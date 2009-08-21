@@ -1,0 +1,36 @@
+.class public test/Anno
+.super java/lang/Object
+.source Anno.java
+
+.annotation runtimeVisibility Ljavax/persistence/Entity;
+  name Ljava/lang/String; = "a_entity"
+.end annotation
+
+.field private id Ljava/lang/String;
+  .annotation runtimeVisibility Ljavax/persistence/Column;
+    name Ljava/lang/String; = "a_field_id"
+  .end annotation
+  .annotation runtimeVisibility Ljavax/persistence/Id;
+  .end annotation
+  .annotation runtimeVisibility Ljavax/persistence/OneToMany;
+    cascade [<string> = { MERGE , REMOVE }
+  .end annotation
+.end field
+
+.method public <init>()V
+.line 24
+	invoke-direct	{v0},java/lang/Object/<init>	; <init>()V
+	return-void	
+.end method
+
+.method public getId()Ljava/lang/String;
+.annotation runtimeVisibility Ljavax/persistence/Column;
+    name Ljava/lang/String; = "a_method_id"
+.end annotation
+.annotation runtimeVisibility Ljavax/persistence/Id;
+.end annotation
+.annotation runtimeVisibility param 1 Lcom/opensymphony/xwork2/inject/Inject;
+.end annotation
+.annotation runtimeVisibility param 1 Lorg/springframework/beans/factory/annotation/Qualifier;
+    value Ljava/lang/String; = "asdf"
+.end annotation

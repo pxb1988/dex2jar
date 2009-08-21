@@ -1,0 +1,580 @@
+00000000 :	64 65 78 0A 
+		30 33 35 00 
+		magic: dex\n035\0
+00000008 :	FF 46 10 1D 
+		checksum
+0000000C :	BC 6D 0D 7E 
+		63 07 B6 51 
+		62 9A 1E 74 
+		6D F0 66 53 
+		C5 DD 7F B3 
+		signature
+00000020 :	AC 07 00 00 
+		file size: 0x000007AC
+00000024 :	70 00 00 00 
+		header size: 0x00000070
+00000028 :	78 56 34 12 
+		00 00 00 00 
+		link size: 0x00000000
+00000030 :	00 00 00 00 
+		link offset: 0x00000000
+00000034 :	E8 06 00 00 
+		map offset: 0x000006E8
+00000038 :	3D 00 00 00 
+		string ids size: 0x0000003D
+0000003C :	70 00 00 00 
+		string ids offset: 0x00000070
+00000040 :	0C 00 00 00 
+		type ids size: 0x0000000C
+00000044 :	64 01 00 00 
+		type ids offset: 0x00000164
+00000048 :	01 00 00 00 
+		proto ids size: 0x00000001
+0000004C :	94 01 00 00 
+		proto ids offset: 0x00000194
+00000050 :	2A 00 00 00 
+		field ids size: 0x0000002A
+00000054 :	A0 01 00 00 
+		field ids offset: 0x000001A0
+00000058 :	03 00 00 00 
+		method ids size: 0x00000003
+0000005C :	F0 02 00 00 
+		method ids offset: 0x000002F0
+00000060 :	01 00 00 00 
+		class defs size: 0x00000001
+00000064 :	08 03 00 00 
+		class defs offset: 0x00000308
+00000068 :	84 04 00 00 
+		data size: 0x00000484
+0000006C :	28 03 00 00 
+		data offset: 0x00000328
+00000070 :	80 03 00 00 
+		string[0]: at 0x00000380
+00000074 :	86 03 00 00 
+		string[1]: at 0x00000386
+00000078 :	90 03 00 00 
+		string[2]: at 0x00000390
+0000007C :	98 03 00 00 
+		string[3]: at 0x00000398
+00000080 :	9B 03 00 00 
+		string[4]: at 0x0000039B
+00000084 :	9E 03 00 00 
+		string[5]: at 0x0000039E
+00000088 :	A1 03 00 00 
+		string[6]: at 0x000003A1
+0000008C :	A4 03 00 00 
+		string[7]: at 0x000003A4
+00000090 :	A7 03 00 00 
+		string[8]: at 0x000003A7
+00000094 :	AA 03 00 00 
+		string[9]: at 0x000003AA
+00000098 :	C9 03 00 00 
+		string[10]: at 0x000003C9
+0000009C :	DB 03 00 00 
+		string[11]: at 0x000003DB
+000000A0 :	EE 03 00 00 
+		string[12]: at 0x000003EE
+000000A4 :	02 04 00 00 
+		string[13]: at 0x00000402
+000000A8 :	16 04 00 00 
+		string[14]: at 0x00000416
+000000AC :	19 04 00 00 
+		string[15]: at 0x00000419
+000000B0 :	2B 04 00 00 
+		string[16]: at 0x0000042B
+000000B4 :	2E 04 00 00 
+		string[17]: at 0x0000042E
+000000B8 :	35 04 00 00 
+		string[18]: at 0x00000435
+000000BC :	3E 04 00 00 
+		string[19]: at 0x0000043E
+000000C0 :	47 04 00 00 
+		string[20]: at 0x00000447
+000000C4 :	51 04 00 00 
+		string[21]: at 0x00000451
+000000C8 :	5C 04 00 00 
+		string[22]: at 0x0000045C
+000000CC :	67 04 00 00 
+		string[23]: at 0x00000467
+000000D0 :	6E 04 00 00 
+		string[24]: at 0x0000046E
+000000D4 :	77 04 00 00 
+		string[25]: at 0x00000477
+000000D8 :	80 04 00 00 
+		string[26]: at 0x00000480
+000000DC :	8B 04 00 00 
+		string[27]: at 0x0000048B
+000000E0 :	96 04 00 00 
+		string[28]: at 0x00000496
+000000E4 :	9E 04 00 00 
+		string[29]: at 0x0000049E
+000000E8 :	A7 04 00 00 
+		string[30]: at 0x000004A7
+000000EC :	B2 04 00 00 
+		string[31]: at 0x000004B2
+000000F0 :	BD 04 00 00 
+		string[32]: at 0x000004BD
+000000F4 :	C9 04 00 00 
+		string[33]: at 0x000004C9
+000000F8 :	D6 04 00 00 
+		string[34]: at 0x000004D6
+000000FC :	E3 04 00 00 
+		string[35]: at 0x000004E3
+00000100 :	EB 04 00 00 
+		string[36]: at 0x000004EB
+00000104 :	F5 04 00 00 
+		string[37]: at 0x000004F5
+00000108 :	FF 04 00 00 
+		string[38]: at 0x000004FF
+0000010C :	0A 05 00 00 
+		string[39]: at 0x0000050A
+00000110 :	16 05 00 00 
+		string[40]: at 0x00000516
+00000114 :	22 05 00 00 
+		string[41]: at 0x00000522
+00000118 :	28 05 00 00 
+		string[42]: at 0x00000528
+0000011C :	30 05 00 00 
+		string[43]: at 0x00000530
+00000120 :	38 05 00 00 
+		string[44]: at 0x00000538
+00000124 :	41 05 00 00 
+		string[45]: at 0x00000541
+00000128 :	4B 05 00 00 
+		string[46]: at 0x0000054B
+0000012C :	55 05 00 00 
+		string[47]: at 0x00000555
+00000130 :	5C 05 00 00 
+		string[48]: at 0x0000055C
+00000134 :	65 05 00 00 
+		string[49]: at 0x00000565
+00000138 :	6E 05 00 00 
+		string[50]: at 0x0000056E
+0000013C :	78 05 00 00 
+		string[51]: at 0x00000578
+00000140 :	83 05 00 00 
+		string[52]: at 0x00000583
+00000144 :	8E 05 00 00 
+		string[53]: at 0x0000058E
+00000148 :	95 05 00 00 
+		string[54]: at 0x00000595
+0000014C :	9D 05 00 00 
+		string[55]: at 0x0000059D
+00000150 :	A7 05 00 00 
+		string[56]: at 0x000005A7
+00000154 :	B1 05 00 00 
+		string[57]: at 0x000005B1
+00000158 :	BD 05 00 00 
+		string[58]: at 0x000005BD
+0000015C :	C9 05 00 00 
+		string[59]: at 0x000005C9
+00000160 :	CF 05 00 00 
+		string[60]: at 0x000005CF
+// string[0]: <*>;
+// string[1]: <clinit>
+// string[2]: <init>
+// string[3]: B
+// string[4]: C
+// string[5]: D
+// string[6]: F
+// string[7]: I
+// string[8]: J
+// string[9]: Ldalvik/annotation/Signature;
+// string[10]: Ljava/lang/Class
+// string[11]: Ljava/lang/Class;
+// string[12]: Ljava/lang/Object;
+// string[13]: Ltest/StaticFinal;
+// string[14]: S
+// string[15]: StaticFinal.java
+// string[16]: V
+// string[17]: _byte
+// string[18]: _byte_0
+// string[19]: _byte_1
+// string[20]: _byte__1
+// string[21]: _byte_max
+// string[22]: _byte_min
+// string[23]: _char
+// string[24]: _char_0
+// string[25]: _char_1
+// string[26]: _char_max
+// string[27]: _char_min
+// string[28]: _class
+// string[29]: _double
+// string[30]: _double_0
+// string[31]: _double_1
+// string[32]: _double__1
+// string[33]: _double_max
+// string[34]: _double_min
+// string[35]: _float
+// string[36]: _float_0
+// string[37]: _float_1
+// string[38]: _float__1
+// string[39]: _float_max
+// string[40]: _float_min
+// string[41]: _int
+// string[42]: _int_0
+// string[43]: _int_1
+// string[44]: _int__1
+// string[45]: _int_max
+// string[46]: _int_min
+// string[47]: _long
+// string[48]: _long_0
+// string[49]: _long_1
+// string[50]: _long__1
+// string[51]: _long_max
+// string[52]: _long_min
+// string[53]: _null
+// string[54]: _short
+// string[55]: _short_0
+// string[56]: _short_1
+// string[57]: _short_max
+// string[58]: _short_min
+// string[59]: this
+// string[60]: value
+00000164 :	03 00 00 00 
+		type[0] index: 00000003 (B)
+00000168 :	04 00 00 00 
+		type[1] index: 00000004 (C)
+0000016C :	05 00 00 00 
+		type[2] index: 00000005 (D)
+00000170 :	06 00 00 00 
+		type[3] index: 00000006 (F)
+00000174 :	07 00 00 00 
+		type[4] index: 00000007 (I)
+00000178 :	08 00 00 00 
+		type[5] index: 00000008 (J)
+0000017C :	09 00 00 00 
+		type[6] index: 00000009 (Ldalvik/annotation/Signature;)
+00000180 :	0B 00 00 00 
+		type[7] index: 0000000B (Ljava/lang/Class;)
+00000184 :	0C 00 00 00 
+		type[8] index: 0000000C (Ljava/lang/Object;)
+00000188 :	0D 00 00 00 
+		type[9] index: 0000000D (Ltest/StaticFinal;)
+0000018C :	0E 00 00 00 
+		type[10] index: 0000000E (S)
+00000190 :	10 00 00 00 
+		type[11] index: 00000010 (V)
+00000194 :	10 00 00 00 
+		0B 00 00 00 
+		00 00 00 00 
+		proto[0]: short signature: V; return type: V; parameter block offset: 00000000
+// proto[0]: V proto(  )
+000001A0 :	09 00 00 00 
+		11 00 00 00 
+		field[0]: test/StaticFinal._byte B
+000001A8 :	09 00 00 00 
+		12 00 00 00 
+		field[1]: test/StaticFinal._byte_0 B
+000001B0 :	09 00 00 00 
+		13 00 00 00 
+		field[2]: test/StaticFinal._byte_1 B
+000001B8 :	09 00 00 00 
+		14 00 00 00 
+		field[3]: test/StaticFinal._byte__1 B
+000001C0 :	09 00 00 00 
+		15 00 00 00 
+		field[4]: test/StaticFinal._byte_max B
+000001C8 :	09 00 00 00 
+		16 00 00 00 
+		field[5]: test/StaticFinal._byte_min B
+000001D0 :	09 00 01 00 
+		17 00 00 00 
+		field[6]: test/StaticFinal._char C
+000001D8 :	09 00 01 00 
+		18 00 00 00 
+		field[7]: test/StaticFinal._char_0 C
+000001E0 :	09 00 01 00 
+		19 00 00 00 
+		field[8]: test/StaticFinal._char_1 C
+000001E8 :	09 00 01 00 
+		1A 00 00 00 
+		field[9]: test/StaticFinal._char_max C
+000001F0 :	09 00 01 00 
+		1B 00 00 00 
+		field[10]: test/StaticFinal._char_min C
+000001F8 :	09 00 07 00 
+		1C 00 00 00 
+		field[11]: test/StaticFinal._class Ljava/lang/Class;
+00000200 :	09 00 02 00 
+		1D 00 00 00 
+		field[12]: test/StaticFinal._double D
+00000208 :	09 00 02 00 
+		1E 00 00 00 
+		field[13]: test/StaticFinal._double_0 D
+00000210 :	09 00 02 00 
+		1F 00 00 00 
+		field[14]: test/StaticFinal._double_1 D
+00000218 :	09 00 02 00 
+		20 00 00 00 
+		field[15]: test/StaticFinal._double__1 D
+00000220 :	09 00 02 00 
+		21 00 00 00 
+		field[16]: test/StaticFinal._double_max D
+00000228 :	09 00 02 00 
+		22 00 00 00 
+		field[17]: test/StaticFinal._double_min D
+00000230 :	09 00 03 00 
+		23 00 00 00 
+		field[18]: test/StaticFinal._float F
+00000238 :	09 00 03 00 
+		24 00 00 00 
+		field[19]: test/StaticFinal._float_0 F
+00000240 :	09 00 03 00 
+		25 00 00 00 
+		field[20]: test/StaticFinal._float_1 F
+00000248 :	09 00 03 00 
+		26 00 00 00 
+		field[21]: test/StaticFinal._float__1 F
+00000250 :	09 00 03 00 
+		27 00 00 00 
+		field[22]: test/StaticFinal._float_max F
+00000258 :	09 00 03 00 
+		28 00 00 00 
+		field[23]: test/StaticFinal._float_min F
+00000260 :	09 00 04 00 
+		29 00 00 00 
+		field[24]: test/StaticFinal._int I
+00000268 :	09 00 04 00 
+		2A 00 00 00 
+		field[25]: test/StaticFinal._int_0 I
+00000270 :	09 00 04 00 
+		2B 00 00 00 
+		field[26]: test/StaticFinal._int_1 I
+00000278 :	09 00 04 00 
+		2C 00 00 00 
+		field[27]: test/StaticFinal._int__1 I
+00000280 :	09 00 04 00 
+		2D 00 00 00 
+		field[28]: test/StaticFinal._int_max I
+00000288 :	09 00 04 00 
+		2E 00 00 00 
+		field[29]: test/StaticFinal._int_min I
+00000290 :	09 00 05 00 
+		2F 00 00 00 
+		field[30]: test/StaticFinal._long J
+00000298 :	09 00 05 00 
+		30 00 00 00 
+		field[31]: test/StaticFinal._long_0 J
+000002A0 :	09 00 05 00 
+		31 00 00 00 
+		field[32]: test/StaticFinal._long_1 J
+000002A8 :	09 00 05 00 
+		32 00 00 00 
+		field[33]: test/StaticFinal._long__1 J
+000002B0 :	09 00 05 00 
+		33 00 00 00 
+		field[34]: test/StaticFinal._long_max J
+000002B8 :	09 00 05 00 
+		34 00 00 00 
+		field[35]: test/StaticFinal._long_min J
+000002C0 :	09 00 08 00 
+		35 00 00 00 
+		field[36]: test/StaticFinal._null Ljava/lang/Object;
+000002C8 :	09 00 0A 00 
+		36 00 00 00 
+		field[37]: test/StaticFinal._short S
+000002D0 :	09 00 0A 00 
+		37 00 00 00 
+		field[38]: test/StaticFinal._short_0 S
+000002D8 :	09 00 0A 00 
+		38 00 00 00 
+		field[39]: test/StaticFinal._short_1 S
+000002E0 :	09 00 0A 00 
+		39 00 00 00 
+		field[40]: test/StaticFinal._short_max S
+000002E8 :	09 00 0A 00 
+		3A 00 00 00 
+		field[41]: test/StaticFinal._short_min S
+000002F0 :	08 00 00 00 
+		02 00 00 00 
+		method[0]: java/lang/Object/<init> (<init>()V)
+000002F8 :	09 00 00 00 
+		01 00 00 00 
+		method[1]: test/StaticFinal/<clinit> (<clinit>()V)
+00000300 :	09 00 00 00 
+		02 00 00 00 
+		method[2]: test/StaticFinal/<init> (<init>()V)
+00000308 :	09 00 00 00 
+		01 00 00 00 
+		08 00 00 00 
+		00 00 00 00 
+		0F 00 00 00 
+		68 03 00 00 
+		82 06 00 00 
+		EE 05 00 00 
+		public test/StaticFinal
+// public  class test/StaticFinal:
+// super: java/lang/Object
+// source: StaticFinal.java
+00000682 :	2A static fields size: 42
+00000683 :	00 instance fields size: 0
+00000684 :	02 direct methods size: 2
+00000685 :	00 virtual methods size: 0
+00000686 :	00 19 // static field[0]: _byte B
+00000688 :	01 19 // static field[1]: _byte_0 B
+0000068A :	01 19 // static field[2]: _byte_1 B
+0000068C :	01 19 // static field[3]: _byte__1 B
+0000068E :	01 19 // static field[4]: _byte_max B
+00000690 :	01 19 // static field[5]: _byte_min B
+00000692 :	01 19 // static field[6]: _char C
+00000694 :	01 19 // static field[7]: _char_0 C
+00000696 :	01 19 // static field[8]: _char_1 C
+00000698 :	01 19 // static field[9]: _char_max C
+0000069A :	01 19 // static field[10]: _char_min C
+0000069C :	01 19 // static field[11]: _class Ljava/lang/Class;
+0000069E :	01 19 // static field[12]: _double D
+000006A0 :	01 19 // static field[13]: _double_0 D
+000006A2 :	01 19 // static field[14]: _double_1 D
+000006A4 :	01 19 // static field[15]: _double__1 D
+000006A6 :	01 19 // static field[16]: _double_max D
+000006A8 :	01 19 // static field[17]: _double_min D
+000006AA :	01 19 // static field[18]: _float F
+000006AC :	01 19 // static field[19]: _float_0 F
+000006AE :	01 19 // static field[20]: _float_1 F
+000006B0 :	01 19 // static field[21]: _float__1 F
+000006B2 :	01 19 // static field[22]: _float_max F
+000006B4 :	01 19 // static field[23]: _float_min F
+000006B6 :	01 19 // static field[24]: _int I
+000006B8 :	01 19 // static field[25]: _int_0 I
+000006BA :	01 19 // static field[26]: _int_1 I
+000006BC :	01 19 // static field[27]: _int__1 I
+000006BE :	01 19 // static field[28]: _int_max I
+000006C0 :	01 19 // static field[29]: _int_min I
+000006C2 :	01 19 // static field[30]: _long J
+000006C4 :	01 19 // static field[31]: _long_0 J
+000006C6 :	01 19 // static field[32]: _long_1 J
+000006C8 :	01 19 // static field[33]: _long__1 J
+000006CA :	01 19 // static field[34]: _long_max J
+000006CC :	01 19 // static field[35]: _long_min J
+000006CE :	01 19 // static field[36]: _null Ljava/lang/Object;
+000006D0 :	01 19 // static field[37]: _short S
+000006D2 :	01 19 // static field[38]: _short_0 S
+000006D4 :	01 19 // static field[39]: _short_1 S
+000006D6 :	01 19 // static field[40]: _short_max S
+000006D8 :	01 19 // static field[41]: _short_min S
+000006DA :	01 88 80 04 
+		B0 06 // direct method[0]: <clinit>()V
+000006E0 :	01 81 80 04 
+		D0 06 // direct method[1]: <init>()V
+000005EE :	2A array item count: 42
+000005EF :	00 61 Array element[0]: 97
+000005F1 :	00 00 Array element[1]: 0
+000005F3 :	00 01 Array element[2]: 1
+000005F5 :	00 FF Array element[3]: -1
+000005F7 :	00 7F Array element[4]: 127
+000005F9 :	00 80 Array element[5]: -128
+000005FB :	23 2D 4E Array element[6]: 'жа'
+000005FE :	03 00 Array element[7]: ' '
+00000600 :	03 01 Array element[8]: ''
+00000602 :	23 FF FF Array element[9]: '?'
+00000605 :	03 00 Array element[10]: ' '
+00000607 :	1E Array element[11]: null
+00000608 :	F1 C3 F5 28 
+		5C 8F C2 F1 
+		3F Array element[12]: 1.11
+00000611 :	11 00 Array element[13]: 0.0
+00000613 :	31 F0 3F Array element[14]: 1.0
+00000616 :	31 F0 BF Array element[15]: -1.0
+00000619 :	F1 FF FF FF 
+		FF FF FF EF 
+		7F Array element[16]: 1.7976931348623157E308
+00000622 :	F1 01 00 00 
+		00 00 00 00 
+		00 Array element[17]: 4.9E-324
+0000062B :	70 AE 47 81 
+		3F Array element[18]: 1.01
+00000630 :	10 00 Array element[19]: 0.0
+00000632 :	30 80 3F Array element[20]: 1.0
+00000635 :	30 80 BF Array element[21]: -1.0
+00000638 :	70 FF FF 7F 
+		7F Array element[22]: 3.4028235E38
+0000063D :	70 01 00 00 
+		00 Array element[23]: 1.4E-45
+00000642 :	64 15 CD 5B 
+		07 Array element[24]: 123456789
+00000647 :	04 00 Array element[25]: 0
+00000649 :	04 01 Array element[26]: 1
+0000064B :	04 FF Array element[27]: -1
+0000064D :	64 FF FF FF 
+		7F Array element[28]: 2147483647
+00000652 :	64 00 00 00 
+		80 Array element[29]: -2147483648
+00000657 :	66 D2 02 96 
+		49 Array element[30]: 1234567890
+0000065C :	06 00 Array element[31]: 0
+0000065E :	06 01 Array element[32]: 1
+00000660 :	06 FF Array element[33]: -1
+00000662 :	E6 FF FF FF 
+		FF FF FF FF 
+		7F Array element[34]: -1
+0000066B :	E6 00 00 00 
+		00 00 00 00 
+		80 Array element[35]: -2147483648
+00000674 :	1E Array element[36]: null
+00000675 :	22 D2 04 Array element[37]: 1234
+00000678 :	02 00 Array element[38]: 0
+0000067A :	02 01 Array element[39]: 1
+0000067C :	22 FF 7F Array element[40]: 32767
+0000067F :	22 00 80 Array element[41]: -32768
+00000368 :	00 00 00 00 
+		class annotation offset: 0x0
+0000036C :	01 00 00 00 
+		field annotation size: 1
+00000370 :	00 00 00 00 
+		method annotation size: 0
+00000374 :	00 00 00 00 
+		parameter annotation size: 0
+00000378 :	0B 00 00 00 
+		field idx: 11
+0000037C :	28 03 00 00 
+		annotation offset: 0x328
+00000328 :	01 00 00 00 
+		E4 05 00 00 
+		field annotation offset: 0x5e4
+000005E4 :	02 fieldAnnotation for _class, entry[0]: visibility: VISIBILITY_SYSTEM
+000005E5 :	06 fieldAnnotation for _class, entry[0]: type: Ldalvik/annotation/Signature;
+000005E6 :	01 3C fieldAnnotation for _class, entry[0]: element[0], name: value
+000005E9 :	02 array item count: 2
+000005EA :	17 0A Array element[0]: "Ljava/lang/Class"
+000005EC :	17 00 Array element[1]: "<*>;"
+fieldAnnotation for _class, entry[0]: element[0], value: { "Ljava/lang/Class" , "<*>;" }
+--------------------------------------
+Class: test/StaticFinal
+****************************
+Method: static <clinit>()V
+00000330 :	01 00 registers size: 1
+00000332 :	00 00 input arguments: 0
+00000334 :	00 00 output arguments: 0
+00000336 :	00 00 try block size: 0
+00000338 :	D6 05 00 00 
+		debug info offset: 0x5d6
+0000033C :	08 00 00 00 
+		instruction block size: 8
+method block: 0x340-0x350
+next block starts at: 0x350
+000005D6 :	3C Starting line: 60
+000005D7 :	00 Parameter number: 0
+000005D8 :	07 DBG_SET_PROLOGUE_END
+000005D9 :	0E Line register: 60; address register: 0x0
+000005DA :	4B Line register: 61; address register: 0x4
+000005DB :	02 4E DBG_ADVANCE_LINE: by -50 lines (new line counter: 11)
+000005DD :	3B Line register: 11; address register: 0x7
+000005DE :	00 DBG_END_SEQUENCE
+****************************
+Method: public <init>()V
+00000350 :	01 00 registers size: 1
+00000352 :	01 00 input arguments: 1
+00000354 :	01 00 output arguments: 1
+00000356 :	00 00 try block size: 0
+00000358 :	DF 05 00 00 
+		debug info offset: 0x5df
+0000035C :	04 00 00 00 
+		instruction block size: 4
+method block: 0x360-0x368
+next block starts at: 0x368
+000005DF :	0B Starting line: 11
+000005E0 :	00 Parameter number: 0
+000005E1 :	07 DBG_SET_PROLOGUE_END
+000005E2 :	0E Line register: 11; address register: 0x0
+000005E3 :	00 DBG_END_SEQUENCE

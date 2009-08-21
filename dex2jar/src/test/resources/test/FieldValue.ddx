@@ -1,0 +1,32 @@
+.class public test/FieldValue
+.super java/lang/Object
+.source FieldValue.java
+
+.field public static ABC I = 0	; 0x0
+.field public static final DCE I = 13	; 0xd
+.field public i I
+
+.method static <clinit>()V
+.line 12
+	const/16	v0,12
+	sput	v0,test/FieldValue.ABC I
+.line 10
+	return-void	
+.end method
+
+.method public <init>()V
+.line 10
+	invoke-direct	{v1},java/lang/Object/<init>	; <init>()V
+.line 11
+	const/16	v0,11
+	iput	v0,v1,test/FieldValue.i I
+.line 10
+	return-void	
+.end method
+
+.method public abc()V
+.line 17
+	return-void	
+.end method
+
+

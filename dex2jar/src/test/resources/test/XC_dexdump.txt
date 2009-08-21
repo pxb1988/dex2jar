@@ -1,0 +1,66 @@
+Processing 'test/XC.dex'...
+Opened 'test/XC.dex', DEX version '035'
+DEX file header:
+magic               : 'dex
+035'
+checksum            : 91482ac3
+signature           : b003...b4ae
+file_size           : 440
+header_size         : 112
+link_size           : 0
+link_off            : 0 (0x000000)
+string_ids_size     : 6
+string_ids_off      : 112 (0x000070)
+type_ids_size       : 3
+type_ids_off        : 136 (0x000088)
+field_ids_size      : 0
+field_ids_off       : 0 (0x000000)
+method_ids_size     : 2
+method_ids_off      : 160 (0x0000a0)
+class_defs_size     : 1
+class_defs_off      : 176 (0x0000b0)
+data_size           : 232
+data_off            : 208 (0x0000d0)
+
+Class #0 header:
+class_idx           : 1
+access_flags        : 1 (0x0001)
+superclass_idx      : 0
+interfaces_off      : 0 (0x000000)
+source_file_idx     : 4
+annotations_off     : 0 (0x000000)
+class_data_off      : 294 (0x000126)
+static_fields_size  : 0
+instance_fields_size: 0
+direct_methods_size : 1
+virtual_methods_size: 0
+
+Class #0            -
+  Class descriptor  : 'Ltest/XC;'
+  Access flags      : 0x0001 (PUBLIC)
+  Superclass        : 'Ljava/lang/Object;'
+  Interfaces        -
+  Static fields     -
+  Instance fields   -
+  Direct methods    -
+    #0              : (in Ltest/XC;)
+      name          : '<init>'
+      type          : '()V'
+      access        : 0x10001 (PUBLIC CONSTRUCTOR)
+      code          -
+      registers     : 1
+      ins           : 1
+      outs          : 1
+      insns size    : 4 16-bit code units
+0000d0:                                        |[0000d0] test.XC.<init>:()V
+0000e0: 7010 0000 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@0000
+0000e6: 0e00                                   |0003: return-void
+      catches       : (none)
+      positions     : 
+        0x0000 line=10
+      locals        : 
+        0x0000 - 0x0004 reg=0 this Ltest/XC; 
+
+  Virtual methods   -
+  source_file_idx   : 4 (XC.java)
+

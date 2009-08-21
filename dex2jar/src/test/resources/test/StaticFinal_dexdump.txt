@@ -1,0 +1,256 @@
+Processing 'test/StaticFinal.dex'...
+Opened 'test/StaticFinal.dex', DEX version '035'
+DEX file header:
+magic               : 'dex
+035'
+checksum            : 1d1046ff
+signature           : bc6d...7fb3
+file_size           : 1964
+header_size         : 112
+link_size           : 0
+link_off            : 0 (0x000000)
+string_ids_size     : 61
+string_ids_off      : 112 (0x000070)
+type_ids_size       : 12
+type_ids_off        : 356 (0x000164)
+field_ids_size      : 42
+field_ids_off       : 416 (0x0001a0)
+method_ids_size     : 3
+method_ids_off      : 752 (0x0002f0)
+class_defs_size     : 1
+class_defs_off      : 776 (0x000308)
+data_size           : 1156
+data_off            : 808 (0x000328)
+
+Class #0 header:
+class_idx           : 9
+access_flags        : 1 (0x0001)
+superclass_idx      : 8
+interfaces_off      : 0 (0x000000)
+source_file_idx     : 15
+annotations_off     : 872 (0x000368)
+class_data_off      : 1666 (0x000682)
+static_fields_size  : 42
+instance_fields_size: 0
+direct_methods_size : 2
+virtual_methods_size: 0
+
+Class #0            -
+  Class descriptor  : 'Ltest/StaticFinal;'
+  Access flags      : 0x0001 (PUBLIC)
+  Superclass        : 'Ljava/lang/Object;'
+  Interfaces        -
+  Static fields     -
+    #0              : (in Ltest/StaticFinal;)
+      name          : '_byte'
+      type          : 'B'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #1              : (in Ltest/StaticFinal;)
+      name          : '_byte_0'
+      type          : 'B'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #2              : (in Ltest/StaticFinal;)
+      name          : '_byte_1'
+      type          : 'B'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #3              : (in Ltest/StaticFinal;)
+      name          : '_byte__1'
+      type          : 'B'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #4              : (in Ltest/StaticFinal;)
+      name          : '_byte_max'
+      type          : 'B'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #5              : (in Ltest/StaticFinal;)
+      name          : '_byte_min'
+      type          : 'B'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #6              : (in Ltest/StaticFinal;)
+      name          : '_char'
+      type          : 'C'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #7              : (in Ltest/StaticFinal;)
+      name          : '_char_0'
+      type          : 'C'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #8              : (in Ltest/StaticFinal;)
+      name          : '_char_1'
+      type          : 'C'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #9              : (in Ltest/StaticFinal;)
+      name          : '_char_max'
+      type          : 'C'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #10              : (in Ltest/StaticFinal;)
+      name          : '_char_min'
+      type          : 'C'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #11              : (in Ltest/StaticFinal;)
+      name          : '_class'
+      type          : 'Ljava/lang/Class;'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #12              : (in Ltest/StaticFinal;)
+      name          : '_double'
+      type          : 'D'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #13              : (in Ltest/StaticFinal;)
+      name          : '_double_0'
+      type          : 'D'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #14              : (in Ltest/StaticFinal;)
+      name          : '_double_1'
+      type          : 'D'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #15              : (in Ltest/StaticFinal;)
+      name          : '_double__1'
+      type          : 'D'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #16              : (in Ltest/StaticFinal;)
+      name          : '_double_max'
+      type          : 'D'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #17              : (in Ltest/StaticFinal;)
+      name          : '_double_min'
+      type          : 'D'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #18              : (in Ltest/StaticFinal;)
+      name          : '_float'
+      type          : 'F'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #19              : (in Ltest/StaticFinal;)
+      name          : '_float_0'
+      type          : 'F'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #20              : (in Ltest/StaticFinal;)
+      name          : '_float_1'
+      type          : 'F'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #21              : (in Ltest/StaticFinal;)
+      name          : '_float__1'
+      type          : 'F'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #22              : (in Ltest/StaticFinal;)
+      name          : '_float_max'
+      type          : 'F'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #23              : (in Ltest/StaticFinal;)
+      name          : '_float_min'
+      type          : 'F'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #24              : (in Ltest/StaticFinal;)
+      name          : '_int'
+      type          : 'I'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #25              : (in Ltest/StaticFinal;)
+      name          : '_int_0'
+      type          : 'I'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #26              : (in Ltest/StaticFinal;)
+      name          : '_int_1'
+      type          : 'I'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #27              : (in Ltest/StaticFinal;)
+      name          : '_int__1'
+      type          : 'I'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #28              : (in Ltest/StaticFinal;)
+      name          : '_int_max'
+      type          : 'I'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #29              : (in Ltest/StaticFinal;)
+      name          : '_int_min'
+      type          : 'I'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #30              : (in Ltest/StaticFinal;)
+      name          : '_long'
+      type          : 'J'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #31              : (in Ltest/StaticFinal;)
+      name          : '_long_0'
+      type          : 'J'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #32              : (in Ltest/StaticFinal;)
+      name          : '_long_1'
+      type          : 'J'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #33              : (in Ltest/StaticFinal;)
+      name          : '_long__1'
+      type          : 'J'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #34              : (in Ltest/StaticFinal;)
+      name          : '_long_max'
+      type          : 'J'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #35              : (in Ltest/StaticFinal;)
+      name          : '_long_min'
+      type          : 'J'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #36              : (in Ltest/StaticFinal;)
+      name          : '_null'
+      type          : 'Ljava/lang/Object;'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #37              : (in Ltest/StaticFinal;)
+      name          : '_short'
+      type          : 'S'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #38              : (in Ltest/StaticFinal;)
+      name          : '_short_0'
+      type          : 'S'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #39              : (in Ltest/StaticFinal;)
+      name          : '_short_1'
+      type          : 'S'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #40              : (in Ltest/StaticFinal;)
+      name          : '_short_max'
+      type          : 'S'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+    #41              : (in Ltest/StaticFinal;)
+      name          : '_short_min'
+      type          : 'S'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+  Instance fields   -
+  Direct methods    -
+    #0              : (in Ltest/StaticFinal;)
+      name          : '<clinit>'
+      type          : '()V'
+      access        : 0x10008 (STATIC CONSTRUCTOR)
+      code          -
+      registers     : 1
+      ins           : 0
+      outs          : 0
+      insns size    : 8 16-bit code units
+000330:                                        |[000330] test.StaticFinal.<clinit>:()V
+000340: 1c00 0800                              |0000: const-class v0, Ljava/lang/Object; // class@0008
+000344: 6900 0b00                              |0002: sput-object v0, Ltest/StaticFinal;._class:Ljava/lang/Class; // field@000b
+000348: 1200                                   |0004: const/4 v0, #int 0 // #0
+00034a: 6900 2400                              |0005: sput-object v0, Ltest/StaticFinal;._null:Ljava/lang/Object; // field@0024
+00034e: 0e00                                   |0007: return-void
+      catches       : (none)
+      positions     : 
+        0x0000 line=60
+        0x0004 line=61
+        0x0007 line=11
+      locals        : 
+
+    #1              : (in Ltest/StaticFinal;)
+      name          : '<init>'
+      type          : '()V'
+      access        : 0x10001 (PUBLIC CONSTRUCTOR)
+      code          -
+      registers     : 1
+      ins           : 1
+      outs          : 1
+      insns size    : 4 16-bit code units
+000350:                                        |[000350] test.StaticFinal.<init>:()V
+000360: 7010 0000 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@0000
+000366: 0e00                                   |0003: return-void
+      catches       : (none)
+      positions     : 
+        0x0000 line=11
+      locals        : 
+        0x0000 - 0x0004 reg=0 this Ltest/StaticFinal; 
+
+  Virtual methods   -
+  source_file_idx   : 15 (StaticFinal.java)
+

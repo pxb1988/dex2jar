@@ -1,0 +1,204 @@
+00000000 :	64 65 78 0A 
+		30 33 35 00 
+		magic: dex\n035\0
+00000008 :	37 4B 9C E7 
+		checksum
+0000000C :	81 DE EF A8 
+		83 3B 47 20 
+		16 D0 7A 5C 
+		CF AF 3A 52 
+		79 DB FB E3 
+		signature
+00000020 :	A0 02 00 00 
+		file size: 0x000002A0
+00000024 :	70 00 00 00 
+		header size: 0x00000070
+00000028 :	78 56 34 12 
+		00 00 00 00 
+		link size: 0x00000000
+00000030 :	00 00 00 00 
+		link offset: 0x00000000
+00000034 :	00 02 00 00 
+		map offset: 0x00000200
+00000038 :	0C 00 00 00 
+		string ids size: 0x0000000C
+0000003C :	70 00 00 00 
+		string ids offset: 0x00000070
+00000040 :	04 00 00 00 
+		type ids size: 0x00000004
+00000044 :	A0 00 00 00 
+		type ids offset: 0x000000A0
+00000048 :	01 00 00 00 
+		proto ids size: 0x00000001
+0000004C :	B0 00 00 00 
+		proto ids offset: 0x000000B0
+00000050 :	03 00 00 00 
+		field ids size: 0x00000003
+00000054 :	BC 00 00 00 
+		field ids offset: 0x000000BC
+00000058 :	04 00 00 00 
+		method ids size: 0x00000004
+0000005C :	D4 00 00 00 
+		method ids offset: 0x000000D4
+00000060 :	01 00 00 00 
+		class defs size: 0x00000001
+00000064 :	F4 00 00 00 
+		class defs offset: 0x000000F4
+00000068 :	8C 01 00 00 
+		data size: 0x0000018C
+0000006C :	14 01 00 00 
+		data offset: 0x00000114
+00000070 :	64 01 00 00 
+		string[0]: at 0x00000164
+00000074 :	6E 01 00 00 
+		string[1]: at 0x0000016E
+00000078 :	76 01 00 00 
+		string[2]: at 0x00000176
+0000007C :	7B 01 00 00 
+		string[3]: at 0x0000017B
+00000080 :	80 01 00 00 
+		string[4]: at 0x00000180
+00000084 :	91 01 00 00 
+		string[5]: at 0x00000191
+00000088 :	94 01 00 00 
+		string[6]: at 0x00000194
+0000008C :	A8 01 00 00 
+		string[7]: at 0x000001A8
+00000090 :	BB 01 00 00 
+		string[8]: at 0x000001BB
+00000094 :	BE 01 00 00 
+		string[9]: at 0x000001BE
+00000098 :	C3 01 00 00 
+		string[10]: at 0x000001C3
+0000009C :	C6 01 00 00 
+		string[11]: at 0x000001C6
+// string[0]: <clinit>
+// string[1]: <init>
+// string[2]: ABC
+// string[3]: DCE
+// string[4]: FieldValue.java
+// string[5]: I
+// string[6]: Ljava/lang/Object;
+// string[7]: Ltest/FieldValue;
+// string[8]: V
+// string[9]: abc
+// string[10]: i
+// string[11]: this
+000000A0 :	05 00 00 00 
+		type[0] index: 00000005 (I)
+000000A4 :	06 00 00 00 
+		type[1] index: 00000006 (Ljava/lang/Object;)
+000000A8 :	07 00 00 00 
+		type[2] index: 00000007 (Ltest/FieldValue;)
+000000AC :	08 00 00 00 
+		type[3] index: 00000008 (V)
+000000B0 :	08 00 00 00 
+		03 00 00 00 
+		00 00 00 00 
+		proto[0]: short signature: V; return type: V; parameter block offset: 00000000
+// proto[0]: V proto(  )
+000000BC :	02 00 00 00 
+		02 00 00 00 
+		field[0]: test/FieldValue.ABC I
+000000C4 :	02 00 00 00 
+		03 00 00 00 
+		field[1]: test/FieldValue.DCE I
+000000CC :	02 00 00 00 
+		0A 00 00 00 
+		field[2]: test/FieldValue.i I
+000000D4 :	01 00 00 00 
+		01 00 00 00 
+		method[0]: java/lang/Object/<init> (<init>()V)
+000000DC :	02 00 00 00 
+		00 00 00 00 
+		method[1]: test/FieldValue/<clinit> (<clinit>()V)
+000000E4 :	02 00 00 00 
+		01 00 00 00 
+		method[2]: test/FieldValue/<init> (<init>()V)
+000000EC :	02 00 00 00 
+		09 00 00 00 
+		method[3]: test/FieldValue/abc (abc()V)
+000000F4 :	02 00 00 00 
+		01 00 00 00 
+		01 00 00 00 
+		00 00 00 00 
+		04 00 00 00 
+		00 00 00 00 
+		E3 01 00 00 
+		DE 01 00 00 
+		public test/FieldValue
+// public  class test/FieldValue:
+// super: java/lang/Object
+// source: FieldValue.java
+000001E3 :	02 static fields size: 2
+000001E4 :	01 instance fields size: 1
+000001E5 :	02 direct methods size: 2
+000001E6 :	01 virtual methods size: 1
+000001E7 :	00 09 // static field[0]: ABC I
+000001E9 :	01 19 // static field[1]: DCE I
+000001EB :	02 01 // instance field[0]: i I
+000001ED :	01 88 80 04 
+		94 02 // direct method[0]: <clinit>()V
+000001F3 :	01 81 80 04 
+		B0 02 // direct method[1]: <init>()V
+000001F9 :	03 01 D0 02 
+		// virtual method[0]: abc()V
+000001DE :	02 array item count: 2
+000001DF :	04 00 Array element[0]: 0
+000001E1 :	04 0D Array element[1]: 13
+--------------------------------------
+Class: test/FieldValue
+****************************
+Method: static <clinit>()V
+00000114 :	01 00 registers size: 1
+00000116 :	00 00 input arguments: 0
+00000118 :	00 00 output arguments: 0
+0000011A :	00 00 try block size: 0
+0000011C :	CC 01 00 00 
+		debug info offset: 0x1cc
+00000120 :	05 00 00 00 
+		instruction block size: 5
+method block: 0x124-0x12e
+next block starts at: 0x130
+000001CC :	0C Starting line: 12
+000001CD :	00 Parameter number: 0
+000001CE :	07 DBG_SET_PROLOGUE_END
+000001CF :	0E Line register: 12; address register: 0x0
+000001D0 :	48 Line register: 10; address register: 0x4
+000001D1 :	00 DBG_END_SEQUENCE
+****************************
+Method: public <init>()V
+00000130 :	02 00 registers size: 2
+00000132 :	01 00 input arguments: 1
+00000134 :	01 00 output arguments: 1
+00000136 :	00 00 try block size: 0
+00000138 :	D2 01 00 00 
+		debug info offset: 0x1d2
+0000013C :	08 00 00 00 
+		instruction block size: 8
+method block: 0x140-0x150
+next block starts at: 0x150
+000001D2 :	0A Starting line: 10
+000001D3 :	00 Parameter number: 0
+000001D4 :	07 DBG_SET_PROLOGUE_END
+000001D5 :	0E Line register: 10; address register: 0x0
+000001D6 :	3C Line register: 11; address register: 0x3
+000001D7 :	49 Line register: 10; address register: 0x7
+000001D8 :	00 DBG_END_SEQUENCE
+****************************
+Method: public abc()V
+00000150 :	01 00 registers size: 1
+00000152 :	01 00 input arguments: 1
+00000154 :	00 00 output arguments: 0
+00000156 :	00 00 try block size: 0
+00000158 :	D9 01 00 00 
+		debug info offset: 0x1d9
+0000015C :	01 00 00 00 
+		instruction block size: 1
+method block: 0x160-0x162
+next block starts at: 0x164
+000001D9 :	11 Starting line: 17
+000001DA :	00 Parameter number: 0
+000001DB :	07 DBG_SET_PROLOGUE_END
+000001DC :	0E Line register: 17; address register: 0x0
+000001DD :	00 DBG_END_SEQUENCE

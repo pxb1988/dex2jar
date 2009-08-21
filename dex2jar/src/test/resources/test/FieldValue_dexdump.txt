@@ -1,0 +1,118 @@
+Processing 'test/FieldValue.dex'...
+Opened 'test/FieldValue.dex', DEX version '035'
+DEX file header:
+magic               : 'dex
+035'
+checksum            : e79c4b37
+signature           : 81de...fbe3
+file_size           : 672
+header_size         : 112
+link_size           : 0
+link_off            : 0 (0x000000)
+string_ids_size     : 12
+string_ids_off      : 112 (0x000070)
+type_ids_size       : 4
+type_ids_off        : 160 (0x0000a0)
+field_ids_size      : 3
+field_ids_off       : 188 (0x0000bc)
+method_ids_size     : 4
+method_ids_off      : 212 (0x0000d4)
+class_defs_size     : 1
+class_defs_off      : 244 (0x0000f4)
+data_size           : 396
+data_off            : 276 (0x000114)
+
+Class #0 header:
+class_idx           : 2
+access_flags        : 1 (0x0001)
+superclass_idx      : 1
+interfaces_off      : 0 (0x000000)
+source_file_idx     : 4
+annotations_off     : 0 (0x000000)
+class_data_off      : 483 (0x0001e3)
+static_fields_size  : 2
+instance_fields_size: 1
+direct_methods_size : 2
+virtual_methods_size: 1
+
+Class #0            -
+  Class descriptor  : 'Ltest/FieldValue;'
+  Access flags      : 0x0001 (PUBLIC)
+  Superclass        : 'Ljava/lang/Object;'
+  Interfaces        -
+  Static fields     -
+    #0              : (in Ltest/FieldValue;)
+      name          : 'ABC'
+      type          : 'I'
+      access        : 0x0009 (PUBLIC STATIC)
+    #1              : (in Ltest/FieldValue;)
+      name          : 'DCE'
+      type          : 'I'
+      access        : 0x0019 (PUBLIC STATIC FINAL)
+  Instance fields   -
+    #0              : (in Ltest/FieldValue;)
+      name          : 'i'
+      type          : 'I'
+      access        : 0x0001 (PUBLIC)
+  Direct methods    -
+    #0              : (in Ltest/FieldValue;)
+      name          : '<clinit>'
+      type          : '()V'
+      access        : 0x10008 (STATIC CONSTRUCTOR)
+      code          -
+      registers     : 1
+      ins           : 0
+      outs          : 0
+      insns size    : 5 16-bit code units
+000114:                                        |[000114] test.FieldValue.<clinit>:()V
+000124: 1300 0c00                              |0000: const/16 v0, #int 12 // #c
+000128: 6700 0000                              |0002: sput v0, Ltest/FieldValue;.ABC:I // field@0000
+00012c: 0e00                                   |0004: return-void
+      catches       : (none)
+      positions     : 
+        0x0000 line=12
+        0x0004 line=10
+      locals        : 
+
+    #1              : (in Ltest/FieldValue;)
+      name          : '<init>'
+      type          : '()V'
+      access        : 0x10001 (PUBLIC CONSTRUCTOR)
+      code          -
+      registers     : 2
+      ins           : 1
+      outs          : 1
+      insns size    : 8 16-bit code units
+000130:                                        |[000130] test.FieldValue.<init>:()V
+000140: 7010 0000 0100                         |0000: invoke-direct {v1}, Ljava/lang/Object;.<init>:()V // method@0000
+000146: 1300 0b00                              |0003: const/16 v0, #int 11 // #b
+00014a: 5910 0200                              |0005: iput v0, v1, Ltest/FieldValue;.i:I // field@0002
+00014e: 0e00                                   |0007: return-void
+      catches       : (none)
+      positions     : 
+        0x0000 line=10
+        0x0003 line=11
+        0x0007 line=10
+      locals        : 
+        0x0000 - 0x0008 reg=1 this Ltest/FieldValue; 
+
+  Virtual methods   -
+    #0              : (in Ltest/FieldValue;)
+      name          : 'abc'
+      type          : '()V'
+      access        : 0x0001 (PUBLIC)
+      code          -
+      registers     : 1
+      ins           : 1
+      outs          : 0
+      insns size    : 1 16-bit code units
+000150:                                        |[000150] test.FieldValue.abc:()V
+000160: 0e00                                   |0000: return-void
+      catches       : (none)
+      positions     : 
+        0x0000 line=17
+      locals        : 
+        0x0000 - 0x0001 reg=0 this Ltest/FieldValue; 
+
+  source_file_idx   : 4 (FieldValue.java)
+
