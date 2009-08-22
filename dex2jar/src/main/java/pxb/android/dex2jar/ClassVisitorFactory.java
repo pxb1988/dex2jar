@@ -10,5 +10,5 @@ import org.objectweb.asm.ClassVisitor;
  * 
  */
 public interface ClassVisitorFactory {
-	public ClassVisitor create();
+	public ClassVisitor create(String className);
 }

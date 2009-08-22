@@ -1,0 +1,45 @@
+.class public test/TryCatch
+.super java/lang/Object
+.source TryCatch.java
+
+
+.method public <init>()V
+.line 10
+	invoke-direct	{v0},java/lang/Object/<init>	; <init>()V
+	return-void	
+.end method
+
+.method public static main([Ljava/lang/String;)V
+.catch java/lang/Exception from l17c to l18a using l18c
+.catch java/lang/Throwable from l17c to l18a using l1a0
+.var 0 is e Ljava/lang/Exception; from l190 to l1a0
+l17c:
+.line 13
+	sget-object	v1,java/lang/System.out Ljava/io/PrintStream;
+	const-string	v2,"a"
+	invoke-virtual	{v1,v2},java/io/PrintStream/println	; println(Ljava/lang/String;)V
+l18a:
+.line 19
+	return-void	
+l18c:
+.line 14
+	move-exception	v1
+	move-object	v0,v1
+.line 15
+l190:
+	sget-object	v1,java/lang/System.out Ljava/io/PrintStream;
+	const-string	v2,"b"
+	invoke-virtual	{v1,v2},java/io/PrintStream/println	; println(Ljava/lang/String;)V
+	goto	l18a
+l1a0:
+.line 16
+	move-exception	v1
+	move-object	v0,v1
+.line 17
+	sget-object	v1,java/lang/System.out Ljava/io/PrintStream;
+	const-string	v2,"c"
+	invoke-virtual	{v1,v2},java/io/PrintStream/println	; println(Ljava/lang/String;)V
+	goto	l18a
+.end method
+
+

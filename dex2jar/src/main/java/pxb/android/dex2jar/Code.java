@@ -45,7 +45,8 @@ public class Code implements DexOpcodes {
 		in.readShortx();
 		mv.visit(registers_size);
 		int tries_size = in.readShortx();
-		int debug_off = in.readIntx();
+		// int debug_off =
+		in.readIntx();
 		int insns_size = in.readIntx();
 		Label labels[] = new Label[insns_size];
 		for (int i = 0; i < insns_size; i++) {
@@ -59,11 +60,14 @@ public class Code implements DexOpcodes {
 				int offset = in.readShortx();
 				// TODO
 				in.readShortx();
-				in.readShortx();
-				int type_id = in.readByte();
-				int handler = in.readByte();
-				String type = dexFile.getTypeItem(type_id);
-				mv.visitTryCatchBlock(labels[start], labels[offset], labels[handler], type);
+				in.readByte();
+				int size = in.readByte();
+				for (int j = 0; j < size; j++) {
+					int type_id = in.readByte();
+					int handler = in.readByte();
+					String type = dexFile.getTypeItem(type_id);
+					mv.visitTryCatchBlock(labels[start], labels[offset], labels[handler], type);
+				}
 			}
 			in.pop();
 		}
@@ -180,5 +184,6 @@ public class Code implements DexOpcodes {
 				throw new RuntimeException("Not support yet!");
 			}
 		}
+		mv.visitEnd();
 	}
 }

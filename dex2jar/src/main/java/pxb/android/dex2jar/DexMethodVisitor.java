@@ -17,28 +17,36 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	private MethodVisitor mv;
 	private Method method;
 	private int map[];
-	private boolean isStatic;
+	private int method_access_flags;
+
+	private boolean isStatic() {
+		return 0 != (method_access_flags & ACC_STATIC);
+	}
 
 	/**
 	 * @param mv
 	 */
-	public DexMethodVisitor(MethodVisitor mv, Method method, boolean isStatic) {
+	public DexMethodVisitor(MethodVisitor mv, Method method, int method_access_flags) {
 		super();
 		this.method = method;
-		this.isStatic = isStatic;
+		this.method_access_flags = method_access_flags;
+		// mv = new AnalyzerAdapter(x(method.getOwner()), method_access_flags,
+		// method.getName(), method.getType().getDesc(), mv);
 		pmv = new PMethodVisitor(mv);
-		pmv.visit(Type.getType(method.getOwner()), method.getType().getDesc(), isStatic);
+		pmv.visit(Type.getType(method.getOwner()), method.getType().getDesc(), this.isStatic());
 		this.mv = new MethodNameAdapter(pmv);
 	}
 
 	void visitEnd() {
+		// PMethodVisitor will count
+		mv.visitMaxs(-1, -1);
 		mv.visitEnd();
 	}
 
 	/**
 	 * <pre>
-	 * 01234 567 
-	 * 567 01234 
+	 * 012 34 567 
+	 * 567 34 012 
 	 * reg=8 
 	 * m=5 
 	 * n=3
@@ -51,15 +59,18 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	public static int[] RegisterMapGenerator(int total, int m) {
 		int[] map = new int[total];
 		int n = total - m;
-
+		for (int i = n; i < total - n; i++) {
+			map[i] = i;
+		}
 		for (int i = 0; i < n; i++) {
+			map[m + i] = i;
 			map[i] = m + i;
 		}
-		for (int i = 1; i < m; i++) {
-			map[i + n] = i;
-		}
+
 		return map;
 	}
+
+	int reg_size;
 
 	/**
 	 * 
@@ -69,12 +80,12 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 */
 	void visit(int reg_size) {
 		int parameterSize = method.getType().getParameterTypes().length;
-		if (isStatic) {
+		if (isStatic()) {
 			map = RegisterMapGenerator(reg_size, reg_size - parameterSize);
 		} else {
 			map = RegisterMapGenerator(reg_size, reg_size - parameterSize - 1);
 		}
-
+		this.reg_size = reg_size;
 	}
 
 	private int detectLoadOpcode(String type) {
@@ -88,7 +99,7 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 * @return
 	 */
 	int detectLoadOpcode(int reg) {
-		Type type = pmv.getFromLocal(map[reg]);
+		Type type = pmv.getLocal(map[reg]);
 		return type.getOpcode(ILOAD);
 	}
 
@@ -99,7 +110,7 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 * @return
 	 */
 	int detectStoreOpcode() {
-		return pmv.getFromStack(1).getOpcode(ISTORE);
+		return pmv.getStack(1).getOpcode(ISTORE);
 
 	}
 
@@ -174,8 +185,11 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 			break;
 		case OP_CONST_CLASS:// const-class
 		{
-			mv.visitLdcInsn(ClassNameAdapter.x(type).replace('/', '.'));
-			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
+			mv.visitLdcInsn(Type.getType(type));
+			// mv.visitLdcInsn(ClassNameAdapter.x(type).replace('/', '.'));
+			// mv.visitMethodInsn(INVOKESTATIC, "java/lang/Class", "forName",
+			// "(Ljava/lang/String;)Ljava/lang/Class;");
+			//			
 			mv.visitVarInsn(ASTORE, map[reg]);
 		}
 			break;

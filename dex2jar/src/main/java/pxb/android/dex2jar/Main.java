@@ -35,24 +35,11 @@ public class Main {
 				final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(jar));
 				zos.setComment("Create by dex2jar version:" + Version.version);
 				new DexFile(data).accept(new ClassVisitorFactory() {
-
-					public ClassVisitor create() {
+					public ClassVisitor create(final String name) {
+						if (!name.equals("javax/servlet/GenericServlet")) {
+							return null;
+						}
 						return new ClassWriter(0) {
-							String className;
-
-							/*
-							 * (non-Javadoc)
-							 * 
-							 * @see org.objectweb.asm.ClassWriter#visit(int,
-							 * int, java.lang.String, java.lang.String,
-							 * java.lang.String, java.lang.String[])
-							 */
-							@Override
-							public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-								className = name;
-								super.visit(version, access, name, signature, superName, interfaces);
-							}
-
 							/*
 							 * (non-Javadoc)
 							 * 
@@ -62,7 +49,7 @@ public class Main {
 							public void visitEnd() {
 								super.visitEnd();
 								try {
-									zos.putNextEntry(new ZipEntry(className + ".class"));
+									zos.putNextEntry(new ZipEntry(name + ".class"));
 									IOUtils.write(this.toByteArray(), zos);
 									zos.closeEntry();
 								} catch (FileNotFoundException e) {

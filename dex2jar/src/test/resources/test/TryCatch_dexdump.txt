@@ -1,0 +1,108 @@
+Processing 'test/TryCatch.dex'...
+Opened 'test/TryCatch.dex', DEX version '035'
+DEX file header:
+magic               : 'dex
+035'
+checksum            : 2b487f08
+signature           : 935b...5d62
+file_size           : 912
+header_size         : 112
+link_size           : 0
+link_off            : 0 (0x000000)
+string_ids_size     : 21
+string_ids_off      : 112 (0x000070)
+type_ids_size       : 9
+type_ids_off        : 196 (0x0000c4)
+field_ids_size      : 1
+field_ids_off       : 268 (0x00010c)
+method_ids_size     : 4
+method_ids_off      : 276 (0x000114)
+class_defs_size     : 1
+class_defs_off      : 308 (0x000134)
+data_size           : 572
+data_off            : 340 (0x000154)
+
+Class #0 header:
+class_idx           : 6
+access_flags        : 1 (0x0001)
+superclass_idx      : 2
+interfaces_off      : 0 (0x000000)
+source_file_idx     : 8
+annotations_off     : 0 (0x000000)
+class_data_off      : 735 (0x0002df)
+static_fields_size  : 0
+instance_fields_size: 0
+direct_methods_size : 2
+virtual_methods_size: 0
+
+Class #0            -
+  Class descriptor  : 'Ltest/TryCatch;'
+  Access flags      : 0x0001 (PUBLIC)
+  Superclass        : 'Ljava/lang/Object;'
+  Interfaces        -
+  Static fields     -
+  Instance fields   -
+  Direct methods    -
+    #0              : (in Ltest/TryCatch;)
+      name          : '<init>'
+      type          : '()V'
+      access        : 0x10001 (PUBLIC CONSTRUCTOR)
+      code          -
+      registers     : 1
+      ins           : 1
+      outs          : 1
+      insns size    : 4 16-bit code units
+000154:                                        |[000154] test.TryCatch.<init>:()V
+000164: 7010 0100 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@0001
+00016a: 0e00                                   |0003: return-void
+      catches       : (none)
+      positions     : 
+        0x0000 line=10
+      locals        : 
+        0x0000 - 0x0004 reg=0 this Ltest/TryCatch; 
+
+    #1              : (in Ltest/TryCatch;)
+      name          : 'main'
+      type          : '([Ljava/lang/String;)V'
+      access        : 0x0089 (PUBLIC STATIC VARARGS)
+      code          -
+      registers     : 4
+      ins           : 1
+      outs          : 2
+      insns size    : 28 16-bit code units
+00016c:                                        |[00016c] test.TryCatch.main:([Ljava/lang/String;)V
+00017c: 6201 0000                              |0000: sget-object v1, Ljava/lang/System;.out:Ljava/io/PrintStream; // field@0000
+000180: 1a02 0c00                              |0002: const-string v2, "a" // string@000c
+000184: 6e20 0000 2100                         |0004: invoke-virtual {v1, v2}, Ljava/io/PrintStream;.println:(Ljava/lang/String;)V // method@0000
+00018a: 0e00                                   |0007: return-void
+00018c: 0d01                                   |0008: move-exception v1
+00018e: 0710                                   |0009: move-object v0, v1
+000190: 6201 0000                              |000a: sget-object v1, Ljava/lang/System;.out:Ljava/io/PrintStream; // field@0000
+000194: 1a02 0e00                              |000c: const-string v2, "b" // string@000e
+000198: 6e20 0000 2100                         |000e: invoke-virtual {v1, v2}, Ljava/io/PrintStream;.println:(Ljava/lang/String;)V // method@0000
+00019e: 28f6                                   |0011: goto 0007 // -000a
+0001a0: 0d01                                   |0012: move-exception v1
+0001a2: 0710                                   |0013: move-object v0, v1
+0001a4: 6201 0000                              |0014: sget-object v1, Ljava/lang/System;.out:Ljava/io/PrintStream; // field@0000
+0001a8: 1a02 0f00                              |0016: const-string v2, "c" // string@000f
+0001ac: 6e20 0000 2100                         |0018: invoke-virtual {v1, v2}, Ljava/io/PrintStream;.println:(Ljava/lang/String;)V // method@0000
+0001b2: 28ec                                   |001b: goto 0007 // -0014
+      catches       : 1
+        0x0000 - 0x0007
+          Ljava/lang/Exception; -> 0x0008
+          Ljava/lang/Throwable; -> 0x0012
+      positions     : 
+        0x0000 line=13
+        0x0007 line=19
+        0x0008 line=14
+        0x000a line=15
+        0x0012 line=16
+        0x0014 line=17
+      locals        : 
+        0x000a - 0x0012 reg=0 e Ljava/lang/Exception; 
+        0x0014 - 0x001c reg=0 e Ljava/lang/Throwable; 
+        0x0000 - 0x001c reg=3 args [Ljava/lang/String; 
+
+  Virtual methods   -
+  source_file_idx   : 8 (TryCatch.java)
+

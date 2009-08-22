@@ -3,6 +3,8 @@
  */
 package pxb.android.dex2jar;
 
+import static pxb.android.dex2jar.ClassNameAdapter.x;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -117,12 +119,6 @@ public class DexFile {
 	int data_size;
 	int data_off;
 
-	public static class Member {
-		String owner;
-		String name;
-		String type;
-	}
-
 	/**
 	 * 一个String id为4字节
 	 * 
@@ -198,13 +194,14 @@ public class DexFile {
 		return m;
 	}
 
-	private void accept(DataIn in, ClassVisitor cv) {
+	private void accept(DataIn in, ClassVisitorFactory cf) {
 		int class_idx = in.readIntx();
-		cv = new ClassNameAdapter(cv);
-
 		String className = this.getTypeItem(class_idx);
-		log.debug("class_idx:{} '{}'", class_idx, className);
-
+		// log.debug("class_idx:{} '{}'", class_idx, className);
+		ClassVisitor cv = cf.create(x(className));
+		if (cv == null)
+			return;
+		cv = new ClassNameAdapter(cv);
 		int access_flags = in.readIntx();
 		log.debug("access_flags:{} (0x{})", access_flags, Integer.toHexString(access_flags));
 
@@ -329,6 +326,7 @@ public class DexFile {
 				}
 				in.pop();
 			}
+
 		}
 
 		int class_data_off = in.readIntx();
@@ -427,69 +425,35 @@ public class DexFile {
 		{
 			int lastIndex = 0;
 			for (int i = 0; i < direct_methods; i++) {
-				int diff = in.readUnsignedLeb128();
-				int method_id = lastIndex + diff;
-				lastIndex = method_id;
-				Method method = getMethod(method_id);
-				log.debug("method:[{}] {}", new Object[] { method_id, method });
-
-				int method_access_flags = in.readUnsignedLeb128();
-				log.debug("method_access_flags:{} (0x{})", method_access_flags, Integer.toHexString(method_access_flags));
-
-				int code_off = in.readUnsignedLeb128();
-				log.debug("code_off:{} (0x{})", code_off, Integer.toHexString(code_off));
-
-				// //////////////////////////////////////////////////////////////
-				MethodVisitor mv = visitMethod(cv, method_id, method_access_flags, method, methodAnnos, parameterAnnos);
-				if (mv != null) {
-					if (code_off != 0) {
-						in.pushMove(code_off);
-						mv.visitCode();
-						boolean isStatic = !method.getName().equals("<init>");
-						new Code(this, in).accept(new DexMethodVisitor(mv, method, isStatic));
-						in.pop();
-					}
-					mv.visitEnd();
-				}
-				// //////////////////////////////////////////////////////////////
-				log.debug("=====");
+				lastIndex = visitMethod(lastIndex, in, cv, methodAnnos, parameterAnnos);
 			}
 		}
 		{
 			int lastIndex = 0;
 			for (int i = 0; i < virtual_methods; i++) {
-				int diff = in.readUnsignedLeb128();
-				int method_id = lastIndex + diff;
-				lastIndex = method_id;
-				Method method = getMethod(method_id);
-				log.info("method:[{}] {}", new Object[] { method_id, method });
-
-				int method_access_flags = in.readUnsignedLeb128();
-				log.debug("method_access_flags:{} (0x{})", method_access_flags, Integer.toHexString(method_access_flags));
-
-				int code_off = in.readUnsignedLeb128();
-				log.debug("code_off:{} (0x{})", code_off, Integer.toHexString(code_off));
-
-				// //////////////////////////////////////////////////////////////
-				MethodVisitor mv = visitMethod(cv, method_id, method_access_flags, method, methodAnnos, parameterAnnos);
-				if (mv != null) {
-					if (code_off != 0) {
-						in.pushMove(code_off);
-						mv.visitCode();
-						new Code(this, in).accept(new DexMethodVisitor(mv, method, false));
-						in.pop();
-					}
-					mv.visitEnd();
-				}
-				// //////////////////////////////////////////////////////////////
-
-				log.debug("=====");
+				lastIndex = visitMethod(lastIndex, in, cv, methodAnnos, parameterAnnos);
 			}
 		}
 		in.pop();
+		cv.visitEnd();
 	}
 
-	static MethodVisitor visitMethod(ClassVisitor cv, int method_id, int method_access_flags, Method method, Map<Integer, Anno[]> methodAnnos, Map<Integer, Anno[][]> parameterAnnos) {
+	int visitMethod(int lastIndex, DataIn in, ClassVisitor cv, Map<Integer, Anno[]> methodAnnos, Map<Integer, Anno[][]> parameterAnnos) {
+		int diff = in.readUnsignedLeb128();
+		int method_id = lastIndex + diff;
+		lastIndex = method_id;
+		Method method = getMethod(method_id);
+		log.info("method:[{}] {}", new Object[] { method_id, method });
+
+		int method_access_flags = in.readUnsignedLeb128();
+		// log.debug("method_access_flags:{} (0x{})",
+		// method_access_flags,
+		// Integer.toHexString(method_access_flags));
+
+		int code_off = in.readUnsignedLeb128();
+		// log.debug("code_off:{} (0x{})", code_off,
+		// Integer.toHexString(code_off));
+
 		// Find exceptions
 		String[] exceptions = findExceptions(methodAnnos.get(method_id));
 		// TODO signature
@@ -516,7 +480,16 @@ public class DexFile {
 				}
 			}
 		}
-		return mv;
+		if (mv != null) {
+			if (code_off != 0) {
+				in.pushMove(code_off);
+				mv.visitCode();
+				new Code(this, in).accept(new DexMethodVisitor(mv, method, method_access_flags));
+				in.pop();
+			}
+			mv.visitEnd();
+		}
+		return method_id;
 	}
 
 	static String[] findExceptions(Anno[] annos) {
@@ -543,25 +516,21 @@ public class DexFile {
 	public void accept(ClassVisitorFactory factory) {
 		DataIn in = input;
 		for (int cid = 0; cid < class_defs_size; cid++) {
-
-			log.debug("=======Start Of Class [{}]========", cid);
 			int idxOffset = this.class_defs_off + cid * 32;
 			// log.debug("class_idx_offset:0x{}",
 			// Integer.toHexString(idxOffset));
 
 			in.pushMove(idxOffset);
 			try {
-				ClassVisitor cv = factory.create();
-				this.accept(in, cv);
-				cv.visitEnd();
+				this.accept(in, factory);
 			} catch (RuntimeException e) {
 				log.error("Fail on class {} cause: [{}]", cid, e);
+				e.printStackTrace();
 			} catch (Exception e) {
 				log.error("Fail on class {} cause: [{}]", cid, e);
+				e.printStackTrace();
 			}
 			in.pop();
-			log.debug("=======End Of Class [{}]========", cid);
-
 		}
 		log.debug("Finish.");
 	}

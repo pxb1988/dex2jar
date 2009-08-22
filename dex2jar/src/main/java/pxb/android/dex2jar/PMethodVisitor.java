@@ -17,11 +17,29 @@ import org.objectweb.asm.Type;
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
+@SuppressWarnings("serial")
 public class PMethodVisitor extends MethodAdapter implements Opcodes {
 
 	private Map<Label, Type> handlers = new HashMap<Label, Type>();
-	private Type[] local = new Type[100];
-	private Stack<Type> stack = new Stack<Type>();
+	private Map<Integer, Type> _local = new HashMap<Integer, Type>();
+	private Stack<Type> stack = new Stack<Type>() {
+
+		@Override
+		public Type push(Type item) {
+			if (this.size() + 1 > maxStack) {
+				maxStack = this.size() + 1;
+			}
+			return super.push(item);
+		}
+	};
+	int maxLocalId = 0;
+	int maxStack = 0;
+
+	public void putLocal(int id, Type t) {
+		if (id > maxLocalId)
+			maxLocalId = id;
+		_local.put(id, t);
+	}
 
 	public PMethodVisitor(MethodVisitor mv) {
 		super(mv);
@@ -45,12 +63,12 @@ public class PMethodVisitor extends MethodAdapter implements Opcodes {
 		Type args[] = Type.getArgumentTypes(des);
 		if (isStatic) {
 			for (int i = 0; i < args.length; i++) {
-				local[i] = (args[i]);
+				putLocal(i, (args[i]));
 			}
 		} else {
-			local[0] = owner;
+			putLocal(0, owner);
 			for (int i = 1; i <= args.length; i++) {
-				local[i] = (args[i - 1]);
+				putLocal(i, (args[i - 1]));
 			}
 		}
 	}
@@ -61,8 +79,8 @@ public class PMethodVisitor extends MethodAdapter implements Opcodes {
 		}
 	}
 
-	public Type getFromLocal(int i) {
-		return local[i];
+	public Type getLocal(int i) {
+		return _local.get(i);
 	}
 
 	/**
@@ -71,7 +89,7 @@ public class PMethodVisitor extends MethodAdapter implements Opcodes {
 	 * @param i
 	 * @return
 	 */
-	public Type getFromStack(int i) {
+	public Type getStack(int i) {
 		return stack.get(stack.size() - i);
 	}
 
@@ -404,6 +422,16 @@ public class PMethodVisitor extends MethodAdapter implements Opcodes {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.objectweb.asm.MethodAdapter#visitMaxs(int, int)
+	 */
+	@Override
+	public void visitMaxs(int maxStack, int maxLocals) {
+		super.visitMaxs(this.maxStack, this.maxLocalId + 1);
+	}
+
 	public void visitVarInsn(int opcode, int var) {
 		super.visitVarInsn(opcode, var);
 		switch (opcode) {
@@ -412,7 +440,7 @@ public class PMethodVisitor extends MethodAdapter implements Opcodes {
 		case FLOAD:
 		case DLOAD:
 		case ALOAD:
-			stack.push(local[var]);
+			stack.push(getLocal(var));
 			break;
 		case ISTORE:
 		case LSTORE:
@@ -421,7 +449,7 @@ public class PMethodVisitor extends MethodAdapter implements Opcodes {
 		case ASTORE:
 			Type p = stack.pop();
 			// if (local[var] == null)
-			local[var] = p;
+			putLocal(var, p);
 			break;
 		case RET:
 		}

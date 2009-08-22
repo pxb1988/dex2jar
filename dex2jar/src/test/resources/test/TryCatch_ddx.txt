@@ -1,0 +1,235 @@
+00000000 :	64 65 78 0A 
+		30 33 35 00 
+		magic: dex\n035\0
+00000008 :	08 7F 48 2B 
+		checksum
+0000000C :	93 5B 23 33 
+		46 2E DB 04 
+		BA 77 48 5A 
+		04 BA 9A 3B 
+		57 BE 5D 62 
+		signature
+00000020 :	90 03 00 00 
+		file size: 0x00000390
+00000024 :	70 00 00 00 
+		header size: 0x00000070
+00000028 :	78 56 34 12 
+		00 00 00 00 
+		link size: 0x00000000
+00000030 :	00 00 00 00 
+		link offset: 0x00000000
+00000034 :	F0 02 00 00 
+		map offset: 0x000002F0
+00000038 :	15 00 00 00 
+		string ids size: 0x00000015
+0000003C :	70 00 00 00 
+		string ids offset: 0x00000070
+00000040 :	09 00 00 00 
+		type ids size: 0x00000009
+00000044 :	C4 00 00 00 
+		type ids offset: 0x000000C4
+00000048 :	03 00 00 00 
+		proto ids size: 0x00000003
+0000004C :	E8 00 00 00 
+		proto ids offset: 0x000000E8
+00000050 :	01 00 00 00 
+		field ids size: 0x00000001
+00000054 :	0C 01 00 00 
+		field ids offset: 0x0000010C
+00000058 :	04 00 00 00 
+		method ids size: 0x00000004
+0000005C :	14 01 00 00 
+		method ids offset: 0x00000114
+00000060 :	01 00 00 00 
+		class defs size: 0x00000001
+00000064 :	34 01 00 00 
+		class defs offset: 0x00000134
+00000068 :	3C 02 00 00 
+		data size: 0x0000023C
+0000006C :	54 01 00 00 
+		data offset: 0x00000154
+00000070 :	D2 01 00 00 
+		string[0]: at 0x000001D2
+00000074 :	DA 01 00 00 
+		string[1]: at 0x000001DA
+00000078 :	F1 01 00 00 
+		string[2]: at 0x000001F1
+0000007C :	08 02 00 00 
+		string[3]: at 0x00000208
+00000080 :	1C 02 00 00 
+		string[4]: at 0x0000021C
+00000084 :	30 02 00 00 
+		string[5]: at 0x00000230
+00000088 :	44 02 00 00 
+		string[6]: at 0x00000244
+0000008C :	5B 02 00 00 
+		string[7]: at 0x0000025B
+00000090 :	6C 02 00 00 
+		string[8]: at 0x0000026C
+00000094 :	7B 02 00 00 
+		string[9]: at 0x0000027B
+00000098 :	7E 02 00 00 
+		string[10]: at 0x0000027E
+0000009C :	82 02 00 00 
+		string[11]: at 0x00000282
+000000A0 :	97 02 00 00 
+		string[12]: at 0x00000297
+000000A4 :	9A 02 00 00 
+		string[13]: at 0x0000029A
+000000A8 :	A0 02 00 00 
+		string[14]: at 0x000002A0
+000000AC :	A3 02 00 00 
+		string[15]: at 0x000002A3
+000000B0 :	A6 02 00 00 
+		string[16]: at 0x000002A6
+000000B4 :	A9 02 00 00 
+		string[17]: at 0x000002A9
+000000B8 :	AF 02 00 00 
+		string[18]: at 0x000002AF
+000000BC :	B4 02 00 00 
+		string[19]: at 0x000002B4
+000000C0 :	BD 02 00 00 
+		string[20]: at 0x000002BD
+// string[0]: <init>
+// string[1]: Ljava/io/PrintStream;
+// string[2]: Ljava/lang/Exception;
+// string[3]: Ljava/lang/Object;
+// string[4]: Ljava/lang/String;
+// string[5]: Ljava/lang/System;
+// string[6]: Ljava/lang/Throwable;
+// string[7]: Ltest/TryCatch;
+// string[8]: TryCatch.java
+// string[9]: V
+// string[10]: VL
+// string[11]: [Ljava/lang/String;
+// string[12]: a
+// string[13]: args
+// string[14]: b
+// string[15]: c
+// string[16]: e
+// string[17]: main
+// string[18]: out
+// string[19]: println
+// string[20]: this
+000000C4 :	01 00 00 00 
+		type[0] index: 00000001 (Ljava/io/PrintStream;)
+000000C8 :	02 00 00 00 
+		type[1] index: 00000002 (Ljava/lang/Exception;)
+000000CC :	03 00 00 00 
+		type[2] index: 00000003 (Ljava/lang/Object;)
+000000D0 :	04 00 00 00 
+		type[3] index: 00000004 (Ljava/lang/String;)
+000000D4 :	05 00 00 00 
+		type[4] index: 00000005 (Ljava/lang/System;)
+000000D8 :	06 00 00 00 
+		type[5] index: 00000006 (Ljava/lang/Throwable;)
+000000DC :	07 00 00 00 
+		type[6] index: 00000007 (Ltest/TryCatch;)
+000000E0 :	09 00 00 00 
+		type[7] index: 00000009 (V)
+000000E4 :	0B 00 00 00 
+		type[8] index: 0000000B ([Ljava/lang/String;)
+000000E8 :	09 00 00 00 
+		07 00 00 00 
+		00 00 00 00 
+		proto[0]: short signature: V; return type: V; parameter block offset: 00000000
+000000F4 :	0A 00 00 00 
+		07 00 00 00 
+		C4 01 00 00 
+		proto[1]: short signature: VL; return type: V; parameter block offset: 000001C4
+00000100 :	0A 00 00 00 
+		07 00 00 00 
+		CC 01 00 00 
+		proto[2]: short signature: VL; return type: V; parameter block offset: 000001CC
+// proto[0]: V proto(  )
+// proto[1]: V proto( Ljava/lang/String; )
+// proto[2]: V proto( [Ljava/lang/String; )
+0000010C :	04 00 00 00 
+		12 00 00 00 
+		field[0]: java/lang/System.out Ljava/io/PrintStream;
+00000114 :	00 00 01 00 
+		13 00 00 00 
+		method[0]: java/io/PrintStream/println (println(Ljava/lang/String;)V)
+0000011C :	02 00 00 00 
+		00 00 00 00 
+		method[1]: java/lang/Object/<init> (<init>()V)
+00000124 :	06 00 00 00 
+		00 00 00 00 
+		method[2]: test/TryCatch/<init> (<init>()V)
+0000012C :	06 00 02 00 
+		11 00 00 00 
+		method[3]: test/TryCatch/main (main([Ljava/lang/String;)V)
+00000134 :	06 00 00 00 
+		01 00 00 00 
+		02 00 00 00 
+		00 00 00 00 
+		08 00 00 00 
+		00 00 00 00 
+		DF 02 00 00 
+		00 00 00 00 
+		public test/TryCatch
+// public  class test/TryCatch:
+// super: java/lang/Object
+// source: TryCatch.java
+000002DF :	00 static fields size: 0
+000002E0 :	00 instance fields size: 0
+000002E1 :	02 direct methods size: 2
+000002E2 :	00 virtual methods size: 0
+000002E3 :	02 81 80 04 
+		D4 02 // direct method[0]: <init>()V
+000002E9 :	01 89 01 EC 
+		02 // direct method[1]: main([Ljava/lang/String;)V
+--------------------------------------
+Class: test/TryCatch
+****************************
+Method: public <init>()V
+00000154 :	01 00 registers size: 1
+00000156 :	01 00 input arguments: 1
+00000158 :	01 00 output arguments: 1
+0000015A :	00 00 try block size: 0
+0000015C :	C3 02 00 00 
+		debug info offset: 0x2c3
+00000160 :	04 00 00 00 
+		instruction block size: 4
+method block: 0x164-0x16c
+next block starts at: 0x16c
+000002C3 :	0A Starting line: 10
+000002C4 :	00 Parameter number: 0
+000002C5 :	07 DBG_SET_PROLOGUE_END
+000002C6 :	0E Line register: 10; address register: 0x0
+000002C7 :	00 DBG_END_SEQUENCE
+****************************
+Method: public static main([Ljava/lang/String;)V
+0000016C :	04 00 registers size: 4
+0000016E :	01 00 input arguments: 1
+00000170 :	02 00 output arguments: 2
+00000172 :	01 00 try block size: 1
+00000174 :	C8 02 00 00 
+		debug info offset: 0x2c8
+00000178 :	1C 00 00 00 
+		instruction block size: 28
+method block: 0x17c-0x1b4
+next block starts at: 0x1b4
+000001B4 :	00 00 00 00 
+		07 00 start offset: 0x17c; end offset: 0x18a
+000001BA :	01 00 catch offset: 1
+000001BC :	01 02 Handler #0; offset: 1
+000001BE :	01 08 Exception: java/lang/Exception; offset: 18c
+000001C0 :	05 12 Exception: java/lang/Throwable; offset: 1a0
+000002C8 :	0D Starting line: 13
+000002C9 :	01 Parameter number: 1
+000002CA :	0E reg#-1 : args
+000002CB :	07 DBG_SET_PROLOGUE_END
+000002CC :	0E Line register: 13; address register: 0x0
+000002CD :	7D Line register: 19; address register: 0x7
+000002CE :	02 7B DBG_ADVANCE_LINE: by -5 lines (new line counter: 14)
+000002D0 :	1D Line register: 14; address register: 0x8
+000002D1 :	2D Line register: 15; address register: 0xa
+000002D2 :	03 00 11 02 
+		DBG_START_LOCAL: v0; name: e; type: Ljava/lang/Exception;; address: 0xa
+000002D6 :	87 Line register: 16; address register: 0x12
+000002D7 :	05 00 DBG_END_LOCAL: v0 (0xa - 0x12)
+000002D9 :	2D Line register: 17; address register: 0x14
+000002DA :	03 00 11 06 
+		DBG_START_LOCAL: v0; name: e; type: Ljava/lang/Throwable;; address: 0x14
+000002DE :	00 DBG_END_SEQUENCE
