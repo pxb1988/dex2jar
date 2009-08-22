@@ -528,22 +528,24 @@ public class DexFile {
 
 	public void accept(ClassVisitorFactory factory) {
 		DataIn in = input;
-		for (int cid = 0; cid <
-		//
-		class_defs_size;
-		// 10;
-		//
-		cid++) {
+		for (int cid = 0; cid < class_defs_size; cid++) {
+
 			log.debug("=======Start Of Class [{}]========", cid);
 			int idxOffset = this.class_defs_off + cid * 32;
 			// log.debug("class_idx_offset:0x{}",
 			// Integer.toHexString(idxOffset));
-			ClassVisitor cv = factory.create();
+
 			in.pushMove(idxOffset);
-			this.accept(in, cv);
-			cv.visitEnd();
+			try {
+				ClassVisitor cv = factory.create();
+				this.accept(in, cv);
+				cv.visitEnd();
+			} catch (Exception e) {
+				log.error("Fail on class {} cause: [{}]", cid, e);
+			}
 			in.pop();
 			log.debug("=======End Of Class [{}]========", cid);
+
 		}
 		log.debug("Finish.");
 	}
