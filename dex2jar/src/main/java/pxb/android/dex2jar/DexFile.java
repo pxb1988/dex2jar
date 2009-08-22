@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.Anno.Item;
-import pxb.util.Hex;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
@@ -44,8 +43,9 @@ public class DexFile {
 		log.debug("checksum:0x{}", Integer.toHexString(checksum));
 		// signiture
 		// in.skipBytes(20);
-		byte[] signature = in.readBytes(20);
-		log.debug("signature:0x{}", Hex.from(signature).encode().toString());
+//		byte[] signature =
+			in.readBytes(20);
+//		log.debug("signature:0x{}", Hex.from(signature).encode().toString());
 		int fileSize = in.readIntx();
 		log.debug("fileSize:{}", fileSize);
 		int headSize = in.readIntx();
