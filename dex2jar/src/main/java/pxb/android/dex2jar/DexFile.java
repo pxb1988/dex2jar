@@ -40,7 +40,7 @@ public class DexFile {
 		log.debug("version:'{}'", new String(version));
 		// 0x 00 ?
 		in.readByte();
-		// 0x A3 14 18 FB
+
 		int checksum = in.readIntx();
 		log.debug("checksum:0x{}", Integer.toHexString(checksum));
 		// signiture

@@ -36,9 +36,9 @@ public class Main {
 				zos.setComment("Create by dex2jar version:" + Version.version);
 				new DexFile(data).accept(new ClassVisitorFactory() {
 					public ClassVisitor create(final String name) {
-						if (!name.equals("javax/servlet/GenericServlet")) {
-							return null;
-						}
+//						if (!name.equals("javax/servlet/GenericServlet")) {
+//							return null;
+//						}
 						return new ClassWriter(0) {
 							/*
 							 * (non-Javadoc)

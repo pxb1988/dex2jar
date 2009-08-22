@@ -111,7 +111,6 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 */
 	int detectStoreOpcode() {
 		return pmv.getStack(1).getOpcode(ISTORE);
-
 	}
 
 	void visitTryCatchBlock(Label start, Label end, Label handler, String type) {

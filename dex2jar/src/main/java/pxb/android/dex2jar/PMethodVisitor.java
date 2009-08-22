@@ -12,6 +12,8 @@ import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
@@ -73,10 +75,15 @@ public class PMethodVisitor extends MethodAdapter implements Opcodes {
 		}
 	}
 
-	private void e(Type stack, Type need) {
-		if (stack == null || !stack.equals(need)) {
-			System.out.println("Type: " + stack + " != " + need);
+	private static final Logger log = LoggerFactory.getLogger(PMethodVisitor.class);
+
+	private void e(Type actual, Type expect) {
+		if (expect != null && expect.equals(actual)) {
+			//
+		} else {
+			log.warn("Expect :{} but :{}", expect, actual);
 		}
+
 	}
 
 	public Type getLocal(int i) {
@@ -376,12 +383,12 @@ public class PMethodVisitor extends MethodAdapter implements Opcodes {
 		Type args[] = Type.getArgumentTypes(desc);
 		for (int i = args.length - 1; i >= 0; i--) {
 			Type t = (Type) stack.pop();
-			e(t, args[i]);
+			e(args[i], t);
 		}
 		if (opcode != Opcodes.INVOKESTATIC) {
 			Type o = Type.getObjectType(owner);
 			Type p = (Type) stack.pop();
-			e(o, p);
+			e(p, o);
 		}
 
 		Type ret = Type.getReturnType(desc);
