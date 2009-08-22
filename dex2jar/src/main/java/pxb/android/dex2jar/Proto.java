@@ -1,7 +1,7 @@
 /**
  * 
  */
-package pxb.android;
+package pxb.android.dex2jar;
 
 import java.util.ArrayList;
 import java.util.List;

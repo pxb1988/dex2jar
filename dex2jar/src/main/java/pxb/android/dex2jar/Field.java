@@ -1,29 +1,24 @@
 /**
  * 
  */
-package pxb.android;
+package pxb.android.dex2jar;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
-public class Method {
+public class Field {
 	public String toString() {
 		return this.getOwner() + "." + this.getName() + this.getType();
 	}
 
-	DexFile dex;
-	int type_idx;
-
-	public Method(DexFile dex, DataIn in) {
+	public Field(DexFile dex, DataIn in) {
 		int owner_idx = in.readShortx();
-		type_idx = in.readShortx();
+		int type_idx = in.readShortx();
 		int name_idx = in.readIntx();
-
 		owner = dex.getTypeItem(owner_idx);
-		// type = dex.getProto(type_idx);
+		type = dex.getTypeItem(type_idx);
 		name = dex.getStringItem(name_idx);
-		this.dex = dex;
 	}
 
 	/**
@@ -36,10 +31,7 @@ public class Method {
 	/**
 	 * @return the type
 	 */
-	public Proto getType() {
-		if (type == null) {
-			type = dex.getProto(type_idx);
-		}
+	public String getType() {
 		return type;
 	}
 
@@ -51,6 +43,6 @@ public class Method {
 	}
 
 	private String owner;
-	private Proto type;
+	private String type;
 	private String name;
 }

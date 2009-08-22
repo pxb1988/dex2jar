@@ -1,7 +1,7 @@
 /**
  * 
  */
-package pxb.android;
+package pxb.android.dex2jar;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]

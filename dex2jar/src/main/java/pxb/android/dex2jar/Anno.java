@@ -1,7 +1,7 @@
 /**
  * 
  */
-package pxb.android;
+package pxb.android.dex2jar;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;

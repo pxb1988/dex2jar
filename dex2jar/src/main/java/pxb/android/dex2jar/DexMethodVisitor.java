@@ -1,7 +1,7 @@
 /**
  * 
  */
-package pxb.android;
+package pxb.android.dex2jar;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
