@@ -38,13 +38,15 @@ public class Constant {
 			return null;// null
 		case 28: {
 			int size = in.readByte();
-			String[] array = new String[size];
+			Object[] array = new Object[size];
 			for (int i = 0; i < size; i++) {
-				in.readByte();
-				int idx = in.readByte();
-				array[i] = dex.getStringItem(idx);
+				array[i] = ReadConstant(dex, in);
 			}
 			return array;
+		}
+		case 24: {
+			int type_id = (int) x3(in, b);
+			return dex.getTypeItem(type_id);
 		}
 		default:
 			throw new RuntimeException("Not support yet.");

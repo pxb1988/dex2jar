@@ -16,6 +16,7 @@ import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pxb.android.Anno.Item;
 import pxb.util.Hex;
 
 /**
@@ -439,8 +440,29 @@ public class DexFile {
 
 				// //////////////////////////////////////////////////////////////
 				// TODO signature,exception
-				MethodVisitor mv = cv.visitMethod(method_access_flags, method.getName(), method.getType().getDesc(), null, null);
+				String[] exceptions = null;
+				{// Find exceptions
+					Anno[] fannos = methodAnnos.get(method_id);
+					if (fannos != null) {
+						for (Anno anno : fannos) {
+							if (anno.getType().equals("Ldalvik/annotation/Throws;")) {
+								Item[] items = anno.getItems();
+								for (Item it : items) {
+									if (it.getName().equals("value")) {
+										Object[] value = (Object[]) it.getValue();
+										exceptions = new String[value.length];
+										for (int j = 0; j < value.length; j++) {
+											exceptions[j] = value[j].toString();
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				MethodVisitor mv = cv.visitMethod(method_access_flags, method.getName(), method.getType().getDesc(), null, exceptions);
 				if (mv != null) {
+					mv = new FilterAnnotationAdapter(mv);
 					{
 						Anno[] fannos = methodAnnos.get(method_id);
 						if (fannos != null) {
@@ -489,8 +511,30 @@ public class DexFile {
 
 				// //////////////////////////////////////////////////////////////
 				// TODO signature,exception
-				MethodVisitor mv = cv.visitMethod(method_access_flags, method.getName(), method.getType().getDesc(), null, null);
+
+				String[] exceptions = null;
+				{// Find exceptions
+					Anno[] fannos = methodAnnos.get(method_id);
+					if (fannos != null) {
+						for (Anno anno : fannos) {
+							if (anno.getType().equals("Ldalvik/annotation/Throws;")) {
+								Item[] items = anno.getItems();
+								for (Item it : items) {
+									if (it.getName().equals("value")) {
+										Object[] value = (Object[]) it.getValue();
+										exceptions = new String[value.length];
+										for (int j = 0; j < value.length; j++) {
+											exceptions[j] = value[j].toString();
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				MethodVisitor mv = cv.visitMethod(method_access_flags, method.getName(), method.getType().getDesc(), null, exceptions);
 				if (mv != null) {
+					mv = new FilterAnnotationAdapter(mv);
 					{
 						Anno[] fannos = methodAnnos.get(method_id);
 						if (fannos != null) {

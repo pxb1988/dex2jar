@@ -20,7 +20,24 @@ public class Anno {
 		private Object value;
 
 		public String toString() {
-			return getName() + "=" + getValue();
+			Object value = this.getValue();
+			StringBuilder sb = new StringBuilder(this.getName()).append('=');
+			if (value.getClass().isArray()) {
+				Object[] array = (Object[]) value;
+				if (array.length > 0) {
+					if (array.length > 1)
+						sb.append('{');
+					sb.append(array[0]);
+					for (int j = 1; j < array.length; j++) {
+						sb.append(',').append(array[j]);
+					}
+					if (array.length > 1)
+						sb.append('}');
+				}
+			} else {
+				sb.append(value);
+			}
+			return sb.toString();
 		}
 
 		/**
@@ -46,11 +63,13 @@ public class Anno {
 	private static final Logger log = LoggerFactory.getLogger(Anno.class);
 
 	private void accept(AnnotationVisitor av) {
+		if (av == null)
+			return;
 		for (Item it : this.getItems()) {
 			if (it.getValue() != null) {
 				Object value = it.getValue();
 				if (value.getClass().isArray()) {
-					log.error("NoSupport Arry Value In Annotation {} {}", this, value);
+					log.error("NoSupport Arry Value In Annotation {}", this);
 					// TODO
 					// AnnotationVisitor arrayVisitor =
 					// av.visitArray(it.getName());
@@ -110,10 +129,10 @@ public class Anno {
 		if (items != null && items.length > 0) {
 			sb.append('(');
 			Item item = items[0];
-			sb.append(item.getName()).append('=').append(item.getValue());
+			sb.append(item);
 			for (int i = 1; i < items.length; i++) {
 				item = items[i];
-				sb.append(',').append(item.getName()).append('=').append(item.getValue());
+				sb.append(',').append(item);
 			}
 			sb.append(')');
 		}

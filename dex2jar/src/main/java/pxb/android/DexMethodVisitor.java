@@ -21,7 +21,7 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 */
 	public DexMethodVisitor(MethodVisitor mv) {
 		super();
-		this.mv = new MethodNameAdapter(mv);
+		this.mv = mv;
 	}
 
 	void visitEnd() {
