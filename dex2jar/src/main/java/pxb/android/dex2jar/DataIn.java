@@ -35,4 +35,9 @@ public interface DataIn {
 	 * 
 	 */
 	public int readByte();
+
+	/**
+	 * @param i
+	 */
+	public void skip(int bytes);
 }

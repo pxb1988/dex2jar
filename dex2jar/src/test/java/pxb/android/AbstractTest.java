@@ -16,6 +16,9 @@ import org.junit.Test;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
+import pxb.android.dex2jar.ClassVisitorFactory;
+import pxb.android.dex2jar.DexFile;
+
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * 

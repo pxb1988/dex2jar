@@ -13,18 +13,26 @@ import org.objectweb.asm.Type;
  * 
  */
 public class DexMethodVisitor implements Opcodes, DexOpcodes {
-	MethodVisitor mv;
-	int map[];
+	private PMethodVisitor pmv;
+	private MethodVisitor mv;
+	private Method method;
+	private int map[];
+	private boolean isStatic;
 
 	/**
 	 * @param mv
 	 */
-	public DexMethodVisitor(MethodVisitor mv) {
+	public DexMethodVisitor(MethodVisitor mv, Method method, boolean isStatic) {
 		super();
-		this.mv = mv;
+		this.method = method;
+		this.isStatic = isStatic;
+		pmv = new PMethodVisitor(mv);
+		pmv.visit(Type.getType(method.getOwner()), method.getType().getDesc(), isStatic);
+		this.mv = new MethodNameAdapter(pmv);
 	}
 
 	void visitEnd() {
+		mv.visitEnd();
 	}
 
 	/**
@@ -59,15 +67,17 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 * @param reg_size
 	 * @param ins_size
 	 */
-	void visit(boolean isStatic, int reg_size, int parameterSize) {
+	void visit(int reg_size) {
+		int parameterSize = method.getType().getParameterTypes().length;
 		if (isStatic) {
 			map = RegisterMapGenerator(reg_size, reg_size - parameterSize);
 		} else {
 			map = RegisterMapGenerator(reg_size, reg_size - parameterSize - 1);
 		}
+
 	}
 
-	int detectLoadOpcode(String type) {
+	private int detectLoadOpcode(String type) {
 		return Type.getType(type).getOpcode(ILOAD);
 	}
 
@@ -78,7 +88,8 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 * @return
 	 */
 	int detectLoadOpcode(int reg) {
-		return 0;
+		Type type = pmv.getFromLocal(map[reg]);
+		return type.getOpcode(ILOAD);
 	}
 
 	/**
@@ -87,8 +98,13 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 *            没有转换
 	 * @return
 	 */
-	int detectStoreOpcode(int reg) {
-		return 0;
+	int detectStoreOpcode() {
+		return pmv.getFromStack(1).getOpcode(ISTORE);
+
+	}
+
+	void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+		mv.visitTryCatchBlock(start, end, handler, type);
 	}
 
 	int detectStoreOpcode(String type) {
@@ -153,7 +169,7 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 		case OP_NEW_INSTANCE:// new-instance
 		{
 			mv.visitTypeInsn(NEW, type);
-			mv.visitIntInsn(ASTORE, map[reg]);
+			mv.visitVarInsn(ASTORE, map[reg]);
 		}
 			break;
 		case OP_CONST_CLASS:// const-class
@@ -194,7 +210,7 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 		switch (opcode) {
 		case OP_MOVE_RESULT_OBJECT:// move-result-object
 		case OP_MOVE_EXCEPTION: {
-			mv.visitVarInsn(ASTORE, map[reg]);
+			this.store(reg);
 		}
 			break;
 		case OP_THROW:// throw
@@ -224,7 +240,7 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	}
 
 	private void store(int reg) {
-		mv.visitVarInsn(this.detectStoreOpcode(reg), map[reg]);
+		mv.visitVarInsn(this.detectStoreOpcode(), map[reg]);
 	}
 
 	void visitJumpInsn(int opcode, Label label, int reg) {

@@ -12,8 +12,6 @@ import org.objectweb.asm.Label;
 public class Code implements DexOpcodes {
 	DexFile dexFile;
 	DataIn in;
-	Method method;
-	boolean isStatic;
 
 	/**
 	 * @param dexFile
@@ -21,11 +19,9 @@ public class Code implements DexOpcodes {
 	 * @param method
 	 * @param isStatic
 	 */
-	public Code(DexFile dexFile, DataIn in, Method method, boolean isStatic) {
+	public Code(DexFile dexFile, DataIn in) {
 		this.dexFile = dexFile;
 		this.in = in;
-		this.method = method;
-		this.isStatic = isStatic;
 	}
 
 	private static int[] buildMethodRegister(int size, int value) {
@@ -47,19 +43,33 @@ public class Code implements DexOpcodes {
 		in.readShortx();
 		// int outs_size =
 		in.readShortx();
-		mv.visit(isStatic, registers_size, method.getType().getParameterTypes().length);
-		// int tries_size =
-		in.readShortx();
-		// int debug_off =
-		in.readIntx();
+		mv.visit(registers_size);
+		int tries_size = in.readShortx();
+		int debug_off = in.readIntx();
 		int insns_size = in.readIntx();
 		Label labels[] = new Label[insns_size];
 		for (int i = 0; i < insns_size; i++) {
 			labels[i] = new Label();
 		}
+		{// try catch
+			in.push();
+			in.skip(insns_size * 2);
+			for (int i = 0; i < tries_size; i++) {
+				int start = in.readIntx();
+				int offset = in.readShortx();
+				// TODO
+				in.readShortx();
+				in.readShortx();
+				int type_id = in.readByte();
+				int handler = in.readByte();
+				String type = dexFile.getTypeItem(type_id);
+				mv.visitTryCatchBlock(labels[start], labels[offset], labels[handler], type);
+			}
+			in.pop();
+		}
 		for (int i = 0; i < insns_size;) {
-			Label label = labels[i];
-			mv.visitLabel(label);
+			mv.visitLabel(labels[i]);
+
 			int opcode = in.readByte() & 0xff;
 			switch (opcode) {
 			case DexOpcodes.OP_INVOKE_VIRTUAL:// invoke-virtual

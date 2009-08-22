@@ -9,7 +9,7 @@ package pxb.android.dex2jar;
  */
 public class Field {
 	public String toString() {
-		return this.getOwner() + "." + this.getName() + this.getType();
+		return this.getOwner() + "." + this.getName() + " " + this.getType();
 	}
 
 	public Field(DexFile dex, DataIn in) {

@@ -13,11 +13,6 @@
 			<version>1.5.6</version>
 		</dependency>
 		<dependency>
-			<groupId>pxb.util</groupId>
-			<artifactId>util-core</artifactId>
-			<version>1.0.1</version>
-		</dependency>
-		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.5</version>

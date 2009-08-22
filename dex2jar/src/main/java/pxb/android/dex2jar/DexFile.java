@@ -43,9 +43,9 @@ public class DexFile {
 		log.debug("checksum:0x{}", Integer.toHexString(checksum));
 		// signiture
 		// in.skipBytes(20);
-//		byte[] signature =
-			in.readBytes(20);
-//		log.debug("signature:0x{}", Hex.from(signature).encode().toString());
+		// byte[] signature =
+		in.readBytes(20);
+		// log.debug("signature:0x{}", Hex.from(signature).encode().toString());
 		int fileSize = in.readIntx();
 		log.debug("fileSize:{}", fileSize);
 		int headSize = in.readIntx();
@@ -201,6 +201,7 @@ public class DexFile {
 	private void accept(DataIn in, ClassVisitor cv) {
 		int class_idx = in.readIntx();
 		cv = new ClassNameAdapter(cv);
+
 		String className = this.getTypeItem(class_idx);
 		log.debug("class_idx:{} '{}'", class_idx, className);
 
@@ -381,7 +382,7 @@ public class DexFile {
 				int field_access_flags = in.readUnsignedLeb128();
 
 				// //////////////////////////////////////////////////////////////
-				// TODO signature, value
+				// TODO signature
 				Object fvalue = null;
 				if (constant != null && i < constant.length) {
 					fvalue = constant[i];
@@ -439,53 +440,13 @@ public class DexFile {
 				log.debug("code_off:{} (0x{})", code_off, Integer.toHexString(code_off));
 
 				// //////////////////////////////////////////////////////////////
-				// TODO signature,exception
-				String[] exceptions = null;
-				{// Find exceptions
-					Anno[] fannos = methodAnnos.get(method_id);
-					if (fannos != null) {
-						for (Anno anno : fannos) {
-							if (anno.getType().equals("Ldalvik/annotation/Throws;")) {
-								Item[] items = anno.getItems();
-								for (Item it : items) {
-									if (it.getName().equals("value")) {
-										Object[] value = (Object[]) it.getValue();
-										exceptions = new String[value.length];
-										for (int j = 0; j < value.length; j++) {
-											exceptions[j] = value[j].toString();
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-				MethodVisitor mv = cv.visitMethod(method_access_flags, method.getName(), method.getType().getDesc(), null, exceptions);
+				MethodVisitor mv = visitMethod(cv, method_id, method_access_flags, method, methodAnnos, parameterAnnos);
 				if (mv != null) {
-					mv = new FilterAnnotationAdapter(mv);
-					{
-						Anno[] fannos = methodAnnos.get(method_id);
-						if (fannos != null) {
-							for (Anno anno : fannos) {
-								anno.accept(mv);
-							}
-						}
-					}
-					{
-						Anno[][] fannoss = parameterAnnos.get(method_id);
-						if (fannoss != null) {
-							for (int j = 0; j < fannoss.length; j++) {
-								Anno[] fannos = fannoss[j];
-								for (Anno anno : fannos) {
-									anno.accept(j, mv);
-								}
-							}
-						}
-					}
 					if (code_off != 0) {
 						in.pushMove(code_off);
 						mv.visitCode();
-						new Code(this, in, method, true).accept(new DexMethodVisitor(mv));
+						boolean isStatic = !method.getName().equals("<init>");
+						new Code(this, in).accept(new DexMethodVisitor(mv, method, isStatic));
 						in.pop();
 					}
 					mv.visitEnd();
@@ -501,7 +462,7 @@ public class DexFile {
 				int method_id = lastIndex + diff;
 				lastIndex = method_id;
 				Method method = getMethod(method_id);
-				log.debug("method:[{}] {}", new Object[] { method_id, method });
+				log.info("method:[{}] {}", new Object[] { method_id, method });
 
 				int method_access_flags = in.readUnsignedLeb128();
 				log.debug("method_access_flags:{} (0x{})", method_access_flags, Integer.toHexString(method_access_flags));
@@ -510,54 +471,12 @@ public class DexFile {
 				log.debug("code_off:{} (0x{})", code_off, Integer.toHexString(code_off));
 
 				// //////////////////////////////////////////////////////////////
-				// TODO signature,exception
-
-				String[] exceptions = null;
-				{// Find exceptions
-					Anno[] fannos = methodAnnos.get(method_id);
-					if (fannos != null) {
-						for (Anno anno : fannos) {
-							if (anno.getType().equals("Ldalvik/annotation/Throws;")) {
-								Item[] items = anno.getItems();
-								for (Item it : items) {
-									if (it.getName().equals("value")) {
-										Object[] value = (Object[]) it.getValue();
-										exceptions = new String[value.length];
-										for (int j = 0; j < value.length; j++) {
-											exceptions[j] = value[j].toString();
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-				MethodVisitor mv = cv.visitMethod(method_access_flags, method.getName(), method.getType().getDesc(), null, exceptions);
+				MethodVisitor mv = visitMethod(cv, method_id, method_access_flags, method, methodAnnos, parameterAnnos);
 				if (mv != null) {
-					mv = new FilterAnnotationAdapter(mv);
-					{
-						Anno[] fannos = methodAnnos.get(method_id);
-						if (fannos != null) {
-							for (Anno anno : fannos) {
-								anno.accept(mv);
-							}
-						}
-					}
-					{
-						Anno[][] fannoss = parameterAnnos.get(method_id);
-						if (fannoss != null) {
-							for (int j = 0; j < fannoss.length; j++) {
-								Anno[] fannos = fannoss[j];
-								for (Anno anno : fannos) {
-									anno.accept(j, mv);
-								}
-							}
-						}
-					}
 					if (code_off != 0) {
 						in.pushMove(code_off);
 						mv.visitCode();
-						new Code(this, in, method, false).accept(new DexMethodVisitor(mv));
+						new Code(this, in).accept(new DexMethodVisitor(mv, method, false));
 						in.pop();
 					}
 					mv.visitEnd();
@@ -568,6 +487,57 @@ public class DexFile {
 			}
 		}
 		in.pop();
+	}
+
+	static MethodVisitor visitMethod(ClassVisitor cv, int method_id, int method_access_flags, Method method, Map<Integer, Anno[]> methodAnnos, Map<Integer, Anno[][]> parameterAnnos) {
+		// Find exceptions
+		String[] exceptions = findExceptions(methodAnnos.get(method_id));
+		// TODO signature
+		MethodVisitor mv = cv.visitMethod(method_access_flags, method.getName(), method.getType().getDesc(), null, exceptions);
+		if (mv != null) {
+			mv = new FilterAnnotationAdapter(mv);
+			{
+				Anno[] fannos = methodAnnos.get(method_id);
+				if (fannos != null) {
+					for (Anno anno : fannos) {
+						anno.accept(mv);
+					}
+				}
+			}
+			{
+				Anno[][] fannoss = parameterAnnos.get(method_id);
+				if (fannoss != null) {
+					for (int j = 0; j < fannoss.length; j++) {
+						Anno[] fannos = fannoss[j];
+						for (Anno anno : fannos) {
+							anno.accept(j, mv);
+						}
+					}
+				}
+			}
+		}
+		return mv;
+	}
+
+	static String[] findExceptions(Anno[] annos) {
+		if (annos == null || annos.length == 0)
+			return null;
+		String exceptions[] = new String[annos.length];
+		for (Anno anno : annos) {
+			if (anno.getType().equals("Ldalvik/annotation/Throws;")) {
+				Item[] items = anno.getItems();
+				for (Item it : items) {
+					if (it.getName().equals("value")) {
+						Object[] value = (Object[]) it.getValue();
+						exceptions = new String[value.length];
+						for (int j = 0; j < value.length; j++) {
+							exceptions[j] = value[j].toString();
+						}
+					}
+				}
+			}
+		}
+		return exceptions;
 	}
 
 	public void accept(ClassVisitorFactory factory) {
@@ -584,6 +554,8 @@ public class DexFile {
 				ClassVisitor cv = factory.create();
 				this.accept(in, cv);
 				cv.visitEnd();
+			} catch (RuntimeException e) {
+				log.error("Fail on class {} cause: [{}]", cid, e);
 			} catch (Exception e) {
 				log.error("Fail on class {} cause: [{}]", cid, e);
 			}

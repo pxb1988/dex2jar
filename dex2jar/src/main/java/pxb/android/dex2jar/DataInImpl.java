@@ -146,6 +146,13 @@ public class DataInImpl implements DataIn {
 		return in.read() & 0xff;
 	}
 
+	/* (non-Javadoc)
+	 * @see pxb.android.dex2jar.DataIn#skip(int)
+	 */
+	public void skip(int bytes) {
+		 in.skip(bytes);
+	}
+
 	// /*
 	// * (non-Javadoc)
 	// *

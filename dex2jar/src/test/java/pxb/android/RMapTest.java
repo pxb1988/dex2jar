@@ -6,6 +6,8 @@ package pxb.android;
 import org.junit.Assert;
 import org.junit.Test;
 
+import pxb.android.dex2jar.DexMethodVisitor;
+
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * 
