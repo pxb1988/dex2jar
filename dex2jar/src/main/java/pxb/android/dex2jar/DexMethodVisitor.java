@@ -59,7 +59,7 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	public static int[] RegisterMapGenerator(int total, int m) {
 		int[] map = new int[total];
 		int n = total - m;
-		for (int i = n; i < total - n; i++) {
+		for (int i = n; i < m; i++) {
 			map[i] = i;
 		}
 		for (int i = 0; i < n; i++) {
@@ -113,6 +113,16 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 		return pmv.getStack(1).getOpcode(ISTORE);
 	}
 
+	/**
+	 * 
+	 * @param reg
+	 *            没有转换
+	 * @return
+	 */
+	int detectReturnOpcode() {
+		return pmv.getStack(1).getOpcode(IRETURN);
+	}
+
 	void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
 		mv.visitTryCatchBlock(start, end, handler, type);
 	}
@@ -139,7 +149,7 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 		}
 		switch (opcode) {
 		case OP_INVOKE_DIRECT:// invoke-direct
-		{
+		case OP_INVOKE_SUPER: {
 			mv.visitMethodInsn(INVOKESPECIAL, method.getOwner(), method.getName(), method.getType().getDesc());
 		}
 			break;
@@ -154,7 +164,8 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 		}
 			break;
 		default:
-			throw new RuntimeException("Not support yet!");
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+
 		}
 	}
 
@@ -165,7 +176,8 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 		}
 			break;
 		default:
-			throw new RuntimeException("Not support yet!");
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+
 		}
 	}
 
@@ -192,8 +204,15 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 			mv.visitVarInsn(ASTORE, map[reg]);
 		}
 			break;
+		case OP_CHECK_CAST: {
+			this.load(reg);
+			mv.visitTypeInsn(CHECKCAST, type);
+			this.store(reg);
+		}
+			break;
 		default:
-			throw new RuntimeException("Not support yet!");
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+
 		}
 	}
 
@@ -202,16 +221,23 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 * @param string
 	 * @param reg
 	 */
-	public void visitLdcInsn(int opcode, String string, int reg) {
+	public void visitLdcInsn(int opcode, Object value, int reg) {
 		switch (opcode) {
 		case OP_CONST_STRING:// const-string
 		{
-			mv.visitLdcInsn(string);
-			mv.visitVarInsn(ASTORE, map[reg]);
+			mv.visitLdcInsn(value);
+			this.store(reg);
+		}
+			break;
+		case OP_CONST_4:
+		case OP_CONST_16: {
+			mv.visitLdcInsn(value);
+			this.store(reg);
 		}
 			break;
 		default:
-			throw new RuntimeException("Not support yet!");
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+
 		}
 	}
 
@@ -222,6 +248,7 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	public void visitVarInsn(int opcode, int reg) {
 		switch (opcode) {
 		case OP_MOVE_RESULT_OBJECT:// move-result-object
+		case OP_MOVE_RESULT:
 		case OP_MOVE_EXCEPTION: {
 			this.store(reg);
 		}
@@ -232,14 +259,16 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 			mv.visitInsn(ATHROW);
 		}
 			break;
+		case OP_RETURN:
 		case OP_RETURN_OBJECT:// return-object
 		{
-			mv.visitVarInsn(ALOAD, map[reg]);
-			mv.visitInsn(ARETURN);
+			this.load(reg);
+			mv.visitInsn(this.detectReturnOpcode());
 		}
 			break;
 		default:
-			throw new RuntimeException("Not support yet!");
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+
 		}
 	}
 
@@ -257,18 +286,47 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	}
 
 	void visitJumpInsn(int opcode, Label label, int reg) {
+		load(reg);
+
 		switch (opcode) {
 		case OP_IF_NEZ: {
-			load(reg);
 			if (this.detectLoadOpcode(reg) == ALOAD) {
 				mv.visitJumpInsn(IFNONNULL, label);
 			} else {
-				mv.visitJumpInsn(IFNE, label);
+				mv.visitLdcInsn(0);
+				mv.visitJumpInsn(IF_ICMPEQ, label);
 			}
 		}
 			break;
+		case OP_IF_GTZ: {
+			mv.visitLdcInsn(0);
+			mv.visitJumpInsn(IF_ICMPGT, label);
+		}
+			break;
+		case OP_IF_LEZ: {
+			mv.visitLdcInsn(0);
+			mv.visitJumpInsn(IF_ICMPLE, label);
+		}
+			break;
 		default:
-			throw new RuntimeException("Not support yet!");
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+		}
+	}
+
+	void visitJumpInsn(int opcode, Label label, int reg1, int reg2) {
+		this.load(reg1);
+		this.load(reg2);
+		switch (opcode) {
+		case OP_IF_EQ: {
+			mv.visitJumpInsn(IF_ACMPEQ, label);
+		}
+			break;
+		case OP_IF_NE: {
+			mv.visitJumpInsn(IF_ACMPNE, label);
+		}
+			break;
+		default:
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
 		}
 	}
 
@@ -292,7 +350,8 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 		}
 			break;
 		default:
-			throw new RuntimeException("Not support yet!");
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+
 		}
 
 	}
@@ -321,17 +380,85 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 		}
 			break;
 		default:
-			throw new RuntimeException("Not support yet!");
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+
 		}
 	}
 
 	/**
 	 * @param opcode
-	 * @param from
-	 * @param to
+	 * @param fromReg
+	 * @param toReg
 	 */
-	public void visitMoveObject(int opcode, int from, int to) {
+	public void visitMoveInsn(int opcode, int from, int to) {
 		this.load(from);
+		switch (opcode) {
+		case OP_MOVE_OBJECT:
+		case OP_MOVE: {
+			// do nothing
+		}
+			break;
+		case OP_INT_TO_BYTE: {
+			mv.visitInsn(I2B);
+		}
+			break;
+		case OP_INT_TO_SHORT: {
+			mv.visitInsn(I2S);
+		}
+			break;
+		case OP_INT_TO_CHAR: {
+			mv.visitInsn(I2C);
+		}
+			break;
+		case OP_INT_TO_FLOAT: {
+			mv.visitInsn(I2F);
+		}
+			break;
+		case OP_INT_TO_LONG: {
+			mv.visitInsn(I2L);
+		}
+			break;
+		case OP_INT_TO_DOUBLE: {
+			mv.visitInsn(I2D);
+		}
+			break;
+		case OP_LONG_TO_DOUBLE: {
+			mv.visitInsn(L2D);
+		}
+			break;
+		case OP_LONG_TO_FLOAT: {
+			mv.visitInsn(L2F);
+		}
+			break;
+		case OP_LONG_TO_INT: {
+			mv.visitInsn(L2I);
+		}
+			break;
+		case OP_DOUBLE_TO_FLOAT: {
+			mv.visitInsn(D2F);
+		}
+			break;
+		case OP_DOUBLE_TO_INT: {
+			mv.visitInsn(D2I);
+		}
+			break;
+		case OP_DOUBLE_TO_LONG: {
+			mv.visitInsn(D2L);
+		}
+			break;
+		case OP_FLOAT_TO_INT: {
+			mv.visitInsn(F2I);
+		}
+			break;
+		case OP_FLOAT_TO_LONG: {
+			mv.visitInsn(F2L);
+		}
+			break;
+		case OP_FLOAT_TO_DOUBLE: {
+			mv.visitInsn(F2D);
+		}
+			break;
+		}
 		this.store(to);
 	}
 
@@ -341,5 +468,112 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 	 */
 	public void visitGotoInsn(int opcode, Label label) {
 		mv.visitJumpInsn(GOTO, label);
+	}
+
+	/**
+	 * [reg1]=[reg2]+value
+	 * 
+	 * @param opcode
+	 * @param reg1
+	 * @param reg2
+	 * @param value
+	 */
+	public void visitAdd(int opcode, int reg1, int reg2, int value) {
+		switch (opcode) {
+		case OP_ADD_INT_LIT8: {
+			this.load(reg2);
+			mv.visitLdcInsn(value);
+			mv.visitInsn(IADD);
+			this.store(reg1);
+		}
+			break;
+		default:
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+
+		}
+	}
+
+	/**
+	 * @param opcode
+	 * @param arrayReg
+	 * @param indexReg
+	 * @param valueReg
+	 */
+	public void visitArrayInsn(int opcode, int arrayReg, int indexReg, int valueReg) {
+
+		switch (opcode) {
+		case OP_APUT:
+		case OP_APUT_BOOLEAN:
+		case OP_APUT_BYTE:
+		case OP_APUT_CHAR:
+		case OP_APUT_OBJECT:
+		case OP_APUT_SHORT:
+		case OP_APUT_WIDE: {
+			load(arrayReg);
+			load(indexReg);
+			load(valueReg);
+			switch (opcode) {
+			case OP_APUT:
+				mv.visitInsn(IASTORE);
+				break;
+			case OP_APUT_BOOLEAN:
+				mv.visitInsn(BASTORE);
+				break;
+			case OP_APUT_BYTE:
+				mv.visitInsn(BASTORE);
+				break;
+			case OP_APUT_CHAR:
+				mv.visitInsn(CASTORE);
+				break;
+			case OP_APUT_OBJECT:
+				mv.visitInsn(AASTORE);
+				break;
+			case OP_APUT_SHORT:
+				mv.visitInsn(SASTORE);
+				break;
+			case OP_APUT_WIDE:
+				mv.visitInsn(AASTORE);
+				break;
+			}
+		}
+			break;
+		case OP_AGET:
+		case OP_AGET_BOOLEAN:
+		case OP_AGET_BYTE:
+		case OP_AGET_CHAR:
+		case OP_AGET_OBJECT:
+		case OP_AGET_SHORT:
+		case OP_AGET_WIDE: {
+			load(arrayReg);
+			load(indexReg);
+			switch (opcode) {
+			case OP_AGET:
+				mv.visitInsn(IALOAD);
+				break;
+			case OP_AGET_BOOLEAN:
+				mv.visitInsn(BALOAD);
+				break;
+			case OP_AGET_BYTE:
+				mv.visitInsn(BALOAD);
+				break;
+			case OP_AGET_CHAR:
+				mv.visitInsn(CALOAD);
+				break;
+			case OP_AGET_OBJECT:
+				mv.visitInsn(AALOAD);
+				break;
+			case OP_AGET_SHORT:
+				mv.visitInsn(SALOAD);
+				break;
+			case OP_AGET_WIDE:
+				mv.visitInsn(AALOAD);
+				break;
+			}
+			store(valueReg);
+		}
+			break;
+		default:
+			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
+		}
 	}
 }

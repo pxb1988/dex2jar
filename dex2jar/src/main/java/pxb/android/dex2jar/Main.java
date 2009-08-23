@@ -34,11 +34,11 @@ public class Main {
 				byte[] data = FileUtils.readFileToByteArray(dex);
 				final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(jar));
 				zos.setComment("Create by dex2jar version:" + Version.version);
-				new DexFile(data).accept(new ClassVisitorFactory() {
+				new DexFile(data, true).accept(new ClassVisitorFactory() {
 					public ClassVisitor create(final String name) {
-//						if (!name.equals("javax/servlet/GenericServlet")) {
-//							return null;
-//						}
+//						 if (!name.equals("javax/servlet/ServletInputStream")) {
+//						 return null;
+//						 }
 						return new ClassWriter(0) {
 							/*
 							 * (non-Javadoc)

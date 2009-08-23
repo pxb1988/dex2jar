@@ -4,6 +4,8 @@
 package pxb.android.dex2jar;
 
 import org.objectweb.asm.Label;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
@@ -32,6 +34,21 @@ public class Code implements DexOpcodes {
 		}
 		return a;
 	}
+
+	public String dumpOpcode(int opcode) {
+		try {
+			java.lang.reflect.Field fs[] = DexOpcodes.class.getDeclaredFields();
+			for (java.lang.reflect.Field f : fs) {
+				int value = f.getInt(null);
+				if (value == opcode)
+					return f.getName();
+			}
+		} catch (Exception e) {
+		}
+		return "UNKNOW";
+	}
+
+	private static final Logger log = LoggerFactory.getLogger(Code.class);
 
 	/**
 	 * @param mv
@@ -75,11 +92,12 @@ public class Code implements DexOpcodes {
 			mv.visitLabel(labels[i]);
 
 			int opcode = in.readByte() & 0xff;
+			log.debug("Opcode:0x{}={}", Integer.toHexString(opcode), dumpOpcode(opcode));
 			switch (opcode) {
 			case DexOpcodes.OP_INVOKE_VIRTUAL:// invoke-virtual
 			case DexOpcodes.OP_INVOKE_DIRECT:// invoke-direct
 			case DexOpcodes.OP_INVOKE_INTERFACE:// invoke-interface
-			{
+			case DexOpcodes.OP_INVOKE_SUPER: {
 				int size = (in.readByte() >> 4) & 0xf;
 				int method_idx = in.readShortx();
 				int params = in.readShortx();
@@ -95,8 +113,8 @@ public class Code implements DexOpcodes {
 			}
 				break;
 			case DexOpcodes.OP_NEW_INSTANCE: // new-instance
-			case DexOpcodes.OP_CONST_CLASS:// const-class
-			{
+			case DexOpcodes.OP_CONST_CLASS:// const-class\
+			case DexOpcodes.OP_CHECK_CAST: {
 				int reg = in.readByte();
 				int type_idx = in.readShortx();
 				String type = dexFile.getTypeItem(type_idx);
@@ -114,13 +132,32 @@ public class Code implements DexOpcodes {
 			}
 				break;
 			case OP_MOVE_RESULT_OBJECT:// move-result-object
+			case OP_MOVE_RESULT:
 			case OP_MOVE_EXCEPTION:
 			case OP_THROW:// throw
 			case OP_RETURN_OBJECT:// return-object
-			{
+			case OP_RETURN: {
 				int reg = in.readByte();
 				mv.visitVarInsn(opcode, reg);
 				i += 1;
+			}
+				break;
+			case OP_CONST_4: {
+				int b = in.readByte();
+				int reg = b & 0xf;
+				int value = (b >> 4) & 0xf;
+				if (0 != (value & 0x8)) {
+					value = -((Integer.reverse(value) & 0x7) + 1);
+				}
+				mv.visitLdcInsn(opcode, value, reg);
+				i += 1;
+			}
+				break;
+			case OP_CONST_16: {
+				int to = in.readByte();
+				int value = (short) in.readShortx();
+				mv.visitLdcInsn(opcode, value, to);
+				i += 2;
 			}
 				break;
 			case OP_SPUT_OBJECT:// sput-object
@@ -133,12 +170,7 @@ public class Code implements DexOpcodes {
 				i += 2;
 			}
 				break;
-			case OP_IF_EQ:
-			case OP_IF_NE:
-			case OP_IF_LT:
-			case OP_IF_GE:
-			case OP_IF_GT:
-			case OP_IF_LE:
+
 			case OP_IF_EQZ:
 			case OP_IF_NEZ:
 			case OP_IF_LTZ:
@@ -149,6 +181,20 @@ public class Code implements DexOpcodes {
 				int reg = in.readByte();
 				int offset = in.readShortx();
 				mv.visitJumpInsn(opcode, labels[i + ((short) offset)], reg);
+				i += 2;
+			}
+				break;
+			case OP_IF_EQ:
+			case OP_IF_NE:
+			case OP_IF_LT:
+			case OP_IF_GE:
+			case OP_IF_GT:
+			case OP_IF_LE: {
+				int b = in.readByte();
+				int reg1 = b & 0xf;
+				int reg2 = (b >> 4) & 0xf;
+				int offset = in.readShortx();
+				mv.visitJumpInsn(opcode, labels[i + ((short) offset)], reg1, reg2);
 				i += 2;
 			}
 				break;
@@ -166,11 +212,29 @@ public class Code implements DexOpcodes {
 				i += 2;
 			}
 				break;
-			case OP_MOVE_OBJECT: {
+			case OP_MOVE_OBJECT:
+			case OP_MOVE:
+			case OP_INT_TO_BYTE:
+			case OP_INT_TO_CHAR:
+			case OP_INT_TO_DOUBLE:
+			case OP_INT_TO_FLOAT:
+			case OP_INT_TO_LONG:
+			case OP_INT_TO_SHORT:
+			case OP_LONG_TO_DOUBLE:
+			case OP_LONG_TO_FLOAT:
+			case OP_LONG_TO_INT:
+			case OP_DOUBLE_TO_FLOAT:
+			case OP_DOUBLE_TO_INT:
+			case OP_DOUBLE_TO_LONG:
+			case OP_FLOAT_TO_INT:
+			case OP_FLOAT_TO_DOUBLE:
+			case OP_FLOAT_TO_LONG:
+				//
+			{
 				int b = in.readByte();
 				int to = b & 0xf;
 				int from = (b >> 4) & 0xf;
-				mv.visitMoveObject(opcode, from, to);
+				mv.visitMoveInsn(opcode, from, to);
 				i += 1;
 			}
 				break;
@@ -180,8 +244,39 @@ public class Code implements DexOpcodes {
 				i += 1;
 			}
 				break;
+			case OP_ADD_INT_LIT8: {
+				int reg1 = in.readByte();
+				int reg2 = in.readByte();
+				int value = (byte) in.readByte();
+				mv.visitAdd(opcode, reg1, reg2, value);
+				i += 2;
+			}
+				break;
+			case OP_APUT:
+			case OP_APUT_BOOLEAN:
+			case OP_APUT_BYTE:
+			case OP_APUT_CHAR:
+			case OP_APUT_OBJECT:
+			case OP_APUT_SHORT:
+			case OP_APUT_WIDE:
+			case OP_AGET:
+			case OP_AGET_BOOLEAN:
+			case OP_AGET_BYTE:
+			case OP_AGET_CHAR:
+			case OP_AGET_OBJECT:
+			case OP_AGET_SHORT:
+			case OP_AGET_WIDE:
+				//
+			{
+				int value = in.readByte();
+				int array = in.readByte();
+				int index = in.readByte();
+				mv.visitArrayInsn(opcode, array, index, value);
+				i += 2;
+			}
+				break;
 			default:
-				throw new RuntimeException("Not support yet!");
+				throw new RuntimeException("Not support Opcode:[0x" + Integer.toHexString(opcode) + "] yet!");
 			}
 		}
 		mv.visitEnd();
