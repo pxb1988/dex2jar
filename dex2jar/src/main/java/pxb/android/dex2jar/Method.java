@@ -12,17 +12,17 @@ public class Method {
 		return this.getOwner() + "." + this.getName() + this.getType();
 	}
 
-	DexFile dex;
+	Dex dex;
 	int type_idx;
 
-	public Method(DexFile dex, DataIn in) {
+	public Method(Dex dex, DataIn in) {
 		int owner_idx = in.readShortx();
 		type_idx = in.readShortx();
 		int name_idx = in.readIntx();
 
-		owner = dex.getTypeItem(owner_idx);
+		owner = dex.getType(owner_idx);
 		// type = dex.getProto(type_idx);
-		name = dex.getStringItem(name_idx);
+		name = dex.getString(name_idx);
 		this.dex = dex;
 	}
 

@@ -14,7 +14,7 @@ public class Constant {
 
 	}
 
-	public static Object ReadConstant(DexFile dex, DataIn in) {
+	public static Object ReadConstant(Dex dex, DataIn in) {
 		int b = in.readByte();
 		int type = b & 0x1f;
 		switch (type) {
@@ -29,7 +29,7 @@ public class Constant {
 		case 3:
 			return new Character((char) x3(in, b));
 		case 23:
-			return dex.getStringItem((int) x3(in, b));
+			return dex.getString((int) x3(in, b));
 		case 16:
 			return Float.intBitsToFloat((int) (xf(in, b) >> 32));
 		case 17:
@@ -46,11 +46,10 @@ public class Constant {
 		}
 		case 24: {
 			int type_id = (int) x3(in, b);
-			return dex.getTypeItem(type_id);
+			return dex.getType(type_id);
 		}
 		default:
 			throw new RuntimeException("Not support yet.");
-
 		}
 	}
 

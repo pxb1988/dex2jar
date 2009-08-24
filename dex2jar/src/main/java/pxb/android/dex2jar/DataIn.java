@@ -3,7 +3,6 @@
  */
 package pxb.android.dex2jar;
 
-
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * 
@@ -11,6 +10,7 @@ package pxb.android.dex2jar;
 public interface DataIn {
 
 	public int readIntx();
+
 
 	public short readShortx();
 

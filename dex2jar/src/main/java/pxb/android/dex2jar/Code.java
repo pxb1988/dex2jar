@@ -82,7 +82,7 @@ public class Code implements DexOpcodes {
 				for (int j = 0; j < size; j++) {
 					int type_id = in.readByte();
 					int handler = in.readByte();
-					String type = dexFile.getTypeItem(type_id);
+					String type = dexFile.getType(type_id);
 					mv.visitTryCatchBlock(labels[start], labels[offset], labels[handler], type);
 				}
 			}
@@ -96,6 +96,7 @@ public class Code implements DexOpcodes {
 			switch (opcode) {
 			case DexOpcodes.OP_INVOKE_VIRTUAL:// invoke-virtual
 			case DexOpcodes.OP_INVOKE_DIRECT:// invoke-direct
+			case DexOpcodes.OP_INVOKE_STATIC:
 			case DexOpcodes.OP_INVOKE_INTERFACE:// invoke-interface
 			case DexOpcodes.OP_INVOKE_SUPER: {
 				int size = (in.readByte() >> 4) & 0xf;
@@ -117,7 +118,7 @@ public class Code implements DexOpcodes {
 			case DexOpcodes.OP_CHECK_CAST: {
 				int reg = in.readByte();
 				int type_idx = in.readShortx();
-				String type = dexFile.getTypeItem(type_idx);
+				String type = dexFile.getType(type_idx);
 				mv.visitTypeInsn(opcode, type, reg);
 				i += 2;
 			}
@@ -126,7 +127,7 @@ public class Code implements DexOpcodes {
 			{
 				int reg = in.readByte();
 				int string_idx = in.readShortx();
-				String string = dexFile.getStringItem(string_idx);
+				String string = dexFile.getString(string_idx);
 				mv.visitLdcInsn(opcode, string, reg);
 				i += 2;
 			}

@@ -24,7 +24,7 @@ import pxb.android.dex2jar.Anno.Item;
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
-public class DexFile {
+public class DexFile implements Dex {
 	private static final Logger log = LoggerFactory.getLogger(DexFile.class);
 	boolean continueOnException;
 
@@ -138,7 +138,7 @@ public class DexFile {
 	 * @return
 	 * @throws IOException
 	 */
-	public String getStringItem(int id) {
+	public String getString(int id) {
 		if (id >= this.string_ids_size)
 			throw new RuntimeException("Id out of bound");
 		DataIn in = input;
@@ -169,7 +169,7 @@ public class DexFile {
 		return proto;
 	}
 
-	public String getTypeItem(int id) {
+	public String getType(int id) {
 		if (id >= this.type_ids_size)
 			throw new RuntimeException("Id out of bound");
 		DataIn in = input;
@@ -177,7 +177,7 @@ public class DexFile {
 		// log.debug("type_idx_offset:0x{}", Integer.toHexString(idxOffset));
 		in.pushMove(idxOffset);
 		int offset = in.readIntx();
-		String desc = this.getStringItem(offset);
+		String desc = this.getString(offset);
 		in.pop();
 		return desc;
 	}
@@ -208,7 +208,7 @@ public class DexFile {
 
 	private void accept(DataIn in, ClassVisitorFactory cf) {
 		int class_idx = in.readIntx();
-		String className = this.getTypeItem(class_idx);
+		String className = this.getType(class_idx);
 		// log.debug("class_idx:{} '{}'", class_idx, className);
 		ClassVisitor cv = cf.create(x(className));
 		if (cv == null)
@@ -219,7 +219,7 @@ public class DexFile {
 			log.debug("access_flags:{} (0x{})", access_flags, Integer.toHexString(access_flags));
 
 			int superclass_idx = in.readIntx();
-			String superClassName = superclass_idx == -1 ? null : this.getTypeItem(superclass_idx);
+			String superClassName = superclass_idx == -1 ? null : this.getType(superclass_idx);
 			log.debug("superclass_idx:{} '{}'", superclass_idx, superClassName);
 
 			// 获取接口
@@ -231,7 +231,7 @@ public class DexFile {
 					in.pushMove(interfaces_off);
 					int size = in.readIntx();
 					for (int i = 0; i < size; i++) {
-						String p = getTypeItem(in.readShortx());
+						String p = getType(in.readShortx());
 						interfaceTypeList.add(p);
 					}
 					in.pop();
@@ -242,7 +242,7 @@ public class DexFile {
 			{
 				int source_file_idx = in.readIntx();
 				if (source_file_idx != -1)
-					sourceFile = this.getStringItem(source_file_idx);
+					sourceFile = this.getString(source_file_idx);
 				log.debug("source_file_idx:{} '{}'", source_file_idx, sourceFile);
 			}
 			// 获取注解
@@ -371,83 +371,84 @@ public class DexFile {
 				classAnnos = null;
 			}
 			// //////////////////////////////////////////////////////////////
+			if (class_data_off != 0) {
+				in.pushMove(class_data_off);
+				int static_fields = in.readByte();
+				log.debug("static_fields:{} (0x{})", static_fields, Integer.toHexString(static_fields));
+				int instance_fields = in.readByte();
+				log.debug("instance_fields:{} (0x{})", instance_fields, Integer.toHexString(instance_fields));
+				int direct_methods = in.readByte();
+				log.debug("direct_methods:{} (0x{})", direct_methods, Integer.toHexString(direct_methods));
+				int virtual_methods = in.readByte();
+				log.debug("virtual_methods:{} (0x{})", virtual_methods, Integer.toHexString(virtual_methods));
+				{
+					int lastIndex = 0;
+					for (int i = 0; i < static_fields; i++) {
+						int diff = in.readUnsignedLeb128();
+						int field_id = lastIndex + diff;
+						lastIndex = field_id;
+						Field field = getField(field_id);
+						log.debug("field:[{}] {}", new Object[] { field_id, field });
 
-			in.pushMove(class_data_off);
-			int static_fields = in.readByte();
-			log.debug("static_fields:{} (0x{})", static_fields, Integer.toHexString(static_fields));
-			int instance_fields = in.readByte();
-			log.debug("instance_fields:{} (0x{})", instance_fields, Integer.toHexString(instance_fields));
-			int direct_methods = in.readByte();
-			log.debug("direct_methods:{} (0x{})", direct_methods, Integer.toHexString(direct_methods));
-			int virtual_methods = in.readByte();
-			log.debug("virtual_methods:{} (0x{})", virtual_methods, Integer.toHexString(virtual_methods));
-			{
-				int lastIndex = 0;
-				for (int i = 0; i < static_fields; i++) {
-					int diff = in.readUnsignedLeb128();
-					int field_id = lastIndex + diff;
-					lastIndex = field_id;
-					Field field = getField(field_id);
-					log.debug("field:[{}] {}", new Object[] { field_id, field });
+						int field_access_flags = in.readUnsignedLeb128();
 
-					int field_access_flags = in.readUnsignedLeb128();
-
-					// //////////////////////////////////////////////////////////////
-					// TODO signature
-					Object fvalue = null;
-					if (constant != null && i < constant.length) {
-						fvalue = constant[i];
-					}
-					FieldVisitor fv = cv.visitField(field_access_flags, field.getName(), field.getType(), null, fvalue);
-					if (fv != null) {
-						Anno[] fannos = fieldAnnos.get(field_id);
-						if (fannos != null) {
-							for (Anno anno : fannos) {
-								anno.accept(fv);
-							}
+						// //////////////////////////////////////////////////////////////
+						// TODO signature
+						Object fvalue = null;
+						if (constant != null && i < constant.length) {
+							fvalue = constant[i];
 						}
-						fv.visitEnd();
-					}
-					// //////////////////////////////////////////////////////////////
-				}
-			}
-			{
-				int lastIndex = 0;
-				for (int i = 0; i < instance_fields; i++) {
-					int diff = in.readUnsignedLeb128();
-					int field_id = lastIndex + diff;
-					lastIndex = field_id;
-					Field field = getField(field_id);
-					log.debug("field:[{}] {}", new Object[] { field_id, field });
-					int field_access_flags = in.readUnsignedLeb128();
-					// //////////////////////////////////////////////////////////////
-					// TODO signature, value
-					FieldVisitor fv = cv.visitField(field_access_flags, field.getName(), field.getType(), null, null);
-					if (fv != null) {
-						Anno[] fannos = fieldAnnos.get(field_id);
-						if (fannos != null) {
-							for (Anno anno : fannos) {
-								anno.accept(fv);
+						FieldVisitor fv = cv.visitField(field_access_flags, field.getName(), field.getType(), null, fvalue);
+						if (fv != null) {
+							Anno[] fannos = fieldAnnos.get(field_id);
+							if (fannos != null) {
+								for (Anno anno : fannos) {
+									anno.accept(fv);
+								}
 							}
+							fv.visitEnd();
 						}
-						fv.visitEnd();
+						// //////////////////////////////////////////////////////////////
 					}
-					// //////////////////////////////////////////////////////////////
 				}
-			}
-			{
-				int lastIndex = 0;
-				for (int i = 0; i < direct_methods; i++) {
-					lastIndex = visitMethod(lastIndex, in, cv, methodAnnos, parameterAnnos);
+				{
+					int lastIndex = 0;
+					for (int i = 0; i < instance_fields; i++) {
+						int diff = in.readUnsignedLeb128();
+						int field_id = lastIndex + diff;
+						lastIndex = field_id;
+						Field field = getField(field_id);
+						log.debug("field:[{}] {}", new Object[] { field_id, field });
+						int field_access_flags = in.readUnsignedLeb128();
+						// //////////////////////////////////////////////////////////////
+						// TODO signature, value
+						FieldVisitor fv = cv.visitField(field_access_flags, field.getName(), field.getType(), null, null);
+						if (fv != null) {
+							Anno[] fannos = fieldAnnos.get(field_id);
+							if (fannos != null) {
+								for (Anno anno : fannos) {
+									anno.accept(fv);
+								}
+							}
+							fv.visitEnd();
+						}
+						// //////////////////////////////////////////////////////////////
+					}
 				}
-			}
-			{
-				int lastIndex = 0;
-				for (int i = 0; i < virtual_methods; i++) {
-					lastIndex = visitMethod(lastIndex, in, cv, methodAnnos, parameterAnnos);
+				{
+					int lastIndex = 0;
+					for (int i = 0; i < direct_methods; i++) {
+						lastIndex = visitMethod(lastIndex, in, cv, methodAnnos, parameterAnnos);
+					}
 				}
+				{
+					int lastIndex = 0;
+					for (int i = 0; i < virtual_methods; i++) {
+						lastIndex = visitMethod(lastIndex, in, cv, methodAnnos, parameterAnnos);
+					}
+				}
+				in.pop();
 			}
-			in.pop();
 			cv.visitEnd();
 		} catch (Exception e) {
 			throw new RuntimeException("Error in class:[" + className + "]", e);

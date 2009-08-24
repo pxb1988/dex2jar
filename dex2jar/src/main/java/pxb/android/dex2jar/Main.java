@@ -36,7 +36,7 @@ public class Main {
 				zos.setComment("Create by dex2jar version:" + Version.version);
 				new DexFile(data, true).accept(new ClassVisitorFactory() {
 					public ClassVisitor create(final String name) {
-//						 if (!name.equals("javax/servlet/ServletInputStream")) {
+//						 if (!name.equals("javax/servlet/SingleThreadModel")) {
 //						 return null;
 //						 }
 						return new ClassWriter(0) {

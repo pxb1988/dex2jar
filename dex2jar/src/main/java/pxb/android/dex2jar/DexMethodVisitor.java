@@ -163,6 +163,10 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 			mv.visitMethodInsn(INVOKEINTERFACE, method.getOwner(), method.getName(), method.getType().getDesc());
 		}
 			break;
+		case OP_INVOKE_STATIC: {
+			mv.visitMethodInsn(INVOKESTATIC, method.getOwner(), method.getName(), method.getType().getDesc());
+		}
+			break;
 		default:
 			throw new RuntimeException("Not support Opcode:[" + Integer.toHexString(opcode) + "] yet!");
 
@@ -318,11 +322,15 @@ public class DexMethodVisitor implements Opcodes, DexOpcodes {
 		this.load(reg2);
 		switch (opcode) {
 		case OP_IF_EQ: {
-			mv.visitJumpInsn(IF_ACMPEQ, label);
+			mv.visitJumpInsn(IFEQ, label);
 		}
 			break;
 		case OP_IF_NE: {
-			mv.visitJumpInsn(IF_ACMPNE, label);
+			mv.visitJumpInsn(IFNE, label);
+		}
+			break;
+		case OP_IF_GE: {
+			mv.visitJumpInsn(IFGE, label);
 		}
 			break;
 		default:

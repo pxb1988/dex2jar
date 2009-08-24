@@ -12,13 +12,13 @@ public class Field {
 		return this.getOwner() + "." + this.getName() + " " + this.getType();
 	}
 
-	public Field(DexFile dex, DataIn in) {
+	public Field(Dex dex, DataIn in) {
 		int owner_idx = in.readShortx();
 		int type_idx = in.readShortx();
 		int name_idx = in.readIntx();
-		owner = dex.getTypeItem(owner_idx);
-		type = dex.getTypeItem(type_idx);
-		name = dex.getStringItem(name_idx);
+		owner = dex.getType(owner_idx);
+		type = dex.getType(type_idx);
+		name = dex.getString(name_idx);
 	}
 
 	/**

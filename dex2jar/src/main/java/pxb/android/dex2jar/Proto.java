@@ -15,20 +15,20 @@ public class Proto {
 		return desc;
 	}
 
-	public Proto(DexFile dex, DataIn in) {
+	public Proto(Dex dex, DataIn in) {
 		// int shorty_idx =
 		in.readIntx();
 		int return_type_idx = in.readIntx();
 		int parameters_off = in.readIntx();
 
-		returnType = dex.getTypeItem(return_type_idx);
+		returnType = dex.getType(return_type_idx);
 		List<String> parameterTypeList = new ArrayList<String>();
 		StringBuilder ps = new StringBuilder("(");
 		if (parameters_off != 0) {
 			in.pushMove(parameters_off);
 			int size = in.readIntx();
 			for (int i = 0; i < size; i++) {
-				String p = dex.getTypeItem(in.readShortx());
+				String p = dex.getType(in.readShortx());
 				parameterTypeList.add(p);
 				ps.append(p);
 			}
