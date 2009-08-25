@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.DataIn;
 import pxb.android.dex2jar.Dex;
+import pxb.android.dex2jar.DexOpcodeDump;
+import pxb.android.dex2jar.DexOpcodeUtil;
 import pxb.android.dex2jar.DexOpcodes;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 import pxb.android.dex2jar.visitors.impl.ToAsmDexOpcodeAdapter;
@@ -19,6 +21,7 @@ import pxb.android.dex2jar.visitors.impl.ToAsmDexOpcodeAdapter;
 public class DexCodeReader implements DexOpcodes {
 	private Dex dex;
 	private DataIn in;
+
 	private static final Logger log = LoggerFactory.getLogger(DexCodeReader.class);
 
 	/**
@@ -67,161 +70,33 @@ public class DexCodeReader implements DexOpcodes {
 		ToAsmDexOpcodeAdapter tadoa = new ToAsmDexOpcodeAdapter(dex, dcv);
 		for (int i = 0; i < insns_size;) {
 			int opcode = in.readByte() & 0xff;
+			log.debug(String.format("%04x", i));
 			dcv.visitLabel(i);
-			switch (opcode) {
-
-			case OP_MOVE_RESULT_OBJECT:
-			case OP_MOVE_EXCEPTION:
-			case OP_MOVE_OBJECT:
-			case OP_MOVE_RESULT:
-			case OP_MOVE:
-			case OP_MOVE_RESULT_WIDE:
-			case OP_GOTO:
-
-			case OP_RETURN_VOID:
-			case OP_RETURN:
-			case OP_RETURN_OBJECT:
-			case OP_RETURN_WIDE:
-			case OP_THROW:
-
-			case OP_CONST_4:
-
-			case OP_ARRAY_LENGTH:
-
-			case OP_INT_TO_BYTE:
-			case OP_INT_TO_CHAR:
-			case OP_INT_TO_DOUBLE:
-			case OP_INT_TO_FLOAT:
-			case OP_INT_TO_LONG:
-			case OP_INT_TO_SHORT:
-			case OP_LONG_TO_DOUBLE:
-			case OP_LONG_TO_FLOAT:
-			case OP_LONG_TO_INT:
-			case OP_DOUBLE_TO_FLOAT:
-			case OP_DOUBLE_TO_INT:
-			case OP_DOUBLE_TO_LONG:
-			case OP_FLOAT_TO_INT:
-			case OP_FLOAT_TO_DOUBLE:
-			case OP_FLOAT_TO_LONG:
-
-			case OP_AND_INT_2ADDR:
-			case OP_ADD_INT_2ADDR:
-			case OP_MUL_DOUBLE_2ADDR:
-			case OP_MUL_LONG_2ADDR:
-			case OP_MUL_INT_2ADDR:
-			case OP_MUL_FLOAT_2ADDR:
-				//
-			{
-				int b = in.readByte();
-				tadoa.visit(opcode, b);
-				i += 1;
+			int size = DexOpcodeUtil.getSize(opcode);
+			switch (size) {
+			case 1: {
+				int a = in.readByte();
+				log.debug(String.format("%04x| %02x%02x           %s", i, opcode, a, DexOpcodeDump.dump(opcode)));
+				tadoa.visit(opcode, a);
 				break;
 			}
-			case OP_NEW_INSTANCE:
-			case OP_NEW_ARRAY:
-			case OP_MOVE_OBJECT_FROM16:
-			case OP_MOVE_FROM16:
-			case OP_CONST_STRING:
-			case OP_CONST_CLASS:
-			case OP_CONST_WIDE_16:
-			case OP_CHECK_CAST:
-			case OP_CONST_16:
-			case OP_ADD_INT_LIT8:
-			case OP_GOTO_16:
-
-			case OP_IF_EQZ:
-			case OP_IF_NEZ:
-			case OP_IF_LTZ:
-			case OP_IF_GEZ:
-			case OP_IF_GTZ:
-			case OP_IF_LEZ:
-			case OP_IF_EQ:
-			case OP_IF_NE:
-			case OP_IF_LT:
-			case OP_IF_GE:
-			case OP_IF_GT:
-			case OP_IF_LE:
-
-			case OP_CMPL_FLOAT:
-			case OP_CMPG_FLOAT:
-			case OP_CMPL_DOUBLE:
-			case OP_CMPG_DOUBLE:
-			case OP_CMP_LONG:
-
-			case OP_AGET:
-			case OP_AGET_WIDE:
-			case OP_AGET_OBJECT:
-			case OP_AGET_BOOLEAN:
-			case OP_AGET_BYTE:
-			case OP_AGET_CHAR:
-			case OP_AGET_SHORT:
-			case OP_APUT:
-			case OP_APUT_WIDE:
-			case OP_APUT_OBJECT:
-			case OP_APUT_BOOLEAN:
-			case OP_APUT_BYTE:
-			case OP_APUT_CHAR:
-			case OP_APUT_SHORT:
-			case OP_IGET:
-			case OP_IGET_WIDE:
-			case OP_IGET_OBJECT:
-			case OP_IGET_BOOLEAN:
-			case OP_IGET_BYTE:
-			case OP_IGET_CHAR:
-			case OP_IGET_SHORT:
-			case OP_IPUT:
-			case OP_IPUT_WIDE:
-			case OP_IPUT_OBJECT:
-			case OP_IPUT_BOOLEAN:
-			case OP_IPUT_BYTE:
-			case OP_IPUT_CHAR:
-			case OP_IPUT_SHORT:
-			case OP_SGET:
-			case OP_SGET_WIDE:
-			case OP_SGET_OBJECT:
-			case OP_SGET_BOOLEAN:
-			case OP_SGET_BYTE:
-			case OP_SGET_CHAR:
-			case OP_SGET_SHORT:
-			case OP_SPUT:
-			case OP_SPUT_WIDE:
-			case OP_SPUT_OBJECT:
-			case OP_SPUT_BOOLEAN:
-			case OP_SPUT_BYTE:
-			case OP_SPUT_CHAR:
-			case OP_SPUT_SHORT:
-
-			case OP_DIV_DOUBLE:
-			case OP_DIV_INT:
-			case OP_DIV_FLOAT:
-			case OP_DIV_LONG:
-
-				//
-			{
-				int b = in.readByte();
-				int c = in.readShortx();
-				tadoa.visit(opcode, b, c);
-				i += 2;
+			case 2: {
+				int a = in.readByte();
+				short b = in.readShortx();
+				log.debug(String.format("%04x| %02x%02x %04x      %s", i, opcode, a, Short.reverseBytes(b), DexOpcodeDump.dump(opcode)));
+				tadoa.visit(opcode, a, b);
 				break;
 			}
-			case OP_INVOKE_VIRTUAL:
-			case OP_INVOKE_DIRECT:
-			case OP_INVOKE_STATIC:
-			case OP_INVOKE_INTERFACE:
-			case OP_INVOKE_SUPER:
-			case OP_CONST:
-				//
-			{
-				int b = in.readByte();
-				int c = in.readShortx();
-				int d = in.readShortx();
-				tadoa.visit(opcode, b, c, d);
-				i += 3;
+			case 3: {
+				int a = in.readByte();
+				short b = in.readShortx();
+				short c = in.readShortx();
+				log.debug(String.format("%04x| %02x%02x %04x %04x %s", i, opcode, a, Short.reverseBytes(b), Short.reverseBytes(c), DexOpcodeDump.dump(opcode)));
+				tadoa.visit(opcode, a, b, c);
 				break;
 			}
 			default:
-				throw new RuntimeException("Not support Opcode :[0x" + Integer.toHexString(opcode) + "]");
-
+				throw new RuntimeException(String.format("Not support Opcode :[0x%02x] @[0x%04x]", opcode, i));
 			}
 		}
 	}

@@ -3,8 +3,15 @@
  */
 package pxb.android;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
+
+import pxb.android.dex2jar.DexOpcodes;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
@@ -12,23 +19,20 @@ import org.objectweb.asm.Opcodes;
  */
 public class OpcodeTest implements Opcodes {
 	@Test
-	public void test() {
-
-		// System.out.println(Integer.toHexString(ACC_PUBLIC));
-		int type = 6;
-		long value = 1;
-		long c = value ^ (value >> 63);
-		int requiredBits = 65 - Long.numberOfLeadingZeros(c);
-
-		int requiredBytes = (requiredBits + 7) >> 3;
-
-		int a = type | (requiredBytes - 1 << 5);
-
-		while (requiredBytes > 0) {
-			int b = (byte) value;
-			value >>= 8;
-			--requiredBytes;
+	public void test() throws IllegalArgumentException, IllegalAccessException, IOException {
+		OutputStream os = new FileOutputStream("target/abc.txt");
+		PrintWriter out = new PrintWriter(os);
+		for (java.lang.reflect.Field f : DexOpcodes.class.getDeclaredFields()) {
+			int opcode = f.getInt(null);
+			out.print("map[");
+			out.print(opcode);
+			out.print("]=\"");
+			out.print(f.getName().substring(3));
+			out.println("\";");
 		}
+		out.flush();
+		out.close();
+		os.flush();
+		os.close();
 	}
-
 }

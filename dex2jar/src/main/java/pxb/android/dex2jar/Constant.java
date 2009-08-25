@@ -48,6 +48,9 @@ public class Constant {
 			int type_id = (int) x3(in, b);
 			return dex.getType(type_id);
 		}
+		case 31: {
+			return new Boolean(((b >> 5) & 0x3) != 0);
+		}
 		default:
 			throw new RuntimeException("Not support yet.");
 		}

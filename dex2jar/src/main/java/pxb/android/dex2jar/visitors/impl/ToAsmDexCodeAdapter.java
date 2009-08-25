@@ -3,6 +3,7 @@
  */
 package pxb.android.dex2jar.visitors.impl;
 
+import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
 /**
@@ -31,6 +32,14 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor {
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitTryCatch(int, int, int, java.lang.String)
 	 */
 	public void visitTryCatch(int start, int offset, int handler, String type) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitMethodInsn(int, pxb.android.dex2jar.Method, int[])
+	 */
+	public void visitMethodInsn(int opcode, Method method, int[] regs) {
 		// TODO Auto-generated method stub
 		
 	}

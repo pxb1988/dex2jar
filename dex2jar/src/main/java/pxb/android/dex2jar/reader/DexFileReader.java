@@ -248,10 +248,10 @@ public class DexFileReader implements Dex {
 
 		if (class_data_off != 0) {
 			in.pushMove(class_data_off);
-			int static_fields = in.readByte();
-			int instance_fields = in.readByte();
-			int direct_methods = in.readByte();
-			int virtual_methods = in.readByte();
+			int static_fields = in.readUnsignedLeb128();
+			int instance_fields = in.readUnsignedLeb128();
+			int direct_methods = in.readUnsignedLeb128();
+			int virtual_methods = in.readUnsignedLeb128();
 			{
 				int lastIndex = 0;
 				{
