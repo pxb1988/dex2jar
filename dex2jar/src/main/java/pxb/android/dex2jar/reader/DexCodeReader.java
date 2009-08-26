@@ -38,25 +38,27 @@ public class DexCodeReader implements DexOpcodes {
 	 */
 	public void accept(DexCodeVisitor dcv) {
 		DataIn in = this.in;
-		int registers_size = in.readShortx();
-		// int ins_size =
-		in.readShortx();
+		ToAsmDexOpcodeAdapter tadoa = new ToAsmDexOpcodeAdapter(dex, dcv);
+		int total_registers_size = in.readShortx();
+		int in_register_size = in.readShortx();
 		// int outs_size =
 		in.readShortx();
-		dcv.visitRegister(registers_size);
+
 		int tries_size = in.readShortx();
 		// int debug_off =
 		in.readIntx();
-		int insns_size = in.readIntx();
+		int instruction_size = in.readIntx();
+		dcv.visit(total_registers_size, in_register_size, instruction_size);
 		{// try catch
 			in.push();
-			in.skip(insns_size * 2);
+			in.skip(instruction_size * 2);
 			for (int i = 0; i < tries_size; i++) {
 				int start = in.readIntx();
 				int offset = in.readShortx();
 				// TODO
-				in.readShortx();
-				in.readByte();
+				int x = in.readShortx();
+				int y = in.readByte();
+				log.debug("Unknow x:{},y:{}", x, y);
 				int size = in.readByte();
 				for (int j = 0; j < size; j++) {
 					int type_id = in.readByte();
@@ -67,10 +69,9 @@ public class DexCodeReader implements DexOpcodes {
 			}
 			in.pop();
 		}
-		ToAsmDexOpcodeAdapter tadoa = new ToAsmDexOpcodeAdapter(dex, dcv);
-		for (int i = 0; i < insns_size;) {
+
+		for (int i = 0; i < instruction_size;) {
 			int opcode = in.readByte() & 0xff;
-			log.debug(String.format("%04x", i));
 			dcv.visitLabel(i);
 			int size = DexOpcodeUtil.getSize(opcode);
 			switch (size) {
@@ -78,6 +79,7 @@ public class DexCodeReader implements DexOpcodes {
 				int a = in.readByte();
 				log.debug(String.format("%04x| %02x%02x           %s", i, opcode, a, DexOpcodeDump.dump(opcode)));
 				tadoa.visit(opcode, a);
+				i += 1;
 				break;
 			}
 			case 2: {
@@ -85,6 +87,7 @@ public class DexCodeReader implements DexOpcodes {
 				short b = in.readShortx();
 				log.debug(String.format("%04x| %02x%02x %04x      %s", i, opcode, a, Short.reverseBytes(b), DexOpcodeDump.dump(opcode)));
 				tadoa.visit(opcode, a, b);
+				i += 2;
 				break;
 			}
 			case 3: {
@@ -93,11 +96,13 @@ public class DexCodeReader implements DexOpcodes {
 				short c = in.readShortx();
 				log.debug(String.format("%04x| %02x%02x %04x %04x %s", i, opcode, a, Short.reverseBytes(b), Short.reverseBytes(c), DexOpcodeDump.dump(opcode)));
 				tadoa.visit(opcode, a, b, c);
+				i += 3;
 				break;
 			}
 			default:
 				throw new RuntimeException(String.format("Not support Opcode :[0x%02x] @[0x%04x]", opcode, i));
 			}
 		}
+		dcv.visitEnd();
 	}
 }

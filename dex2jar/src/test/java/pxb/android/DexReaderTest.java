@@ -31,8 +31,8 @@ public class DexReaderTest {
 		zos.setComment("Create by dex2jar version:" + Version.version);
 		new DexFileReader(new File("target/classes.dex")).accept(new ToAsm(new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-//				if (!name.equals("org/mortbay/jetty/HttpHeaders"))
-//					return null;
+				if (!name.equals("javax/servlet/ServletOutputStream"))
+					return null;
 				return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
 					/*
 					 * (non-Javadoc)

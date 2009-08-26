@@ -151,7 +151,7 @@ public class DexFileReader implements Dex {
 			try {
 				acceptClass(dv);
 			} catch (Exception e) {
-				log.error("Fail on class {} cause: [{}]", cid, e);
+				log.error("Fail on class", e);
 				if (!continueOnException) {
 					throw new RuntimeException(e);
 				} else {

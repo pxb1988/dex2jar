@@ -61,14 +61,14 @@ public class PDescMethodVisitor extends MethodAdapter implements Opcodes {
 		this.handlers.put(handler, Type.getType(type));
 	}
 
-	public void visit(Type owner, String des, boolean isStatic) {
+	public void visit(String owner, String des, boolean isStatic) {
 		Type args[] = Type.getArgumentTypes(des);
 		if (isStatic) {
 			for (int i = 0; i < args.length; i++) {
 				putLocal(i, (args[i]));
 			}
 		} else {
-			putLocal(0, owner);
+			putLocal(0, Type.getType(owner));
 			for (int i = 1; i <= args.length; i++) {
 				putLocal(i, (args[i - 1]));
 			}
@@ -425,7 +425,7 @@ public class PDescMethodVisitor extends MethodAdapter implements Opcodes {
 		case ANEWARRAY:
 			stack.pop();
 			stack.push(Type.getType(type));
-//			stack.push(Type.getObjectType("[L" + type + ";"));
+			// stack.push(Type.getObjectType("[L" + type + ";"));
 			break;
 		}
 	}

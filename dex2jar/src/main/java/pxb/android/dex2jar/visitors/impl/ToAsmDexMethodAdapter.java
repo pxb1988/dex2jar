@@ -9,6 +9,7 @@ import java.util.List;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 import pxb.android.dex2jar.visitors.DexMethodVisitor;
@@ -22,8 +23,6 @@ public class ToAsmDexMethodAdapter implements DexMethodVisitor {
 	final private ClassVisitor cv;
 	private MethodVisitor mv;
 	final private int access_flags;
-	final private String name;
-	final private String desc;
 	final private List<String> exceptions = new ArrayList<String>();
 
 	protected void buildMv() {
@@ -33,15 +32,20 @@ public class ToAsmDexMethodAdapter implements DexMethodVisitor {
 		}
 	}
 
+	String owner;
+	String name;
+	String desc;
+
 	/**
 	 * @param cv
 	 * @param access_flags
 	 * @param name
 	 * @param desc
 	 */
-	public ToAsmDexMethodAdapter(ClassVisitor cv, int access_flags, String name, String desc) {
+	public ToAsmDexMethodAdapter(ClassVisitor cv, int access_flags, String owner, String name, String desc) {
 		this.cv = cv;
 		this.access_flags = access_flags;
+		this.owner = owner;
 		this.name = name;
 		this.desc = desc;
 	}
@@ -64,7 +68,7 @@ public class ToAsmDexMethodAdapter implements DexMethodVisitor {
 	 */
 	public DexCodeVisitor visitCode() {
 		buildMv();
-		return new ToAsmDexCodeAdapter();
+		return new ToAsmDexCodeAdapter(mv, access_flags, this.owner, this.name, this.desc);
 	}
 
 	/*

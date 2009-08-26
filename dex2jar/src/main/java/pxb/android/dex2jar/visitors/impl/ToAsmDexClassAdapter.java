@@ -20,6 +20,7 @@ import pxb.android.dex2jar.visitors.asm.TypeNameAdapter;
  */
 public class ToAsmDexClassAdapter implements DexClassVisitor, Opcodes {
 	protected ClassVisitor cv;
+	String className;
 
 	/**
 	 * @param access_flags
@@ -29,6 +30,7 @@ public class ToAsmDexClassAdapter implements DexClassVisitor, Opcodes {
 	 */
 	public ToAsmDexClassAdapter(ClassVisitor cv, int access_flags, String className, String superClass, String[] interfaceNames) {
 		this.cv = new TypeNameAdapter(cv);
+		this.className = className;
 		cv.visit(V1_5, access_flags, className, null, superClass, interfaceNames);
 	}
 
@@ -76,7 +78,7 @@ public class ToAsmDexClassAdapter implements DexClassVisitor, Opcodes {
 	 * java.lang.String, java.lang.String)
 	 */
 	public DexMethodVisitor visitMethod(int access_flags, String name, String desc) {
-		return new ToAsmDexMethodAdapter(cv, access_flags, name, desc);
+		return new ToAsmDexMethodAdapter(cv, access_flags, this.className, name, desc);
 	}
 
 	/*

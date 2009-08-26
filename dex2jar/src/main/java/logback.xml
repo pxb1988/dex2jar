@@ -3,12 +3,13 @@
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<layout class="ch.qos.logback.classic.PatternLayout">
 			<Pattern>
-			%d{HH:mm:ss.SSS} %-5level %logger{0} - %msg%n
+			<![CDATA[%d{HH:mm:ss.SSS} %-5level %logger{30} - %msg%n]]>
 			</Pattern>
-    </layout>
-  </appender>
-
-  <root level="debug">
-    <appender-ref ref="STDOUT" />
-  </root>
+		</layout>
+	</appender>
+	<logger name="pxb.android.dex2jar.reader.DexFileReader" level="INFO" />
+<!--	<logger name="pxb.android.dex2jar.reader.DexCodeReader" level="INFO" />-->
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+	</root>
 </configuration>
