@@ -31,7 +31,7 @@ public class ToAsmDexClassAdapter implements DexClassVisitor, Opcodes {
 	public ToAsmDexClassAdapter(ClassVisitor cv, int access_flags, String className, String superClass, String[] interfaceNames) {
 		this.cv = new TypeNameAdapter(cv);
 		this.className = className;
-		cv.visit(V1_5, access_flags, className, null, superClass, interfaceNames);
+		this.cv.visit(V1_5, access_flags, className, null, superClass, interfaceNames);
 	}
 
 	/*

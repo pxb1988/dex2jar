@@ -12,6 +12,8 @@ import pxb.android.dex2jar.DexOpcodeDump;
 import pxb.android.dex2jar.DexOpcodes;
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
+import pxb.android.dex2jar.optimize.LdcOptimizeAdapter;
+import pxb.android.dex2jar.optimize.NewOptimizeAdapter;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 import pxb.android.dex2jar.visitors.asm.PDescMethodVisitor;
 
@@ -28,10 +30,12 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 	/**
 	 * @param mv2
 	 */
-	public ToAsmDexCodeAdapter(MethodVisitor mv2, int access_flags, String owner, String name, String desc) {
-		mv = new PDescMethodVisitor(mv2);
+	public ToAsmDexCodeAdapter(MethodVisitor mv, int access_flags, String owner, String name, String desc) {
+		mv = new LdcOptimizeAdapter(mv);// 优化Ldc
+		mv = new NewOptimizeAdapter(mv);// 优化New
+		this.mv = new PDescMethodVisitor(mv);
 		isStatic = 0 != (access_flags & ACC_STATIC);
-		mv.visit(owner, desc, isStatic);
+		this.mv.visit(owner, desc, isStatic);
 		parameters = Type.getArgumentTypes(desc);
 	}
 
@@ -154,6 +158,31 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 	 * pxb.android.dex2jar.Method, int[])
 	 */
 	public void visitMethodInsn(int opcode, Method method, int[] registers) {
+		// ==========
+		// <init>方法特殊处理
+		if (method.getName().equals("<init>")) {
+			int typeReg = registers[0];
+			String type = newInsTypes[typeReg];
+			if (type != null) {
+				mv.visitTypeInsn(NEW, type);
+				mv.visitInsn(DUP);
+				int i = 1;
+				for (String x : method.getType().getParameterTypes()) {
+					this.load(registers[i++]);
+					if ("D".equals(x) || "J".equals(x)) {
+						i++;
+					}
+				}
+				mv.visitMethodInsn(INVOKESPECIAL, method.getOwner(), method.getName(), method.getType().getDesc());
+				this.store(typeReg);
+				newInsTypes[typeReg] = null;
+			} else {
+				loadArgument(method, registers, false);
+				mv.visitMethodInsn(INVOKESPECIAL, method.getOwner(), method.getName(), method.getType().getDesc());
+			}
+			return;
+		}
+		// ==========
 		switch (opcode) {
 		case OP_INVOKE_STATIC: {
 			loadArgument(method, registers, true);
@@ -183,6 +212,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 	}
 
+	String[] newInsTypes;
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -195,6 +226,7 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		{
 			mv.visitTypeInsn(NEW, type);
 			this.store(reg);
+			// newInsTypes[reg] = type;
 		}
 			break;
 		case OP_CONST_CLASS:// const-class
@@ -307,7 +339,12 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 	public void visitFieldInsn(int opcode, Field field, int owner_reg, int value_reg) {
 		switch (opcode) {
 		case OP_IGET:
-		case OP_IGET_OBJECT: {
+		case OP_IGET_OBJECT:
+		case OP_IGET_BOOLEAN:
+		case OP_IGET_BYTE:
+		case OP_IGET_SHORT:
+			//
+		{
 			load(owner_reg);
 			mv.visitFieldInsn(GETFIELD, field.getOwner(), field.getName(), field.getType());
 			store(value_reg);
@@ -315,7 +352,12 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			break;
 
 		case OP_IPUT:
-		case OP_IPUT_OBJECT: {
+		case OP_IPUT_OBJECT:
+		case OP_IPUT_BOOLEAN:
+		case OP_IPUT_BYTE:
+		case OP_IPUT_SHORT:
+			//
+		{
 			this.load(owner_reg);
 			this.load(value_reg);
 			mv.visitFieldInsn(PUTFIELD, field.getOwner(), field.getName(), field.getType());
@@ -375,6 +417,27 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			this.store(reg1);
 		}
 			break;
+		case OP_ADD_LONG_2ADDR: {
+			this.load(reg1);
+			this.load(reg2);
+			mv.visitInsn(LADD);
+			this.store(reg1);
+		}
+			break;
+		case OP_ADD_INT_2ADDR: {
+			this.load(reg1);
+			this.load(reg2);
+			mv.visitInsn(IADD);
+			this.store(reg1);
+		}
+			break;
+		case OP_CMP_LONG: {
+			this.load(reg1);
+			this.load(reg2);
+			mv.visitInsn(LSUB);
+			this.store(value);
+		}
+			break;
 		default:
 			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
 
@@ -421,6 +484,10 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			mv.visitJumpInsn(IFLE, label);
 		}
 			break;
+		case OP_IF_LTZ: {
+			mv.visitJumpInsn(IFLT, label);
+		}
+			break;
 		case OP_GOTO: {
 			mv.visitJumpInsn(GOTO, label);
 		}
@@ -453,6 +520,14 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			mv.visitJumpInsn(IFGE, label);
 		}
 			break;
+		case OP_IF_LE: {
+			mv.visitJumpInsn(IFLE, label);
+		}
+			break;
+		case OP_IF_LT: {
+			mv.visitJumpInsn(IFLT, label);
+		}
+			break;
 		default:
 			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
 		}
@@ -474,6 +549,7 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			break;
 		case OP_CONST_4:
 		case OP_CONST_16:
+		case OP_CONST_WIDE_16:
 		case OP_CONST: {
 			mv.visitLdcInsn(value);
 			this.store(reg);
@@ -559,6 +635,13 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			mv.visitInsn(F2D);
 		}
 			break;
+		case OP_ARRAY_LENGTH: {
+			mv.visitInsn(ARRAYLENGTH);
+		}
+			break;
+		default:
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+
 		}
 		this.store(to);
 	}
@@ -643,25 +726,25 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 		int[] map = new int[total_registers_size];
 		this.map = map;
-		if (total_registers_size == 1)
-			return;
-		int n = total_registers_size - in_register_size;
-		int p = n;
-		int q = 0;
-		if (!isStatic) {
-			map[p++] = q++;
-		}
-		for (Type arg : parameters) {
-			map[p++] = q++;
-			if (Type.LONG_TYPE.equals(arg) || Type.DOUBLE_TYPE.equals(arg)) {
-				map[p++] = -1;
+		if (total_registers_size > 1) {
+			int n = total_registers_size - in_register_size;
+			int p = n;
+			int q = 0;
+			if (!isStatic) {
+				map[p++] = q++;
+			}
+			for (Type arg : parameters) {
+				map[p++] = q++;
+				if (Type.LONG_TYPE.equals(arg) || Type.DOUBLE_TYPE.equals(arg)) {
+					map[p++] = -1;
+				}
+			}
+
+			for (int i = 0; i < n; i++) {
+				map[i] = q++;
 			}
 		}
-
-		for (int i = 0; i < n; i++) {
-			map[i] = q++;
-		}
-
+		newInsTypes = new String[total_registers_size];
 	}
 
 	/*

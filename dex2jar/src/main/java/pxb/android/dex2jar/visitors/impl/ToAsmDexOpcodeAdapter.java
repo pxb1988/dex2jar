@@ -3,9 +3,6 @@
  */
 package pxb.android.dex2jar.visitors.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import pxb.android.dex2jar.Dex;
 import pxb.android.dex2jar.DexOpcodeDump;
 import pxb.android.dex2jar.DexOpcodes;
@@ -94,11 +91,21 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 		}
 			break;
 		case OP_AND_INT_2ADDR:
-		case OP_AND_LONG_2ADDR: {
+		case OP_AND_LONG_2ADDR:
+		case OP_ADD_INT_2ADDR:
+		case OP_ADD_LONG_2ADDR:
+			//
+		{
 
 			int a = arg1 & 0xf;
 			int b = (arg1 >> 4) & 0xf;
 			dcv.visitIntInsn(opcode, a, b, -1);
+		}
+			break;
+		case OP_ARRAY_LENGTH: {
+			int a = arg1 & 0xf;
+			int b = (arg1 >> 4) & 0xf;
+			dcv.visitMoveInsn(opcode, b, a);
 		}
 			break;
 		default:
@@ -125,7 +132,10 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 			dcv.visitLdcInsn(opcode, string, arg1);
 		}
 			break;
-		case OP_CONST_16: {
+		case OP_CONST_16:
+		case OP_CONST_WIDE_16:
+			//
+		{
 			dcv.visitLdcInsn(opcode, arg2, arg1);
 		}
 			break;
@@ -158,9 +168,17 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 		}
 			break;
 		case OP_IGET_OBJECT:
+		case OP_IGET:
+		case OP_IGET_BOOLEAN:
+		case OP_IGET_BYTE:
+		case OP_IGET_SHORT:
 		case OP_IPUT_OBJECT:
+		case OP_IPUT_BOOLEAN:
+		case OP_IPUT_BYTE:
+		case OP_IPUT_SHORT:
 		case OP_IPUT:
-		case OP_IGET://
+
+			//
 		{
 			int value_reg = arg1 & 0xf;
 			int owner_reg = (arg1 >> 4) & 0xf;
@@ -168,6 +186,7 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 			dcv.visitFieldInsn(opcode, field, owner_reg, value_reg);
 		}
 			break;
+
 		case OP_ADD_INT_LIT8: {
 			int reg2 = (arg1 >> 4) & 0xf;
 			int value = (byte) (arg1 & 0xf);
@@ -201,6 +220,12 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 			int dem = (arg1 >> 4) & 0xf;
 			String type = dex.getType(arg2);
 			dcv.visitArrayInsn(opcode, type, a, dem);
+		}
+			break;
+		case OP_CMP_LONG: {
+			int a = (arg2 >> 8) & 0xff;
+			int b = arg2 & 0xff;
+			dcv.visitIntInsn(opcode, arg1, a, b);
 		}
 			break;
 		default:

@@ -27,12 +27,15 @@ import pxb.android.dex2jar.visitors.impl.ToAsm;
 public class DexReaderTest {
 	@Test
 	public void test() throws IOException {
-		final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(new File("target/gen_test.jar")));
-		zos.setComment("Create by dex2jar version:" + Version.version);
+		// final ZipOutputStream zos = new
+		// ZipOutputStream(FileUtils.openOutputStream(new
+		// File("target/gen_test.jar")));
+		// zos.setComment("Create by dex2jar version:" + Version.version);
+		final File base = new File("target/g/");
 		new DexFileReader(new File("target/classes.dex")).accept(new ToAsm(new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-				if (!name.equals("javax/servlet/ServletOutputStream"))
-					return null;
+				// if (!name.equals("javax/servlet/ServletOutputStream"))
+				// return null;
 				return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
 					/*
 					 * (non-Javadoc)
@@ -42,20 +45,34 @@ public class DexReaderTest {
 					@Override
 					public void visitEnd() {
 						super.visitEnd();
+						byte[] data = this.toByteArray();
 						try {
-							zos.putNextEntry(new ZipEntry(name + ".class"));
-							IOUtils.write(this.toByteArray(), zos);
-							zos.closeEntry();
+							// zos.putNextEntry(new ZipEntry(name + ".class"));
+							// IOUtils.write(data, zos);
+							// zos.closeEntry();
+							FileUtils.writeByteArrayToFile(new File(base, name + ".class"), data);
 						} catch (FileNotFoundException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
+						try {
+							Class<?> c = new Load().def(data, name);
+							System.out.println(c);
+						} catch (Throwable t) {
+							t.printStackTrace();
+						}
 					}
 				};
 			}
 		}));
-		zos.finish();
-		zos.close();
+//		zos.finish();
+//		zos.close();
+	}
+
+	static class Load extends ClassLoader {
+		public Class<?> def(byte[] data, String name) {
+			return defineClass(name.replace('/', '.'), data, 0, data.length);
+		}
 	}
 }

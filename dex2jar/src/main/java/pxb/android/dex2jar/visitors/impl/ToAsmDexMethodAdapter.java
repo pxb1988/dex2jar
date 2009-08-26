@@ -9,7 +9,6 @@ import java.util.List;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 import pxb.android.dex2jar.visitors.DexMethodVisitor;
