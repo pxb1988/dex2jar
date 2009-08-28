@@ -43,7 +43,6 @@ public class DexCodeReader implements DexOpcodes {
 		int in_register_size = in.readShortx();
 		// int outs_size =
 		in.readShortx();
-
 		int tries_size = in.readShortx();
 		// int debug_off =
 		in.readIntx();
@@ -55,16 +54,26 @@ public class DexCodeReader implements DexOpcodes {
 			for (int i = 0; i < tries_size; i++) {
 				int start = in.readIntx();
 				int offset = in.readShortx();
-				// TODO
 				int x = in.readShortx();
-				int y = in.readByte();
-				log.debug("Unknow x:{},y:{}", x, y);
-				int size = in.readByte();
+				log.debug("Unknow x:{}", x);
+				int size = (int) in.readUnsignedLeb128();
 				for (int j = 0; j < size; j++) {
-					int type_id = in.readByte();
-					int handler = in.readByte();
-					String type = dex.getType(type_id);
-					dcv.visitTryCatch(start, offset, handler, type);
+					boolean catchAll = false;
+					int listSize = (int) in.readSignedLeb128();
+					if (listSize < 0) {
+						listSize = -listSize + 1;
+						catchAll = true;
+					}
+					for (int k = 0; k < listSize; k++) {
+						int type_id = (int) in.readUnsignedLeb128();
+						int handler = (int) in.readUnsignedLeb128();
+						String type = dex.getType(type_id);
+						dcv.visitTryCatch(start, offset, handler, type);
+					}
+					if (catchAll) {
+						int handler = (int) in.readUnsignedLeb128();
+						dcv.visitTryCatch(start, offset, handler, null);
+					}
 				}
 			}
 			in.pop();
@@ -99,6 +108,18 @@ public class DexCodeReader implements DexOpcodes {
 				i += 3;
 				break;
 			}
+			case -1: {
+				switch (opcode) {
+				case OP_SPARSE_SWITCH: {
+					
+				}
+					break;
+				case OP_PACKED_SWITCH:
+					break;
+				}
+				i += 3;
+			}
+				break;
 			default:
 				throw new RuntimeException(String.format("Not support Opcode :[0x%02x] @[0x%04x]", opcode, i));
 			}

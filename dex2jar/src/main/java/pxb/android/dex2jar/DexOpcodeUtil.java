@@ -237,8 +237,6 @@ public final class DexOpcodeUtil implements DexOpcodes {
 		case OP_INVOKE_SUPER_RANGE:
 		case OP_INVOKE_VIRTUAL_RANGE:
 		case OP_CONST:
-		case OP_SPARSE_SWITCH:
-		case OP_PACKED_SWITCH:
 		case OP_FILL_ARRAY_DATA:
 		case OP_FILLED_NEW_ARRAY:
 		case OP_CONST_WIDE_32:
@@ -260,9 +258,15 @@ public final class DexOpcodeUtil implements DexOpcodes {
 			// in.skip(9);
 			// }
 			// break;
+		case OP_SPARSE_SWITCH:
+		case OP_PACKED_SWITCH: {
+			return -1;
+		}
 		default:
 			return Integer.MAX_VALUE;
-//			throw new RuntimeException(String.format("Not support Opcode :[0x%04x]", opcode));
+			// throw new
+			// RuntimeException(String.format("Not support Opcode :[0x%04x]",
+			// opcode));
 
 		}
 	}

@@ -44,10 +44,14 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 			break;
 		case OP_MOVE_RESULT_OBJECT:// move-result-object
 		case OP_MOVE_RESULT:
+		case OP_MOVE_RESULT_WIDE:
 		case OP_MOVE_EXCEPTION:
 		case OP_THROW:// throw
 		case OP_RETURN_OBJECT:// return-object
-		case OP_RETURN: {
+		case OP_RETURN:
+		case OP_RETURN_WIDE:
+			//
+		{
 			dcv.visitVarInsn(opcode, arg1);
 		}
 			break;
@@ -61,6 +65,7 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 			dcv.visitLdcInsn(opcode, value, reg);
 		}
 			break;
+
 		case OP_MOVE_OBJECT:
 		case OP_MOVE:
 		case OP_INT_TO_BYTE:
@@ -94,6 +99,8 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 		case OP_AND_LONG_2ADDR:
 		case OP_ADD_INT_2ADDR:
 		case OP_ADD_LONG_2ADDR:
+		case OP_MUL_LONG_2ADDR:
+		case OP_MUL_INT_2ADDR:
 			//
 		{
 
@@ -210,8 +217,8 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 			//
 		{
 			int value = arg1;
-			int array = (arg2 >> 4) & 0xf;
-			int index = arg2 & 0xf;
+			int index = (arg2 >> 8) & 0xff;
+			int array = arg2 & 0xff;
 			dcv.visitArrayInsn(opcode, array, index, value);
 		}
 			break;
@@ -222,10 +229,15 @@ public class ToAsmDexOpcodeAdapter implements DexOpcodeVisitor, DexOpcodes {
 			dcv.visitArrayInsn(opcode, type, a, dem);
 		}
 			break;
-		case OP_CMP_LONG: {
+		case OP_CMP_LONG:
+		case OP_DIV_LONG: {
 			int a = (arg2 >> 8) & 0xff;
 			int b = arg2 & 0xff;
 			dcv.visitIntInsn(opcode, arg1, a, b);
+		}
+			break;
+		case OP_GOTO_16: {
+			dcv.visitJumpInsn(opcode, arg2, -1);
 		}
 			break;
 		default:

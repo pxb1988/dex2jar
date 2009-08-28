@@ -431,6 +431,13 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			this.store(reg1);
 		}
 			break;
+		case OP_MUL_LONG_2ADDR: {
+			this.load(reg1);
+			this.load(reg2);
+			mv.visitInsn(LMUL);
+			this.store(reg1);
+		}
+			break;
 		case OP_CMP_LONG: {
 			this.load(reg1);
 			this.load(reg2);
@@ -438,6 +445,14 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			this.store(value);
 		}
 			break;
+		case OP_DIV_LONG: {
+			this.load(reg1);
+			this.load(reg2);
+			mv.visitInsn(LDIV);
+			this.store(value);
+		}
+			break;
+
 		default:
 			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
 
@@ -480,6 +495,10 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			mv.visitJumpInsn(IFGT, label);
 		}
 			break;
+		case OP_IF_GEZ: {
+			mv.visitJumpInsn(IFGE, label);
+		}
+			break;
 		case OP_IF_LEZ: {
 			mv.visitJumpInsn(IFLE, label);
 		}
@@ -488,7 +507,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			mv.visitJumpInsn(IFLT, label);
 		}
 			break;
-		case OP_GOTO: {
+		case OP_GOTO:
+		case OP_GOTO_16: {
 			mv.visitJumpInsn(GOTO, label);
 		}
 			break;
@@ -509,23 +529,23 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		this.load(reg1);
 		switch (opcode) {
 		case OP_IF_EQ: {
-			mv.visitJumpInsn(IFEQ, label);
+			mv.visitJumpInsn(IF_ICMPEQ, label);
 		}
 			break;
 		case OP_IF_NE: {
-			mv.visitJumpInsn(IFNE, label);
+			mv.visitJumpInsn(IF_ICMPNE, label);
 		}
 			break;
 		case OP_IF_GE: {
-			mv.visitJumpInsn(IFGE, label);
+			mv.visitJumpInsn(IF_ICMPGE, label);
 		}
 			break;
 		case OP_IF_LE: {
-			mv.visitJumpInsn(IFLE, label);
+			mv.visitJumpInsn(IF_ICMPLE, label);
 		}
 			break;
 		case OP_IF_LT: {
-			mv.visitJumpInsn(IFLT, label);
+			mv.visitJumpInsn(IF_ICMPLT, label);
 		}
 			break;
 		default:
@@ -682,7 +702,10 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		switch (opcode) {
 		case OP_MOVE_RESULT_OBJECT:// move-result-object
 		case OP_MOVE_RESULT:
-		case OP_MOVE_EXCEPTION: {
+		case OP_MOVE_EXCEPTION:
+		case OP_MOVE_RESULT_WIDE:
+			//
+		{
 			this.store(reg);
 		}
 			break;
@@ -693,7 +716,9 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		case OP_RETURN:
-		case OP_RETURN_OBJECT:// return-object
+		case OP_RETURN_OBJECT:
+		case OP_RETURN_WIDE:
+			//
 		{
 			this.load(reg);
 			mv.visitInsn(this.detectReturnOpcode());

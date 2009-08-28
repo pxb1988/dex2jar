@@ -27,13 +27,13 @@ public class DexAnnotationReader {
 			int field_annotation_offset = in.readIntx();
 			in.pushMove(field_annotation_offset);
 			int visible_i = in.readByte();
-			int type_idx = in.readUnsignedLeb128();
+			int type_idx = (int) in.readUnsignedLeb128();
 			String type = dex.getType(type_idx);
 			DexAnnotationVisitor dav = daa.visitAnnotation(type, visible_i);
 			if (dav != null) {
-				int sizex = in.readUnsignedLeb128();
+				int sizex = (int) in.readUnsignedLeb128();
 				for (int k = 0; k < sizex; k++) {
-					int name_idx = in.readUnsignedLeb128();
+					int name_idx = (int) in.readUnsignedLeb128();
 					String name = dex.getString(name_idx);
 					Object object = Constant.ReadConstant(dex, in);
 					dav.visit(name, object);

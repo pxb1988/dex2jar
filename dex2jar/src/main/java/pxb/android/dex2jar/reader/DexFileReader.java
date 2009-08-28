@@ -248,10 +248,10 @@ public class DexFileReader implements Dex {
 
 		if (class_data_off != 0) {
 			in.pushMove(class_data_off);
-			int static_fields = in.readUnsignedLeb128();
-			int instance_fields = in.readUnsignedLeb128();
-			int direct_methods = in.readUnsignedLeb128();
-			int virtual_methods = in.readUnsignedLeb128();
+			int static_fields = (int) in.readUnsignedLeb128();
+			int instance_fields = (int) in.readUnsignedLeb128();
+			int direct_methods = (int) in.readUnsignedLeb128();
+			int virtual_methods = (int) in.readUnsignedLeb128();
 			{
 				int lastIndex = 0;
 				{
@@ -259,7 +259,7 @@ public class DexFileReader implements Dex {
 					{
 						if (static_values_off != 0) {
 							in.pushMove(static_values_off);
-							int size = in.readUnsignedLeb128();
+							int size = (int) in.readUnsignedLeb128();
 							constant = new Object[size];
 							for (int i = 0; i < size; i++) {
 								constant[i] = Constant.ReadConstant(this, in);
@@ -342,7 +342,7 @@ public class DexFileReader implements Dex {
 		in.pushMove(idxOffset);
 		int offset = in.readIntx();
 		in.pushMove(offset);
-		int length = in.readUnsignedByte();
+		int length = (int) in.readUnsignedLeb128();
 		String string = new String(in.readBytes(length));
 		in.pop();
 		in.pop();
@@ -362,10 +362,10 @@ public class DexFileReader implements Dex {
 	}
 
 	protected int visitField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions, Object value) {
-		int diff = in.readUnsignedLeb128();
+		int diff = (int) in.readUnsignedLeb128();
 		int field_id = lastIndex + diff;
 		Field field = getField(field_id);
-		int field_access_flags = in.readUnsignedLeb128();
+		int field_access_flags = (int) in.readUnsignedLeb128();
 		// //////////////////////////////////////////////////////////////
 		// TODO signature
 		DexFieldVisitor dfv = dcv.visitField(field_access_flags, field.getName(), field.getType(), value);
@@ -383,11 +383,11 @@ public class DexFileReader implements Dex {
 	}
 
 	protected int visitMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos, Map<Integer, Integer> parameterAnnos) {
-		int diff = in.readUnsignedLeb128();
+		int diff = (int) in.readUnsignedLeb128();
 		int method_id = lastIndex + diff;
 		Method method = getMethod(method_id);
-		int method_access_flags = in.readUnsignedLeb128();
-		int code_off = in.readUnsignedLeb128();
+		int method_access_flags = (int) in.readUnsignedLeb128();
+		int code_off = (int) in.readUnsignedLeb128();
 
 		// TODO signature
 		pxb.android.dex2jar.visitors.DexMethodVisitor dmv = cv.visitMethod(method_access_flags, method.getName(), method.getType().getDesc());

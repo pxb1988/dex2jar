@@ -97,8 +97,8 @@ public class DataInImpl implements DataIn {
 	 * 
 	 * @see pxb.android.DataIn#readUnsignedLeb128()
 	 */
-	public int readUnsignedLeb128() {
-		int value = 0;
+	public long readUnsignedLeb128() {
+		long value = 0;
 		int count = 0;
 		int b = in.read();
 		while ((b & 0x80) != 0) {
@@ -108,6 +108,21 @@ public class DataInImpl implements DataIn {
 		}
 		value |= (b & 0x7f) << count;
 		return value;
+	}
+
+	public long readSignedLeb128() {
+		int bitpos = 0;
+		long vln = 0L;
+		do {
+			int inp = in.read();
+			vln |= ((long) (inp & 0x7F)) << bitpos;
+			bitpos += 7;
+			if ((inp & 0x80) == 0)
+				break;
+		} while (true);
+		if (((1L << (bitpos - 1)) & vln) != 0)
+			vln -= (1L << bitpos);
+		return vln;
 	}
 
 	/*
@@ -146,13 +161,14 @@ public class DataInImpl implements DataIn {
 		return in.read() & 0xff;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see pxb.android.dex2jar.DataIn#skip(int)
 	 */
 	public void skip(int bytes) {
-		 in.skip(bytes);
+		in.skip(bytes);
 	}
-
 
 	// /*
 	// * (non-Javadoc)

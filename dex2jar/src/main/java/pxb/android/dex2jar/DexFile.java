@@ -350,7 +350,7 @@ public class DexFile implements Dex {
 				log.debug("static_values_off:{} (0x{})", static_values_off, Integer.toHexString(static_values_off));
 				if (static_values_off != 0) {
 					in.pushMove(static_values_off);
-					int size = in.readUnsignedLeb128();
+					int size = (int) in.readUnsignedLeb128();
 					constant = new Object[size];
 					for (int i = 0; i < size; i++) {
 						constant[i] = Constant.ReadConstant(this, in);
@@ -384,13 +384,13 @@ public class DexFile implements Dex {
 				{
 					int lastIndex = 0;
 					for (int i = 0; i < static_fields; i++) {
-						int diff = in.readUnsignedLeb128();
+						int diff = (int) in.readUnsignedLeb128();
 						int field_id = lastIndex + diff;
 						lastIndex = field_id;
 						Field field = getField(field_id);
 						log.debug("field:[{}] {}", new Object[] { field_id, field });
 
-						int field_access_flags = in.readUnsignedLeb128();
+						int field_access_flags = (int) in.readUnsignedLeb128();
 
 						// //////////////////////////////////////////////////////////////
 						// TODO signature
@@ -414,12 +414,12 @@ public class DexFile implements Dex {
 				{
 					int lastIndex = 0;
 					for (int i = 0; i < instance_fields; i++) {
-						int diff = in.readUnsignedLeb128();
+						int diff =(int)  in.readUnsignedLeb128();
 						int field_id = lastIndex + diff;
 						lastIndex = field_id;
 						Field field = getField(field_id);
 						log.debug("field:[{}] {}", new Object[] { field_id, field });
-						int field_access_flags = in.readUnsignedLeb128();
+						int field_access_flags = (int) in.readUnsignedLeb128();
 						// //////////////////////////////////////////////////////////////
 						// TODO signature, value
 						FieldVisitor fv = cv.visitField(field_access_flags, field.getName(), field.getType(), null, null);
@@ -456,18 +456,18 @@ public class DexFile implements Dex {
 	}
 
 	protected int visitMethod(int lastIndex, DataIn in, ClassVisitor cv, Map<Integer, Anno[]> methodAnnos, Map<Integer, Anno[][]> parameterAnnos) {
-		int diff = in.readUnsignedLeb128();
+		int diff =(int)  in.readUnsignedLeb128();
 		int method_id = lastIndex + diff;
 		lastIndex = method_id;
 		Method method = getMethod(method_id);
 		log.info("method:[{}] {}", new Object[] { method_id, method });
 
-		int method_access_flags = in.readUnsignedLeb128();
+		int method_access_flags = (int) in.readUnsignedLeb128();
 		// log.debug("method_access_flags:{} (0x{})",
 		// method_access_flags,
 		// Integer.toHexString(method_access_flags));
 
-		int code_off = in.readUnsignedLeb128();
+		int code_off = (int) in.readUnsignedLeb128();
 		// log.debug("code_off:{} (0x{})", code_off,
 		// Integer.toHexString(code_off));
 

@@ -11,7 +11,6 @@ public interface DataIn {
 
 	public int readIntx();
 
-
 	public short readShortx();
 
 	public void move(int offset);
@@ -24,7 +23,9 @@ public interface DataIn {
 
 	byte[] readBytes(int size);
 
-	int readUnsignedLeb128();
+	long readUnsignedLeb128();
+
+	long readSignedLeb128();
 
 	/**
 	 * @return

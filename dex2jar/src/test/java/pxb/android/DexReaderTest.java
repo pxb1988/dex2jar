@@ -34,8 +34,8 @@ public class DexReaderTest {
 		final File base = new File("target/g/");
 		new DexFileReader(new File("target/classes.dex")).accept(new ToAsm(new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-				// if (!name.equals("javax/servlet/ServletOutputStream"))
-				// return null;
+				 if (!name.equals("javax/servlet/http/HttpUtils"))
+				 return null;
 				return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
 					/*
 					 * (non-Javadoc)

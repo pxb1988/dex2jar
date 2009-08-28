@@ -110,13 +110,13 @@ public class Anno {
 	public Anno(DexFile dex, DataIn in) {
 		int visible_i = in.readByte();
 		visible = visible_i == 1;// VISIBILITY_RUNTIME
-		int type_idx = in.readUnsignedLeb128();
+		int type_idx = (int) in.readUnsignedLeb128();
 		type = dex.getType(type_idx);
-		int sizex = in.readUnsignedLeb128();
+		int sizex = (int) in.readUnsignedLeb128();
 		items = new Item[sizex];
 		for (int k = 0; k < sizex; k++) {
 			Item item = new Item();
-			int name_idx = in.readUnsignedLeb128();
+			int name_idx = (int) in.readUnsignedLeb128();
 			item.name = dex.getString(name_idx);
 			Object object = Constant.ReadConstant(dex, in);
 			item.value = object;
