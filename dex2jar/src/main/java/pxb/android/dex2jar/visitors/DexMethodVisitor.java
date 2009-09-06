@@ -9,7 +9,7 @@ package pxb.android.dex2jar.visitors;
  */
 public interface DexMethodVisitor extends DexAnnotationAble {
 
-	public DexParameterAnnotationVisitor visitParamesterAnnotation(int index);
+	public DexAnnotationAble visitParamesterAnnotation(int index);
 
 	/*
 	 * (non-Javadoc)
@@ -18,7 +18,7 @@ public interface DexMethodVisitor extends DexAnnotationAble {
 	 * pxb.android.dex2jar.visitors.DexAnnotationAble#visitAnnotation(java.lang
 	 * .String, boolean)
 	 */
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable);
+	public DexAnnotationVisitor visitAnnotation(String name, int visiable);
 
 	/**
 	 * 

@@ -15,18 +15,17 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pxb.android.dex2jar.Constant;
 import pxb.android.dex2jar.DataIn;
 import pxb.android.dex2jar.DataInImpl;
 import pxb.android.dex2jar.Dex;
-import pxb.android.dex2jar.DexAnnotationReader;
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.Proto;
+import pxb.android.dex2jar.v1.Constant;
+import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexClassVisitor;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 import pxb.android.dex2jar.visitors.DexFieldVisitor;
-import pxb.android.dex2jar.visitors.DexParameterAnnotationVisitor;
 import pxb.android.dex2jar.visitors.DexFileVisitor;
 
 /**
@@ -210,13 +209,7 @@ public class DexFileReader implements Dex {
 				int class_annotations_off = in.readIntx();
 				if (class_annotations_off != 0) {
 					in.pushMove(class_annotations_off);
-					int size = in.readIntx();
-					for (int j = 0; j < size; j++) {
-						int field_annotation_offset = in.readIntx();
-						in.pushMove(field_annotation_offset);
-						new DexAnnotationReader(this).accept(in, dcv);
-						in.pop();
-					}
+					new DexAnnotationReader(this).accept(in, dcv);
 					in.pop();
 				}
 
@@ -366,9 +359,10 @@ public class DexFileReader implements Dex {
 		int field_id = lastIndex + diff;
 		Field field = getField(field_id);
 		int field_access_flags = (int) in.readUnsignedLeb128();
+		field.setAccessFlags(field_access_flags);
 		// //////////////////////////////////////////////////////////////
 		// TODO signature
-		DexFieldVisitor dfv = dcv.visitField(field_access_flags, field.getName(), field.getType(), value);
+		DexFieldVisitor dfv = dcv.visitField(field, value);
 		if (dfv != null) {
 			Integer annotation_offset = fieldAnnotationPositions.get(field_id);
 			if (annotation_offset != null) {
@@ -388,9 +382,9 @@ public class DexFileReader implements Dex {
 		Method method = getMethod(method_id);
 		int method_access_flags = (int) in.readUnsignedLeb128();
 		int code_off = (int) in.readUnsignedLeb128();
-
+		method.setAccessFlags(method_access_flags);
 		// TODO signature
-		pxb.android.dex2jar.visitors.DexMethodVisitor dmv = cv.visitMethod(method_access_flags, method.getName(), method.getType().getDesc());
+		pxb.android.dex2jar.visitors.DexMethodVisitor dmv = cv.visitMethod(method);
 		if (dmv != null) {
 			{
 				Integer annotation_offset = methodAnnos.get(method_id);
@@ -408,7 +402,7 @@ public class DexFileReader implements Dex {
 					for (int j = 0; j < sizeJ; j++) {
 						int field_annotation_offset = in.readIntx();
 						in.pushMove(field_annotation_offset);
-						DexParameterAnnotationVisitor dpav = dmv.visitParamesterAnnotation(j);
+						DexAnnotationAble dpav = dmv.visitParamesterAnnotation(j);
 						if (dpav != null)
 							new DexAnnotationReader(this).accept(in, dpav);
 						in.pop();

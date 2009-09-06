@@ -7,7 +7,7 @@ package pxb.android.dex2jar.visitors;
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
-public class DexAnnotationVisitor {
+public interface DexAnnotationVisitor {
 	/**
 	 * Visits a primitive value of the annotation.
 	 * 
@@ -23,8 +23,7 @@ public class DexAnnotationVisitor {
 	 *            visitArray} and visiting each array element in turn, but is
 	 *            more convenient).
 	 */
-	public void visit(String name, Object value) {
-	}
+	public void visit(String name, Object value);
 
 	/**
 	 * Visits an enumeration value of the annotation.
@@ -36,8 +35,7 @@ public class DexAnnotationVisitor {
 	 * @param value
 	 *            the actual enumeration value.
 	 */
-	void visitEnum(String name, String desc, String value) {
-	}
+	void visitEnum(String name, String desc, String value);
 
 	/**
 	 * Visits a nested annotation value of the annotation.
@@ -52,9 +50,7 @@ public class DexAnnotationVisitor {
 	 *         visited before calling other methods on this annotation
 	 *         visitor</i>.
 	 */
-	public DexAnnotationVisitor visitAnnotation(String name, String desc) {
-		return null;
-	}
+	public DexAnnotationVisitor visitAnnotation(String name, String desc);
 
 	/**
 	 * Visits an array value of the annotation. Note that arrays of primitive
@@ -70,21 +66,10 @@ public class DexAnnotationVisitor {
 	 *         visitor are ignored. <i>All the array values must be visited
 	 *         before calling other methods on this annotation visitor</i>.
 	 */
-	DexAnnotationVisitor visitArray(String name) {
-		return null;
-	}
+	DexAnnotationVisitor visitArray(String name);
 
 	/**
 	 * Visits the end of the annotation.
 	 */
-	void visitEnd() {
-	}
-
-	/* (non-Javadoc)
-	 * @see pxb.android.dex2jar.visitors.DexAnnotationAble#visitAnnotation(java.lang.String, boolean)
-	 */
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	void visitEnd();
 }

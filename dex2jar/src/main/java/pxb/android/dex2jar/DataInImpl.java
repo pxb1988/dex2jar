@@ -170,6 +170,24 @@ public class DataInImpl implements DataIn {
 		in.skip(bytes);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see pxb.android.dex2jar.DataIn#needPadding()
+	 */
+	public boolean needPadding() {
+		return in.getPos() % 4 != 0;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see pxb.android.dex2jar.DataIn#readLongx()
+	 */
+	public long readLongx() {
+		return ((long) readIntx()) | (((long) readIntx()) << 32);
+	}
+
 	// /*
 	// * (non-Javadoc)
 	// *

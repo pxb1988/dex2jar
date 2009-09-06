@@ -12,8 +12,24 @@ public class Method {
 		return this.getOwner() + "." + this.getName() + this.getType();
 	}
 
-	Dex dex;
-	int type_idx;
+	private Dex dex;
+	private int type_idx;
+	private int access_flags;
+
+	/**
+	 * @return the access_flags
+	 */
+	public int getAccessFlags() {
+		return access_flags;
+	}
+
+	/**
+	 * @param access_flags
+	 *            the access_flags to set
+	 */
+	public void setAccessFlags(int access_flags) {
+		this.access_flags = access_flags;
+	}
 
 	public Method(Dex dex, DataIn in) {
 		int owner_idx = in.readShortx();

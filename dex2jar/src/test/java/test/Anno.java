@@ -3,6 +3,10 @@
  */
 package test;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -10,6 +14,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.Actions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -21,7 +27,7 @@ import com.opensymphony.xwork2.inject.Inject;
  */
 @Entity(name = "a_entity")
 @Table
-@org.apache.struts2.convention.annotation.Action(params = { "13", "1f" })
+@Action(params = { "13", "1f" })
 public class Anno {
 	@Id
 	@Column(name = "a_field_id")
@@ -60,8 +66,20 @@ public class Anno {
 		return id;
 	}
 
+	@Actions(@Action(""))
+	@Actionsx(value = @Action, t = Anno.class, ts = Anno.class)
 	@Autowired
 	public void methodABC(@Inject @Qualifier("asdf") String a, @Qualifier("asdfxxx") String b) {
+	}
+
+	@Target( { java.lang.annotation.ElementType.METHOD })
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface Actionsx {
+		public abstract Action value();
+
+		public Class<?> t();
+
+		public Class<?>[] ts();
 	}
 
 	/**

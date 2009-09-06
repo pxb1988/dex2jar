@@ -54,7 +54,7 @@ public class DexMethodAdapter implements DexMethodVisitor {
 	 * pxb.android.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation
 	 * (int)
 	 */
-	public DexParameterAnnotationVisitor visitParamesterAnnotation(int index) {
+	public DexAnnotationAble visitParamesterAnnotation(int index) {
 		return mv.visitParamesterAnnotation(index);
 	}
 

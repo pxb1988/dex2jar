@@ -11,6 +11,8 @@ public interface DataIn {
 
 	public int readIntx();
 
+	public long readLongx();
+
 	public short readShortx();
 
 	public void move(int offset);
@@ -31,6 +33,8 @@ public interface DataIn {
 	 * @return
 	 */
 	public int readUnsignedByte();
+
+	public boolean needPadding();
 
 	/**
 	 * 

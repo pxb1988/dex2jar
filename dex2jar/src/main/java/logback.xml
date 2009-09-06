@@ -1,5 +1,5 @@
 <configuration>
-
+	<substitutionProperty name="log.base" value="target/logs/dex2jar" />
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<layout class="ch.qos.logback.classic.PatternLayout">
 			<Pattern>
@@ -7,9 +7,24 @@
 			</Pattern>
 		</layout>
 	</appender>
-	<logger name="pxb.android.dex2jar.reader.DexFileReader" level="INFO" />
-<!--	<logger name="pxb.android.dex2jar.reader.DexCodeReader" level="INFO" />-->
-	<root level="DEBUG">
+<!--	<appender name="logfile"-->
+<!--		class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+<!--		<Encoding>UTF-8</Encoding>-->
+<!--		<File>${log.base}.log</File>-->
+<!--		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+<!--			<FileNamePattern><![CDATA[${log.base}.%d{yyyy-MM-dd}.log.zip]]></FileNamePattern>-->
+<!--		</rollingPolicy>-->
+<!--		<layout class="ch.qos.logback.classic.PatternLayout">-->
+<!--			<pattern><![CDATA[%msg%n]]></pattern>-->
+<!--		</layout>-->
+<!--	</appender>-->
+	<logger name="pxb.android.dex2jar.dump">
+		<level value="INFO" />
+<!--		<appender-ref ref="logfile" />-->
+	</logger>
+
+	<logger name="pxb.android.dex2jar.reader" level="WARN" />
+	<root level="WARN">
 		<appender-ref ref="STDOUT" />
 	</root>
 </configuration>
