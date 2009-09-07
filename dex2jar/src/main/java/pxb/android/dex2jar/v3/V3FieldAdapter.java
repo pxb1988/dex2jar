@@ -28,7 +28,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
 
 	protected void build() {
 		if (!build) {
-			FieldVisitor fv = cv.visitField(field.getAccessFlags(), field.getName(), field.getOwner(), null, value);
+			FieldVisitor fv = cv.visitField(field.getAccessFlags(), field.getName(), field.getType(), null, value);
 			if (fv != null) {
 				for (Ann ann : anns) {
 					AnnotationVisitor av = fv.visitAnnotation(ann.type, ann.visible == 1);

@@ -74,7 +74,7 @@ public class Anno {
 
 	@Target( { java.lang.annotation.ElementType.METHOD })
 	@Retention(RetentionPolicy.RUNTIME)
-	public @interface Actionsx {
+	public static @interface Actionsx {
 		public abstract Action value();
 
 		public Class<?> t();

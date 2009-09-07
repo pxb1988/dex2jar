@@ -3,6 +3,8 @@
  */
 package pxb.android.dex2jar.v3;
 
+import java.util.Map;
+
 import org.objectweb.asm.ClassVisitor;
 
 import pxb.android.dex2jar.asm.TypeNameAdapter;
@@ -16,12 +18,15 @@ import pxb.android.dex2jar.visitors.DexFileVisitor;
  */
 public class V3 implements DexFileVisitor {
 	protected ClassVisitorFactory cvf;
+	Map<String, Integer> accessFlagsMap;
 
 	/**
-	 * @param cvf
+	 * @param accessFlagsMap
+	 * @param classVisitorFactory
 	 */
-	public V3(ClassVisitorFactory cvf) {
-		this.cvf = cvf;
+	public V3(Map<String, Integer> accessFlagsMap, ClassVisitorFactory classVisitorFactory) {
+		this.accessFlagsMap = accessFlagsMap;
+		this.cvf = classVisitorFactory;
 	}
 
 	/*
@@ -34,7 +39,7 @@ public class V3 implements DexFileVisitor {
 		final ClassVisitor cv = cvf.create(TypeNameAdapter.x(className));
 		if (cv == null)
 			return null;
-		return new V3ClassAdapter(cv, access_flags, className, superClass, interfaceNames);
+		return new V3ClassAdapter(accessFlagsMap, cv, access_flags, className, superClass, interfaceNames);
 	}
 
 	/*

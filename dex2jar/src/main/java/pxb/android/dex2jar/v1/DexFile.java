@@ -420,7 +420,7 @@ public class DexFile implements Dex {
 				{
 					int lastIndex = 0;
 					for (int i = 0; i < instance_fields; i++) {
-						int diff =(int)  in.readUnsignedLeb128();
+						int diff = (int) in.readUnsignedLeb128();
 						int field_id = lastIndex + diff;
 						lastIndex = field_id;
 						Field field = getField(field_id);
@@ -462,7 +462,7 @@ public class DexFile implements Dex {
 	}
 
 	protected int visitMethod(int lastIndex, DataIn in, ClassVisitor cv, Map<Integer, Anno[]> methodAnnos, Map<Integer, Anno[][]> parameterAnnos) {
-		int diff =(int)  in.readUnsignedLeb128();
+		int diff = (int) in.readUnsignedLeb128();
 		int method_id = lastIndex + diff;
 		lastIndex = method_id;
 		Method method = getMethod(method_id);

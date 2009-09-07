@@ -110,8 +110,7 @@ public class TypeNameAdapter extends ClassAdapter {
 	 */
 	@Override
 	public void visitInnerClass(String name, String outerName, String innerName, int access) {
-		// TODO Auto-generated method stub
-		super.visitInnerClass(name, outerName, innerName, access);
+		super.visitInnerClass(x(name), x(outerName), innerName, access);
 	}
 
 	/*
@@ -248,18 +247,6 @@ public class TypeNameAdapter extends ClassAdapter {
 			super.visitTypeInsn(opcode, type);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see
-		 * org.objectweb.asm.MethodAdapter#visitAnnotation(java.lang.String,
-		 * boolean)
-		 */
-		@Override
-		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-			return super.visitAnnotation(x(desc), visible);
-		}
-
 		/**
 		 * @param mv
 		 */
@@ -276,17 +263,6 @@ public class TypeNameAdapter extends ClassAdapter {
 		 */
 		public FieldNameAdapter(FieldVisitor fv) {
 			super(fv);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see pxb.android.FieldAdapter#visitAnnotation(java.lang.String,
-		 * boolean)
-		 */
-		@Override
-		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-			return super.visitAnnotation(x(desc), visible);
 		}
 
 	}

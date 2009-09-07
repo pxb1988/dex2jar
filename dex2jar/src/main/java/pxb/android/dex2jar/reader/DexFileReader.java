@@ -94,8 +94,8 @@ public class DexFileReader implements Dex {
 		int link_off = in.readIntx();
 		log.debug("link_off:{} (0x{})", link_off, Integer.toHexString(link_off));
 
-		int x34h = in.readIntx();
-		log.debug("x34h:{}", x34h);
+		int mapOff = in.readIntx();
+		log.debug("x34h:{}", mapOff);
 
 		string_ids_size = in.readIntx();
 		log.debug("string_ids_size:{}", string_ids_size);
@@ -132,6 +132,17 @@ public class DexFileReader implements Dex {
 		data_off = in.readIntx();
 		log.debug("data_off:{} (0x{})", data_off, Integer.toHexString(data_off));
 		log.debug("=======End Of Head========");
+
+		// {
+		// in.pushMove(mapOff);
+		// int value = in.readShortx();
+		// System.out.println(this.getString(value));
+		// in.readShortx();
+		// int size = in.readIntx();
+		// int offset = in.readIntx();
+		// in.pop();
+		// }
+
 	}
 
 	public DexFileReader(File f) throws IOException {
@@ -361,7 +372,6 @@ public class DexFileReader implements Dex {
 		int field_access_flags = (int) in.readUnsignedLeb128();
 		field.setAccessFlags(field_access_flags);
 		// //////////////////////////////////////////////////////////////
-		// TODO signature
 		DexFieldVisitor dfv = dcv.visitField(field, value);
 		if (dfv != null) {
 			Integer annotation_offset = fieldAnnotationPositions.get(field_id);
@@ -383,7 +393,6 @@ public class DexFileReader implements Dex {
 		int method_access_flags = (int) in.readUnsignedLeb128();
 		int code_off = (int) in.readUnsignedLeb128();
 		method.setAccessFlags(method_access_flags);
-		// TODO signature
 		pxb.android.dex2jar.visitors.DexMethodVisitor dmv = cv.visitMethod(method);
 		if (dmv != null) {
 			{

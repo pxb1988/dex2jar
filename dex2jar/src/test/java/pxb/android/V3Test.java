@@ -15,6 +15,7 @@ import org.objectweb.asm.ClassWriter;
 import pxb.android.dex2jar.reader.DexFileReader;
 import pxb.android.dex2jar.v1.ClassVisitorFactory;
 import pxb.android.dex2jar.v3.V3;
+import pxb.android.dex2jar.v3.V3AccessFlagsAdapter;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
@@ -28,10 +29,13 @@ public class V3Test {
 		// File("target/gen_test.jar")));
 		// zos.setComment("Create by dex2jar version:" + Version.version);
 		final File base = new File("target/g/");
-		new DexFileReader(new File("target/test-classes/test/Anno.dex")).accept(new V3(new ClassVisitorFactory() {
+		DexFileReader reader = new DexFileReader(new File("target/test-classes/test/Anno.dex"));
+		V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
+		reader.accept(afa);
+		reader.accept(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-//				if (!name.equals("org/mortbay/jetty/handler/DefaultHandler"))
-//					return null;
+				// if (!name.equals("org/mortbay/jetty/handler/DefaultHandler"))
+				// return null;
 				return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
 					/*
 					 * (non-Javadoc)
