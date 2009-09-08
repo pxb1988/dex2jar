@@ -12,7 +12,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import pxb.android.dex2jar.Method;
-import pxb.android.dex2jar.dump.DumpDexCodeAdapter;
 import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
@@ -107,7 +106,7 @@ public class V3MethodAdapter implements DexMethodVisitor {
 		build();
 		if (mv == null)
 			return null;
-		return new DumpDexCodeAdapter(new V3CodeAdapter(method, mv));
+		return new V3CodeAdapter(method, mv);
 	}
 
 	/*

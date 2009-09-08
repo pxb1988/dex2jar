@@ -32,7 +32,8 @@ public class DexDebugInfoReader {
 	public static final int DBG_LINE_RANGE = 15;
 	private DataIn in;
 	private Dex dex;
-//	private int regsize;
+
+	// private int regsize;
 
 	/**
 	 * @param in
@@ -42,16 +43,16 @@ public class DexDebugInfoReader {
 		super();
 		this.in = in;
 		this.dex = dex;
-//		this.regsize = regsize;
+		// this.regsize = regsize;
 	}
 
-	private static class LocalVariable {
-		int start;
-		int end;
-		String name;
-		String type;
-		String signature;
-		int reg;
+	public static class LocalVariable {
+		public int start;
+		public int end;
+		public String name;
+		public String type;
+		public String signature;
+		public int reg;
 
 		/**
 		 * @param start

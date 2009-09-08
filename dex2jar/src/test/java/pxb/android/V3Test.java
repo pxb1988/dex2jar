@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
+import pxb.android.dex2jar.dump.Dump;
 import pxb.android.dex2jar.reader.DexFileReader;
 import pxb.android.dex2jar.v1.ClassVisitorFactory;
 import pxb.android.dex2jar.v3.V3;
@@ -32,7 +33,7 @@ public class V3Test {
 		DexFileReader reader = new DexFileReader(new File("target/test-classes/test/Anno.dex"));
 		V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
 		reader.accept(afa);
-		reader.accept(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
+		reader.accept(new Dump(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
 				// if (!name.equals("org/mortbay/jetty/handler/DefaultHandler"))
 				// return null;
@@ -65,7 +66,7 @@ public class V3Test {
 					}
 				};
 			}
-		}));
+		})));
 		// zos.finish();
 		// zos.close();
 	}

@@ -11,13 +11,12 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import pxb.android.dex2jar.Method;
-import pxb.android.dex2jar.dump.DumpDexCodeAdapter;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexAnnotationAsmAdapter;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 import pxb.android.dex2jar.visitors.DexMethodVisitor;
-import pxb.android.dex2jar.visitors.EmptyDexAnnotationAdapter;
+import pxb.android.dex2jar.visitors.EmptyVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
@@ -59,11 +58,11 @@ public class ToAsmDexMethodAdapter implements DexMethodVisitor {
 	 */
 	public DexAnnotationVisitor visitAnnotation(String name, int visible) {
 		if ("Ldalvik/annotation/Throws;".equals(name)) {
-			return new EmptyDexAnnotationAdapter() {
+			return new EmptyVisitor() {
 
 				@Override
 				public DexAnnotationVisitor visitArray(String name) {
-					return new EmptyDexAnnotationAdapter() {
+					return new EmptyVisitor() {
 						@Override
 						public void visit(String name, Object value) {
 							exceptions.add(value.toString());
@@ -90,7 +89,7 @@ public class ToAsmDexMethodAdapter implements DexMethodVisitor {
 	 */
 	public DexCodeVisitor visitCode() {
 		buildMv();
-		return new DumpDexCodeAdapter(new ToAsmDexCodeAdapter(mv, this.owner, method));
+		return new ToAsmDexCodeAdapter(mv, this.owner, method);
 	}
 
 	/*

@@ -8,7 +8,7 @@ package pxb.android.dex2jar.visitors;
  * 
  */
 public class DexMethodAdapter implements DexMethodVisitor {
-	DexMethodVisitor mv;
+	protected DexMethodVisitor mv;
 
 	/**
 	 * @param mv

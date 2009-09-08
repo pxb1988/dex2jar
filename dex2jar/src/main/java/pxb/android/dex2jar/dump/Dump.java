@@ -9,22 +9,30 @@ import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
-import pxb.android.dex2jar.visitors.DexAnnotationAble;
-import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
+import pxb.android.dex2jar.visitors.DexClassAdapter;
 import pxb.android.dex2jar.visitors.DexClassVisitor;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 import pxb.android.dex2jar.visitors.DexFieldVisitor;
 import pxb.android.dex2jar.visitors.DexFileVisitor;
+import pxb.android.dex2jar.visitors.DexMethodAdapter;
 import pxb.android.dex2jar.visitors.DexMethodVisitor;
-import pxb.android.dex2jar.visitors.EmptyDexCodeAdapter;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
-public class DumpDexFileAdapter implements DexFileVisitor {
-	private static final Logger log = LoggerFactory.getLogger(DumpDexFileAdapter.class);
+public class Dump implements DexFileVisitor {
+	private static final Logger log = LoggerFactory.getLogger(Dump.class);
 	int class_count = 0;
+	DexFileVisitor dfv;
+
+	/**
+	 * @param dfv
+	 */
+	public Dump(DexFileVisitor dfv) {
+		super();
+		this.dfv = dfv;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -45,24 +53,23 @@ public class DumpDexFileAdapter implements DexFileVisitor {
 		log.info(String.format("%-20s:%-2d", "interfaces", interfaceNames.length));
 		for (int i = 0; i < interfaceNames.length; i++)
 			log.info(String.format("%-20s:[%2d]%s", "", i, Type.getType(interfaceNames[i]).getClassName()));
-		return new DexClassVisitor() {
 
-			public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			public void visitEnd() {
-				// TODO Auto-generated method stub
-
-			}
+		DexClassVisitor dcv = dfv.visit(access_flags, className, superClass, interfaceNames);
+		if (dfv == null)
+			return null;
+		return new DexClassAdapter(dcv) {
 
 			public DexFieldVisitor visitField(Field field, Object value) {
-				// TODO Auto-generated method stub
-				return null;
+				log.info("");
+				log.info(String.format("%20s:%d", "field", field_count++));
+				log.info(String.format("%20s:0x%08x", "access_flags", field.getAccessFlags()));
+				log.info(String.format("%20s:%s", "name", field.getName()));
+				log.info(String.format("%20s:%s", "describe", field.getType()));
+				return dcv.visitField(field, value);
 			}
 
 			int method_count = 0;
+			int field_count = 0;
 
 			public DexMethodVisitor visitMethod(Method method) {
 				log.info("");
@@ -75,32 +82,18 @@ public class DumpDexFileAdapter implements DexFileVisitor {
 				for (int i = 0; i < method.getType().getParameterTypes().length; i++) {
 					log.info(String.format("%20s:[%2d]%s", "", i, Type.getType(method.getType().getParameterTypes()[i]).getClassName()));
 				}
-				return new DexMethodVisitor() {
-
-					public DexAnnotationVisitor visitAnnotation(String name, int visiable) {
-						// TODO Auto-generated method stub
-						return null;
-					}
-
+				DexMethodVisitor dmv = dcv.visitMethod(method);
+				if (dmv == null) {
+					return null;
+				}
+				return new DexMethodAdapter(dmv) {
 					public DexCodeVisitor visitCode() {
-						return new DumpDexCodeAdapter(new EmptyDexCodeAdapter());
-					}
-
-					public void visitEnd() {
-						// TODO Auto-generated method stub
-
-					}
-
-					public DexAnnotationAble visitParamesterAnnotation(int index) {
-						// TODO Auto-generated method stub
-						return null;
+						DexCodeVisitor dcv = mv.visitCode();
+						if (dcv == null)
+							return null;
+						return new DumpDexCodeAdapter(dcv);
 					}
 				};
-			}
-
-			public void visitSource(String file) {
-				// TODO Auto-generated method stub
-
 			}
 		};
 	}
@@ -112,6 +105,7 @@ public class DumpDexFileAdapter implements DexFileVisitor {
 	 */
 	public void visitEnd() {
 		log.info("=========");
+		dfv.visitEnd();
 	}
 
 }
