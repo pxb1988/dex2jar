@@ -64,7 +64,9 @@ public class Dump implements DexFileVisitor {
 				log.info(String.format("%20s:%d", "field", field_count++));
 				log.info(String.format("%20s:0x%08x", "access_flags", field.getAccessFlags()));
 				log.info(String.format("%20s:%s", "name", field.getName()));
-				log.info(String.format("%20s:%s", "describe", field.getType()));
+				log.info(String.format("%20s:%s", "type", Type.getType(field.getType()).getClassName()));
+				if (value != null)
+					log.info(String.format("%20s:%s", "value", value));
 				return dcv.visitField(field, value);
 			}
 
@@ -104,7 +106,6 @@ public class Dump implements DexFileVisitor {
 	 * @see pxb.android.dex2jar.visitors.DexFileVisitor#visitEnd()
 	 */
 	public void visitEnd() {
-		log.info("=========");
 		dfv.visitEnd();
 	}
 
