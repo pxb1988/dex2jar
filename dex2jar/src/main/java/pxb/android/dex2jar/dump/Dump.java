@@ -44,7 +44,7 @@ public class Dump implements DexFileVisitor {
 		log.info("");
 		log.info("");
 		log.info(String.format("%-20s:%s", "class:", class_count++));
-		log.info(String.format("%-20s:0x%08x", "access", access_flags));
+		log.info(String.format("%-20s:0x%04x", "access", access_flags));
 		log.info(String.format("%-20s:%s", "class", Type.getType(className).getClassName()));
 		log.info(String.format("%-20s:%s", "super", Type.getType(superClass).getClassName()));
 		if (interfaceNames == null) {
@@ -62,7 +62,7 @@ public class Dump implements DexFileVisitor {
 			public DexFieldVisitor visitField(Field field, Object value) {
 				log.info("");
 				log.info(String.format("%20s:%d", "field", field_count++));
-				log.info(String.format("%20s:0x%08x", "access_flags", field.getAccessFlags()));
+				log.info(String.format("%20s:0x%04x", "access_flags", field.getAccessFlags()));
 				log.info(String.format("%20s:%s", "name", field.getName()));
 				log.info(String.format("%20s:%s", "type", Type.getType(field.getType()).getClassName()));
 				if (value != null)
@@ -76,7 +76,7 @@ public class Dump implements DexFileVisitor {
 			public DexMethodVisitor visitMethod(Method method) {
 				log.info("");
 				log.info(String.format("%20s:%d", "method", method_count++));
-				log.info(String.format("%20s:0x%08x", "access_flags", method.getAccessFlags()));
+				log.info(String.format("%20s:0x%04x", "access_flags", method.getAccessFlags()));
 				log.info(String.format("%20s:%s", "name", method.getName()));
 				log.info(String.format("%20s:%s", "describe", method.getType().toString()));
 				log.info(String.format("%20s:%s", "return", Type.getType(method.getType().getReturnType()).getClassName()));
