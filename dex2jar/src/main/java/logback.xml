@@ -18,13 +18,12 @@
 <!--			<pattern><![CDATA[%msg%n]]></pattern>-->
 <!--		</layout>-->
 <!--	</appender>-->
-	<logger name="pxb.android.dex2jar.dump">
-		<level value="INFO" />
+	<logger name="pxb.android.dex2jar.dump" level="INFO">
 <!--		<appender-ref ref="logfile" />-->
 	</logger>
 
 	<logger name="pxb.android.dex2jar.reader" level="WARN" />
-	<root level="WARN">
+	<root level="INFO">
 		<appender-ref ref="STDOUT" />
 	</root>
 </configuration>

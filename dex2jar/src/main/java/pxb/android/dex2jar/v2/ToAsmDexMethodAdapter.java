@@ -11,6 +11,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import pxb.android.dex2jar.Method;
+import pxb.android.dex2jar.dump.DumpDexCodeAdapter;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexAnnotationAsmAdapter;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
@@ -89,7 +90,7 @@ public class ToAsmDexMethodAdapter implements DexMethodVisitor {
 	 */
 	public DexCodeVisitor visitCode() {
 		buildMv();
-		return new ToAsmDexCodeAdapter(mv, this.owner, method);
+		return new DumpDexCodeAdapter(new ToAsmDexCodeAdapter(mv, this.owner, method));
 	}
 
 	/*
