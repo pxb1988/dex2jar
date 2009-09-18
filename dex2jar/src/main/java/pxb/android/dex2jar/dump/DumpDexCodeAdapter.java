@@ -444,7 +444,8 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		switch (opcode) {
 		case OP_GOTO:
 		case OP_GOTO_16:
-			info(opcode, "goto %04x  //%c%04x", this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "goto %04x  //%c%04x", this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset
+					: -offset);
 			break;
 		}
 		super.visitJumpInsn(opcode, offset);
@@ -460,22 +461,28 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	public void visitJumpInsn(int opcode, int offset, int reg) {
 		switch (opcode) {
 		case OP_IF_EQZ:
-			info(opcode, "if v%d == 0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d == 0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-',
+					offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_NEZ:
-			info(opcode, "if v%d != 0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d != 0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-',
+					offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_LTZ:
-			info(opcode, "if v%d <  0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d <  0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-',
+					offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_GEZ:
-			info(opcode, "if v%d >= 0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d >= 0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-',
+					offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_GTZ:
-			info(opcode, "if v%d >  0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d >  0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-',
+					offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_LEZ:
-			info(opcode, "if v%d <= 0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d <= 0 goto %04x  //%c%04x", reg, this._index + offset, offset >= 0 ? '+' : '-',
+					offset >= 0 ? offset : -offset);
 			break;
 		}
 		super.visitJumpInsn(opcode, offset, reg);
@@ -491,22 +498,28 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	public void visitJumpInsn(int opcode, int offset, int reg1, int reg2) {
 		switch (opcode) {
 		case OP_IF_EQ:
-			info(opcode, "if v%d == v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d == v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset,
+					offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_NE:
-			info(opcode, "if v%d != v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d != v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset,
+					offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_LT:
-			info(opcode, "if v%d <  v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d <  v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset,
+					offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_GE:
-			info(opcode, "if v%d >= v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d >= v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset,
+					offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_GT:
-			info(opcode, "if v%d >  v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d >  v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset,
+					offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
 			break;
 		case OP_IF_LE:
-			info(opcode, "if v%d <= v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset, offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
+			info(opcode, "if v%d <= v%d goto %04x  //%c%04x", reg1, reg2, this._index + offset,
+					offset >= 0 ? '+' : '-', offset >= 0 ? offset : -offset);
 			break;
 		}
 		super.visitJumpInsn(opcode, offset, reg1, reg2);
@@ -575,9 +588,11 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	public void visitLookupSwitchInsn(int opcode, int reg, int label, int[] cases, int[] label2) {
 		info(opcode, "switch(v%d)", reg);
 		for (int i = 0; i < cases.length; i++) {
-			info(opcode, "case %d: goto %04x  //%c%04x", cases[i], label2[i] + this._index, label2[i] >= 0 ? '+' : '-', label2[i] >= 0 ? label2[i] : -label2[i]);
+			info(opcode, "case %d: goto %04x  //%c%04x", cases[i], label2[i] + this._index, label2[i] >= 0 ? '+' : '-',
+					label2[i] >= 0 ? label2[i] : -label2[i]);
 		}
-		info(opcode, "default: goto %04x  //%c%04x", label + this._index, label >= 0 ? '+' : '-', label >= 0 ? label : -label);
+		info(opcode, "default: goto %04x  //%c%04x", label + this._index, label >= 0 ? '+' : '-', label >= 0 ? label
+				: -label);
 		super.visitLookupSwitchInsn(opcode, reg, label, cases, label2);
 	}
 
@@ -595,19 +610,18 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		case OP_INVOKE_STATIC_RANGE: {
 			int i = 0;
 			StringBuilder sb = new StringBuilder();
-			for (String type : method.getType().getParameterTypes()) {
+			for (int j = 0; j < method.getType().getParameterTypes().length; j++) {
 				sb.append('v').append(regs[i++]).append(',');
-				if ("D".equals(type) || "J".equals(type)) {
-					i++;
-				}
 			}
 			if (sb.length() > 0) {
 				sb.deleteCharAt(sb.length() - 1);
 			}
 			if (method.getType().getReturnType().equals("V")) {
-				info(opcode, "%s.%s(%s)  //%s", c(method.getOwner()), method.getName(), sb.toString(), method.toString());
+				info(opcode, "%s.%s(%s)  //%s", c(method.getOwner()), method.getName(), sb.toString(), method
+						.toString());
 			} else {
-				info(opcode, "XXX=%s.%s(%s)  //%s", c(method.getOwner()), method.getName(), sb.toString(), method.toString());
+				info(opcode, "XXX=%s.%s(%s)  //%s", c(method.getOwner()), method.getName(), sb.toString(), method
+						.toString());
 
 			}
 		}
@@ -622,11 +636,8 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		case OP_INVOKE_SUPER: {
 			int i = 1;
 			StringBuilder sb = new StringBuilder();
-			for (String type : method.getType().getParameterTypes()) {
+			for (int j = 0; j < method.getType().getParameterTypes().length; j++) {
 				sb.append(',').append('v').append(regs[i++]);
-				if ("D".equals(type) || "J".equals(type)) {
-					i++;
-				}
 			}
 			if (sb.length() > 0) {
 				sb.deleteCharAt(0);
@@ -654,9 +665,11 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	public void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, int label, int[] labels) {
 		info(opcode, "switch(v%d)", reg);
 		for (int i = 0; i < labels.length; i++) {
-			info(opcode, "case %d: goto %04x  //%c%04x", first_case + i, labels[i] + this._index, labels[i] >= 0 ? '+' : '-', labels[i] >= 0 ? labels[i] : -labels[i]);
+			info(opcode, "case %d: goto %04x  //%c%04x", first_case + i, labels[i] + this._index, labels[i] >= 0 ? '+'
+					: '-', labels[i] >= 0 ? labels[i] : -labels[i]);
 		}
-		info(opcode, "default: goto %04x  //%c%04x", label + this._index, label >= 0 ? '+' : '-', label >= 0 ? label : -label);
+		info(opcode, "default: goto %04x  //%c%04x", label + this._index, label >= 0 ? '+' : '-', label >= 0 ? label
+				: -label);
 
 		super.visitTableSwitchInsn(opcode, reg, first_case, last_case, label, labels);
 	}

@@ -155,11 +155,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		if (!isStatic) {
 			this.load(registers[i++]);
 		}
-		for (String type : method.getType().getParameterTypes()) {
+		while (i < registers.length) {
 			this.load(registers[i++]);
-			if ("D".equals(type) || "J".equals(type)) {
-				i++;
-			}
 		}
 	}
 
@@ -226,7 +223,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 				break;
 
 			default:
-				throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+				throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+						.dump(opcode)));
 			}
 		}
 	}
@@ -248,7 +246,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 	}
@@ -332,7 +331,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 		}
 	}
 
@@ -372,7 +372,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 	}
@@ -390,7 +391,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			break;
 		case OP_CONST_4:
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 	}
@@ -472,7 +474,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			break;
 
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 
@@ -526,7 +529,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			break;
 
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 		}
 	}
 
@@ -570,7 +574,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 	}
@@ -607,7 +612,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 	}
@@ -654,7 +660,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 	}
@@ -740,7 +747,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 		}
 	}
 
@@ -895,7 +903,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 	}
@@ -914,7 +923,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 	}
@@ -947,7 +957,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump
+					.dump(opcode)));
 
 		}
 	}

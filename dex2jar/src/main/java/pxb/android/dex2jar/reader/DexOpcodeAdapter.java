@@ -7,6 +7,7 @@ import pxb.android.dex2jar.Dex;
 import pxb.android.dex2jar.DexOpcodeDump;
 import pxb.android.dex2jar.DexOpcodes;
 import pxb.android.dex2jar.Field;
+import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
 /**
@@ -143,7 +144,8 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump
+					.dump(opcode)));
 		}
 	}
 
@@ -355,7 +357,8 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		}
 			break;
 		default:
-			throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump
+					.dump(opcode)));
 		}
 	}
 
@@ -372,7 +375,10 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		case OP_INVOKE_STATIC:
 		case OP_INVOKE_INTERFACE:// invoke-interface
 		case OP_INVOKE_SUPER: {
-			dcv.visitMethodInsn(opcode, dex.getMethod(arg2), buildMethodRegister(arg1, arg3));
+			Method m = dex.getMethod(arg2);
+			int args[] = getRangeValues(arg1, arg3);
+			args = filter(m, args);
+			dcv.visitMethodInsn(opcode, m, args);
 		}
 			break;
 		case OP_CONST: {
@@ -392,11 +398,13 @@ public class DexOpcodeAdapter implements DexOpcodes {
 			for (int i = 0; i < arg1; i++) {
 				args[i] = arg3 + i;
 			}
-			dcv.visitMethodInsn(opcode, dex.getMethod(arg2), args);
+			Method m = dex.getMethod(arg2);
+			args = filter(m, args);
+			dcv.visitMethodInsn(opcode, m, args);
 		}
 			break;
 		case OP_FILLED_NEW_ARRAY: {
-			dcv.visitFilledNewArrayIns(opcode, dex.getType(arg2), buildMethodRegister(arg1, arg3));
+			dcv.visitFilledNewArrayIns(opcode, dex.getType(arg2), getRangeValues(arg1, arg3));
 		}
 			break;
 		case OP_FILLED_NEW_ARRAY_RANGE: {
@@ -408,11 +416,41 @@ public class DexOpcodeAdapter implements DexOpcodes {
 
 		}
 		default:
-			throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
+			throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump
+					.dump(opcode)));
 		}
 	}
 
-	private static int[] buildMethodRegister(int arg1, int value) {
+	private int[] filter(Method m, int[] args) {
+
+		String types[] = m.getType().getParameterTypes();
+		if (types.length == 0)
+			return args;
+		int index = args.length - 1;
+		int i = args.length - 1;
+		for (int j = types.length - 1; j > 0; j--) {
+			String type = types[j];
+			if ("J".equals(type) || "D".equals(type)) {
+				i--;
+			}
+			args[index--] = args[i--];
+		}
+		switch (i) {
+		case 0:
+			break;
+		case 1:
+			args[index--] = args[i--];
+			break;
+		default:
+			throw new RuntimeException("Should never happen.");
+		}
+		int length = args.length - index;
+		int[] nArgs = new int[length];
+		System.arraycopy(args, index, nArgs, 0, length);
+		return nArgs;
+	}
+
+	private static int[] getRangeValues(int arg1, int value) {
 		int size = (arg1 >> 4) & 0xf;
 		int[] a = new int[size];
 		for (int i = 0; i < size && i < 4; i++) {
