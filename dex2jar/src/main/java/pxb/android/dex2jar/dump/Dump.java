@@ -3,6 +3,9 @@
  */
 package pxb.android.dex2jar.dump;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +13,7 @@ import org.springframework.asm.Opcodes;
 
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
+import pxb.android.dex2jar.reader.DexFileReader;
 import pxb.android.dex2jar.visitors.DexClassAdapter;
 import pxb.android.dex2jar.visitors.DexClassVisitor;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
@@ -17,6 +21,7 @@ import pxb.android.dex2jar.visitors.DexFieldVisitor;
 import pxb.android.dex2jar.visitors.DexFileVisitor;
 import pxb.android.dex2jar.visitors.DexMethodAdapter;
 import pxb.android.dex2jar.visitors.DexMethodVisitor;
+import pxb.android.dex2jar.visitors.EmptyVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
@@ -159,6 +164,12 @@ public class Dump implements DexFileVisitor {
 				};
 			}
 		};
+	}
+
+	public static void main(String... args) throws IOException {
+		for (String s : args) {
+			new DexFileReader(new File(s)).accept(new Dump(new EmptyVisitor()));
+		}
 	}
 
 	/*

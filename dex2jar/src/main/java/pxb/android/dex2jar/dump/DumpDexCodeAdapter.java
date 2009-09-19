@@ -35,7 +35,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 
 	protected void info(int opcode, String format, Object... args) {
 		String s = String.format(format, args);
-		log.info(String.format("%04x|%02x|%-20s|%s", this._index, opcode, DexOpcodeDump.dump(opcode), s));
+		log.info(String.format("%02x|%-20s|%04x|%s", opcode, DexOpcodeDump.dump(opcode), this._index, s));
 	}
 
 	/*
@@ -696,7 +696,11 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 */
 	@Override
 	public void visitTryCatch(int start, int offset, int handler, String type) {
-		log.info(String.format("%04x ~ %04x > %04x %s", start, start + offset, handler, type));
+		if (type == null) {
+			log.info(String.format("%04x ~ %04x > %04x all", start, start + offset, handler));
+		} else {
+			log.info(String.format("%04x ~ %04x > %04x %s", start, start + offset, handler, type));
+		}
 		super.visitTryCatch(start, offset, handler, type);
 	}
 
