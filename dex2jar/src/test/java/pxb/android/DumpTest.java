@@ -19,6 +19,6 @@ import pxb.android.dex2jar.visitors.EmptyVisitor;
 public class DumpTest {
 	@Test
 	public void test() throws IOException {
-		new DexFileReader(new File("target/classes.dex")).accept(new Dump(new EmptyVisitor()));
+		new DexFileReader(new File("target/test-classes/pxb/android/i_jetty.dex")).accept(new Dump(new EmptyVisitor()));
 	}
 }

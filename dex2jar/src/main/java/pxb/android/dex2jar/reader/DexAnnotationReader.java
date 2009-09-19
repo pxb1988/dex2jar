@@ -25,8 +25,8 @@ public class DexAnnotationReader {
 	private static final int VALUE_DOUBLE = 17;
 	private static final int VALUE_STRING = 23;
 	private static final int VALUE_TYPE = 24;
-	// private static final int VALUE_FIELD = 25;
-	// private static final int VALUE_METHOD = 26;
+	private static final int VALUE_FIELD = 25;
+	private static final int VALUE_METHOD = 26;
 	private static final int VALUE_ENUM = 27;
 	private static final int VALUE_ARRAY = 28;
 	private static final int VALUE_ANNOTATION = 29;
@@ -108,6 +108,16 @@ public class DexAnnotationReader {
 			value = dex.getField((int) x3(in, b));
 		}
 			break;
+		case VALUE_METHOD: {
+			int method_id = (int) x3(in, b);
+			value = dex.getMethod(method_id);
+			break;
+		}
+		case VALUE_FIELD: {
+			int field_id = (int) x3(in, b);
+			value = dex.getField(field_id);
+			break;
+		}
 		}
 
 		if (value != null) {

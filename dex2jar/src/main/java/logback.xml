@@ -2,8 +2,9 @@
 <!--	<substitutionProperty name="log.base" value="target/logs/dex2jar" />-->
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<layout class="ch.qos.logback.classic.PatternLayout">
+		<!-- %d{HH:mm:ss.SSS} %-5level %logger{30} - %msg%n -->
 			<Pattern>
-			<![CDATA[%d{HH:mm:ss.SSS} %-5level %logger{30} - %msg%n]]>
+			<![CDATA[%msg%n]]>
 			</Pattern>
 		</layout>
 	</appender>

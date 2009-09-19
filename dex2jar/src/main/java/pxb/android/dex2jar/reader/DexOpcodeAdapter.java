@@ -376,7 +376,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		case OP_INVOKE_INTERFACE:// invoke-interface
 		case OP_INVOKE_SUPER: {
 			Method m = dex.getMethod(arg2);
-			int args[] = getRangeValues(arg1, arg3);
+			int args[] = getValues(arg1, arg3);
 			args = filter(m, args);
 			dcv.visitMethodInsn(opcode, m, args);
 		}
@@ -404,7 +404,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		}
 			break;
 		case OP_FILLED_NEW_ARRAY: {
-			dcv.visitFilledNewArrayIns(opcode, dex.getType(arg2), getRangeValues(arg1, arg3));
+			dcv.visitFilledNewArrayIns(opcode, dex.getType(arg2), getValues(arg1, arg3));
 		}
 			break;
 		case OP_FILLED_NEW_ARRAY_RANGE: {
@@ -424,11 +424,11 @@ public class DexOpcodeAdapter implements DexOpcodes {
 	private int[] filter(Method m, int[] args) {
 
 		String types[] = m.getType().getParameterTypes();
-		if (types.length == 0)
+		if (types.length == 0 || types.length == args.length)
 			return args;
 		int index = args.length - 1;
 		int i = args.length - 1;
-		for (int j = types.length - 1; j > 0; j--) {
+		for (int j = types.length - 1; j >= 0; j--) {
 			String type = types[j];
 			if ("J".equals(type) || "D".equals(type)) {
 				i--;
@@ -436,21 +436,24 @@ public class DexOpcodeAdapter implements DexOpcodes {
 			args[index--] = args[i--];
 		}
 		switch (i) {
-		case 0:
+		case -1:
 			break;
-		case 1:
+		case 0:
 			args[index--] = args[i--];
 			break;
 		default:
 			throw new RuntimeException("Should never happen.");
 		}
-		int length = args.length - index;
+		int start = index + 1;
+		if (start == 0)
+			return args;
+		int length = args.length - start;
 		int[] nArgs = new int[length];
-		System.arraycopy(args, index, nArgs, 0, length);
+		System.arraycopy(args, start, nArgs, 0, length);
 		return nArgs;
 	}
 
-	private static int[] getRangeValues(int arg1, int value) {
+	private static int[] getValues(int arg1, int value) {
 		int size = (arg1 >> 4) & 0xf;
 		int[] a = new int[size];
 		for (int i = 0; i < size && i < 4; i++) {

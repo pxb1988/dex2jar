@@ -20,7 +20,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 */
 	public DexClassVisitor visit(int accessFlags, String className, String superClass, String... interfaceNames) {
 
-		return null;
+		return this;
 	}
 
 	/*
@@ -41,7 +41,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 */
 	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
 
-		return null;
+		return this;
 	}
 
 	/*
@@ -53,7 +53,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 */
 	public DexFieldVisitor visitField(Field field, Object value) {
 
-		return null;
+		return this;
 	}
 
 	/*
@@ -65,7 +65,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 */
 	public DexMethodVisitor visitMethod(Method method) {
 
-		return null;
+		return this;
 	}
 
 	/*
@@ -86,7 +86,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 */
 	public DexCodeVisitor visitCode() {
 
-		return null;
+		return this;
 	}
 
 	/*
@@ -98,7 +98,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 */
 	public DexAnnotationAble visitParamesterAnnotation(int index) {
 
-		return null;
+		return this;
 	}
 
 	/*
@@ -360,7 +360,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 */
 	public DexAnnotationVisitor visitAnnotation(String name, String desc) {
 
-		return null;
+		return this;
 	}
 
 	/*
@@ -372,7 +372,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 */
 	public DexAnnotationVisitor visitArray(String name) {
 
-		return null;
+		return this;
 	}
 
 	/*

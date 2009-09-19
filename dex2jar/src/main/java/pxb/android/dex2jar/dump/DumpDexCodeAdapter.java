@@ -4,6 +4,7 @@
 package pxb.android.dex2jar.dump;
 
 import org.objectweb.asm.Type;
+import org.objectweb.asm.xwork.Opcodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,12 +23,14 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	private static final Logger log = LoggerFactory.getLogger(DumpDexCodeAdapter.class);
 
 	int _index;
+	Method m;
 
 	/**
 	 * @param dcv
 	 */
-	public DumpDexCodeAdapter(DexCodeVisitor dcv) {
+	public DumpDexCodeAdapter(DexCodeVisitor dcv, Method m) {
 		super(dcv);
+		this.m = m;
 	}
 
 	protected void info(int opcode, String format, Object... args) {
@@ -45,6 +48,17 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		log.info(String.format("%20s:%d,", "reg_size", total_registers_size));
 		log.info(String.format("%20s:%d,", "in_reg_size", in_register_size));
 		log.info(String.format("%20s:%d,", "ins_size", instruction_size));
+		int i = total_registers_size - in_register_size;
+		if ((m.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
+			log.info(String.format("%20s:v%d   //%s", "this", i++, Type.getType(m.getOwner()).getClassName()));
+		}
+		for (String type : m.getType().getParameterTypes()) {
+			if ("D".equals(type) || "J".equals(type)) {
+				log.info(String.format("%20s:v%d,v%d   //%s", "", i++, i++, Type.getType(type).getClassName()));
+			} else {
+				log.info(String.format("%20s:v%d   //%s", "", i++, Type.getType(type).getClassName()));
+			}
+		}
 		super.visit(total_registers_size, in_register_size, instruction_size);
 	}
 
