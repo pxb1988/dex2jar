@@ -128,6 +128,7 @@ public class Dump implements DexFileVisitor {
 						.getAccessFlags())));
 				log.info(String.format("%20s:%s", "name", field.getName()));
 				log.info(String.format("%20s:%s", "type", Type.getType(field.getType()).getClassName()));
+				log.info(String.format("%20s:%s", "", field));
 				if (value != null)
 					log.info(String.format("%20s:%s", "value", value));
 				return dcv.visitField(field, value);
@@ -145,6 +146,7 @@ public class Dump implements DexFileVisitor {
 				log.info(String.format("%20s:%s", "describe", method.getType().toString()));
 				log.info(String.format("%20s:%s", "return", Type.getType(method.getType().getReturnType())
 						.getClassName()));
+				log.info(String.format("%20s:%s", "", method));
 				log.info(String.format("%20s:%d", "args", method.getType().getParameterTypes().length));
 				for (int i = 0; i < method.getType().getParameterTypes().length; i++) {
 					log.info(String.format("%20s:[%2d]%s", "", i, Type.getType(method.getType().getParameterTypes()[i])

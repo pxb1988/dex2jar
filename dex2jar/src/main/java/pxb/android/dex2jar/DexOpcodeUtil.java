@@ -477,6 +477,30 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 			return F2D;
 		case OP_ARRAY_LENGTH:
 			return ARRAYLENGTH;
+		case OP_APUT: // int
+			return IASTORE;
+		case OP_APUT_BOOLEAN:
+		case OP_APUT_BYTE:
+			return BASTORE;
+		case OP_APUT_CHAR:
+			return CASTORE;
+		case OP_APUT_OBJECT:
+			return AASTORE;
+		case OP_APUT_SHORT:
+			return SASTORE;
+		case OP_APUT_WIDE: // long
+			return LASTORE;
+		case OP_AGET:
+			return IALOAD;
+		case OP_AGET_BOOLEAN:
+		case OP_AGET_BYTE:
+			return BALOAD;
+		case OP_AGET_CHAR:
+			return CALOAD;
+		case OP_AGET_SHORT:
+			return SALOAD;
+		case OP_AGET_WIDE:
+			return LALOAD;
 		default:
 			throw new RuntimeException("Not support");
 		}
