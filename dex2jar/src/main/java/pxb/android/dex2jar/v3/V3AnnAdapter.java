@@ -6,8 +6,11 @@ package pxb.android.dex2jar.v3;
 import java.util.List;
 
 import org.objectweb.asm.AnnotationVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.Field;
+import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 
@@ -18,6 +21,7 @@ import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 public class V3AnnAdapter implements DexAnnotationVisitor {
 
 	Ann ann;
+	private static final Logger logger = LoggerFactory.getLogger(V3AnnAdapter.class);
 
 	public static void accept(List<Item> items, AnnotationVisitor av) {
 		if (av == null)
@@ -38,6 +42,8 @@ public class V3AnnAdapter implements DexAnnotationVisitor {
 			} else if (v instanceof Field) {
 				Field e = (Field) v;
 				av.visitEnum(item.name, e.getType(), e.getName());
+			} else if (v instanceof Method) {
+				logger.warn("Find Method Annotation:{}", v);
 			} else {
 				av.visit(item.name, v);
 			}

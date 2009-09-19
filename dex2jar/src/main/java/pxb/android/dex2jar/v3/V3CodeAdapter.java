@@ -412,7 +412,13 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_ADD_INT_2ADDR:
 		case OP_ADD_LONG_2ADDR:
 		case OP_ADD_FLOAT_2ADDR:
-		case OP_ADD_DOUBLE_2ADDR: {
+		case OP_ADD_DOUBLE_2ADDR:
+		case OP_SHR_LONG_2ADDR:
+		case OP_SHL_LONG_2ADDR:
+		case OP_USHR_LONG_2ADDR:
+		case OP_SHR_INT_2ADDR:
+		case OP_SHL_INT_2ADDR:
+		case OP_USHR_INT_2ADDR: {
 			int load = 0;
 			int store = 0;
 			switch (opcode) {
@@ -423,7 +429,10 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_XOR_INT_2ADDR:
 			case OP_ADD_INT_2ADDR:
 			case OP_REM_INT_2ADDR:
-			case OP_DIV_INT_2ADDR: {
+			case OP_DIV_INT_2ADDR:
+			case OP_SHR_INT_2ADDR:
+			case OP_SHL_INT_2ADDR:
+			case OP_USHR_INT_2ADDR: {
 				load = ILOAD;
 				store = ISTORE;
 			}
@@ -435,7 +444,10 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_OR_LONG_2ADDR:
 			case OP_XOR_LONG_2ADDR:
 			case OP_REM_LONG_2ADDR:
-			case OP_DIV_LONG_2ADDR: {
+			case OP_DIV_LONG_2ADDR:
+			case OP_SHR_LONG_2ADDR:
+			case OP_SHL_LONG_2ADDR:
+			case OP_USHR_LONG_2ADDR: {
 				load = LLOAD;
 				store = LSTORE;
 			}
@@ -470,6 +482,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_INT_TO_CHAR:
 		case OP_INT_TO_FLOAT:
 		case OP_INT_TO_DOUBLE:
+		case OP_INT_TO_LONG:
 		case OP_LONG_TO_DOUBLE:
 		case OP_LONG_TO_FLOAT:
 		case OP_LONG_TO_INT:
@@ -526,6 +539,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_INT_TO_DOUBLE: {
 				load = ILOAD;
 				store = DSTORE;
+			}
+				break;
+			case OP_INT_TO_LONG: {
+				load = ILOAD;
+				store = LSTORE;
 			}
 				break;
 			case OP_LONG_TO_DOUBLE: {
@@ -676,7 +694,13 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_REM_FLOAT:
 		case OP_REM_DOUBLE:
 		case OP_CMPL_DOUBLE:
-		case OP_CMPL_FLOAT: {
+		case OP_CMPL_FLOAT:
+		case OP_SHR_INT:
+		case OP_SHL_INT:
+		case OP_USHR_INT:
+		case OP_SHR_LONG:
+		case OP_SHL_LONG:
+		case OP_USHR_LONG: {
 			int load = 0;
 			int store = 0;
 			switch (opcode) {
@@ -688,7 +712,10 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_DIV_INT:
 			case OP_MUL_INT:
 			case OP_REM_INT:
-			case OP_ADD_INT: {
+			case OP_ADD_INT:
+			case OP_SHR_INT:
+			case OP_SHL_INT:
+			case OP_USHR_INT: {
 				load = ILOAD;
 				store = ISTORE;
 			}
@@ -702,7 +729,10 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_MUL_LONG:
 			case OP_CMP_LONG:
 			case OP_REM_LONG:
-			case OP_DIV_LONG: {
+			case OP_DIV_LONG:
+			case OP_SHR_LONG:
+			case OP_SHL_LONG:
+			case OP_USHR_LONG: {
 				load = ILOAD;
 				store = ISTORE;
 			}

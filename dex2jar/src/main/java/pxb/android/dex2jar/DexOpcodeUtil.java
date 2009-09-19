@@ -347,6 +347,18 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 			return FDIV;
 		case OP_DIV_DOUBLE_2ADDR:
 			return DDIV;
+		case OP_SHR_LONG_2ADDR:
+			return LSHR;
+		case OP_SHL_LONG_2ADDR:
+			return LSHL;
+		case OP_USHR_LONG_2ADDR:
+			return LUSHR;
+		case OP_SHR_INT_2ADDR:
+			return ISHR;
+		case OP_SHL_INT_2ADDR:
+			return ISHL;
+		case OP_USHR_INT_2ADDR:
+			return IUSHR;
 
 		case OP_AND_LONG:
 			return LAND;
@@ -360,7 +372,18 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 			return LXOR;
 		case OP_XOR_INT:
 			return IXOR;
-
+		case OP_SHR_INT:
+			return ISHR;
+		case OP_SHL_INT:
+			return ISHL;
+		case OP_USHR_INT:
+			return IUSHR;
+		case OP_SHR_LONG:
+			return LSHR;
+		case OP_SHL_LONG:
+			return LSHL;
+		case OP_USHR_LONG:
+			return LUSHR;
 		case OP_ADD_INT:
 			return IADD;
 		case OP_ADD_LONG:
@@ -501,6 +524,7 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 			return SALOAD;
 		case OP_AGET_WIDE:
 			return LALOAD;
+
 		default:
 			throw new RuntimeException("Not support");
 		}
