@@ -12,9 +12,9 @@ import org.junit.Test;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
+import pxb.android.dex2jar.ClassVisitorFactory;
 import pxb.android.dex2jar.dump.Dump;
 import pxb.android.dex2jar.reader.DexFileReader;
-import pxb.android.dex2jar.v1.ClassVisitorFactory;
 import pxb.android.dex2jar.v3.V3;
 import pxb.android.dex2jar.v3.V3AccessFlagsAdapter;
 

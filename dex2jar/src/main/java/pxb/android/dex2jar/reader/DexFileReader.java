@@ -21,7 +21,6 @@ import pxb.android.dex2jar.Dex;
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.Proto;
-import pxb.android.dex2jar.v1.Constant;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexClassVisitor;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;

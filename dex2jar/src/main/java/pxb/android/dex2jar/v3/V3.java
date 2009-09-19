@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.objectweb.asm.ClassVisitor;
 
+import pxb.android.dex2jar.ClassVisitorFactory;
 import pxb.android.dex2jar.asm.TypeNameAdapter;
-import pxb.android.dex2jar.v1.ClassVisitorFactory;
 import pxb.android.dex2jar.visitors.DexClassVisitor;
 import pxb.android.dex2jar.visitors.DexFileVisitor;
 
