@@ -365,7 +365,8 @@ public class DexFileReader implements Dex {
 		return desc;
 	}
 
-	protected int visitField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions, Object value) {
+	protected int visitField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions,
+			Object value) {
 		int diff = (int) in.readUnsignedLeb128();
 		int field_id = lastIndex + diff;
 		Field field = getField(field_id);
@@ -386,7 +387,8 @@ public class DexFileReader implements Dex {
 		return field_id;
 	}
 
-	protected int visitMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos, Map<Integer, Integer> parameterAnnos) {
+	protected int visitMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos,
+			Map<Integer, Integer> parameterAnnos) {
 		int diff = (int) in.readUnsignedLeb128();
 		int method_id = lastIndex + diff;
 		Method method = getMethod(method_id);
@@ -424,7 +426,7 @@ public class DexFileReader implements Dex {
 				DexCodeVisitor dcv = dmv.visitCode();
 				if (dcv != null) {
 					try {
-						new DexCodeReader(this, in).accept(dcv);
+						new DexCodeReader(this, in, method).accept(dcv);
 					} catch (Exception e) {
 						throw new RuntimeException("Error in method:[" + method + "]", e);
 					}

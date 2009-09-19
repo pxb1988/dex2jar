@@ -10,6 +10,7 @@ import java.util.List;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.tree.MethodNode;
 
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.v3.Ann.Item;
@@ -29,6 +30,7 @@ public class V3MethodAdapter implements DexMethodVisitor {
 	protected Method method;
 	protected MethodVisitor mv;
 	protected List<Ann>[] paramAnns;
+	protected MethodNode methodNode;
 
 	/**
 	 * @param cv
@@ -65,20 +67,24 @@ public class V3MethodAdapter implements DexMethodVisitor {
 					}
 				}
 			}
-			MethodVisitor mv = cv.visitMethod(method.getAccessFlags(), method.getName(), method.getType().getDesc(), null, exceptions);
-			for (Ann ann : anns) {
-				AnnotationVisitor av = mv.visitAnnotation(ann.type, ann.visible == 1);
-				V3AnnAdapter.accept(ann.items, av);
-				av.visitEnd();
-			}
-			for (int i = 0; i < paramAnns.length; i++) {
-				for (Ann ann : paramAnns[i]) {
-					AnnotationVisitor av = mv.visitParameterAnnotation(i, ann.type, ann.visible == 1);
+			MethodVisitor mv = cv.visitMethod(method.getAccessFlags(), method.getName(), method.getType().getDesc(),
+					null, exceptions);
+			if (mv != null) {
+				methodNode = new MethodNode(method.getAccessFlags(), method.getName(), method.getType().getDesc(),
+						null, exceptions);
+				for (Ann ann : anns) {
+					AnnotationVisitor av = mv.visitAnnotation(ann.type, ann.visible == 1);
 					V3AnnAdapter.accept(ann.items, av);
 					av.visitEnd();
 				}
+				for (int i = 0; i < paramAnns.length; i++) {
+					for (Ann ann : paramAnns[i]) {
+						AnnotationVisitor av = mv.visitParameterAnnotation(i, ann.type, ann.visible == 1);
+						V3AnnAdapter.accept(ann.items, av);
+						av.visitEnd();
+					}
+				}
 			}
-
 			this.mv = mv;
 			build = true;
 		}
@@ -106,7 +112,7 @@ public class V3MethodAdapter implements DexMethodVisitor {
 		build();
 		if (mv == null)
 			return null;
-		return new V3CodeAdapter(method, mv);
+		return new V3CodeAdapter(method, methodNode);
 	}
 
 	/*
@@ -116,8 +122,10 @@ public class V3MethodAdapter implements DexMethodVisitor {
 	 */
 	public void visitEnd() {
 		build();
-		if (mv != null)
-			mv.visitEnd();
+		if (mv != null) {
+			methodNode.accept(mv);
+			// mv.visitEnd();
+		}
 	}
 
 	/*

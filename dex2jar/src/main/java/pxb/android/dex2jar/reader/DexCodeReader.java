@@ -3,6 +3,7 @@
  */
 package pxb.android.dex2jar.reader;
 
+import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +12,7 @@ import pxb.android.dex2jar.Dex;
 import pxb.android.dex2jar.DexOpcodeDump;
 import pxb.android.dex2jar.DexOpcodeUtil;
 import pxb.android.dex2jar.DexOpcodes;
+import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
 /**
@@ -20,16 +22,17 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
 public class DexCodeReader implements DexOpcodes {
 	private Dex dex;
 	private DataIn in;
-	// private Method method;
+	private Method method;
 	private static final Logger log = LoggerFactory.getLogger(DexCodeReader.class);
 
 	/**
 	 * @param dexReader
 	 * @param in
 	 */
-	public DexCodeReader(Dex dex, DataIn in) {
+	public DexCodeReader(Dex dex, DataIn in, Method method) {
 		this.dex = dex;
 		this.in = in;
+		this.method = method;
 	}
 
 	/**
@@ -45,7 +48,29 @@ public class DexCodeReader implements DexOpcodes {
 		int tries_size = in.readShortx();
 		int debug_off = in.readIntx();
 		int instruction_size = in.readIntx();
-		dcv.visit(total_registers_size, in_register_size, instruction_size);
+//		// for v2
+//		dcv.visit(total_registers_size, in_register_size, instruction_size);
+		// for v3
+		{
+			int args[];
+			int args_index;
+			int i = total_registers_size - in_register_size;
+			if ((method.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
+				args = new int[method.getType().getParameterTypes().length + 1];
+				args[0] = i++;
+				args_index = 1;
+			} else {
+				args = new int[method.getType().getParameterTypes().length];
+				args_index = 0;
+			}
+			for (String type : method.getType().getParameterTypes()) {
+				args[args_index++] = i++;
+				if ("D".equals(type) || "J".equals(type)) {
+					i++;
+				}
+			}
+			dcv.visitInitLocal(args);
+		}
 		if (tries_size > 0) {
 			in.push();
 			in.skip(instruction_size * 2);
@@ -99,7 +124,8 @@ public class DexCodeReader implements DexOpcodes {
 			case 2: {
 				int a = in.readByte();
 				short b = in.readShortx();
-				log.debug(String.format("%04x| %02x%02x %04x      %s", i, opcode, a, Short.reverseBytes(b), DexOpcodeDump.dump(opcode)));
+				log.debug(String.format("%04x| %02x%02x %04x      %s", i, opcode, a, Short.reverseBytes(b),
+						DexOpcodeDump.dump(opcode)));
 				tadoa.visit(opcode, a, b);
 				i += 2;
 				break;
@@ -108,7 +134,8 @@ public class DexCodeReader implements DexOpcodes {
 				int a = in.readByte();
 				short b = in.readShortx();
 				short c = in.readShortx();
-				log.debug(String.format("%04x| %02x%02x %04x %04x %s", i, opcode, a, Short.reverseBytes(b), Short.reverseBytes(c), DexOpcodeDump.dump(opcode)));
+				log.debug(String.format("%04x| %02x%02x %04x %04x %s", i, opcode, a, Short.reverseBytes(b), Short
+						.reverseBytes(c), DexOpcodeDump.dump(opcode)));
 				tadoa.visit(opcode, a, b, c);
 				i += 3;
 				break;
@@ -202,7 +229,8 @@ public class DexCodeReader implements DexOpcodes {
 			}
 				break;
 			default:
-				throw new RuntimeException(String.format("Not support Opcode :0x%02x=%s @[0x%04x]", opcode, DexOpcodeDump.dump(opcode), i));
+				throw new RuntimeException(String.format("Not support Opcode :0x%02x=%s @[0x%04x]", opcode,
+						DexOpcodeDump.dump(opcode), i));
 			}
 		}
 		dcv.visitEnd();

@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
@@ -42,22 +41,19 @@ public class V3CodeAdapter implements DexCodeVisitor {
 		this.mv = mv;
 	}
 
+	public void visitInitLocal(int... args) {
+		for (int i : args) {
+			map(i);
+		}
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visit(int, int, int)
 	 */
 	public void visit(int total_registers_size, int in_register_size, int instruction_size) {
-		int i = total_registers_size - in_register_size;
-		if ((method.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
-			map(i++);
-		}
-		for (String type : method.getType().getParameterTypes()) {
-			map(i++);
-			if ("D".equals(type) || "J".equals(type)) {
-				i++;
-			}
-		}
+		// do nothing
 	}
 
 	/*

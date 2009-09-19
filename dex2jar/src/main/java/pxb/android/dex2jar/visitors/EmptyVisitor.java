@@ -10,7 +10,8 @@ import pxb.android.dex2jar.Method;
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
-public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor, DexCodeVisitor, DexAnnotationVisitor {
+public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor,
+		DexCodeVisitor, DexAnnotationVisitor {
 
 	/*
 	 * (non-Javadoc)
@@ -99,15 +100,6 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	public DexAnnotationAble visitParamesterAnnotation(int index) {
 
 		return this;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visit(int, int, int)
-	 */
-	public void visit(int totalRegistersSize, int inRegisterSize, int instructionSize) {
-
 	}
 
 	/*
@@ -383,6 +375,10 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 * .String, java.lang.String, java.lang.String)
 	 */
 	public void visitEnum(String name, String desc, String value) {
+
+	}
+
+	public void visitInitLocal(int... args) {
 
 	}
 

@@ -1005,4 +1005,8 @@ public class ToAsmDexCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes 
 			mv.visitInsn(store);
 		}
 	}
+
+	public void visitInitLocal(int... args) {
+		// do nothing
+	}
 }

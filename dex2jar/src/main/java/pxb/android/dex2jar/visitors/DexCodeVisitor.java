@@ -13,11 +13,10 @@ import pxb.android.dex2jar.Method;
 public interface DexCodeVisitor {
 
 	/**
-	 * @param total_registers_size
-	 * @param in_register_size
-	 * @param instruction_size
+	 * 
+	 * @param args
 	 */
-	void visit(int total_registers_size, int in_register_size, int instruction_size);
+	void visitInitLocal(int... args);
 
 	/**
 	 * <pre>

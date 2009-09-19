@@ -21,14 +21,6 @@ public class DexCodeAdapter implements DexCodeVisitor {
 		this.dcv = dcv;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visit(int, int, int)
-	 */
-	public void visit(int total_registers_size, int in_register_size, int instruction_size) {
-		dcv.visit(total_registers_size, in_register_size, instruction_size);
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -267,6 +259,10 @@ public class DexCodeAdapter implements DexCodeVisitor {
 	 */
 	public void visitFilledNewArrayIns(int opcode, String type, int[] regs) {
 		dcv.visitFilledNewArrayIns(opcode, type, regs);
+	}
+
+	public void visitInitLocal(int... args) {
+		dcv.visitInitLocal(args);
 	}
 
 }

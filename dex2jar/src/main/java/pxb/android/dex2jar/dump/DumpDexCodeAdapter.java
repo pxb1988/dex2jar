@@ -38,28 +38,17 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		log.info(String.format("%02x|%-20s|%04x|%s", opcode, DexOpcodeDump.dump(opcode), this._index, s));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visit(int, int, int)
-	 */
 	@Override
-	public void visit(int total_registers_size, int in_register_size, int instruction_size) {
-		log.info(String.format("%20s:%d,", "reg_size", total_registers_size));
-		log.info(String.format("%20s:%d,", "in_reg_size", in_register_size));
-		log.info(String.format("%20s:%d,", "ins_size", instruction_size));
-		int i = total_registers_size - in_register_size;
+	public void visitInitLocal(int... args) {
+		log.info(String.format("%20s====", ""));
+		int i = 0;
 		if ((m.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
-			log.info(String.format("%20s:v%d   //%s", "this", i++, Type.getType(m.getOwner()).getClassName()));
+			log.info(String.format("%20s:v%d   //%s", "this", args[i++], Type.getType(m.getOwner()).getClassName()));
 		}
 		for (String type : m.getType().getParameterTypes()) {
-			if ("D".equals(type) || "J".equals(type)) {
-				log.info(String.format("%20s:v%d,v%d   //%s", "", i++, i++, Type.getType(type).getClassName()));
-			} else {
-				log.info(String.format("%20s:v%d   //%s", "", i++, Type.getType(type).getClassName()));
-			}
+			log.info(String.format("%20s:v%d   //%s", "", args[i++], Type.getType(type).getClassName()));
 		}
-		super.visit(total_registers_size, in_register_size, instruction_size);
+		super.visitInitLocal(args);
 	}
 
 	private static String c(String type) {
