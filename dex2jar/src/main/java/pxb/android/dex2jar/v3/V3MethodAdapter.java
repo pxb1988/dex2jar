@@ -6,13 +6,18 @@ package pxb.android.dex2jar.v3;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Stack;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import pxb.android.dex2jar.Method;
+import pxb.android.dex2jar.optimize.Load;
+import pxb.android.dex2jar.optimize.New;
 import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
@@ -23,7 +28,7 @@ import pxb.android.dex2jar.visitors.DexMethodVisitor;
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
-public class V3MethodAdapter implements DexMethodVisitor {
+public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	protected List<Ann> anns = new ArrayList<Ann>();
 	protected boolean build = false;
 	protected ClassVisitor cv;
@@ -54,7 +59,7 @@ public class V3MethodAdapter implements DexMethodVisitor {
 			for (Iterator<Ann> it = anns.iterator(); it.hasNext();) {
 				Ann ann = it.next();
 				if ("Ldalvik/annotation/Throws;".equals(ann.type)) {
-					// it.remove();
+					it.remove();
 					for (Item item : ann.items) {
 						if (item.name.equals("value")) {
 							Ann values = (Ann) item.value;
@@ -123,8 +128,10 @@ public class V3MethodAdapter implements DexMethodVisitor {
 	public void visitEnd() {
 		build();
 		if (mv != null) {
+			// New.transform(methodNode.instructions);
+			// Load.transform(methodNode.instructions);
 			methodNode.accept(mv);
-			// mv.visitEnd();
+
 		}
 	}
 

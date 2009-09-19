@@ -27,7 +27,9 @@ public class Main {
 		for (String file : args) {
 			try {
 				File dex = new File(file);
-				final File gen = new File(file + "." + (System.currentTimeMillis() / 1000) + ".g");
+				// final File gen = new File(file + "." +
+				// (System.currentTimeMillis() / 1000) + ".g");
+				final File gen = new File(file + ".g");
 				byte[] data = FileUtils.readFileToByteArray(dex);
 				DexFileReader reader = new DexFileReader(data);
 				V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();

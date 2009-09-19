@@ -30,14 +30,14 @@ public class V3Test {
 		// File("target/gen_test.jar")));
 		// zos.setComment("Create by dex2jar version:" + Version.version);
 		final File base = new File("target/g/");
-		DexFileReader reader = new DexFileReader(new File("target/test-classes/test/Anno.dex"));
+		DexFileReader reader = new DexFileReader(new File("target/test-classes/pxb/android/i_jetty.dex"));
 		V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
 		reader.accept(afa);
 		reader.accept(new Dump(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-				// if (!name.equals("org/mortbay/jetty/handler/DefaultHandler"))
-				// return null;
-				return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
+				if (!name.equals("javax/servlet/GenericServlet"))
+					return null;
+				return new ClassWriter(0) {
 					/*
 					 * (non-Javadoc)
 					 * 
