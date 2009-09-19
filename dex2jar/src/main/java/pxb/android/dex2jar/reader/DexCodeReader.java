@@ -3,6 +3,9 @@
  */
 package pxb.android.dex2jar.reader;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +38,21 @@ public class DexCodeReader implements DexOpcodes {
 		this.method = method;
 	}
 
+	Map<Integer, Integer> labels = new HashMap<Integer, Integer>();
+	int labels_index;
+
+	public void order(int offset) {
+		if (!labels.containsKey(offset)) {
+			labels.put(offset, this.labels_index++);
+		}
+	}
+
 	/**
 	 * @param dcv
 	 */
 	public void accept(DexCodeVisitor dcv) {
 		DataIn in = this.in;
-		DexOpcodeAdapter tadoa = new DexOpcodeAdapter(dex, dcv);
+		DexOpcodeAdapter tadoa = new DexOpcodeAdapter(dex, dcv, this.labels);
 		int total_registers_size = in.readShortx();
 		int in_register_size = in.readShortx();
 		// int outs_size =
@@ -48,8 +60,8 @@ public class DexCodeReader implements DexOpcodes {
 		int tries_size = in.readShortx();
 		int debug_off = in.readIntx();
 		int instruction_size = in.readIntx();
-//		// for v2
-//		dcv.visit(total_registers_size, in_register_size, instruction_size);
+		// // for v2
+		// dcv.visit(total_registers_size, in_register_size, instruction_size);
 		// for v3
 		{
 			int args[];
@@ -71,6 +83,7 @@ public class DexCodeReader implements DexOpcodes {
 			}
 			dcv.visitInitLocal(args);
 		}
+
 		if (tries_size > 0) {
 			in.push();
 			in.skip(instruction_size * 2);
@@ -92,12 +105,21 @@ public class DexCodeReader implements DexOpcodes {
 				for (int k = 0; k < listSize; k++) {
 					int type_id = (int) in.readUnsignedLeb128();
 					int handler = (int) in.readUnsignedLeb128();
+					order(start);
+					order(start + offset);
+					order(handler);
 					String type = dex.getType(type_id);
-					dcv.visitTryCatch(start, offset, handler, type);
+					dcv.visitTryCatch(this.labels.get(start), this.labels.get(start + offset),
+							this.labels.get(handler), type);
 				}
 				if (catchAll) {
 					int handler = (int) in.readUnsignedLeb128();
-					dcv.visitTryCatch(start, offset, handler, null);
+					order(start);
+					order(start + offset);
+					order(handler);
+					dcv.visitTryCatch(this.labels.get(start), this.labels.get(start + offset),
+							this.labels.get(handler), null);
+
 				}
 				in.pop();
 			}
@@ -108,10 +130,112 @@ public class DexCodeReader implements DexOpcodes {
 			// new DexDebugInfoReader(in, dex,total_registers_size).accept(dcv);
 			// in.pop();
 		}
-
+		// search fo labels
+		in.push();
 		for (int i = 0; i < instruction_size;) {
 			int opcode = in.readByte() & 0xff;
-			dcv.visitLabel(i);
+			int size = DexOpcodeUtil.getSize(opcode);
+			switch (size) {
+			case 1: {
+				int a = in.readByte();
+				switch (opcode) {
+				case OP_GOTO:
+					order(i + ((byte) a));
+					break;
+				}
+				i += 1;
+				break;
+			}
+			case 2: {
+				in.readByte();
+				short b = in.readShortx();
+				switch (opcode) {
+				case OP_GOTO_16:
+				case OP_IF_EQZ:
+				case OP_IF_NEZ:
+				case OP_IF_LTZ:
+				case OP_IF_GEZ:
+				case OP_IF_GTZ:
+				case OP_IF_LEZ:
+				case OP_IF_EQ:
+				case OP_IF_NE:
+				case OP_IF_LT:
+				case OP_IF_GE:
+				case OP_IF_GT:
+				case OP_IF_LE:
+					order(i + b);
+					break;
+				}
+				i += 2;
+				break;
+			}
+			case 3: {
+				in.readByte();
+				in.readShortx();
+				in.readShortx();
+				i += 3;
+				break;
+			}
+			case 0:// OP_NOP
+				i = instruction_size;
+				break;
+			case -1: {
+				in.readByte();
+				int offset = in.readIntx();
+				in.push();
+				in.skip((offset - 3) * 2);
+				switch (opcode) {
+				case OP_SPARSE_SWITCH: {
+					{
+						in.readShortx();
+						int switch_size = in.readShortx();
+						for (int j = 0; j < switch_size; j++) {
+							in.readIntx();
+						}
+						for (int j = 0; j < switch_size; j++) {
+							order(i + in.readIntx());
+						}
+						order(i + 3);
+					}
+				}
+					break;
+				case OP_PACKED_SWITCH: {
+					{
+						in.readShortx();
+						int switch_size = in.readShortx();
+						in.readIntx();
+						for (int j = 0; j < switch_size; j++) {
+							int targetOffset = in.readIntx();
+							order(i + targetOffset);
+						}
+						order(i + 3);
+					}
+
+				}
+					break;
+				case OP_FILL_ARRAY_DATA:
+					break;
+				}
+				in.pop();
+				i += 3;
+			}
+				break;
+			case -2: {
+				in.readByte();
+				in.readLongx();
+				i += 4;
+			}
+				break;
+			}
+		}
+		in.pop();
+
+		//
+		for (int i = 0; i < instruction_size;) {
+			int opcode = in.readByte() & 0xff;
+			if (labels.containsKey(i))
+				dcv.visitLabel(labels.get(i));
+			tadoa.visitOffset(i);
 			int size = DexOpcodeUtil.getSize(opcode);
 			switch (size) {
 			case 1: {
@@ -159,9 +283,9 @@ public class DexCodeReader implements DexOpcodes {
 							cases[j] = in.readIntx();
 						}
 						for (int j = 0; j < switch_size; j++) {
-							label[j] = in.readIntx();
+							label[j] = labels.get(i + in.readIntx());
 						}
-						dcv.visitLookupSwitchInsn(opcode, reg, 3, cases, label);
+						dcv.visitLookupSwitchInsn(opcode, reg, this.labels.get(i + 3), cases, label);
 					}
 				}
 					break;
@@ -171,12 +295,12 @@ public class DexCodeReader implements DexOpcodes {
 						int switch_size = in.readShortx();
 						int first_case = in.readIntx();
 						int last_case = first_case - 1 + switch_size;
-						int labels[] = new int[switch_size];
+						int _labels[] = new int[switch_size];
 						for (int j = 0; j < switch_size; j++) {
 							int targetOffset = in.readIntx();
-							labels[j] = targetOffset;
+							_labels[j] = this.labels.get(i + targetOffset);
 						}
-						dcv.visitTableSwitchInsn(opcode, reg, first_case, last_case, 3, labels);
+						dcv.visitTableSwitchInsn(opcode, reg, first_case, last_case, this.labels.get(i + 3), _labels);
 					}
 
 				}

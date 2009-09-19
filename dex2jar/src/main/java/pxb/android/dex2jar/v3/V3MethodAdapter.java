@@ -6,17 +6,18 @@ package pxb.android.dex2jar.v3;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.commons.AnalyzerAdapter;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.BasicInterpreter;
 
 import pxb.android.dex2jar.Method;
-import pxb.android.dex2jar.optimize.Load;
 import pxb.android.dex2jar.optimize.New;
 import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
@@ -128,8 +129,17 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	public void visitEnd() {
 		build();
 		if (mv != null) {
-			// New.transform(methodNode.instructions);
+			New.transform(methodNode.instructions);
 			// Load.transform(methodNode.instructions);
+			// try {
+			// new Analyzer(new BasicInterpreter()).analyze(method.getOwner(),
+			// methodNode);
+			// } catch (AnalyzerException e) {
+			// e.printStackTrace();
+			// }
+			// mv = new AnalyzerAdapter(method.getOwner(),
+			// method.getAccessFlags(), method.getName(), method.getType()
+			// .getDesc(), mv);
 			methodNode.accept(mv);
 
 		}

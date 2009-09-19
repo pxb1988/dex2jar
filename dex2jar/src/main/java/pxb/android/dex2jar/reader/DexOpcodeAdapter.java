@@ -3,6 +3,8 @@
  */
 package pxb.android.dex2jar.reader;
 
+import java.util.Map;
+
 import pxb.android.dex2jar.Dex;
 import pxb.android.dex2jar.DexOpcodeDump;
 import pxb.android.dex2jar.DexOpcodes;
@@ -17,14 +19,17 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
 public class DexOpcodeAdapter implements DexOpcodes {
 	private DexCodeVisitor dcv;
 	private Dex dex;
+	Map<Integer, Integer> labels;
 
 	/**
 	 * @param dex
 	 * @param dcv2
+	 * @param labels
 	 */
-	public DexOpcodeAdapter(Dex dex, DexCodeVisitor dcv2) {
+	public DexOpcodeAdapter(Dex dex, DexCodeVisitor dcv2, Map<Integer, Integer> labels) {
 		this.dex = dex;
 		this.dcv = dcv2;
+		this.labels = labels;
 	}
 
 	// private static final Logger log =
@@ -111,7 +116,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		}
 			break;
 		case OP_GOTO: {
-			dcv.visitJumpInsn(opcode, (byte) arg1);
+			dcv.visitJumpInsn(opcode, this.labels.get(offset + ((byte) arg1)));
 		}
 			break;
 		case OP_RETURN_VOID: {
@@ -212,7 +217,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		case OP_IF_GTZ:
 		case OP_IF_LEZ: //
 		{
-			dcv.visitJumpInsn(opcode, arg2, arg1);
+			dcv.visitJumpInsn(opcode, this.labels.get(offset+arg2), arg1);
 		}
 			break;
 		case OP_IF_EQ:
@@ -223,7 +228,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		case OP_IF_LE: {
 			int reg1 = arg1 & 0xf;
 			int reg2 = (arg1 >> 4) & 0xf;
-			dcv.visitJumpInsn(opcode, arg2, reg1, reg2);
+			dcv.visitJumpInsn(opcode, this.labels.get(offset+arg2), reg1, reg2);
 		}
 			break;
 		case OP_IGET:
@@ -347,7 +352,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		}
 			break;
 		case OP_GOTO_16: {
-			dcv.visitJumpInsn(opcode, arg2);
+			dcv.visitJumpInsn(opcode, this.labels.get(offset+arg2));
 		}
 			break;
 		case OP_MOVE_OBJECT_FROM16:
@@ -464,5 +469,11 @@ public class DexOpcodeAdapter implements DexOpcodes {
 			a[4] = arg1 & 0xf;
 		}
 		return a;
+	}
+
+	int offset;
+
+	public void visitOffset(int i) {
+		this.offset = i;
 	}
 }

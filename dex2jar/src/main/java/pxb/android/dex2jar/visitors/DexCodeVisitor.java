@@ -253,9 +253,9 @@ public interface DexCodeVisitor {
 	 * </pre>
 	 * 
 	 * @param opcode
-	 * @param offset
+	 * @param label
 	 */
-	void visitJumpInsn(int opcode, int offset);
+	void visitJumpInsn(int opcode, int label);
 
 	/**
 	 * <pre>
@@ -268,10 +268,10 @@ public interface DexCodeVisitor {
 	 * </pre>
 	 * 
 	 * @param opcode
-	 * @param offset
+	 * @param label
 	 * @param reg
 	 */
-	void visitJumpInsn(int opcode, int offset, int reg);
+	void visitJumpInsn(int opcode, int label, int reg);
 
 	/**
 	 * <pre>
@@ -284,11 +284,11 @@ public interface DexCodeVisitor {
 	 * </pre>
 	 * 
 	 * @param opcode
-	 * @param offset
+	 * @param label
 	 * @param reg1
 	 * @param reg2
 	 */
-	void visitJumpInsn(int opcode, int offset, int reg1, int reg2);
+	void visitJumpInsn(int opcode, int label, int reg1, int reg2);
 
 	/**
 	 * 
@@ -324,11 +324,11 @@ public interface DexCodeVisitor {
 	 * 
 	 * @param opcode
 	 * @param reg
-	 * @param defaultOffset
+	 * @param defaultLabel
 	 * @param cases
-	 * @param offsets
+	 * @param labels
 	 */
-	void visitLookupSwitchInsn(int opcode, int reg, int defaultOffset, int[] cases, int[] offsets);
+	void visitLookupSwitchInsn(int opcode, int reg, int defaultLabel, int[] cases, int[] labels);
 
 	/**
 	 * <pre>
@@ -359,16 +359,16 @@ public interface DexCodeVisitor {
 	 * @param _defaultLabel
 	 * @param labels
 	 */
-	void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, int _defaultLabel, int[] labels);
+	void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, int defaultLabel, int[] labels);
 
 	/**
 	 * 
 	 * @param start
-	 * @param offset
+	 * @param end
 	 * @param handler
 	 * @param type
 	 */
-	void visitTryCatch(int start, int offset, int handler, String type);
+	void visitTryCatch(int start, int end, int handler, String type);
 
 	/**
 	 * <pre>

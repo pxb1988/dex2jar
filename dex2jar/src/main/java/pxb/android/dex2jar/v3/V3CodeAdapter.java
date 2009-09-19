@@ -167,11 +167,6 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitEnd()
 	 */
 	public void visitEnd() {
-		for (Map.Entry<Integer, Label> e : _labels.entrySet()) {
-			if (e.getKey() > this.now_offset) {
-				mv.visitLabel(e.getValue());
-			}
-		}
 		mv.visitEnd();
 	}
 
@@ -805,10 +800,9 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		}
 	}
 
-	int now_offset;
 
 	protected Label getLabel(int offset) {
-		return labels(now_offset + offset);
+		return labels(offset);
 	}
 
 	/*
@@ -816,8 +810,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * 
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitJumpInsn(int, int)
 	 */
-	public void visitJumpInsn(int opcode, int offset) {
-		Label label = getLabel(offset);
+	public void visitJumpInsn(int opcode, int _label) {
+		Label label = getLabel(_label);
 		switch (opcode) {
 		case OP_GOTO:
 		case OP_GOTO_16: {
@@ -891,8 +885,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLabel(int)
 	 */
 	public void visitLabel(int index) {
-		labels(index);
-		this.now_offset = index;
+		mv.visitLabel(labels(index));
 	}
 
 	/*
