@@ -27,6 +27,13 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	protected MethodVisitor mv;
 	int _regcount = 0;
 	Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+	int maxStack = 0;
+
+	void stack(int a) {
+		if (a > maxStack) {
+			maxStack = a;
+		}
+	}
 
 	private int map(int reg) {
 		Integer integer = map.get(reg);
@@ -70,6 +77,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(ILOAD, map(index));
 			mv.visitVarInsn(ILOAD, map(regFromOrTo));
 			mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
+			stack(3);
 		}
 			break;
 		case OP_APUT_WIDE: // long
@@ -78,6 +86,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(ILOAD, map(index));
 			mv.visitVarInsn(LLOAD, map(regFromOrTo));
 			mv.visitInsn(LASTORE);
+			stack(3);
 		}
 			break;
 		case OP_APUT_OBJECT: {
@@ -85,6 +94,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(ILOAD, map(index));
 			mv.visitVarInsn(ALOAD, map(regFromOrTo));
 			mv.visitInsn(AASTORE);
+			stack(3);
 		}
 			break;
 		case OP_AGET:
@@ -96,6 +106,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(ILOAD, map(index));
 			mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
 			mv.visitVarInsn(ISTORE, map(regFromOrTo));
+			stack(2);
 		}
 			break;
 		case OP_AGET_WIDE: {
@@ -103,6 +114,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(ILOAD, map(index));
 			mv.visitInsn(LALOAD);
 			mv.visitVarInsn(LSTORE, map(regFromOrTo));
+			stack(2);
 		}
 			break;
 		case OP_AGET_OBJECT: {
@@ -110,6 +122,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(ILOAD, map(index));
 			mv.visitInsn(AALOAD);
 			mv.visitVarInsn(ASTORE, map(regFromOrTo));
+			stack(2);
 		}
 			break;
 		default:
@@ -153,6 +166,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 				break;
 			}
 			mv.visitVarInsn(ASTORE, map(saveToReg));
+			stack(2);
 		}
 			break;
 		default:
@@ -167,6 +181,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitEnd()
 	 */
 	public void visitEnd() {
+		mv.visitMaxs(this.maxStack, this._regcount);
 		mv.visitEnd();
 	}
 
@@ -201,6 +216,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 				break;
 			}
 			mv.visitFieldInsn(PUTSTATIC, field.getOwner(), field.getName(), field.getType());
+			stack(1);
 		}
 			break;
 		case OP_SGET_OBJECT:// sget-object
@@ -226,6 +242,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 				mv.visitVarInsn(ISTORE, map(reg));
 				break;
 			}
+			stack(1);
 		}
 			break;
 		default:
@@ -267,6 +284,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 				mv.visitVarInsn(ASTORE, map(regFromOrTo));
 				break;
 			}
+			stack(1);
 		}
 			break;
 
@@ -293,6 +311,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 				mv.visitVarInsn(ALOAD, map(regFromOrTo));
 				break;
 			}
+			stack(2);
 			mv.visitFieldInsn(PUTFIELD, field.getOwner(), field.getName(), field.getType());
 		}
 			break;
@@ -332,6 +351,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitLdcInsn(values[i]);
 			mv.visitInsn(op);
 		}
+		stack(3);
 	}
 
 	/*
@@ -376,6 +396,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(load, map(regs[i]));
 			mv.visitInsn(store);
 		}
+		stack(4);
 	}
 
 	/*
@@ -466,6 +487,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(load, map(opReg));
 			mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
 			mv.visitVarInsn(store, map(saveToReg));
+			stack(2);
 		}
 			break;
 		case OP_NEG_INT:
@@ -595,6 +617,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(load, map(opReg));
 			mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
 			mv.visitVarInsn(store, map(saveToReg));
+			stack(1);
 		}
 			break;
 		case OP_MOVE_OBJECT:
@@ -627,6 +650,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			}
 			mv.visitVarInsn(load, map(opReg));
 			mv.visitVarInsn(store, map(saveToReg));
+			stack(1);
 		}
 			break;
 		default:
@@ -658,6 +682,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitLdcInsn(opValueOrReg);
 			mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
 			mv.visitVarInsn(ISTORE, map(saveToReg));
+			stack(2);
 		}
 			break;
 
@@ -758,6 +783,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitVarInsn(load, map(opValueOrReg));
 			mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
 			mv.visitVarInsn(store, map(saveToReg));
+			stack(2);
 		}
 			break;
 
@@ -772,6 +798,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			mv.visitLdcInsn(opValueOrReg);
 			mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
 			mv.visitVarInsn(ISTORE, map(saveToReg));
+			stack(2);
 		}
 			break;
 
@@ -799,7 +826,6 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 					.dump(opcode)));
 		}
 	}
-
 
 	protected Label getLabel(int offset) {
 		return labels(offset);
@@ -834,6 +860,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	public void visitJumpInsn(int opcode, int offset, int reg) {
 		Label label = getLabel(offset);
 		mv.visitVarInsn(ILOAD, map(reg));
+		stack(1);
 		switch (opcode) {
 		case OP_IF_NEZ: {
 			mv.visitJumpInsn(IFNE, label);
@@ -877,6 +904,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		mv.visitVarInsn(ILOAD, map(reg2));
 		mv.visitVarInsn(ILOAD, map(reg1));
 		mv.visitJumpInsn(DexOpcodeUtil.mapOpcode(opcode), label);
+		stack(2);
 	}
 
 	/*
@@ -900,6 +928,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		{
 			mv.visitLdcInsn(value);
 			mv.visitVarInsn(ASTORE, map(reg));
+			stack(1);
 		}
 			break;
 		case OP_CONST:
@@ -908,6 +937,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_CONST_HIGH16: {
 			mv.visitLdcInsn(value);
 			mv.visitVarInsn(ISTORE, map(reg));
+			stack(1);
 		}
 			break;
 		case OP_CONST_WIDE:
@@ -916,6 +946,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_CONST_WIDE_HIGH16: {
 			mv.visitLdcInsn(value);
 			mv.visitVarInsn(LSTORE, map(reg));
+			stack(1);
 		}
 			break;
 		default:
@@ -963,6 +994,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			}
 			mv.visitVarInsn(ILOAD, map(reg));
 			mv.visitLookupSwitchInsn(getLabel(defaultOffset), cases, ls);
+			stack(1);
 			break;
 		}
 	}
@@ -975,6 +1007,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		for (String s : method.getType().getParameterTypes()) {
 			mv.visitVarInsn(Type.getType(s).getOpcode(ILOAD), map(registers[i++]));
 		}
+		stack(registers.length);
 	}
 
 	/*
@@ -984,6 +1017,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * pxb.android.dex2jar.Method, int[])
 	 */
 	public void visitMethodInsn(int opcode, Method method, int[] args) {
+		stack(args.length);
 		switch (opcode) {
 		case OP_INVOKE_STATIC:
 		case OP_INVOKE_STATIC_RANGE: {
@@ -1035,6 +1069,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			}
 			mv.visitVarInsn(ILOAD, map(reg));
 			mv.visitTableSwitchInsn(first_case, last_case, this.getLabel(label), ls);
+			stack(1);
 			break;
 		}
 	}
@@ -1072,18 +1107,21 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		{
 			mv.visitTypeInsn(NEW, type);
 			mv.visitVarInsn(ASTORE, map(toReg));
+			stack(1);
 		}
 			break;
 		case OP_CONST_CLASS:// const-class
 		{
 			mv.visitLdcInsn(Type.getType(type));
 			mv.visitVarInsn(ASTORE, map(toReg));
+			stack(1);
 		}
 			break;
 		case OP_CHECK_CAST: {
 			mv.visitVarInsn(ALOAD, map(toReg));
 			mv.visitTypeInsn(CHECKCAST, type);
 			mv.visitVarInsn(ASTORE, map(toReg));
+			stack(1);
 		}
 			break;
 		default:
@@ -1103,7 +1141,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_INSTANCE_OF: {
 			mv.visitVarInsn(ALOAD, map(fromReg));
 			mv.visitTypeInsn(INSTANCEOF, type);
-			mv.visitVarInsn(ASTORE, map(toReg));
+			mv.visitVarInsn(ISTORE, map(toReg));
+			stack(1);
 		}
 			break;
 		default:
@@ -1126,22 +1165,26 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			//
 		{
 			mv.visitVarInsn(ASTORE, map(reg));
+			stack(1);
 		}
 			break;
 		case OP_THROW:// throw
 		{
 			mv.visitVarInsn(ALOAD, map(reg));
 			mv.visitInsn(ATHROW);
+			stack(1);
 		}
 			break;
 		case OP_RETURN: {
 			mv.visitVarInsn(ILOAD, map(reg));
 			mv.visitInsn(IRETURN);
+			stack(1);
 		}
 			break;
 		case OP_RETURN_OBJECT: {
 			mv.visitVarInsn(ALOAD, map(reg));
 			mv.visitInsn(ARETURN);
+			stack(1);
 		}
 			break;
 		case OP_RETURN_WIDE:
@@ -1149,16 +1192,19 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		{
 			mv.visitVarInsn(LLOAD, map(reg));
 			mv.visitInsn(LRETURN);
+			stack(1);
 		}
 			break;
 		case OP_MONITOR_ENTER: {
 			mv.visitVarInsn(ALOAD, map(reg));
 			mv.visitInsn(MONITORENTER);
+			stack(1);
 		}
 			break;
 		case OP_MONITOR_EXIT: {
 			mv.visitVarInsn(ALOAD, map(reg));
 			mv.visitInsn(MONITOREXIT);
+			stack(1);
 		}
 			break;
 		default:

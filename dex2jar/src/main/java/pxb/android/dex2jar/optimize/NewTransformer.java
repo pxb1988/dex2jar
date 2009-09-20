@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
@@ -16,9 +17,15 @@ import org.objectweb.asm.tree.VarInsnNode;
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
-public class New implements Opcodes {
-	public static void transform(InsnList innsnList) {
-		doX(innsnList, innsnList.getFirst());
+public class NewTransformer extends MethodTransformerAdapter implements Opcodes {
+	public NewTransformer(MethodTransformer tr) {
+		super(tr);
+	}
+
+	@Override
+	public void transform(MethodNode method) {
+		doX(method.instructions, method.instructions.getFirst());
+		super.transform(method);
 	}
 
 	private static MethodInsnNode doX(InsnList innsnList, AbstractInsnNode p) {

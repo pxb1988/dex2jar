@@ -87,7 +87,8 @@ public class V3ClassAdapter implements DexClassVisitor {
 	 * @param superClass
 	 * @param interfaceNames
 	 */
-	public V3ClassAdapter(Map<String, Integer> accessFlagsMap, ClassVisitor cv, int access_flags, String className, String superClass, String[] interfaceNames) {
+	public V3ClassAdapter(Map<String, Integer> accessFlagsMap, ClassVisitor cv, int access_flags, String className,
+			String superClass, String[] interfaceNames) {
 		super();
 		this.accessFlagsMap = accessFlagsMap;
 		this.cv = new TypeNameAdapter(cv);

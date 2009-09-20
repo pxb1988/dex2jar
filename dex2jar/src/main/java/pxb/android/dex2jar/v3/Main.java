@@ -5,8 +5,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.ClassNode;
 
 import pxb.android.dex2jar.ClassVisitorFactory;
 import pxb.android.dex2jar.reader.DexFileReader;
@@ -46,7 +48,15 @@ public class Main {
 							public void visitEnd() {
 								super.visitEnd();
 								try {
-									FileUtils.writeByteArrayToFile(new File(gen, name + ".class"), this.toByteArray());
+									byte[] data = this.toByteArray();
+									// ClassNode node = new ClassNode();
+									// new ClassReader(data).accept(node,
+									// ClassReader.EXPAND_FRAMES);
+									// ClassWriter cw = new
+									// ClassWriter(ClassWriter.COMPUTE_MAXS);
+									// node.accept(cw);
+									// data = cw.toByteArray();
+									FileUtils.writeByteArrayToFile(new File(gen, name + ".class"), data);
 								} catch (FileNotFoundException e) {
 									e.printStackTrace();
 								} catch (IOException e) {
