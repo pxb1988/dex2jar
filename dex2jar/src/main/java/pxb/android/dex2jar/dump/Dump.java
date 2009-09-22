@@ -6,10 +6,10 @@ package pxb.android.dex2jar.dump;
 import java.io.File;
 import java.io.IOException;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.asm.Opcodes;
 
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;

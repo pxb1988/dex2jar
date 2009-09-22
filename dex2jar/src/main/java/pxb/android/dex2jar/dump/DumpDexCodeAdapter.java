@@ -3,8 +3,8 @@
  */
 package pxb.android.dex2jar.dump;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.xwork.Opcodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
