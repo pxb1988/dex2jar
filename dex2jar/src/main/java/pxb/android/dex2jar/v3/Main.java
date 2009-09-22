@@ -5,10 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.tree.ClassNode;
 
 import pxb.android.dex2jar.ClassVisitorFactory;
 import pxb.android.dex2jar.reader.DexFileReader;

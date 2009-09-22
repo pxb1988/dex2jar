@@ -14,11 +14,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
 
 import pxb.android.dex2jar.Method;
-import pxb.android.dex2jar.optimize.LdcTransformer;
-import pxb.android.dex2jar.optimize.LoadTransformer;
 import pxb.android.dex2jar.optimize.MethodTransformer;
 import pxb.android.dex2jar.optimize.MethodTransformerAdapter;
-import pxb.android.dex2jar.optimize.NewTransformer;
+import pxb.android.dex2jar.optimize.Z;
 import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
@@ -129,14 +127,16 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	public void visitEnd() {
 		build();
 		if (mv != null) {
-			if (methodNode.instructions.size() > 0) {
+			if (methodNode.instructions.size() > 2) {
 				MethodTransformer tr = new MethodTransformerAdapter(null);
-				tr = new LoadTransformer(tr);
-				tr = new NewTransformer(tr);
-				tr = new LoadTransformer(tr);
-				tr = new LdcTransformer(tr);
-				tr = new LoadTransformer(tr);
-				tr = new LdcTransformer(tr);
+				// tr = new LoadTransformer(tr);
+				// tr = new NewTransformer(tr);
+				// tr = new LoadTransformer(tr);
+				// tr = new LdcTransformer(tr);
+				// tr = new LoadTransformer(tr);
+				// tr = new LdcTransformer(tr);
+				// tr=new Y(method,tr);
+				tr = new Z(method, tr);
 				tr.transform(methodNode);
 			}
 			methodNode.accept(mv);
