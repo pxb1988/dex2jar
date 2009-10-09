@@ -16,7 +16,6 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.BasicInterpreter;
-import org.objectweb.asm.tree.analysis.BasicValue;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.tree.analysis.Value;
 import org.objectweb.asm.util.TraceMethodVisitor;
@@ -27,6 +26,7 @@ import pxb.android.dex2jar.Method;
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
+@SuppressWarnings("unchecked")
 public class Y extends MethodTransformerAdapter implements Opcodes {
 
 	Method m;
@@ -159,12 +159,12 @@ public class Y extends MethodTransformerAdapter implements Opcodes {
 				in.clear();
 				out.clear();
 				all.clear();
-			} else if(LoadTransformer.isRead(p)){
+			} else if (LoadTransformer.isRead(p)) {
 
-			} else if(LoadTransformer.isWrite(p)){
-				
+			} else if (LoadTransformer.isWrite(p)) {
+
 			}
-			Frame f = frames[i];
+//			Frame f = frames[i];
 		}
 	}
 }

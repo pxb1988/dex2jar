@@ -3,10 +3,10 @@
  */
 package pxb.android.dex2jar.dump;
 
+import java.io.PrintWriter;
+
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.DexOpcodeDump;
 import pxb.android.dex2jar.DexOpcodes;
@@ -20,32 +20,37 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
  * 
  */
 public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
-	private static final Logger log = LoggerFactory.getLogger(DumpDexCodeAdapter.class);
-
-	Method m;
+	// private static final Logger log =
+	// LoggerFactory.getLogger(DumpDexCodeAdapter.class);
+	private PrintWriter out;
+	private Method m;
 
 	/**
 	 * @param dcv
 	 */
-	public DumpDexCodeAdapter(DexCodeVisitor dcv, Method m) {
+	public DumpDexCodeAdapter(DexCodeVisitor dcv, Method m, PrintWriter out) {
 		super(dcv);
 		this.m = m;
+		this.out = out;
 	}
 
 	protected void info(int opcode, String format, Object... args) {
 		String s = String.format(format, args);
-		log.info(String.format("%-20s|%5s|%s", DexOpcodeDump.dump(opcode), "", s));
+		out.printf("%-20s|%5s|%s\n", DexOpcodeDump.dump(opcode), "", s);
 	}
 
 	@Override
 	public void visitInitLocal(int... args) {
-		log.info(String.format("%20s====", ""));
 		int i = 0;
 		if ((m.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
-			log.info(String.format("%20s:v%d   //%s", "this", args[i++], Type.getType(m.getOwner()).getClassName()));
+			int reg = args[i++];
+			String type = Type.getType(m.getOwner()).getClassName();
+			out.printf("%20s:v%d   //%s\n", "this", reg, type);
 		}
 		for (String type : m.getType().getParameterTypes()) {
-			log.info(String.format("%20s:v%d   //%s", "", args[i++], Type.getType(type).getClassName()));
+			int reg = args[i++];
+			type = Type.getType(type).getClassName();
+			out.printf("%20s:v%d   //%s\n", "", reg, type);
 		}
 		super.visitInitLocal(args);
 	}
@@ -521,7 +526,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 */
 	@Override
 	public void visitLabel(int index) {
-		log.info(String.format("%-20s|%5s:", "LABEL", "L" + index));
+		out.printf("%-20s|%5s:\n", "LABEL", "L" + index);
 		super.visitLabel(index);
 	}
 
@@ -668,9 +673,9 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	@Override
 	public void visitTryCatch(int start, int offset, int handler, String type) {
 		if (type == null) {
-			log.info(String.format("L%d ~ L%d > L%d all", start, offset, handler));
+			out.printf("L%d ~ L%d > L%d all\n", start, offset, handler);
 		} else {
-			log.info(String.format("L%d ~ L%d > L%d %s", start, offset, handler, type));
+			out.printf("L%d ~ L%d > L%d %s\n", start, offset, handler, type);
 		}
 		super.visitTryCatch(start, offset, handler, type);
 	}

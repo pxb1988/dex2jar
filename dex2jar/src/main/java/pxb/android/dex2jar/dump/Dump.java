@@ -5,11 +5,10 @@ package pxb.android.dex2jar.dump;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
@@ -28,9 +27,9 @@ import pxb.android.dex2jar.visitors.EmptyVisitor;
  * 
  */
 public class Dump implements DexFileVisitor {
-	private static final Logger log = LoggerFactory.getLogger(Dump.class);
-	int class_count = 0;
-	DexFileVisitor dfv;
+	private int class_count = 0;
+	private DexFileVisitor dfv;
+	private PrintWriter out;
 
 	public static String getAccDes(int acc) {
 		StringBuilder sb = new StringBuilder();
@@ -91,9 +90,10 @@ public class Dump implements DexFileVisitor {
 	/**
 	 * @param dfv
 	 */
-	public Dump(DexFileVisitor dfv) {
+	public Dump(DexFileVisitor dfv, PrintWriter out) {
 		super();
 		this.dfv = dfv;
+		this.out = out;
 	}
 
 	/*
@@ -103,34 +103,44 @@ public class Dump implements DexFileVisitor {
 	 * java.lang.String, java.lang.String, java.lang.String[])
 	 */
 	public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames) {
-		log.info("");
-		log.info("");
-		log.info(String.format("%-20s:%s", "class:", class_count++));
-		log.info(String.format("%-20s:0x%04x    //%s", "access", access_flags, getAccDes(access_flags)));
-		log.info(String.format("%-20s:%s", "class", Type.getType(className).getClassName()));
-		log.info(String.format("%-20s:%s", "super", Type.getType(superClass).getClassName()));
-		if (interfaceNames == null) {
-			interfaceNames = new String[0];
+		out.println();
+		out.println();
+		out.printf("//class:%04d  access:0x%04x\n", class_count++, access_flags);
+		out.print(getAccDes(access_flags));
+		if ((access_flags & Opcodes.ACC_INTERFACE) == 0) {
+			out.print("class ");
 		}
-		log.info(String.format("%-20s:%-2d", "interfaces", interfaceNames.length));
-		for (int i = 0; i < interfaceNames.length; i++)
-			log.info(String.format("%-20s:[%2d]%s", "", i, Type.getType(interfaceNames[i]).getClassName()));
+		out.print(Type.getType(className).getClassName());
 
+		if (!"Ljava/lang/Object;".equals(superClass)) {
+			out.print(" extends ");
+			out.print(Type.getType(superClass).getClassName());
+		}
+		if (interfaceNames != null && interfaceNames.length > 0) {
+			out.print(" implements ");
+			out.print(Type.getType(interfaceNames[0]).getClassName());
+			for (int i = 1; i < interfaceNames.length; i++) {
+				out.print(',');
+				out.print(Type.getType(interfaceNames[i]).getClassName());
+			}
+		}
+		out.println();
 		DexClassVisitor dcv = dfv.visit(access_flags, className, superClass, interfaceNames);
 		if (dcv == null)
 			return null;
 		return new DexClassAdapter(dcv) {
 
 			public DexFieldVisitor visitField(Field field, Object value) {
-				log.info("");
-				log.info(String.format("%20s:%d", "field", field_count++));
-				log.info(String.format("%20s:0x%04x   //%s", "access_flags", field.getAccessFlags(), getAccDes(field
-						.getAccessFlags())));
-				log.info(String.format("%20s:%s", "name", field.getName()));
-				log.info(String.format("%20s:%s", "type", Type.getType(field.getType()).getClassName()));
-				log.info(String.format("%20s:%s", "", field));
-				if (value != null)
-					log.info(String.format("%20s:%s", "value", value));
+				out.printf("//field:%04d  access:0x%04x\n", field_count++, field.getAccessFlags());
+				out.printf("//%s\n", field);
+				out.printf("%s %s %s", getAccDes(field.getAccessFlags()), Type.getType(field.getType()).getClassName(),
+						field.getName());
+				if (value != null) {
+					out.print('=');
+					out.print(value);
+				}
+				out.print(';');
+
 				return dcv.visitField(field, value);
 			}
 
@@ -138,20 +148,22 @@ public class Dump implements DexFileVisitor {
 			int field_count = 0;
 
 			public DexMethodVisitor visitMethod(final Method method) {
-				log.info("");
-				log.info(String.format("%20s:%d", "method", method_count++));
-				log.info(String.format("%20s:0x%04x   //%s", "access_flags", method.getAccessFlags(), getAccDes(method
-						.getAccessFlags())));
-				log.info(String.format("%20s:%s", "name", method.getName()));
-				log.info(String.format("%20s:%s", "describe", method.getType().toString()));
-				log.info(String.format("%20s:%s", "return", Type.getType(method.getType().getReturnType())
-						.getClassName()));
-				log.info(String.format("%20s:%s", "", method));
-				log.info(String.format("%20s:%d", "args", method.getType().getParameterTypes().length));
-				for (int i = 0; i < method.getType().getParameterTypes().length; i++) {
-					log.info(String.format("%20s:[%2d]%s", "", i, Type.getType(method.getType().getParameterTypes()[i])
-							.getClassName()));
+				out.println();
+				out.printf("//method:%04d  access:0x%04x\n", method_count++, method.getAccessFlags());
+				out.printf("//%s\n", method);
+
+				out.printf("%s%s %s(", getAccDes(method.getAccessFlags()), Type.getType(
+						method.getType().getReturnType()).getClassName(), method.getName());
+				String ps[] = method.getType().getParameterTypes();
+				if (ps != null && ps.length > 0) {
+					out.print(Type.getType(ps[0]).getClassName());
+					for (int i = 1; i < ps.length; i++) {
+						out.print(',');
+						out.print(Type.getType(ps[i]).getClassName());
+					}
 				}
+				out.println(')');
+
 				DexMethodVisitor dmv = dcv.visitMethod(method);
 				if (dmv == null) {
 					return null;
@@ -161,7 +173,7 @@ public class Dump implements DexFileVisitor {
 						DexCodeVisitor dcv = mv.visitCode();
 						if (dcv == null)
 							return null;
-						return new DumpDexCodeAdapter(dcv, method);
+						return new DumpDexCodeAdapter(dcv, method, out);
 					}
 				};
 			}
@@ -170,7 +182,7 @@ public class Dump implements DexFileVisitor {
 
 	public static void main(String... args) throws IOException {
 		for (String s : args) {
-			new DexFileReader(new File(s)).accept(new Dump(new EmptyVisitor()));
+			new DexFileReader(new File(s)).accept(new Dump(new EmptyVisitor(), new PrintWriter(System.out)));
 		}
 	}
 

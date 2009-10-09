@@ -3,7 +3,8 @@
  */
 package pxb.android.dex2jar.optimize;
 
-import static pxb.android.dex2jar.optimize.LoadTransformer.*;
+import static pxb.android.dex2jar.optimize.LoadTransformer.isRead;
+import static pxb.android.dex2jar.optimize.LoadTransformer.isSameVar;
 import static pxb.android.dex2jar.optimize.LoadTransformer.isWrite;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.util.TraceMethodVisitor;
 
 import pxb.android.dex2jar.Method;
 
@@ -40,12 +42,17 @@ public class Z extends MethodTransformerAdapter implements Opcodes {
 	}
 
 	InsnList insnList;
+	TraceMethodVisitor tr = new TraceMethodVisitor();
 
 	@Override
 	public void transform(MethodNode method) {
+
 		List<Block> blocks = new ArrayList<Block>();
 		AbstractInsnNode p = method.instructions.getFirst();
 		insnList = method.instructions;
+
+		dump();
+
 		Block block = new Block();
 		blocks.add(block);
 		if (p instanceof LabelNode) {
@@ -106,7 +113,15 @@ public class Z extends MethodTransformerAdapter implements Opcodes {
 		return ((VarInsnNode) p).var;
 	}
 
-	public void doBlock(Block block) {
+	public void dump() {
+		insnList.accept(tr);
+		for (Object o : tr.text) {
+			System.out.print(o);
+		}
+		tr.text.clear();
+	}
+
+	protected void doNew(Block block) {
 		AbstractInsnNode p = block.first.getNext();
 		while (p != null && !(p instanceof LabelNode)) {
 			if (p.getOpcode() == Opcodes.NEW) {
@@ -115,17 +130,35 @@ public class Z extends MethodTransformerAdapter implements Opcodes {
 				p = p.getNext();
 			}
 		}
-		p = block.first.getNext();
+	}
+
+	void dump(Block block) {
+		AbstractInsnNode p = block.first.getNext();
+		while (p != null && !(p instanceof LabelNode)) {
+			p.accept(tr);
+			p = p.getNext();
+		}
+		for (Object o : tr.text) {
+			System.out.print(o);
+		}
+		tr.text.clear();
+	}
+
+	protected void doLdc(Block block) {
+
+		AbstractInsnNode p = block.first.getNext();
 		while (p != null && !(p instanceof LabelNode)) {
 			if (p.getOpcode() == Opcodes.LDC) {
-				AbstractInsnNode q = p.getNext().getNext();
-				doLdc(p, block);
-				p = q;
+				p = doLdc(p, block);
 			} else {
 				p = p.getNext();
 			}
 		}
-		p = block.first.getNext();
+
+	}
+
+	protected void doVar(Block block) {
+		AbstractInsnNode p = block.first.getNext();
 		while (p != null && !(p instanceof LabelNode)) {
 			if (isWrite(p)) {
 				AbstractInsnNode q = p.getNext();
@@ -164,12 +197,28 @@ public class Z extends MethodTransformerAdapter implements Opcodes {
 		}
 	}
 
-	private void doLdc(AbstractInsnNode _ldc, Block block) {
+	public void doBlock(Block block) {
+		System.out.println("BEFORE");
+		dump(block);
+		
+		doNew(block);
+		doLdc(block);
+		doVar(block);
+
+		System.out.println("AFTER");
+		dump(block);
+	}
+
+	private AbstractInsnNode doLdc(AbstractInsnNode _ldc, Block block) {
 		AbstractInsnNode _store = _ldc.getNext();
 		if (!isWrite(_store))
-			return;
+			return _store;
+
 		int var = var(_store);
+		if (block.out[var] == _store)
+			return _store.getNext();
 		AbstractInsnNode p = _store.getNext();
+		AbstractInsnNode pre = _ldc.getPrevious();
 		insnList.remove(_ldc);
 		insnList.remove(_store);
 		while (p != null && !(p instanceof LabelNode)) {
@@ -184,9 +233,10 @@ public class Z extends MethodTransformerAdapter implements Opcodes {
 				p = p.getNext();
 			}
 		}
+		return pre.getNext();
 	}
 
-	public AbstractInsnNode doNew(AbstractInsnNode _new) {
+	private AbstractInsnNode doNew(AbstractInsnNode _new) {
 		AbstractInsnNode _store = _new.getNext();
 		if (_store.getOpcode() == Opcodes.DUP) {
 			return _store.getNext();

@@ -6,6 +6,7 @@ package pxb.android;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class V3Test {
 		reader.accept(afa);
 		reader.accept(new Dump(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-				if (!name.equals("javax/servlet/GenericServlet"))
+				if (!name.equals("javax/servlet/ServletOutputStream"))
 					return null;
 				return new ClassWriter(0) {
 					/*
@@ -57,23 +58,23 @@ public class V3Test {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						try {
-							Class<?> c = new Load().def(data, name);
-							System.out.println(c);
-						} catch (Throwable t) {
-							t.printStackTrace();
-						}
+//						try {
+//							Class<?> c = new Load().def(data, name);
+//							System.out.println(c);
+//						} catch (Throwable t) {
+//							t.printStackTrace();
+//						}
 					}
 				};
 			}
-		})));
+		}), new PrintWriter(System.out)));
 		// zos.finish();
 		// zos.close();
 	}
 
-	static class Load extends ClassLoader {
-		public Class<?> def(byte[] data, String name) {
-			return defineClass(name.replace('/', '.'), data, 0, data.length);
-		}
-	}
+//	private static class Load extends ClassLoader {
+//		public Class<?> def(byte[] data, String name) {
+//			return defineClass(name.replace('/', '.'), data, 0, data.length);
+//		}
+//	}
 }

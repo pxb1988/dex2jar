@@ -10,7 +10,6 @@ public class MethodTransformerAdapter implements MethodTransformer {
 		this.tr = tr;
 	}
 
-	@Override
 	public void transform(MethodNode method) {
 		if (tr != null) {
 			tr.transform(method);

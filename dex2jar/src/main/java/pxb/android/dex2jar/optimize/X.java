@@ -24,6 +24,7 @@ import pxb.android.dex2jar.Method;
  * @author Panxiaobo
  * 
  */
+@SuppressWarnings("unchecked")
 public class X implements Opcodes {
 	public static void transform(Method m, MethodNode method) {
 

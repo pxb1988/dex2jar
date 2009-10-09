@@ -11,6 +11,7 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.tree.MethodNode;
 
 import pxb.android.dex2jar.Method;
@@ -139,7 +140,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 				tr = new Z(method, tr);
 				tr.transform(methodNode);
 			}
-			methodNode.accept(mv);
+			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), mv));
 
 		}
 	}
