@@ -36,9 +36,9 @@ public class V3Test {
 		reader.accept(afa);
 		reader.accept(new Dump(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-				if (!name.equals("javax/servlet/ServletOutputStream"))
-					return null;
-				return new ClassWriter(0) {
+//				if (!name.equals("javax/servlet/http/HttpUtils"))
+//					return null;
+				return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
 					/*
 					 * (non-Javadoc)
 					 * 
@@ -58,12 +58,12 @@ public class V3Test {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-//						try {
-//							Class<?> c = new Load().def(data, name);
-//							System.out.println(c);
-//						} catch (Throwable t) {
-//							t.printStackTrace();
-//						}
+						// try {
+						// Class<?> c = new Load().def(data, name);
+						// System.out.println(c);
+						// } catch (Throwable t) {
+						// t.printStackTrace();
+						// }
 					}
 				};
 			}
@@ -72,9 +72,9 @@ public class V3Test {
 		// zos.close();
 	}
 
-//	private static class Load extends ClassLoader {
-//		public Class<?> def(byte[] data, String name) {
-//			return defineClass(name.replace('/', '.'), data, 0, data.length);
-//		}
-//	}
+	// private static class Load extends ClassLoader {
+	// public Class<?> def(byte[] data, String name) {
+	// return defineClass(name.replace('/', '.'), data, 0, data.length);
+	// }
+	// }
 }

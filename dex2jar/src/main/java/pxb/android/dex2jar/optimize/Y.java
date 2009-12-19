@@ -62,7 +62,7 @@ public class Y extends MethodTransformerAdapter implements Opcodes {
 
 		@Override
 		public Value copyOperation(AbstractInsnNode insn, Value value) throws AnalyzerException {
-			if (LoadTransformer.isRead(insn)) {
+			if (Util.isRead(insn)) {
 
 			}
 			return super.copyOperation(insn, value);
@@ -159,9 +159,9 @@ public class Y extends MethodTransformerAdapter implements Opcodes {
 				in.clear();
 				out.clear();
 				all.clear();
-			} else if (LoadTransformer.isRead(p)) {
+			} else if (Util.isRead(p)) {
 
-			} else if (LoadTransformer.isWrite(p)) {
+			} else if (Util.isWrite(p)) {
 
 			}
 //			Frame f = frames[i];

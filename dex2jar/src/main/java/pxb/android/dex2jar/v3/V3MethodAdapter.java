@@ -15,6 +15,8 @@ import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.tree.MethodNode;
 
 import pxb.android.dex2jar.Method;
+import pxb.android.dex2jar.optimize.A;
+import pxb.android.dex2jar.optimize.LdcOptimizeAdapter;
 import pxb.android.dex2jar.optimize.MethodTransformer;
 import pxb.android.dex2jar.optimize.MethodTransformerAdapter;
 import pxb.android.dex2jar.optimize.Z;
@@ -130,17 +132,33 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 		if (mv != null) {
 			if (methodNode.instructions.size() > 2) {
 				MethodTransformer tr = new MethodTransformerAdapter(null);
-				// tr = new LoadTransformer(tr);
-				// tr = new NewTransformer(tr);
-				// tr = new LoadTransformer(tr);
-				// tr = new LdcTransformer(tr);
-				// tr = new LoadTransformer(tr);
-				// tr = new LdcTransformer(tr);
-				// tr=new Y(method,tr);
 				tr = new Z(method, tr);
+				tr = new A(tr);
 				tr.transform(methodNode);
 			}
-			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), mv));
+//			System.out.println();
+//			System.out.println(method);
+//			TraceMethodVisitor tr = new TraceMethodVisitor();
+//			methodNode.accept(tr);
+//			int i = 0;
+//			for (Object o : tr.text) {
+//				System.out.print(i++ + "" + o);
+//			}
+//			tr.text.clear();
+//
+//			methodNode.maxStack += 1000;
+//			// methodNode.maxStack *= 2;
+//			methodNode.maxLocals *= 2;
+//			Analyzer a = new Analyzer(new BasicInterpreter());
+//			try {
+//				a.analyze(method.getOwner(), methodNode);
+//			} catch (AnalyzerException e) {
+//				throw new RuntimeException("fail on " + method, e);
+//			}
+//			Frame[] fs = a.getFrames();
+
+			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(),
+					new LdcOptimizeAdapter(mv)));
 
 		}
 	}

@@ -4,7 +4,9 @@
 package pxb.android.dex2jar.v3;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -67,6 +69,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * int, int)
 	 */
 	public void visitArrayInsn(int opcode, int regFromOrTo, int array, int index) {
+		checkResult();
 		switch (opcode) {
 		case OP_APUT: // int
 		case OP_APUT_BOOLEAN:
@@ -138,6 +141,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * java.lang.String, int, int)
 	 */
 	public void visitArrayInsn(int opcode, String type, int saveToReg, int demReg) {
+		checkResult();
 		switch (opcode) {
 		case OP_NEW_ARRAY: {
 			mv.visitVarInsn(ILOAD, map(demReg));
@@ -181,6 +185,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitEnd()
 	 */
 	public void visitEnd() {
+		checkResult();
 		mv.visitMaxs(this.maxStack, this._regcount);
 		mv.visitEnd();
 	}
@@ -192,6 +197,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * pxb.android.dex2jar.Field, int)
 	 */
 	public void visitFieldInsn(int opcode, Field field, int reg) {
+		checkResult();
 		switch (opcode) {
 		case OP_SPUT_OBJECT:
 		case OP_SPUT:
@@ -259,6 +265,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * pxb.android.dex2jar.Field, int, int)
 	 */
 	public void visitFieldInsn(int opcode, Field field, int regFromOrTo, int ownerReg) {
+		checkResult();
 		switch (opcode) {
 		case OP_IGET:
 		case OP_IGET_WIDE:
@@ -329,6 +336,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * int, int, int, java.lang.Object[])
 	 */
 	public void visitFillArrayInsn(int opcode, int reg, int elemWidth, int initLength, Object[] values) {
+		checkResult();
 		int op = 0;
 		switch (elemWidth) {
 		case 1:
@@ -362,6 +370,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * java.lang.String, int[])
 	 */
 	public void visitFilledNewArrayIns(int opcode, String type, int[] regs) {
+		checkResult();
 		Type elem = Type.getType(type).getElementType();
 		int shortType = elem.getSort();
 		mv.visitLdcInsn(regs.length);
@@ -406,6 +415,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * int)
 	 */
 	public void visitInInsn(int opcode, int saveToReg, int opReg) {
+		checkResult();
 		switch (opcode) {
 		case OP_AND_INT_2ADDR:
 		case OP_AND_LONG_2ADDR:
@@ -667,6 +677,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * int, int)
 	 */
 	public void visitInInsn(int opcode, int saveToReg, int opReg, int opValueOrReg) {
+		checkResult();
 		switch (opcode) {
 		case OP_USHR_INT_LIT8:
 		case OP_SHR_INT_LIT8:
@@ -815,6 +826,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitInsn(int)
 	 */
 	public void visitInsn(int opcode) {
+		checkResult();
 		switch (opcode) {
 		case OP_RETURN_VOID: {
 			mv.visitInsn(RETURN);
@@ -837,6 +849,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitJumpInsn(int, int)
 	 */
 	public void visitJumpInsn(int opcode, int _label) {
+		checkResult();
 		Label label = getLabel(_label);
 		switch (opcode) {
 		case OP_GOTO:
@@ -858,6 +871,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * int)
 	 */
 	public void visitJumpInsn(int opcode, int offset, int reg) {
+		checkResult();
 		Label label = getLabel(offset);
 		mv.visitVarInsn(ILOAD, map(reg));
 		stack(1);
@@ -900,6 +914,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * int, int)
 	 */
 	public void visitJumpInsn(int opcode, int offset, int reg1, int reg2) {
+		checkResult();
 		Label label = getLabel(offset);
 		mv.visitVarInsn(ILOAD, map(reg2));
 		mv.visitVarInsn(ILOAD, map(reg1));
@@ -913,7 +928,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLabel(int)
 	 */
 	public void visitLabel(int index) {
+		checkResult();
 		mv.visitLabel(labels(index));
+		if (handlers.contains(index)) {
+			methodHashResult = true;
+		}
 	}
 
 	/*
@@ -923,6 +942,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * java.lang.Object, int)
 	 */
 	public void visitLdcInsn(int opcode, Object value, int reg) {
+		checkResult();
 		switch (opcode) {
 		case OP_CONST_STRING:// const-string
 		{
@@ -986,6 +1006,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * int, int, int[], int[])
 	 */
 	public void visitLookupSwitchInsn(int opcode, int reg, int defaultOffset, int[] cases, int[] offsets) {
+		checkResult();
 		switch (opcode) {
 		case OP_SPARSE_SWITCH:
 			Label[] ls = new Label[offsets.length];
@@ -1010,6 +1031,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		stack(registers.length);
 	}
 
+	boolean methodHashResult = false;
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -1017,6 +1040,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * pxb.android.dex2jar.Method, int[])
 	 */
 	public void visitMethodInsn(int opcode, Method method, int[] args) {
+		checkResult();
+		Type ret = Type.getType(method.getType().getReturnType());
+		if (!Type.VOID_TYPE.equals(ret)) {
+			methodHashResult = true;
+		}
 		stack(args.length);
 		switch (opcode) {
 		case OP_INVOKE_STATIC:
@@ -1061,6 +1089,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * int, int, int, int, int[])
 	 */
 	public void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, int label, int[] labels) {
+		checkResult();
 		switch (opcode) {
 		case OP_PACKED_SWITCH:
 			Label ls[] = new Label[labels.length];
@@ -1074,14 +1103,24 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		}
 	}
 
+	private void checkResult() {
+		if (methodHashResult) {
+			mv.visitInsn(POP);
+			methodHashResult = false;
+		}
+	}
+
+	private Set<Integer> handlers = new HashSet<Integer>();
+
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitTryCatch(int, int,
 	 * int, java.lang.String)
 	 */
-	public void visitTryCatch(int start, int offset, int handler, String type) {
-		mv.visitTryCatchBlock(labels(start), labels(start + offset), labels(handler), type);
+	public void visitTryCatch(int start, int end, int handler, String type) {
+		mv.visitTryCatchBlock(labels(start), labels(end), labels(handler), type);
+		handlers.add(handler);
 	}
 
 	protected Label labels(int i) {
@@ -1102,6 +1141,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * java.lang.String, int)
 	 */
 	public void visitTypeInsn(int opcode, String type, int toReg) {
+		checkResult();
 		switch (opcode) {
 		case OP_NEW_INSTANCE:// new-instance
 		{
@@ -1137,6 +1177,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 * java.lang.String, int, int)
 	 */
 	public void visitTypeInsn(int opcode, String type, int toReg, int fromReg) {
+		checkResult();
 		switch (opcode) {
 		case OP_INSTANCE_OF: {
 			mv.visitVarInsn(ALOAD, map(fromReg));
@@ -1162,8 +1203,19 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_MOVE_RESULT:
 		case OP_MOVE_EXCEPTION:
 		case OP_MOVE_RESULT_WIDE:
+			break;
+		default:
+			checkResult();
+		}
+
+		switch (opcode) {
+		case OP_MOVE_RESULT_OBJECT:// move-result-object
+		case OP_MOVE_RESULT:
+		case OP_MOVE_EXCEPTION:
+		case OP_MOVE_RESULT_WIDE:
 			//
 		{
+			methodHashResult = false;
 			mv.visitVarInsn(ASTORE, map(reg));
 			stack(1);
 		}

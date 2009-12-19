@@ -145,7 +145,11 @@ public class DexOpcodeAdapter implements DexOpcodes {
 			if (0 != (value & 0x8)) {
 				value = -((Integer.reverse(value) & 0x7) + 1);
 			}
-			dcv.visitLdcInsn(opcode, value, reg);
+//			if (value == 0) {
+//				dcv.visitLdcInsn(opcode, DexCodeVisitor.ZERO_OR_NULL, reg);
+//			} else {
+				dcv.visitLdcInsn(opcode, value, reg);
+//			}
 		}
 			break;
 		default:
@@ -217,7 +221,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		case OP_IF_GTZ:
 		case OP_IF_LEZ: //
 		{
-			dcv.visitJumpInsn(opcode, this.labels.get(offset+arg2), arg1);
+			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2), arg1);
 		}
 			break;
 		case OP_IF_EQ:
@@ -228,7 +232,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		case OP_IF_LE: {
 			int reg1 = arg1 & 0xf;
 			int reg2 = (arg1 >> 4) & 0xf;
-			dcv.visitJumpInsn(opcode, this.labels.get(offset+arg2), reg1, reg2);
+			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2), reg1, reg2);
 		}
 			break;
 		case OP_IGET:
@@ -352,7 +356,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		}
 			break;
 		case OP_GOTO_16: {
-			dcv.visitJumpInsn(opcode, this.labels.get(offset+arg2));
+			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2));
 		}
 			break;
 		case OP_MOVE_OBJECT_FROM16:

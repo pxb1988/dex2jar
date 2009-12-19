@@ -37,7 +37,7 @@ public class DexFileReader implements Dex {
 
 	private int class_defs_size;
 
-	private boolean continueOnException;
+	private boolean continueOnException = false;
 
 	private int data_off;
 

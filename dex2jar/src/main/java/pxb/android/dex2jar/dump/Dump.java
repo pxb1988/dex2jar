@@ -139,7 +139,7 @@ public class Dump implements DexFileVisitor {
 					out.print('=');
 					out.print(value);
 				}
-				out.print(';');
+				out.println(';');
 
 				return dcv.visitField(field, value);
 			}

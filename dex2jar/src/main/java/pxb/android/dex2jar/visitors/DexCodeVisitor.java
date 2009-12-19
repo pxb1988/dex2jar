@@ -11,6 +11,11 @@ import pxb.android.dex2jar.Method;
  * 
  */
 public interface DexCodeVisitor {
+	Object ZERO_OR_NULL = new Object() {
+		public String toString() {
+			return "0/null";
+		}
+	};
 
 	/**
 	 * 
@@ -300,6 +305,7 @@ public interface DexCodeVisitor {
 	 * 
 	 * @param opcode
 	 * @param value
+	 *            value or 0==ZERO_OR_NULL
 	 * @param reg
 	 */
 	void visitLdcInsn(int opcode, Object value, int reg);
