@@ -147,7 +147,7 @@ public class DexCodeReader implements DexOpcodes {
 				break;
 			}
 			case 2: {
-				in.readByte();
+				in.skip(1);
 				short b = in.readShortx();
 				switch (opcode) {
 				case OP_GOTO_16:
@@ -170,9 +170,7 @@ public class DexCodeReader implements DexOpcodes {
 				break;
 			}
 			case 3: {
-				in.readByte();
-				in.readShortx();
-				in.readShortx();
+				in.skip(5);
 				i += 3;
 				break;
 			}
@@ -180,7 +178,7 @@ public class DexCodeReader implements DexOpcodes {
 				i = instruction_size;
 				break;
 			case -1: {
-				in.readByte();
+				in.skip(1);
 				int offset = in.readIntx();
 				in.push();
 				in.skip((offset - 3) * 2);
@@ -201,9 +199,9 @@ public class DexCodeReader implements DexOpcodes {
 					break;
 				case OP_PACKED_SWITCH: {
 					{
-						in.readShortx();
+						in.skip(2);
 						int switch_size = in.readShortx();
-						in.readIntx();
+						in.skip(4);
 						for (int j = 0; j < switch_size; j++) {
 							int targetOffset = in.readIntx();
 							order(i + targetOffset);
@@ -221,8 +219,7 @@ public class DexCodeReader implements DexOpcodes {
 			}
 				break;
 			case -2: {
-				in.readByte();
-				in.readLongx();
+				in.skip(9);
 				i += 4;
 			}
 				break;
