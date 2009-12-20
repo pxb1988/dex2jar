@@ -269,7 +269,7 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 			return -1;
 		}
 		case OP_CONST_WIDE:
-			return -2;
+			return 5;
 		default:
 			return Integer.MAX_VALUE;
 			// throw new

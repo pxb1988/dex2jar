@@ -4,7 +4,7 @@
 		<layout class="ch.qos.logback.classic.PatternLayout">
 		<!-- %d{HH:mm:ss.SSS} %-5level %logger{30} - %msg%n -->
 			<Pattern>
-			<![CDATA[%msg%n]]>
+			<![CDATA[%d{HH:mm:ss.SSS} %msg%n]]>
 			</Pattern>
 		</layout>
 	</appender>

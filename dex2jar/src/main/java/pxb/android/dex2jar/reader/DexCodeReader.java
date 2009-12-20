@@ -140,7 +140,6 @@ public class DexCodeReader implements DexOpcodes {
 				int a = in.readByte();
 				switch (opcode) {
 				case OP_GOTO:
-					System.out.println("  " + a + " " + ((byte) a));
 					order(i + ((byte) a));
 					break;
 				}
@@ -219,7 +218,7 @@ public class DexCodeReader implements DexOpcodes {
 				i += 3;
 			}
 				break;
-			case -2: {
+			case 5: {
 				in.skip(9);
 				i += 5;
 			}
@@ -343,7 +342,7 @@ public class DexCodeReader implements DexOpcodes {
 				i += 3;
 			}
 				break;
-			case -2: {
+			case 5: {
 				int reg = in.readByte();
 				long value = in.readLongx();
 				dcv.visitLdcInsn(opcode, value, reg);

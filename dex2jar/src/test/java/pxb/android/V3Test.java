@@ -9,12 +9,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.output.ProxyOutputStream;
 import org.junit.Test;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
 import pxb.android.dex2jar.ClassVisitorFactory;
 import pxb.android.dex2jar.dump.Dump;
+import pxb.android.dex2jar.dump.Dump.WriterManager;
 import pxb.android.dex2jar.reader.DexFileReader;
 import pxb.android.dex2jar.v3.V3;
 import pxb.android.dex2jar.v3.V3AccessFlagsAdapter;
@@ -34,11 +36,13 @@ public class V3Test {
 		DexFileReader reader = new DexFileReader(new File("target/test-classes/pxb/android/i_jetty.dex"));
 		V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
 		reader.accept(afa);
-		reader.accept(new Dump(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
+		reader.accept(
+				//new Dump(
+				new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-//				if (!name.equals("javax/servlet/http/HttpUtils"))
-//					return null;
-				return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
+				// if (!name.equals("javax/servlet/http/HttpUtils"))
+				// return null;
+				return new ClassWriter(0) {
 					/*
 					 * (non-Javadoc)
 					 * 
@@ -67,7 +71,18 @@ public class V3Test {
 					}
 				};
 			}
-		}), new PrintWriter(System.out)));
+		})
+				// , new WriterManager() {
+				//
+				// public PrintWriter get(String name) {
+				// return new PrintWriter(new ProxyOutputStream(System.out) {
+				// public void close() {
+				// }
+				// });
+				// }
+				// })
+		
+		);
 		// zos.finish();
 		// zos.close();
 	}
