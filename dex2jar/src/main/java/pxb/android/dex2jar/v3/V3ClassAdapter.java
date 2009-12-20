@@ -116,9 +116,6 @@ public class V3ClassAdapter implements DexClassVisitor {
 
 	public DexMethodVisitor visitMethod(Method method) {
 		build();
-		if(method.getOwner().contains("BufferUtil")){
-			System.out.println("");
-		}
 		return new V3MethodAdapter(cv, method);
 	}
 
