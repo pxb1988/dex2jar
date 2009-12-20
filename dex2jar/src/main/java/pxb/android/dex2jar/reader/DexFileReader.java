@@ -28,6 +28,8 @@ import pxb.android.dex2jar.visitors.DexFieldVisitor;
 import pxb.android.dex2jar.visitors.DexFileVisitor;
 
 /**
+ * 读取dex文件
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
@@ -296,6 +298,11 @@ public class DexFileReader implements Dex {
 		dcv.visitEnd();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see pxb.android.dex2jar.Dex#getField(int)
+	 */
 	public Field getField(int id) {
 		if (id >= this.field_ids_size)
 			throw new RuntimeException("Id out of bound");
@@ -307,6 +314,11 @@ public class DexFileReader implements Dex {
 		return m;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see pxb.android.dex2jar.Dex#getMethod(int)
+	 */
 	public Method getMethod(int id) {
 		if (id >= this.method_ids_size)
 			throw new RuntimeException("Id out of bound");
@@ -318,6 +330,11 @@ public class DexFileReader implements Dex {
 		return m;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see pxb.android.dex2jar.Dex#getProto(int)
+	 */
 	public Proto getProto(int id) {
 		if (id >= this.proto_ids_size)
 			throw new RuntimeException("Id out of bound");
@@ -333,9 +350,7 @@ public class DexFileReader implements Dex {
 	/**
 	 * 一个String id为4字节
 	 * 
-	 * @param id
-	 * @return
-	 * @throws IOException
+	 * @see pxb.android.dex2jar.Dex#getString(int)
 	 */
 	public String getString(int id) {
 		if (id >= this.string_ids_size)
@@ -352,6 +367,11 @@ public class DexFileReader implements Dex {
 		return string;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see pxb.android.dex2jar.Dex#getType(int)
+	 */
 	public String getType(int id) {
 		if (id >= this.type_ids_size)
 			throw new RuntimeException("Id out of bound");
@@ -364,6 +384,15 @@ public class DexFileReader implements Dex {
 		return desc;
 	}
 
+	/**
+	 * 访问成员
+	 * 
+	 * @param lastIndex
+	 * @param dcv
+	 * @param fieldAnnotationPositions
+	 * @param value
+	 * @return
+	 */
 	protected int visitField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions,
 			Object value) {
 		int diff = (int) in.readUnsignedLeb128();
@@ -386,6 +415,15 @@ public class DexFileReader implements Dex {
 		return field_id;
 	}
 
+	/**
+	 * 访问方法
+	 * 
+	 * @param lastIndex
+	 * @param cv
+	 * @param methodAnnos
+	 * @param parameterAnnos
+	 * @return
+	 */
 	protected int visitMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos,
 			Map<Integer, Integer> parameterAnnos) {
 		int diff = (int) in.readUnsignedLeb128();

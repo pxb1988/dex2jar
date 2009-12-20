@@ -233,7 +233,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 * 
 	 * @param block
 	 */
-	static void optmizeOut(Block block) {
+	private static void optmizeOut(Block block) {
 		Set<Object> mask = new HashSet();
 		for (int i = 0; i < block.out.size(); i++) {
 			if (block.out.get(i) != null) {
@@ -258,7 +258,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 * @param checkThis
 	 * @return 是否被读取
 	 */
-	static boolean doOptmizeOut(int i, Block block, Set<Object> mask, boolean checkThis) {
+	private static boolean doOptmizeOut(int i, Block block, Set<Object> mask, boolean checkThis) {
 		if (checkThis) {
 			Object o = block.in.get(i);
 			if (o != null)

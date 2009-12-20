@@ -6,16 +6,20 @@ import pxb.android.dex2jar.DataIn;
 import pxb.android.dex2jar.Dex;
 
 /**
+ * 读取静态常量
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
 public class Constant {
-	private Object[] array;
 
-	public Constant(DataIn in) {
-
-	}
-
+	/**
+	 * 读取静态常量
+	 * 
+	 * @param dex
+	 * @param in
+	 * @return
+	 */
 	public static Object ReadConstant(Dex dex, DataIn in) {
 		int b = in.readByte();
 		int type = b & 0x1f;
@@ -58,11 +62,7 @@ public class Constant {
 		}
 	}
 
-	public Object get(int id) {
-		return array[id];
-	}
-
-	private static long x0246(DataIn in, int before) {
+	public static long x0246(DataIn in, int before) {
 		int length = ((before >> 5) & 0x7) + 1;
 		long value = 0;
 		for (int j = 0; j < length; j++) {
@@ -71,7 +71,7 @@ public class Constant {
 		return value;
 	}
 
-	private static long x3(DataIn in, int before) {
+	public static long x3(DataIn in, int before) {
 		int length = ((before >> 5) & 0x7) + 1;
 		long value = 0;
 		for (int j = 0; j < length; j++) {
@@ -80,7 +80,7 @@ public class Constant {
 		return value;
 	}
 
-	private static long xf(DataIn in, int before) {
+	public static long xf(DataIn in, int before) {
 		int bytes = ((before >> 5) & 0x7) + 1;
 		long result = 0L;
 		int bitpos = 0;

@@ -4,32 +4,34 @@
 package pxb.android.dex2jar;
 
 /**
+ * 方法
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
 public class Method {
-	public String toString() {
-		return this.getOwner() + "." + this.getName() + this.getType();
-	}
-
-	private Dex dex;
-	private int type_idx;
+	/**
+	 * 修饰符
+	 */
 	private int access_flags;
 
+	private Dex dex;
 	/**
-	 * @return the access_flags
+	 * 方法名
 	 */
-	public int getAccessFlags() {
-		return access_flags;
-	}
-
+	private String name;
 	/**
-	 * @param access_flags
-	 *            the access_flags to set
+	 * 方法所有者
 	 */
-	public void setAccessFlags(int access_flags) {
-		this.access_flags = access_flags;
-	}
+	private String owner;
+	/**
+	 * 参数和返回值
+	 */
+	private Proto type;
+	/**
+	 * 方法编号
+	 */
+	private int type_idx;
 
 	public Method(Dex dex, DataIn in) {
 		int owner_idx = in.readShortx();
@@ -40,6 +42,20 @@ public class Method {
 		// type = dex.getProto(type_idx);
 		name = dex.getString(name_idx);
 		this.dex = dex;
+	}
+
+	/**
+	 * @return the access_flags
+	 */
+	public int getAccessFlags() {
+		return access_flags;
+	}
+
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
 	}
 
 	/**
@@ -60,13 +76,19 @@ public class Method {
 	}
 
 	/**
-	 * @return the name
+	 * @param access_flags
+	 *            the access_flags to set
 	 */
-	public String getName() {
-		return name;
+	public void setAccessFlags(int access_flags) {
+		this.access_flags = access_flags;
 	}
 
-	private String owner;
-	private Proto type;
-	private String name;
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return this.getOwner() + "." + this.getName() + this.getType();
+	}
 }

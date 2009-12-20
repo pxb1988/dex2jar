@@ -4,6 +4,8 @@
 package pxb.android.dex2jar;
 
 /**
+ * 输入流
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */

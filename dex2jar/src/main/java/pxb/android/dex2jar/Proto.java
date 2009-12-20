@@ -7,13 +7,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 参数和返回类型
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
 public class Proto {
-	public String toString() {
-		return desc;
-	}
+	/**
+	 * 描述
+	 */
+	private String desc;
+	/**
+	 * 参数类型
+	 */
+	private String[] parameterTypes;
+	/**
+	 * 返回类型
+	 */
+	private String returnType;
 
 	public Proto(Dex dex, DataIn in) {
 		// int shorty_idx =
@@ -39,9 +50,9 @@ public class Proto {
 		parameterTypes = parameterTypeList.toArray(new String[parameterTypeList.size()]);
 	}
 
-	private String[] parameterTypes;
-	private String desc;
-	private String returnType;
+	public String getDesc() {
+		return desc;
+	}
 
 	/**
 	 * @return the parameterTypes
@@ -54,7 +65,7 @@ public class Proto {
 		return returnType;
 	}
 
-	public String getDesc() {
+	public String toString() {
 		return desc;
 	}
 }

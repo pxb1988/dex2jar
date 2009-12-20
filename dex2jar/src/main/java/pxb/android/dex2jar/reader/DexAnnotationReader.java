@@ -3,6 +3,10 @@
  */
 package pxb.android.dex2jar.reader;
 
+import static pxb.android.dex2jar.reader.Constant.x0246;
+import static pxb.android.dex2jar.reader.Constant.x3;
+import static pxb.android.dex2jar.reader.Constant.xf;
+
 import org.objectweb.asm.Type;
 
 import pxb.android.dex2jar.DataIn;
@@ -11,6 +15,8 @@ import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 
 /**
+ * 读取注解
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
@@ -35,12 +41,20 @@ public class DexAnnotationReader {
 
 	/**
 	 * @param dex
+	 *            dex文件
 	 */
 	public DexAnnotationReader(Dex dex) {
 		super();
 		this.dex = dex;
 	}
 
+	/**
+	 * 处理
+	 * 
+	 * @param in
+	 *            输入流
+	 * @param daa
+	 */
 	public void accept(DataIn in, DexAnnotationAble daa) {
 		int size = in.readIntx();
 		for (int j = 0; j < size; j++) {
@@ -63,6 +77,13 @@ public class DexAnnotationReader {
 		}
 	}
 
+	/**
+	 * 
+	 * @param dex
+	 * @param in
+	 * @param name
+	 * @param dav
+	 */
 	private static void acceptAnnotation(Dex dex, DataIn in, String name, DexAnnotationVisitor dav) {
 		int b = in.readByte();
 		int type = b & 0x1f;
@@ -156,33 +177,4 @@ public class DexAnnotationReader {
 		}
 	}
 
-	private static long x0246(DataIn in, int before) {
-		int length = ((before >> 5) & 0x7) + 1;
-		long value = 0;
-		for (int j = 0; j < length; j++) {
-			value |= ((long) in.readByte()) << (j * 8);
-		}
-		return value;
-	}
-
-	private static long x3(DataIn in, int before) {
-		int length = ((before >> 5) & 0x7) + 1;
-		long value = 0;
-		for (int j = 0; j < length; j++) {
-			value |= in.readByte() << (j * 8);
-		}
-		return value;
-	}
-
-	private static long xf(DataIn in, int before) {
-		int bytes = ((before >> 5) & 0x7) + 1;
-		long result = 0L;
-		int bitpos = 0;
-		for (int i = 0; i < bytes; ++i, bitpos += 8) {
-			int b = in.readByte();
-			result |= (long) b << bitpos;
-		}
-		result <<= (8 - bytes) * 8;
-		return result;
-	}
 }

@@ -4,6 +4,8 @@
 package pxb.android.dex2jar;
 
 /**
+ * dex的所有指令
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */

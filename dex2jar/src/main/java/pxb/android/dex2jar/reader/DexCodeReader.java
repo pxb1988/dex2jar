@@ -19,18 +19,42 @@ import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
 /**
+ * 用于读取方法的指令
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
 public class DexCodeReader implements DexOpcodes {
-	private Dex dex;
-	private DataIn in;
-	private Method method;
 	private static final Logger log = LoggerFactory.getLogger(DexCodeReader.class);
+	/**
+	 * dex文件
+	 */
+	private Dex dex;
+	/**
+	 * 输入流
+	 */
+	private DataIn in;
+	/**
+	 * 标签映射,指令位置->指令编号
+	 */
+	private Map<Integer, Integer> labels = new HashMap<Integer, Integer>();
+	/**
+	 * 用于记录标签的编号，递增
+	 */
+	private int labels_index = 0;
 
 	/**
-	 * @param dexReader
+	 * 方法的描述
+	 */
+	private Method method;
+
+	/**
+	 * @param dex
+	 *            dex文件
 	 * @param in
+	 *            输入流
+	 * @param method
+	 *            方法的描述
 	 */
 	public DexCodeReader(Dex dex, DataIn in, Method method) {
 		this.dex = dex;
@@ -38,16 +62,9 @@ public class DexCodeReader implements DexOpcodes {
 		this.method = method;
 	}
 
-	Map<Integer, Integer> labels = new HashMap<Integer, Integer>();
-	int labels_index;
-
-	public void order(int offset) {
-		if (!labels.containsKey(offset)) {
-			labels.put(offset, this.labels_index++);
-		}
-	}
-
 	/**
+	 * 处理指令
+	 * 
 	 * @param dcv
 	 */
 	public void accept(DexCodeVisitor dcv) {
@@ -60,9 +77,7 @@ public class DexCodeReader implements DexOpcodes {
 		int tries_size = in.readShortx();
 		int debug_off = in.readIntx();
 		int instruction_size = in.readIntx();
-		// // for v2
-		// dcv.visit(total_registers_size, in_register_size, instruction_size);
-		// for v3
+		// 处理方法的参数
 		{
 			int args[];
 			int args_index;
@@ -77,13 +92,14 @@ public class DexCodeReader implements DexOpcodes {
 			}
 			for (String type : method.getType().getParameterTypes()) {
 				args[args_index++] = i++;
-				if ("D".equals(type) || "J".equals(type)) {
+				if ("D".equals(type) || "J".equals(type)) {// 为Double/Long型特殊处理
 					i++;
 				}
 			}
 			dcv.visitInitLocal(args);
 		}
 
+		// 处理异常处理
 		if (tries_size > 0) {
 			in.push();
 			in.skip(instruction_size * 2);
@@ -125,12 +141,13 @@ public class DexCodeReader implements DexOpcodes {
 			}
 			in.pop();
 		}
+		// 处理debug信息
 		if (debug_off != 0) {
 			// in.pushMove(debug_off);
 			// new DexDebugInfoReader(in, dex,total_registers_size).accept(dcv);
 			// in.pop();
 		}
-		// search fo labels
+		// 查找标签
 		in.push();
 		for (int i = 0; i < instruction_size;) {
 			int opcode = in.readByte() & 0xff;
@@ -227,7 +244,7 @@ public class DexCodeReader implements DexOpcodes {
 		}
 		in.pop();
 
-		//
+		// 处理指令
 		for (int i = 0; i < instruction_size;) {
 			int opcode = in.readByte() & 0xff;
 			if (labels.containsKey(i))
@@ -355,5 +372,17 @@ public class DexCodeReader implements DexOpcodes {
 			}
 		}
 		dcv.visitEnd();
+	}
+
+	/**
+	 * 预定一个标签位置
+	 * 
+	 * @param offset
+	 *            指令位置
+	 */
+	private void order(int offset) {
+		if (!labels.containsKey(offset)) {
+			labels.put(offset, this.labels_index++);
+		}
 	}
 }

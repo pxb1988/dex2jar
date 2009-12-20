@@ -7,11 +7,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 注解
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
 public class Ann {
 	public static class Item {
+		public String name;
+
+		public Object value;
+
 		/**
 		 * @param name
 		 * @param value
@@ -21,10 +27,12 @@ public class Ann {
 			this.name = name;
 			this.value = value;
 		}
-
-		public String name;
-		public Object value;
 	}
+
+	public List<Item> items = new ArrayList<Item>();
+
+	public String type;
+	public int visible;
 
 	/**
 	 * @param type
@@ -35,8 +43,4 @@ public class Ann {
 		this.type = type;
 		this.visible = visible;
 	}
-
-	public List<Item> items = new ArrayList<Item>();
-	public String type;
-	public int visible;
 }

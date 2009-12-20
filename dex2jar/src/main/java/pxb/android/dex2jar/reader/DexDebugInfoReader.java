@@ -13,6 +13,8 @@ import pxb.android.dex2jar.Dex;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
 /**
+ * 读取debug信息
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
@@ -72,6 +74,11 @@ public class DexDebugInfoReader {
 		}
 	}
 
+	/**
+	 * 处理
+	 * 
+	 * @param dcv
+	 */
 	public void accept(DexCodeVisitor dcv) {
 		DataIn in = this.in;
 		int lineRegister = (int) in.readUnsignedLeb128();
@@ -105,7 +112,8 @@ public class DexDebugInfoReader {
 				int nameIdx = (int) in.readUnsignedLeb128() - 1;
 				int typeIdx = (int) in.readUnsignedLeb128() - 1;
 				if ((nameIdx >= 0) && (typeIdx >= 0)) {
-					LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1, dex.getString(nameIdx), dex.getType(typeIdx), null);
+					LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1,
+							dex.getString(nameIdx), dex.getType(typeIdx), null);
 					variableList.put(regNum, localVariable);
 				}
 			}
@@ -116,7 +124,8 @@ public class DexDebugInfoReader {
 				int typeIdx = (int) in.readUnsignedLeb128() - 1;
 				int sigIdx = (int) in.readUnsignedLeb128() - 1;
 				if ((nameIdx >= 0) && (typeIdx >= 0)) {
-					LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1, dex.getString(nameIdx), dex.getType(typeIdx), dex.getString(sigIdx));
+					LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1,
+							dex.getString(nameIdx), dex.getType(typeIdx), dex.getString(sigIdx));
 					variableList.put(regNum, localVariable);
 				}
 			}

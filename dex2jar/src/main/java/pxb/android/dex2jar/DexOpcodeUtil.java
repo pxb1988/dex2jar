@@ -6,10 +6,19 @@ package pxb.android.dex2jar;
 import org.objectweb.asm.Opcodes;
 
 /**
+ * 指令的工具类
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
 public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
+	/**
+	 * 获取指令的长度
+	 * 
+	 * @param opcode
+	 *            指令
+	 * @return
+	 */
 	public static int getSize(int opcode) {
 		switch (opcode) {
 
@@ -279,6 +288,13 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 		}
 	}
 
+	/**
+	 * 映射dex指令到jvm指令
+	 * 
+	 * @param dexOpcode
+	 *            dex指令
+	 * @return
+	 */
 	public static int mapOpcode(int dexOpcode) {
 		switch (dexOpcode) {
 		case OP_ADD_INT_LIT8:

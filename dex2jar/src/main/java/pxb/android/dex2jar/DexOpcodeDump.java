@@ -4,10 +4,17 @@
 package pxb.android.dex2jar;
 
 /**
+ * 输出指令信息
+ * 
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
 public final class DexOpcodeDump {
+	/**
+	 * 输出
+	 * 
+	 * @param 指令
+	 */
 	public static final String dump(int opcode) {
 		return map[opcode & 0xff];
 	}
