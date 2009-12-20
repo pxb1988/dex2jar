@@ -5,6 +5,7 @@ public class XList<T> {
 
 	Object[] ts = new Object[SIZE];
 
+	@SuppressWarnings("unchecked")
 	public T get(int index) {
 		if (ts.length > index) {
 			return (T) ts[index];
