@@ -33,7 +33,9 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 	 * INVOKE_DIRECT       |     |v6.<init>(v7)  //Ljava/lang/IllegalArgumentException;.<init>(Ljava/lang/String;)V
 	 * THROW               |     |throw v6
 	 * </pre>
+	 * 
 	 * 转换为
+	 * 
 	 * <pre>
 	 * L2 ~ L3 > L4 Ljava/io/UnsupportedEncodingException;
 	 * LABEL               |   L2:
@@ -60,16 +62,13 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 		for (Object o : method.tryCatchBlocks) {
 			TryCatchBlockNode tcb = (TryCatchBlockNode) o;
 			AbstractInsnNode end = tcb.end;
-			AbstractInsnNode p = end.getNext();
-			if (p != null && Util.isWrite(p)) {
-				AbstractInsnNode q = p.getNext();
-				if (q != null && q.getOpcode() == GOTO) {
-					method.instructions.remove(p);
-					method.instructions.insertBefore(end, p);
-					AbstractInsnNode r = p.getPrevious();
-					if (r.getOpcode() == POP) {
-						method.instructions.remove(r);
-					}
+			AbstractInsnNode pop = end.getPrevious();
+			if (pop != null && pop.getOpcode() == POP) {
+				AbstractInsnNode write = end.getNext();
+				if (write != null && Util.isWrite(write)) {
+					method.instructions.remove(pop);
+					method.instructions.remove(write);
+					method.instructions.insertBefore(end, write);
 				}
 			}
 		}
