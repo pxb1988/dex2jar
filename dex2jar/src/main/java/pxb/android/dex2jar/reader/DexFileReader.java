@@ -68,7 +68,7 @@ public class DexFileReader implements Dex {
 		byte[] magic = in.readBytes(3);
 		log.debug("magic:'{}'", new String(magic));
 		// 0x 0A ?
-		in.readByte();
+		in.skip(1);
 		// 0x30 33 35
 		byte[] version = in.readBytes(3);
 		log.debug("version:'{}'", new String(version));
@@ -80,7 +80,7 @@ public class DexFileReader implements Dex {
 		// signiture
 		// in.skipBytes(20);
 		// byte[] signature =
-		in.readBytes(20);
+		in.skip(20);
 		// log.debug("signature:0x{}", Hex.from(signature).encode().toString());
 		int fileSize = in.readIntx();
 		log.debug("fileSize:{}", fileSize);
