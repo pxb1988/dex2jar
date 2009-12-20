@@ -764,8 +764,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_SHR_LONG:
 			case OP_SHL_LONG:
 			case OP_USHR_LONG: {
-				load = ILOAD;
-				store = ISTORE;
+				load = LLOAD;
+				store = LSTORE;
 			}
 				break;
 			case OP_ADD_FLOAT:
