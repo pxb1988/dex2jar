@@ -3,10 +3,15 @@
  */
 package pxb.android.dex2jar.dump;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.output.ProxyOutputStream;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -31,6 +36,10 @@ public class Dump implements DexFileVisitor {
 	private DexFileVisitor dfv;
 	private PrintWriter out;
 
+	public interface WriterManager {
+		PrintWriter get(String name);
+	}
+
 	public static String getAccDes(int acc) {
 		StringBuilder sb = new StringBuilder();
 		if ((acc & Opcodes.ACC_PUBLIC) != 0) {
@@ -45,7 +54,7 @@ public class Dump implements DexFileVisitor {
 		if ((acc & Opcodes.ACC_STATIC) != 0) {
 			sb.append("static ");
 		}
-		if ((acc & Opcodes.ACC_ABSTRACT) != 0) {
+		if ((acc & Opcodes.ACC_ABSTRACT) != 0 && (acc & Opcodes.ACC_INTERFACE) == 0) {
 			sb.append("abstract ");
 		}
 		if ((acc & Opcodes.ACC_ANNOTATION) != 0) {
@@ -90,11 +99,13 @@ public class Dump implements DexFileVisitor {
 	/**
 	 * @param dfv
 	 */
-	public Dump(DexFileVisitor dfv, PrintWriter out) {
+	public Dump(DexFileVisitor dfv, WriterManager writerManager) {
 		super();
 		this.dfv = dfv;
-		this.out = out;
+		this.writerManager = writerManager;
 	}
+
+	WriterManager writerManager;
 
 	/*
 	 * (non-Javadoc)
@@ -103,14 +114,15 @@ public class Dump implements DexFileVisitor {
 	 * java.lang.String, java.lang.String, java.lang.String[])
 	 */
 	public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames) {
-		out.println();
-		out.println();
+
+		String javaClassName = Type.getType(className).getClassName();
+		out = writerManager.get(javaClassName);
 		out.printf("//class:%04d  access:0x%04x\n", class_count++, access_flags);
 		out.print(getAccDes(access_flags));
 		if ((access_flags & Opcodes.ACC_INTERFACE) == 0) {
 			out.print("class ");
 		}
-		out.print(Type.getType(className).getClassName());
+		out.print(javaClassName);
 
 		if (!"Ljava/lang/Object;".equals(superClass)) {
 			out.print(" extends ");
@@ -142,6 +154,14 @@ public class Dump implements DexFileVisitor {
 				out.println(';');
 
 				return dcv.visitField(field, value);
+			}
+
+			@Override
+			public void visitEnd() {
+				out.flush();
+				out.close();
+				out = null;
+				super.visitEnd();
 			}
 
 			int method_count = 0;
@@ -181,9 +201,30 @@ public class Dump implements DexFileVisitor {
 	}
 
 	public static void main(String... args) throws IOException {
-		for (String s : args) {
-			new DexFileReader(new File(s)).accept(new Dump(new EmptyVisitor(), new PrintWriter(System.out)));
+		if (args.length < 2) {
+			System.out.println("Dump in.dex out.dump.jar");
 		}
+		final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(args[1])));
+		new DexFileReader(new File(args[0])).accept(new Dump(new EmptyVisitor(), new WriterManager() {
+
+			public PrintWriter get(String name) {
+				try {
+					String s = name.replace('.', '/') + ".dump";
+					ZipEntry zipEntry = new ZipEntry(s);
+					zos.putNextEntry(zipEntry);
+					return new PrintWriter(new ProxyOutputStream(zos) {
+						@Override
+						public void close() throws IOException {
+							zos.closeEntry();
+						}
+					});
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}));
+		zos.finish();
+		zos.close();
 	}
 
 	/*

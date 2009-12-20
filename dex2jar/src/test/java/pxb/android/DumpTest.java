@@ -3,15 +3,11 @@
  */
 package pxb.android;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import org.junit.Test;
 
 import pxb.android.dex2jar.dump.Dump;
-import pxb.android.dex2jar.reader.DexFileReader;
-import pxb.android.dex2jar.visitors.EmptyVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
@@ -20,6 +16,6 @@ import pxb.android.dex2jar.visitors.EmptyVisitor;
 public class DumpTest {
 	@Test
 	public void test() throws IOException {
-		new DexFileReader(new File("target/test-classes/pxb/android/i_jetty.dex")).accept(new Dump(new EmptyVisitor(),new PrintWriter(System.out)));
+		Dump.main("target/test-classes/pxb/android/i_jetty.dex", "target/ijetty.dump.jar");
 	}
 }
