@@ -41,7 +41,7 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 	 * NEW_INSTANCE        |     |v4=NEW Ljava/lang/String;
 	 * CONST_4             |     |v6=0  //
 	 * CONST_STRING        |     |v7="8859_1"
-	 * INVOKE_DIRECT       |     |v4.<init>(v5,v6,v8,v7)  //Ljava/lang/String;.<init>([BIILjava/lang/String;)V
+	 * INVOKE_DIRECT       |     |v4.&lt;init>(v5,v6,v8,v7)  //Ljava/lang/String;.<init>([BIILjava/lang/String;)V
 	 * INVOKE_STATIC       |     |XXX=javax.servlet.http.HttpUtils.parseQueryString(v4)  //Ljavax/servlet/http/HttpUtils;.parseQueryString(Ljava/lang/String;)Ljava/util/Hashtable;
 	 * LABEL               |   L3:
 	 * MOVE_RESULT_OBJECT  |     |v6=XXX
@@ -52,7 +52,7 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 	 * NEW_INSTANCE        |     |v6=NEW Ljava/lang/IllegalArgumentException;
 	 * INVOKE_VIRTUAL      |     |XXX=v0.getMessage()  //Ljava/io/UnsupportedEncodingException;.getMessage()Ljava/lang/String;
 	 * MOVE_RESULT_OBJECT  |     |v7=XXX
-	 * INVOKE_DIRECT       |     |v6.<init>(v7)  //Ljava/lang/IllegalArgumentException;.<init>(Ljava/lang/String;)V
+	 * INVOKE_DIRECT       |     |v6.&lt;init>(v7)  //Ljava/lang/IllegalArgumentException;.<init>(Ljava/lang/String;)V
 	 * THROW               |     |throw v6
 	 * </pre>
 	 * 
@@ -64,7 +64,7 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 	 * NEW_INSTANCE        |     |v4=NEW Ljava/lang/String;
 	 * CONST_4             |     |v6=0  //
 	 * CONST_STRING        |     |v7="8859_1"
-	 * INVOKE_DIRECT       |     |v4.<init>(v5,v6,v8,v7)  //Ljava/lang/String;.<init>([BIILjava/lang/String;)V
+	 * INVOKE_DIRECT       |     |v4.&lt;init>(v5,v6,v8,v7)  //Ljava/lang/String;.<init>([BIILjava/lang/String;)V
 	 * INVOKE_STATIC       |     |XXX=javax.servlet.http.HttpUtils.parseQueryString(v4)  //Ljavax/servlet/http/HttpUtils;.parseQueryString(Ljava/lang/String;)Ljava/util/Hashtable;
 	 * MOVE_RESULT_OBJECT  |     |v6=XXX
 	 * LABEL               |   L3:
@@ -75,7 +75,7 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 	 * NEW_INSTANCE        |     |v6=NEW Ljava/lang/IllegalArgumentException;
 	 * INVOKE_VIRTUAL      |     |XXX=v0.getMessage()  //Ljava/io/UnsupportedEncodingException;.getMessage()Ljava/lang/String;
 	 * MOVE_RESULT_OBJECT  |     |v7=XXX
-	 * INVOKE_DIRECT       |     |v6.<init>(v7)  //Ljava/lang/IllegalArgumentException;.<init>(Ljava/lang/String;)V
+	 * INVOKE_DIRECT       |     |v6.&lt;init>(v7)  //Ljava/lang/IllegalArgumentException;.<init>(Ljava/lang/String;)V
 	 * THROW               |     |throw v6
 	 * </pre>
 	 */

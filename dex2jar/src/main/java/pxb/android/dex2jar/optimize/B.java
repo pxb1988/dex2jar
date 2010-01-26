@@ -171,6 +171,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 
 		long timeStart = System.currentTimeMillis();
 
+		log.debug("enter {}", m);
 		int blockIndex = 0;
 		insnList = method.instructions;
 		this.method = method;
@@ -234,6 +235,9 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 
 		linkBlocks();
 
+		long timeSpend = System.currentTimeMillis() - timeStart;
+		log.debug("spend ({}ms) init", timeSpend);
+
 		for (Block block : blocks) {
 			optmizeOut(block);
 			doBlock(block);
@@ -242,7 +246,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		// changeLdc_0(blocks);
 		super.transform(method);
 
-		long timeSpend = System.currentTimeMillis() - timeStart;
+		timeSpend = System.currentTimeMillis() - timeStart;
 		if (timeSpend > 500) {
 			log.debug("spend {}s,({}ms) {}", new Object[] { timeSpend / 1000, timeSpend, m.toString() });
 		}
@@ -257,7 +261,6 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		Set<Object> mask = new HashSet();
 		for (int i = 0; i < block.out.size(); i++) {
 			if (block.out.get(i) != null) {
-
 				boolean read = doOptmizeOut(i, block, mask, false);
 				if (!read) {
 					block.out.put(i, null);
