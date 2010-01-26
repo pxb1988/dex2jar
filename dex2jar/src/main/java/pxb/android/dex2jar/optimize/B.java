@@ -31,6 +31,7 @@ import java.util.Set;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -42,6 +43,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.TraceMethodVisitor;
 import org.slf4j.Logger;
@@ -273,11 +275,11 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 * 递归检查变量是否被读取
 	 * 
 	 * @param i
-	 *          变量的编号
+	 *            变量的编号
 	 * @param block
-	 *          块
+	 *            块
 	 * @param mask
-	 *          结束递归的状态
+	 *            结束递归的状态
 	 * @param checkThis
 	 * @return 是否被读取
 	 */
@@ -411,12 +413,90 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		tr.text.clear();
 	}
 
+	/**
+	 * 
+	 * 
+	 * 调整NEW指令和对应的INVOKESPECIAL指令的位置，使其于直接编译的指令顺序一样
+	 * 
+	 * <pre>
+	 * BEFORE:
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     ASTORE 0
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     ASTORE 1
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     ASTORE 2
+	 *     ALOAD 1
+	 *     ALOAD 2
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     ALOAD 0
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.<init> (Ljava/io/InputStream;)V
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * 
+	 * <pre>
+	 * AFTER:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     ASTORE 1
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     ASTORE 2
+	 *     ALOAD 1
+	 *     ALOAD 2
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.<init> (Ljava/io/InputStream;)V
+	 *     ASTORE 0
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * @param block
+	 */
 	protected void doNew(Block block) {
+		Map<String, AbstractInsnNode> map = new HashMap();
 		AbstractInsnNode p = block.first.getNext();
 		while (p != null && p != block.last) {
-			if (p.getOpcode() == Opcodes.NEW) {
-				p = doNew(p, block);
-			} else {
+			switch (p.getOpcode()) {
+			case Opcodes.NEW: {
+				AbstractInsnNode store = p.getNext();
+				if (store instanceof VarInsnNode) {
+					map.put(((TypeInsnNode) p).desc + var(store), p);
+					p = store.getNext();
+				} else {
+					p = store;
+				}
+				break;
+			}
+			case Opcodes.INVOKESPECIAL: {
+				MethodInsnNode m = (MethodInsnNode) p;
+				p = p.getNext();
+				if (m.name.equals("<init>")) {
+					int length = Type.getArgumentTypes(m.desc).length;
+					AbstractInsnNode q = m.getPrevious();
+					while (length-- > 0) {
+						q = q.getPrevious();
+					}
+					AbstractInsnNode _new = map.remove(m.owner + var(q));
+					if (_new != null) {
+						AbstractInsnNode _store = _new.getNext();
+						insnList.remove(_new);// remove new
+						insnList.remove(_store); // remove store
+						insnList.insertBefore(q, _new);
+						insnList.insert(_new, new InsnNode(DUP));
+						insnList.remove(q);
+						insnList.insert(m, _store);
+					}
+				}
+				break;
+			}
+			default:
 				p = p.getNext();
 			}
 		}
@@ -432,6 +512,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 			System.out.print(o);
 		}
 		tr.text.clear();
+		System.out.println();
 	}
 
 	protected void doLdc(Block block) {
@@ -486,17 +567,21 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	}
 
 	public void doBlock(Block block) {
-		// System.out.println("BEFORE");
-		// dump(block);
+		System.out.println("BEFORE");
+		dump(block);
 
 		doNew(block);
-		doLdc(block);
-		doVar(block);
+		dump(block);
 
+		doLdc(block);
+		dump(block);
+
+		doVar(block);
+		dump(block);
 		doReIndex(block);
 
-		// System.out.println("AFTER");
-		// dump(block);
+		System.out.println("AFTER");
+		dump(block);
 	}
 
 	private void doReIndex(Block block) {
@@ -543,43 +628,5 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 			}
 		}
 		return pre.getNext();
-	}
-
-	private AbstractInsnNode doNew(AbstractInsnNode _new, Block block) {
-		AbstractInsnNode _store = _new.getNext();
-		if (_store.getOpcode() == Opcodes.DUP) {
-			return _store.getNext();
-		}
-		int var = var(_store);
-		AbstractInsnNode p = _store.getNext();
-		while (p != null && p != block.last) {
-			if (p.getOpcode() == Opcodes.NEW) {
-				p = doNew(p, block);
-			} else if (p.getOpcode() == Opcodes.INVOKESPECIAL) {
-				MethodInsnNode m = (MethodInsnNode) p;
-				if (m.name.equals("<init>")) {
-					AbstractInsnNode q = m.getPrevious();
-					while (q != null && q != _new) {
-						if (isRead(q)) {
-							if (var(q) == var) {
-								insnList.remove(_new);
-								insnList.remove(_store);
-								insnList.insertBefore(q, _new);
-								insnList.insert(_new, new InsnNode(DUP));
-								insnList.remove(q);
-								insnList.insert(m, _store);
-								return _store.getNext();
-							}
-						}
-						q = q.getPrevious();
-					}
-				} else {
-					p = p.getNext();
-				}
-			} else {
-				p = p.getNext();
-			}
-		}
-		return null;
 	}
 }
