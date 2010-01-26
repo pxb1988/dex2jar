@@ -154,7 +154,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	@Override
 	public void transform(MethodNode method) {
 
-		log.debug(m.toString());
+		long timeStart = System.currentTimeMillis();
 
 		int blockIndex = 0;
 		insnList = method.instructions;
@@ -226,6 +226,11 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 
 		// changeLdc_0(blocks);
 		super.transform(method);
+
+		long timeSpend = System.currentTimeMillis() - timeStart;
+		if (timeSpend > 500) {
+			log.debug("spend {}s,({}ms) {}", new Object[] { timeSpend / 1000, timeSpend, m.toString() });
+		}
 	}
 
 	/**
@@ -250,11 +255,11 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 * 递归检查变量是否被读取
 	 * 
 	 * @param i
-	 *            变量的编号
+	 *          变量的编号
 	 * @param block
-	 *            块
+	 *          块
 	 * @param mask
-	 *            结束递归的状态
+	 *          结束递归的状态
 	 * @param checkThis
 	 * @return 是否被读取
 	 */

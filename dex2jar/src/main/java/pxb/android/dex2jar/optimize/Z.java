@@ -27,6 +27,7 @@ import pxb.android.dex2jar.Method;
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
+@Deprecated
 public class Z extends MethodTransformerAdapter implements Opcodes {
 
 	Method m;

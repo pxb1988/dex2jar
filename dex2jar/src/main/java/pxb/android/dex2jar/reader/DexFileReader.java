@@ -172,7 +172,6 @@ public class DexFileReader implements Dex {
 			in.pop();
 		}
 		dv.visitEnd();
-		log.info("Finish.");
 	}
 
 	private void acceptClass(DexFileVisitor dv) {

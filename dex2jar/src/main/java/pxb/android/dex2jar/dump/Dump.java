@@ -209,7 +209,7 @@ public class Dump implements DexFileVisitor {
 
 			public PrintWriter get(String name) {
 				try {
-					String s = name.replace('.', '/') + ".dump";
+					String s = name.replace('.', '/') + ".dump.txt";
 					ZipEntry zipEntry = new ZipEntry(s);
 					zos.putNextEntry(zipEntry);
 					return new PrintWriter(new ProxyOutputStream(zos) {

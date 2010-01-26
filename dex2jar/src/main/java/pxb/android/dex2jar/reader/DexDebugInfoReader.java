@@ -112,8 +112,8 @@ public class DexDebugInfoReader {
 				int nameIdx = (int) in.readUnsignedLeb128() - 1;
 				int typeIdx = (int) in.readUnsignedLeb128() - 1;
 				if ((nameIdx >= 0) && (typeIdx >= 0)) {
-					LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1,
-							dex.getString(nameIdx), dex.getType(typeIdx), null);
+					LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1, dex.getString(nameIdx), dex
+							.getType(typeIdx), null);
 					variableList.put(regNum, localVariable);
 				}
 			}
@@ -124,8 +124,8 @@ public class DexDebugInfoReader {
 				int typeIdx = (int) in.readUnsignedLeb128() - 1;
 				int sigIdx = (int) in.readUnsignedLeb128() - 1;
 				if ((nameIdx >= 0) && (typeIdx >= 0)) {
-					LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1,
-							dex.getString(nameIdx), dex.getType(typeIdx), dex.getString(sigIdx));
+					LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1, dex.getString(nameIdx), dex
+							.getType(typeIdx), dex.getString(sigIdx));
 					variableList.put(regNum, localVariable);
 				}
 			}
@@ -157,7 +157,9 @@ public class DexDebugInfoReader {
 
 			case DBG_SET_FILE: {
 				int sourceFileIdx = (int) in.readUnsignedLeb128() - 1;
-				log.debug("source file:{}", dex.getString(sourceFileIdx));
+				if (log.isDebugEnabled()) {
+					log.debug("source file:{}", dex.getString(sourceFileIdx));
+				}
 			}
 				break;
 			default: {

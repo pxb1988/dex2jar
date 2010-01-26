@@ -26,6 +26,7 @@ import pxb.android.dex2jar.Method;
  * @author Panxiaobo [pxb1988@126.com]
  * 
  */
+@Deprecated
 @SuppressWarnings("unchecked")
 public class Y extends MethodTransformerAdapter implements Opcodes {
 
@@ -81,9 +82,15 @@ public class Y extends MethodTransformerAdapter implements Opcodes {
 		}
 
 		@Override
-		public Value newOperation(AbstractInsnNode insn) {
+		public Value newOperation(AbstractInsnNode insn) throws AnalyzerException {
 			// TODO Auto-generated method stub
 			return super.newOperation(insn);
+		}
+
+		@Override
+		public void returnOperation(AbstractInsnNode insn, Value value, Value expected) throws AnalyzerException {
+			// TODO Auto-generated method stub
+			super.returnOperation(insn, value, expected);
 		}
 
 		@Override
@@ -164,7 +171,7 @@ public class Y extends MethodTransformerAdapter implements Opcodes {
 			} else if (Util.isWrite(p)) {
 
 			}
-//			Frame f = frames[i];
+			// Frame f = frames[i];
 		}
 	}
 }

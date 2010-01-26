@@ -20,10 +20,11 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 import pxb.android.dex2jar.Method;
 
 /**
- * @deprecated
+ * 
  * @author Panxiaobo
  * 
  */
+@Deprecated
 @SuppressWarnings("unchecked")
 public class X implements Opcodes {
 	public static void transform(Method m, MethodNode method) {
@@ -62,8 +63,7 @@ public class X implements Opcodes {
 					}
 				}
 			}
-			AnalyzerAdapter a = new AnalyzerAdapter(m.getOwner(), method.access, method.name, method.desc,
-					new EmptyVisitor());
+			AnalyzerAdapter a = new AnalyzerAdapter(m.getOwner(), method.access, method.name, method.desc, new EmptyVisitor());
 			for (AbstractInsnNode p = method.instructions.getFirst(); p != null; p = p.getNext()) {
 				p.accept(a);
 				if (p instanceof LabelNode) {
