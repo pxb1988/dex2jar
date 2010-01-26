@@ -260,6 +260,8 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 * @param block
 	 */
 	private static void optmizeOut(Block block) {
+		// TODO to slow
+
 		Set<Object> mask = new HashSet();
 		for (int i = 0; i < block.out.size(); i++) {
 			if (block.out.get(i) != null) {
@@ -416,7 +418,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	/**
 	 * 
 	 * 
-	 * 调整NEW指令和对应的INVOKESPECIAL指令的位置，使其于直接编译的指令顺序一样
+	 * 调整NEW指令和对应的INVOKESPECIAL指令的位置，使其与直接编译的指令顺序一样
 	 * 
 	 * <pre>
 	 * BEFORE:
@@ -432,7 +434,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 *     ASTORE 1
 	 *     ALOAD 0
 	 *     ALOAD 1
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.<init> (Ljava/io/InputStream;)V
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
 	 *     ALOAD 0
 	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
 	 * </pre>
@@ -451,7 +453,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 *     NEW Ljava/util/PropertyResourceBundle;
 	 *     DUP
 	 *     ALOAD 1
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.<init> (Ljava/io/InputStream;)V
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
 	 *     ASTORE 0
 	 *     ALOAD 0
 	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
