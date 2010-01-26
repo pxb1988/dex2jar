@@ -1,5 +1,20 @@
-/**
+/*
+ * Copyright (c) 2009-2010 Panxiaobo
  * 
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package pxb.android.dex2jar.dump;
 
@@ -29,7 +44,7 @@ import pxb.android.dex2jar.visitors.EmptyVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * 
+ * @version $Id$
  */
 public class Dump implements DexFileVisitor {
 	private int class_count = 0;
@@ -145,8 +160,8 @@ public class Dump implements DexFileVisitor {
 			public DexFieldVisitor visitField(Field field, Object value) {
 				out.printf("//field:%04d  access:0x%04x\n", field_count++, field.getAccessFlags());
 				out.printf("//%s\n", field);
-				out.printf("%s %s %s", getAccDes(field.getAccessFlags()), Type.getType(field.getType()).getClassName(),
-						field.getName());
+				out.printf("%s %s %s", getAccDes(field.getAccessFlags()), Type.getType(field.getType()).getClassName(), field
+						.getName());
 				if (value != null) {
 					out.print('=');
 					out.print(value);
@@ -172,8 +187,8 @@ public class Dump implements DexFileVisitor {
 				out.printf("//method:%04d  access:0x%04x\n", method_count++, method.getAccessFlags());
 				out.printf("//%s\n", method);
 
-				out.printf("%s%s %s(", getAccDes(method.getAccessFlags()), Type.getType(
-						method.getType().getReturnType()).getClassName(), method.getName());
+				out.printf("%s%s %s(", getAccDes(method.getAccessFlags()), Type.getType(method.getType().getReturnType())
+						.getClassName(), method.getName());
 				String ps[] = method.getType().getParameterTypes();
 				if (ps != null && ps.length > 0) {
 					out.print(Type.getType(ps[0]).getClassName());

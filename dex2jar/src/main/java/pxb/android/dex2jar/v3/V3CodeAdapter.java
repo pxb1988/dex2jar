@@ -1,5 +1,20 @@
-/**
+/*
+ * Copyright (c) 2009-2010 Panxiaobo
  * 
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package pxb.android.dex2jar.v3;
 
@@ -22,7 +37,7 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * 
+ * @version $Id$
  */
 public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	protected Method method;
@@ -411,8 +426,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitInInsn(int, int,
-	 * int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitInInsn(int, int, int)
 	 */
 	public void visitInInsn(int opcode, int saveToReg, int opReg) {
 		checkResult();
@@ -673,8 +687,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitInInsn(int, int,
-	 * int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitInInsn(int, int, int,
+	 * int)
 	 */
 	public void visitInInsn(int opcode, int saveToReg, int opReg, int opValueOrReg) {
 		checkResult();
@@ -979,8 +993,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLineNumber(int,
-	 * int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLineNumber(int, int)
 	 */
 	public void visitLineNumber(int line, int label) {
 		mv.visitLineNumber(line, labels(label));
@@ -1001,8 +1014,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexCodeVisitor#visitLookupSwitchInsn(int,
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLookupSwitchInsn(int,
 	 * int, int, int[], int[])
 	 */
 	public void visitLookupSwitchInsn(int opcode, int reg, int defaultOffset, int[] cases, int[] offsets) {
@@ -1084,8 +1096,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexCodeVisitor#visitTableSwitchInsn(int,
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitTableSwitchInsn(int,
 	 * int, int, int, int, int[])
 	 */
 	public void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, int label, int[] labels) {
