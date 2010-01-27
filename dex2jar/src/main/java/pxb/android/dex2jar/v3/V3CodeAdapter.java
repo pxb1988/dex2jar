@@ -930,8 +930,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	public void visitJumpInsn(int opcode, int offset, int reg1, int reg2) {
 		checkResult();
 		Label label = getLabel(offset);
-		mv.visitVarInsn(ILOAD, map(reg2));
 		mv.visitVarInsn(ILOAD, map(reg1));
+		mv.visitVarInsn(ILOAD, map(reg2));
 		mv.visitJumpInsn(DexOpcodeUtil.mapOpcode(opcode), label);
 		stack(2);
 	}

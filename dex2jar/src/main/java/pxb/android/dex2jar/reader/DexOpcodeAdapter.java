@@ -404,7 +404,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		}
 			break;
 		case OP_CONST: {
-			dcv.visitLdcInsn(opcode, (arg2 << 16) | arg1, arg1);
+			dcv.visitLdcInsn(opcode, arg2 & 0xFFFF, arg1);
 		}
 			break;
 		case OP_CONST_WIDE_32: {

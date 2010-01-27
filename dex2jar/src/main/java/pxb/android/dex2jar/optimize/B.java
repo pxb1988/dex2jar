@@ -49,8 +49,6 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.TraceMethodVisitor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.Method;
 
@@ -61,7 +59,8 @@ import pxb.android.dex2jar.Method;
 @SuppressWarnings("unchecked")
 public class B extends MethodTransformerAdapter implements Opcodes {
 
-	private static final Logger log = LoggerFactory.getLogger(MethodTransformerAdapter.class);
+	// private static final Logger log =
+	// LoggerFactory.getLogger(MethodTransformerAdapter.class);
 	Method m;
 
 	public B(Method m, MethodTransformer tr) {
@@ -154,7 +153,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		return ++max;
 	}
 
-	public void max(int max) {
+	private void max(int max) {
 		if (max > this.max) {
 			this.max = max;
 		}
@@ -163,9 +162,9 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	@Override
 	public void transform(MethodNode method) {
 
-		long timeStart = System.currentTimeMillis();
+		// long timeStart = System.currentTimeMillis();
 
-		log.debug("enter {}", m);
+		// log.debug("enter {}", m);
 		int blockIndex = 0;
 		insnList = method.instructions;
 		this.method = method;
@@ -229,11 +228,13 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 
 		linkBlocks();
 
-		long timeSpend = System.currentTimeMillis() - timeStart;
-		log.debug("spend ({}ms) init", timeSpend);
-		if (m.toString().equals("Ljavax/servlet/http/Cookie;.<init>(Ljava/lang/String;Ljava/lang/String;)V")) {
-			log.debug("spend ({}ms) init", timeSpend);
-		}
+		// long timeSpend = System.currentTimeMillis() - timeStart;
+		// log.debug("spend ({}ms) init", timeSpend);
+		// if
+		// (m.toString().startsWith("Lorg/mortbay/ijetty/console/HTMLHelper;.doFooter"))
+		// {
+		// log.debug("spend ({}ms) init", timeSpend);
+		// }
 
 		for (Block block : blocks) {
 			optmizeOut(block);
@@ -243,10 +244,11 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		// changeLdc_0(blocks);
 		super.transform(method);
 
-		timeSpend = System.currentTimeMillis() - timeStart;
-		if (timeSpend > 500) {
-			log.debug("spend {}s,({}ms) {}", new Object[] { timeSpend / 1000, timeSpend, m.toString() });
-		}
+		// timeSpend = System.currentTimeMillis() - timeStart;
+		// if (timeSpend > 500) {
+		// log.debug("spend {}s,({}ms) {}", new Object[] { timeSpend / 1000,
+		// timeSpend, m.toString() });
+		// }
 	}
 
 	/**
@@ -488,7 +490,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		}
 	}
 
-	private void dump(Block block) {
+	protected void dump(Block block) {
 		AbstractInsnNode p = block.first.getNext();
 		while (p != null && !(p instanceof LabelNode)) {
 			p.accept(tr);
@@ -501,6 +503,43 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		System.out.println();
 	}
 
+	/**
+	 * <pre>
+	 * BEFORE:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     ASTORE 1
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     ASTORE 2
+	 *     ALOAD 1
+	 *     ALOAD 2
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     ASTORE 0
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * <pre>
+	 * AFTER:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     ASTORE 0
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * @param block
+	 */
 	protected void doLdc(Block block) {
 		Map<Integer, LdcInsnNode> map = new HashMap();
 		AbstractInsnNode p = block.first.getNext();
@@ -509,17 +548,64 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 				AbstractInsnNode q = p.getNext();
 				if (isWrite(q)) {
 					Integer var = var(q);
-					if (block.out.get(var) != q) {
+					if (block.out.get(var) == null || block.out.get(var) != q) {
 						map.put(var, (LdcInsnNode) p);
+						insnList.remove(q); // remove store
+						q = p.getPrevious();
+						insnList.remove(p); // remove ldc
+						p = q;
 					}
 				}
-				p = doLdc(p, block);
-			} else {
-				p = p.getNext();
+			} else if (isRead(p)) {
+				Integer var = var(p);
+				if (block.out.get(var) == null || block.out.get(var) != p) {
+					LdcInsnNode ldc = map.get(var);
+					if (ldc != null) {
+						AbstractInsnNode _ldc_copy = ldc.clone(null);
+						insnList.insert(p, _ldc_copy);
+						insnList.remove(p);
+						p = _ldc_copy;
+					}
+				}
+			} else if (isWrite(p)) {
+				Integer var = var(p);
+				map.remove(var);
 			}
+			p = p.getNext();
 		}
 	}
 
+	/**
+	 * <pre>
+	 * BEFORE:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     ASTORE 0
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * <pre>
+	 * AFTER:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * @param block
+	 */
 	protected void doVar(Block block) {
 		AbstractInsnNode p = block.first.getNext();
 		while (p != null && p != block.last) {
@@ -528,11 +614,11 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 				if (isRead(q)) {
 					if (isSameVar(p, q)) {
 						int var = var(p);
-
 						boolean canDel = true;
 						for (AbstractInsnNode i = q.getNext(); i != null && i != block.last; i = i.getNext()) {
 							if (isRead(i) && var == var(i)) {
 								canDel = false;
+								break;
 							}
 							if (isWrite(i) && var == var(i)) {
 								canDel = true;
@@ -553,24 +639,54 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	}
 
 	public void doBlock(Block block) {
-		System.out.println("BEFORE");
-		dump(block);
+		// System.out.println("BEFORE");
+		// dump(block);
 
 		doNew(block);
-		dump(block);
+		// dump(block);
 
 		doLdc(block);
-		dump(block);
+		// dump(block);
 
 		doVar(block);
-		dump(block);
+		// dump(block);
+
 		doReIndex(block);
 
-		System.out.println("AFTER");
-		dump(block);
+		// System.out.println("AFTER");
+		// dump(block);
 	}
 
-	private void doReIndex(Block block) {
+	/**
+	 * <pre>
+	 * BEFORE:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * <pre>
+	 * AFTER:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 4
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 4
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * @param block
+	 */
+	protected void doReIndex(Block block) {
 		Map<Integer, Integer> map = new HashMap();
 		for (AbstractInsnNode p = block.first; p != block.last; p = p.getNext()) {
 			if (isWrite(p)) {
@@ -594,32 +710,5 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 				}
 			}
 		}
-	}
-
-	private AbstractInsnNode doLdc(AbstractInsnNode _ldc, Block block) {
-		AbstractInsnNode _store = _ldc.getNext();
-		if (!isWrite(_store))
-			return _store;
-
-		int var = var(_store);
-		if (block.out.get(var) == _store)
-			return _store.getNext();
-		AbstractInsnNode p = _store.getNext();
-		AbstractInsnNode pre = _ldc.getPrevious();
-		insnList.remove(_ldc);
-		insnList.remove(_store);
-		while (p != null && p != block.last) {
-			if (isRead(p) && var(p) == var) {
-				AbstractInsnNode x = _ldc.clone(null);
-				insnList.insert(p, x);
-				insnList.remove(p);
-				p = x.getNext();
-			} else if (isWrite(p) && var(p) == var) {
-				break;
-			} else {
-				p = p.getNext();
-			}
-		}
-		return pre.getNext();
 	}
 }
