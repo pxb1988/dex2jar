@@ -4,7 +4,7 @@
 	<groupId>pxb.android</groupId>
 	<artifactId>dex2jar</artifactId>
 	<name />
-	<version>0.0.4-SNAPSHOT</version>
+	<version>0.0.5-SNAPSHOT</version>
 	<description />
 	<dependencies>
 		<dependency>

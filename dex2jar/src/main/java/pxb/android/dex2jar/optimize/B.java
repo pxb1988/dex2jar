@@ -21,10 +21,13 @@ package pxb.android.dex2jar.optimize;
 import static pxb.android.dex2jar.optimize.Util.isRead;
 import static pxb.android.dex2jar.optimize.Util.isSameVar;
 import static pxb.android.dex2jar.optimize.Util.isWrite;
+import static pxb.android.dex2jar.optimize.Util.needBreak;
+import static pxb.android.dex2jar.optimize.Util.var;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,8 +72,8 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	public static class Block {
 		public LabelNode first;
 		public LabelNode last;
-		public XList<AbstractInsnNode> in;
-		public XList<AbstractInsnNode> out;
+		public Map<Integer, AbstractInsnNode> in;
+		public Map<Integer, AbstractInsnNode> out;
 
 		public List<Block> froms = new ArrayList();
 		public List<Block> tos = new ArrayList();
@@ -142,17 +145,6 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	TraceMethodVisitor tr = new TraceMethodVisitor();
 	MethodNode method;
 
-	private static boolean needBreak(AbstractInsnNode ins) {
-		switch (ins.getType()) {
-		case AbstractInsnNode.JUMP_INSN:
-		case AbstractInsnNode.LOOKUPSWITCH_INSN:
-		case AbstractInsnNode.TABLESWITCH_INSN:
-		case AbstractInsnNode.LABEL:
-			return true;
-		}
-		return false;
-	}
-
 	List<Block> blocks = new ArrayList();
 	Map<Label, Block> blockMaps = new HashMap();
 
@@ -179,8 +171,8 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		this.method = method;
 		// dump();
 
-		XList<AbstractInsnNode> in = new XList();
-		XList<AbstractInsnNode> out = new XList();
+		Map<Integer, AbstractInsnNode> in = new HashMap();
+		Map<Integer, AbstractInsnNode> out = new HashMap();
 
 		AbstractInsnNode p = method.instructions.getFirst();
 
@@ -227,8 +219,8 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 				blocks.add(block);
 				blockMaps.put(block.first.getLabel(), block);
 				first = p;
-				in = new XList();
-				out = new XList();
+				in = new HashMap();
+				out = new HashMap();
 			}
 			p = p.getNext();
 		}
@@ -239,6 +231,9 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 
 		long timeSpend = System.currentTimeMillis() - timeStart;
 		log.debug("spend ({}ms) init", timeSpend);
+		if (m.toString().equals("Ljavax/servlet/http/Cookie;.<init>(Ljava/lang/String;Ljava/lang/String;)V")) {
+			log.debug("spend ({}ms) init", timeSpend);
+		}
 
 		for (Block block : blocks) {
 			optmizeOut(block);
@@ -260,15 +255,13 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 * @param block
 	 */
 	private static void optmizeOut(Block block) {
-		// TODO to slow
-
 		Set<Object> mask = new HashSet();
-		for (int i = 0; i < block.out.size(); i++) {
-			if (block.out.get(i) != null) {
-				boolean read = doOptmizeOut(i, block, mask, false);
-				if (!read) {
-					block.out.put(i, null);
-				}
+		for (Iterator<Integer> it = block.out.keySet().iterator(); it.hasNext();) {
+			Integer i = it.next();
+			mask.clear();
+			boolean read = doOptmizeOut(i, block, mask, false);
+			if (!read) {
+				it.remove();
 			}
 		}
 	}
@@ -277,32 +270,31 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 * 递归检查变量是否被读取
 	 * 
 	 * @param i
-	 *            变量的编号
+	 *          变量的编号
 	 * @param block
-	 *            块
+	 *          块
 	 * @param mask
-	 *            结束递归的状态
+	 *          结束递归的状态
 	 * @param checkThis
 	 * @return 是否被读取
 	 */
-	private static boolean doOptmizeOut(int i, Block block, Set<Object> mask, boolean checkThis) {
+	private static boolean doOptmizeOut(Integer i, Block block, Set<Object> mask, boolean checkThis) {
 		if (checkThis) {
-			Object o = block.in.get(i);
-			if (o != null)
+			if (block.in.containsKey(i))
 				return true;
 		}
-		boolean result = false;
 		if (!mask.contains(block)) {
 			mask.add(block);
 			for (Block n : block.tos) {
-				result = doOptmizeOut(i, n, mask, true);
-				if (result) {
-					break;
+				if (!mask.contains(n)) {
+					boolean result = doOptmizeOut(i, n, mask, true);
+					if (result) {
+						return true;
+					}
 				}
 			}
-			mask.remove(block);
 		}
-		return result;
+		return false;
 	}
 
 	private void linkBlocks() {
@@ -397,14 +389,6 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 				p = p.getNext();
 			}
 		}
-	}
-
-	static private int var(AbstractInsnNode p) {
-		return ((VarInsnNode) p).var;
-	}
-
-	static private void var(AbstractInsnNode p, int r) {
-		((VarInsnNode) p).var = r;
 	}
 
 	public void dump() {
@@ -504,7 +488,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		}
 	}
 
-	void dump(Block block) {
+	private void dump(Block block) {
 		AbstractInsnNode p = block.first.getNext();
 		while (p != null && !(p instanceof LabelNode)) {
 			p.accept(tr);
@@ -518,9 +502,17 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	}
 
 	protected void doLdc(Block block) {
+		Map<Integer, LdcInsnNode> map = new HashMap();
 		AbstractInsnNode p = block.first.getNext();
 		while (p != null && p != block.last) {
 			if (p.getOpcode() == Opcodes.LDC) {
+				AbstractInsnNode q = p.getNext();
+				if (isWrite(q)) {
+					Integer var = var(q);
+					if (block.out.get(var) != q) {
+						map.put(var, (LdcInsnNode) p);
+					}
+				}
 				p = doLdc(p, block);
 			} else {
 				p = p.getNext();
@@ -533,38 +525,30 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		while (p != null && p != block.last) {
 			if (isWrite(p)) {
 				AbstractInsnNode q = p.getNext();
-				if (isRead(q) && isSameVar(p, q)) {
-					int var = var(p);
-					if (block.out.get(var) != null && block.out.get(var) == p) {
-						p = q.getNext();
-					} else {
-						AbstractInsnNode c = q.getNext();
-						boolean ok = true;
-						while (c != null && !(c instanceof LabelNode)) {
-							if (isRead(c) && isSameVar(p, c)) {
-								ok = false;
+				if (isRead(q)) {
+					if (isSameVar(p, q)) {
+						int var = var(p);
+
+						boolean canDel = true;
+						for (AbstractInsnNode i = q.getNext(); i != null && i != block.last; i = i.getNext()) {
+							if (isRead(i) && var == var(i)) {
+								canDel = false;
+							}
+							if (isWrite(i) && var == var(i)) {
+								canDel = true;
 								break;
 							}
-							if (isWrite(c) && isSameVar(p, c)) {
-								break;
-							}
-							c = c.getNext();
 						}
-						if (ok) {
+						if (canDel && block.out.get(var) != p) {
 							AbstractInsnNode t = q.getNext();
 							insnList.remove(p);
 							insnList.remove(q);
-							p = t;
-						} else {
-							p = q.getNext();
+							p = t.getPrevious();
 						}
 					}
-				} else {
-					p = p.getNext();
 				}
-			} else {
-				p = p.getNext();
 			}
+			p = p.getNext();
 		}
 	}
 
@@ -598,8 +582,15 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 				}
 			} else if (isRead(p)) {
 				int r = var(p);
-				if (block.in.get(r) == null && block.out.get(r) == null) {
-					var(p, map.get(r));
+				if (block.in.get(r) == null && block.out.get(r) == null) {// 不输入，不输出
+					Integer v = map.get(r);
+					if (v == null) {
+						int nr = order();
+						var(p, nr);
+						map.put(r, nr);
+					} else {
+						var(p, v);
+					}
 				}
 			}
 		}

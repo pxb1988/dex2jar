@@ -27,6 +27,24 @@ import org.objectweb.asm.tree.VarInsnNode;
  * @version $Id$
  */
 public class Util implements Opcodes {
+	public static boolean needBreak(AbstractInsnNode ins) {
+		switch (ins.getType()) {
+		case AbstractInsnNode.JUMP_INSN:
+		case AbstractInsnNode.LOOKUPSWITCH_INSN:
+		case AbstractInsnNode.TABLESWITCH_INSN:
+		case AbstractInsnNode.LABEL:
+			return true;
+		}
+		return false;
+	}
+
+	public static int var(AbstractInsnNode p) {
+		return ((VarInsnNode) p).var;
+	}
+
+	public static void var(AbstractInsnNode p, int r) {
+		((VarInsnNode) p).var = r;
+	}
 
 	public static boolean isWrite(AbstractInsnNode p) {
 		if (p instanceof VarInsnNode) {
