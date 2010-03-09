@@ -385,6 +385,10 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		case OP_CMPL_FLOAT:
 			info(opcode, "v%d = v%d - v%d", saveToReg, opReg, opValueOrReg);
 			break;
+		case OP_CMPG_DOUBLE:
+		case OP_CMPG_FLOAT:
+			info(opcode, "v%d = v%d - v%d", saveToReg, opValueOrReg, opReg);
+			break;
 		case OP_MUL_INT_LIT16:
 			info(opcode, "v%d = v%d * %d", saveToReg, opReg, opValueOrReg);
 			break;
