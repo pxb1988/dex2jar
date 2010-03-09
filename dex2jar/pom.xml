@@ -3,8 +3,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>pxb.android</groupId>
 	<artifactId>dex2jar</artifactId>
-	<name />
-	<version>0.0.5-SNAPSHOT</version>
+	<name>Dex2jar</name>
+	<version>0.0.6-SNAPSHOT</version>
 	<description />
 	<dependencies>
 		<dependency>
