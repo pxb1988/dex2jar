@@ -65,11 +65,11 @@ public class DexCodeReader implements DexOpcodes {
 
 	/**
 	 * @param dex
-	 *          dex文件
+	 *            dex文件
 	 * @param in
-	 *          输入流
+	 *            输入流
 	 * @param method
-	 *          方法的描述
+	 *            方法的描述
 	 */
 	public DexCodeReader(Dex dex, DataIn in, Method method) {
 		this.dex = dex;
@@ -278,8 +278,7 @@ public class DexCodeReader implements DexOpcodes {
 				int a = in.readByte();
 				short b = in.readShortx();
 				if (log.isDebugEnabled()) {
-					log.debug(String.format("%04x| %02x%02x %04x      %s", i, opcode, a, Short.reverseBytes(b), DexOpcodeDump
-							.dump(opcode)));
+					log.debug(String.format("%04x| %02x%02x %04x      %s", i, opcode, a, Short.reverseBytes(b), DexOpcodeDump.dump(opcode)));
 				}
 				tadoa.visit(opcode, a, b);
 				i += 2;
@@ -290,8 +289,8 @@ public class DexCodeReader implements DexOpcodes {
 				short b = in.readShortx();
 				short c = in.readShortx();
 				if (log.isDebugEnabled()) {
-					log.debug(String.format("%04x| %02x%02x %04x %04x %s", i, opcode, a, Short.reverseBytes(b), Short
-							.reverseBytes(c), DexOpcodeDump.dump(opcode)));
+					log.debug(String.format("%04x| %02x%02x %04x %04x %s", i, opcode, a, Short.reverseBytes(b), Short.reverseBytes(c), DexOpcodeDump
+							.dump(opcode)));
 				}
 				tadoa.visit(opcode, a, b, c);
 				i += 3;
@@ -386,8 +385,7 @@ public class DexCodeReader implements DexOpcodes {
 			}
 				break;
 			default:
-				throw new RuntimeException(String.format("Not support Opcode :0x%02x=%s @[0x%04x]", opcode, DexOpcodeDump
-						.dump(opcode), i));
+				throw new RuntimeException(String.format("Not support Opcode :0x%02x=%s @[0x%04x]", opcode, DexOpcodeDump.dump(opcode), i));
 			}
 		}
 		dcv.visitEnd();
@@ -397,7 +395,7 @@ public class DexCodeReader implements DexOpcodes {
 	 * 预定一个标签位置
 	 * 
 	 * @param offset
-	 *          指令位置
+	 *            指令位置
 	 */
 	private void order(int offset) {
 		if (!labels.containsKey(offset)) {

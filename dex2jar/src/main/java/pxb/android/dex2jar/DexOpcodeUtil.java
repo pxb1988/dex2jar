@@ -31,7 +31,7 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 	 * 获取指令的长度
 	 * 
 	 * @param opcode
-	 *          指令
+	 *            指令
 	 * @return
 	 */
 	public static int getSize(int opcode) {
@@ -307,7 +307,7 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 	 * 映射dex指令到jvm指令
 	 * 
 	 * @param dexOpcode
-	 *          dex指令
+	 *            dex指令
 	 * @return
 	 */
 	public static int mapOpcode(int dexOpcode) {
@@ -358,6 +358,9 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 			return DSUB;
 		case OP_SUB_FLOAT_2ADDR:
 			return FSUB;
+		case OP_MUL_FLOAT_2ADDR:
+			return FMUL;
+
 		case OP_SUB_INT_2ADDR:
 			return ISUB;
 		case OP_SUB_LONG_2ADDR:
@@ -461,6 +464,10 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 			return DCMPL;
 		case OP_CMPL_FLOAT:
 			return FCMPL;
+		case OP_CMPG_DOUBLE:
+			return DCMPG;
+		case OP_CMPG_FLOAT:
+			return FCMPG;
 
 		case OP_MUL_INT_LIT16:
 			return IMUL;
@@ -557,7 +564,7 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 			return LALOAD;
 
 		default:
-			throw new RuntimeException("Not support");
+			throw new RuntimeException("Not support " + DexOpcodeDump.dump(dexOpcode));
 		}
 
 	}
