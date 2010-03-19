@@ -278,6 +278,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_IGET_BOOLEAN:
 		case OP_IGET_BYTE:
 		case OP_IGET_SHORT:
+		case OP_IGET_CHAR:
 			//
 		{
 			mv.visitVarInsn(ALOAD, map(ownerReg));
@@ -287,6 +288,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_IGET_BOOLEAN:
 			case OP_IGET_BYTE:
 			case OP_IGET_SHORT:
+			case OP_IGET_CHAR:
 				mv.visitVarInsn(ISTORE, map(regFromOrTo));
 				break;
 			case OP_IGET_WIDE:
@@ -306,6 +308,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_IPUT_BOOLEAN:
 		case OP_IPUT_BYTE:
 		case OP_IPUT_SHORT:
+		case OP_IPUT_CHAR:
 			//
 		{
 			mv.visitVarInsn(ALOAD, map(ownerReg));
@@ -314,6 +317,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_IPUT_BOOLEAN:
 			case OP_IPUT_BYTE:
 			case OP_IPUT_SHORT:
+			case OP_IPUT_CHAR:
 				mv.visitVarInsn(ILOAD, map(regFromOrTo));
 				break;
 			case OP_IPUT_WIDE:
@@ -489,7 +493,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 				break;
 			case OP_DIV_DOUBLE_2ADDR:
 			case OP_SUB_DOUBLE_2ADDR:
-			case OP_ADD_DOUBLE_2ADDR: {
+			case OP_ADD_DOUBLE_2ADDR:
+			case OP_MUL_DOUBLE_2ADDR: {
 				load = DLOAD;
 				store = DSTORE;
 			}
