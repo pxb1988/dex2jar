@@ -34,7 +34,7 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
  * 用于读取方法的指令
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DexCodeReader.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class DexCodeReader implements DexOpcodes {
 	private static final Logger log = LoggerFactory.getLogger(DexCodeReader.class);

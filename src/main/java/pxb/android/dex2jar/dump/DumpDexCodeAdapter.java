@@ -29,7 +29,7 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DumpDexCodeAdapter.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	// private static final Logger log =

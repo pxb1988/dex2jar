@@ -19,7 +19,7 @@ package pxb.android.dex2jar;
  * 输入流
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DataIn.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public interface DataIn {
 

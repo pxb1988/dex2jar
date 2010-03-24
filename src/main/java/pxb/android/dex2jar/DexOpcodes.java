@@ -19,7 +19,7 @@ package pxb.android.dex2jar;
  * dex的所有指令
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DexOpcodes.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public abstract interface DexOpcodes {
 	public static final int OP_NOP = 0;

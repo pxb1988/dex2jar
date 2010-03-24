@@ -19,7 +19,7 @@ package pxb.android.dex2jar;
  * 版本号
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: Version.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public interface Version {
 	String version = "$Rev: 60 $";

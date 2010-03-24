@@ -27,7 +27,7 @@ import org.objectweb.asm.Type;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: TypeNameAdapter.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class TypeNameAdapter extends ClassAdapter {
 

@@ -19,7 +19,7 @@ import org.objectweb.asm.ClassVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: ClassVisitorFactory.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public interface ClassVisitorFactory {
 	public ClassVisitor create(String className);

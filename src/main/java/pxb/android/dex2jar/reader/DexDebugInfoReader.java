@@ -28,7 +28,7 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
  * 读取debug信息
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DexDebugInfoReader.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class DexDebugInfoReader {
 	public static final int DBG_END_SEQUENCE = 0;

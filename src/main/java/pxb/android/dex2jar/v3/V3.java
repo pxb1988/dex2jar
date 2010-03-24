@@ -26,7 +26,7 @@ import pxb.android.dex2jar.visitors.DexFileVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: V3.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class V3 implements DexFileVisitor {
 	protected ClassVisitorFactory cvf;

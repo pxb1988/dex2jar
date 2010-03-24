@@ -20,7 +20,7 @@ import pxb.android.dex2jar.Method;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DexClassAdapter.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class DexClassAdapter implements DexClassVisitor {
 	protected DexClassVisitor dcv;

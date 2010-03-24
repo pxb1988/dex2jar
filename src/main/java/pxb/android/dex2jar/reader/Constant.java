@@ -24,7 +24,7 @@ import pxb.android.dex2jar.Dex;
  * 读取静态常量
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: Constant.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class Constant {
 

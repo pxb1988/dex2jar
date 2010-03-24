@@ -28,7 +28,7 @@ import pxb.android.dex2jar.visitors.DexFieldVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: V3FieldAdapter.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class V3FieldAdapter implements DexFieldVisitor {
 	protected List<Ann> anns = new ArrayList<Ann>();

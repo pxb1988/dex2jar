@@ -30,7 +30,7 @@ import pxb.android.dex2jar.reader.DexFileReader;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: Main.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class Main {
 

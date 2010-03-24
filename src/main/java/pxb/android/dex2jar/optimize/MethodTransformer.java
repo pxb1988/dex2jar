@@ -19,7 +19,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: MethodTransformer.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public interface MethodTransformer {
 	public void transform(MethodNode method);

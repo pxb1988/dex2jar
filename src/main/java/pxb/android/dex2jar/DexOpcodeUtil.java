@@ -21,7 +21,7 @@ import org.objectweb.asm.Opcodes;
  * 指令的工具类
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DexOpcodeUtil.java 91 2010-03-19 09:45:09Z pxb1988 $
+ * @version $Id$
  */
 public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 	/**

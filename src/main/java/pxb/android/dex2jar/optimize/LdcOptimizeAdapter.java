@@ -21,7 +21,7 @@ import org.objectweb.asm.Opcodes;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: LdcOptimizeAdapter.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class LdcOptimizeAdapter extends MethodAdapter implements Opcodes {
 

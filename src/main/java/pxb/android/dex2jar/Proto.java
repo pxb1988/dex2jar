@@ -22,7 +22,7 @@ import java.util.List;
  * 参数和返回类型
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: Proto.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class Proto {
 	/**

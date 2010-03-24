@@ -26,7 +26,7 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DexOpcodeAdapter.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class DexOpcodeAdapter implements DexOpcodes {
 	private DexCodeVisitor dcv;

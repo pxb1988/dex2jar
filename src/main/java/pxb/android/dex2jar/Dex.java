@@ -17,7 +17,7 @@ package pxb.android.dex2jar;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: Dex.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public interface Dex {
 	/**

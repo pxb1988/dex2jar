@@ -34,7 +34,7 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: V3CodeAdapter.java 91 2010-03-19 09:45:09Z pxb1988 $
+ * @version $Id$
  */
 public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	protected Method method;

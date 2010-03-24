@@ -30,7 +30,7 @@ import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
  * 读取注解
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DexAnnotationReader.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public class DexAnnotationReader {
 	private Dex dex;

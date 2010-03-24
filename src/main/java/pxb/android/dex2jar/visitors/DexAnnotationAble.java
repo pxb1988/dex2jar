@@ -19,7 +19,7 @@ package pxb.android.dex2jar.visitors;
  * 用于访问注解
  * 
  * @author Panxiaobo [pxb1988@126.com]
- * @version $Id: DexAnnotationAble.java 90 2010-03-09 05:31:33Z pxb1988 $
+ * @version $Id$
  */
 public interface DexAnnotationAble {
 	/**
