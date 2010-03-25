@@ -624,7 +624,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 			if (method.getType().getReturnType().equals("V")) {
 				info(opcode, "%s.%s(%s)  //%s", c(method.getOwner()), method.getName(), sb.toString(), method.toString());
 			} else {
-				info(opcode, "XXX=%s.%s(%s)  //%s", c(method.getOwner()), method.getName(), sb.toString(), method.toString());
+				info(opcode, "TEMP=%s.%s(%s)  //%s", c(method.getOwner()), method.getName(), sb.toString(), method.toString());
 
 			}
 		}
@@ -648,7 +648,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 			if (method.getType().getReturnType().equals("V")) {
 				info(opcode, "v%d.%s(%s)  //%s", regs[0], method.getName(), sb.toString(), method.toString());
 			} else {
-				info(opcode, "XXX=v%d.%s(%s)  //%s", regs[0], method.getName(), sb.toString(), method.toString());
+				info(opcode, "TEMP=v%d.%s(%s)  //%s", regs[0], method.getName(), sb.toString(), method.toString());
 
 			}
 		}
@@ -740,7 +740,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		case OP_MOVE_RESULT:
 		case OP_MOVE_RESULT_WIDE:
 		case OP_MOVE_EXCEPTION:
-			info(opcode, "v%d=XXX", reg);
+			info(opcode, "v%d=TEMP", reg);
 			break;
 		case OP_THROW:
 			info(opcode, "throw v%d", reg);
@@ -769,9 +769,9 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 */
 	@Override
 	public void visitFilledNewArrayIns(int opcode, String type, int[] regs) {
-		info(opcode, "XXX=new %s[%d]", Type.getType(type).getElementType().getClassName(), regs.length);
+		info(opcode, "TEMP=new %s[%d]", Type.getType(type).getElementType().getClassName(), regs.length);
 		for (int i = 0; i < regs.length; i++) {
-			info(opcode, "XXX[%d]=v%d", i, regs[i]);
+			info(opcode, "TEMP[%d]=v%d", i, regs[i]);
 		}
 		super.visitFilledNewArrayIns(opcode, type, regs);
 	}

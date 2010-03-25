@@ -133,7 +133,6 @@ public class TypeNameAdapter extends ClassAdapter {
 	 */
 	@Override
 	public void visitOuterClass(String owner, String name, String desc) {
-		// TODO Auto-generated method stub
 		super.visitOuterClass(owner, name, desc);
 	}
 
