@@ -122,8 +122,7 @@ public class Dump implements DexFileVisitor {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexFileVisitor#visit(int,
-	 * java.lang.String, java.lang.String, java.lang.String[])
+	 * @see pxb.android.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String, java.lang.String[])
 	 */
 	public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames) {
 
@@ -157,8 +156,7 @@ public class Dump implements DexFileVisitor {
 			public DexFieldVisitor visitField(Field field, Object value) {
 				out.printf("//field:%04d  access:0x%04x\n", field_count++, field.getAccessFlags());
 				out.printf("//%s\n", field);
-				out.printf("%s %s %s", getAccDes(field.getAccessFlags()), Type.getType(field.getType()).getClassName(), field
-						.getName());
+				out.printf("%s %s %s", getAccDes(field.getAccessFlags()), Type.getType(field.getType()).getClassName(), field.getName());
 				if (value != null) {
 					out.print('=');
 					out.print(value);
@@ -184,8 +182,7 @@ public class Dump implements DexFileVisitor {
 				out.printf("//method:%04d  access:0x%04x\n", method_count++, method.getAccessFlags());
 				out.printf("//%s\n", method);
 
-				out.printf("%s%s %s(", getAccDes(method.getAccessFlags()), Type.getType(method.getType().getReturnType())
-						.getClassName(), method.getName());
+				out.printf("%s%s %s(", getAccDes(method.getAccessFlags()), Type.getType(method.getType().getReturnType()).getClassName(), method.getName());
 				String ps[] = method.getType().getParameterTypes();
 				if (ps != null && ps.length > 0) {
 					out.print(Type.getType(ps[0]).getClassName());
@@ -215,9 +212,14 @@ public class Dump implements DexFileVisitor {
 	public static void main(String... args) throws IOException {
 		if (args.length < 2) {
 			System.out.println("Dump in.dex out.dump.jar");
+			return;
 		}
-		final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(args[1])));
-		new DexFileReader(new File(args[0])).accept(new Dump(new EmptyVisitor(), new WriterManager() {
+		doFile(new File(args[0]), new File(args[1]));
+	}
+
+	public static void doFile(File srcDex, File destJar) throws IOException {
+		final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
+		new DexFileReader(srcDex).accept(new Dump(new EmptyVisitor(), new WriterManager() {
 
 			public PrintWriter get(String name) {
 				try {

@@ -48,7 +48,11 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 
 	protected void info(int opcode, String format, Object... args) {
 		String s = String.format(format, args);
-		out.printf("%-20s|%5s|%s\n", DexOpcodeDump.dump(opcode), "", s);
+		if (opcode < 0) {
+			out.printf("%-20s|%5s|%s\n", "", "", s);
+		} else {
+			out.printf("%-20s|%5s|%s\n", DexOpcodeDump.dump(opcode), "", s);
+		}
 	}
 
 	@Override
@@ -74,8 +78,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitArrayInsn(int, int,
-	 * int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitArrayInsn(int, int, int, int)
 	 */
 	@Override
 	public void visitArrayInsn(int opcode, int value, int array, int index) {
@@ -105,8 +108,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitArrayInsn(int,
-	 * java.lang.String, int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitArrayInsn(int, java.lang.String, int, int)
 	 */
 	@Override
 	public void visitArrayInsn(int opcode, String type, int saveToReg, int demReg) {
@@ -128,8 +130,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int,
-	 * pxb.android.dex2jar.Field, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int, pxb.android.dex2jar.Field, int)
 	 */
 	@Override
 	public void visitFieldInsn(int opcode, Field field, int reg) {
@@ -159,8 +160,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int,
-	 * pxb.android.dex2jar.Field, int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int, pxb.android.dex2jar.Field, int, int)
 	 */
 	@Override
 	public void visitFieldInsn(int opcode, Field field, int value_reg, int owner_reg) {
@@ -189,8 +189,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFillArrayInsn(int,
-	 * int, int, int, java.lang.Object[])
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFillArrayInsn(int, int, int, int, java.lang.Object[])
 	 */
 	@Override
 	public void visitFillArrayInsn(int opcode, int reg, int elemWidth, int initLength, Object[] values) {
@@ -327,8 +326,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitInInsn(int, int, int,
-	 * int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitInInsn(int, int, int, int)
 	 */
 	@Override
 	public void visitInInsn(int opcode, int saveToReg, int opReg, int opValueOrReg) {
@@ -475,8 +473,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitJumpInsn(int, int,
-	 * int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitJumpInsn(int, int, int)
 	 */
 	@Override
 	public void visitJumpInsn(int opcode, int offset, int reg) {
@@ -506,8 +503,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitJumpInsn(int, int,
-	 * int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitJumpInsn(int, int, int, int)
 	 */
 	@Override
 	public void visitJumpInsn(int opcode, int offset, int reg1, int reg2) {
@@ -548,8 +544,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitLdcInsn(int,
-	 * java.lang.Object, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitLdcInsn(int, java.lang.Object, int)
 	 */
 	@Override
 	public void visitLdcInsn(int opcode, Object value, int reg) {
@@ -576,9 +571,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexCodeAdapter#visitLocalVariable(java.lang
-	 * .String, java.lang.String, java.lang.String, int, int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitLocalVariable(java.lang .String, java.lang.String, java.lang.String, int, int, int)
 	 */
 	@Override
 	public void visitLocalVariable(String name, String type, String signature, int start, int end, int reg) {
@@ -588,24 +581,22 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitLookupSwitchInsn(int,
-	 * int, int, int[], int[])
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitLookupSwitchInsn(int, int, int, int[], int[])
 	 */
 	@Override
 	public void visitLookupSwitchInsn(int opcode, int reg, int label, int[] cases, int[] label2) {
 		info(opcode, "switch(v%d)", reg);
 		for (int i = 0; i < cases.length; i++) {
-			info(opcode, "case %d: goto L%d", cases[i], label2[i]);
+			info(-1, "case %d: goto L%d", cases[i], label2[i]);
 		}
-		info(opcode, "default: goto L%d", label);
+		info(-1, "default: goto L%d", label);
 		super.visitLookupSwitchInsn(opcode, reg, label, cases, label2);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitMethodInsn(int,
-	 * pxb.android.dex2jar.Method, int[])
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitMethodInsn(int, pxb.android.dex2jar.Method, int[])
 	 */
 	@Override
 	public void visitMethodInsn(int opcode, Method method, int[] regs) {
@@ -660,8 +651,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTableSwitchInsn(int,
-	 * int, int, int, int, int[])
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTableSwitchInsn(int, int, int, int, int, int[])
 	 */
 	@Override
 	public void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, int label, int[] labels) {
@@ -677,8 +667,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTryCatch(int, int,
-	 * int, java.lang.String)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTryCatch(int, int, int, java.lang.String)
 	 */
 	@Override
 	public void visitTryCatch(int start, int offset, int handler, String type) {
@@ -693,8 +682,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTypeInsn(int,
-	 * java.lang.String, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTypeInsn(int, java.lang.String, int)
 	 */
 	@Override
 	public void visitTypeInsn(int opcode, String type, int toReg) {
@@ -715,8 +703,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTypeInsn(int,
-	 * java.lang.String, int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTypeInsn(int, java.lang.String, int, int)
 	 */
 	@Override
 	public void visitTypeInsn(int opcode, String type, int toReg, int fromReg) {
@@ -763,9 +750,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexCodeAdapter#visitFilledNewArrayIns(int,
-	 * java.lang.String, int[])
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFilledNewArrayIns(int, java.lang.String, int[])
 	 */
 	@Override
 	public void visitFilledNewArrayIns(int opcode, String type, int[] regs) {

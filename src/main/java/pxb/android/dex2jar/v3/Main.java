@@ -16,7 +16,6 @@
 package pxb.android.dex2jar.v3;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -42,47 +41,50 @@ public class Main {
 			System.out.println("dex2jar file1.dex file2.dex ...");
 		}
 		for (String file : args) {
+			File dex = new File(file);
+			final File gen = new File(file + ".dex2jar.jar");
 			try {
-				File dex = new File(file);
-				final File gen = new File(file + ".dex2jar.jar");
-
-				final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(gen));
-
-				byte[] data = FileUtils.readFileToByteArray(dex);
-				DexFileReader reader = new DexFileReader(data);
-				V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
-				reader.accept(afa);
-				reader.accept(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
-					public ClassVisitor create(final String name) {
-						return new ClassWriter(0) {
-							/*
-							 * (non-Javadoc)
-							 * 
-							 * @see org.objectweb.asm.ClassWriter#visitEnd()
-							 */
-							@Override
-							public void visitEnd() {
-								super.visitEnd();
-								try {
-									byte[] data = this.toByteArray();
-									ZipEntry entry = new ZipEntry(name + ".class");
-									zos.putNextEntry(entry);
-									zos.write(data);
-									zos.closeEntry();
-								} catch (FileNotFoundException e) {
-									e.printStackTrace();
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-						};
-					}
-				}));
-				zos.finish();
-				zos.close();
+				doFile(dex, gen);
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new RuntimeException("处理文件时发生异常:" + dex, e);
 			}
 		}
 	}
+
+	public static void doFile(File srcDex, File destJar) throws IOException {
+
+		final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(destJar));
+
+		byte[] data = FileUtils.readFileToByteArray(srcDex);
+		DexFileReader reader = new DexFileReader(data);
+		V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
+		reader.accept(afa);
+		reader.accept(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
+			public ClassVisitor create(final String name) {
+				return new ClassWriter(0) {
+					/*
+					 * (non-Javadoc)
+					 * 
+					 * @see org.objectweb.asm.ClassWriter#visitEnd()
+					 */
+					@Override
+					public void visitEnd() {
+						super.visitEnd();
+						try {
+							byte[] data = this.toByteArray();
+							ZipEntry entry = new ZipEntry(name + ".class");
+							zos.putNextEntry(entry);
+							zos.write(data);
+							zos.closeEntry();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				};
+			}
+		}));
+		zos.finish();
+		zos.close();
+	}
+
 }
