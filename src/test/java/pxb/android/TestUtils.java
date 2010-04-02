@@ -28,7 +28,7 @@ import org.apache.commons.io.FileUtils;
  * @author Panxiaobo
  * 
  */
-public class TestUtils {
+public abstract class TestUtils {
 
 	public static File dex(String file) throws Exception {
 
