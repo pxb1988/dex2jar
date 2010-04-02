@@ -60,6 +60,10 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	// LoggerFactory.getLogger(MethodTransformerAdapter.class);
 	Method m;
 
+	private static enum LocalType {
+		UNKNOWN, OBJECT, NUMBER
+	}
+
 	public B(Method m, MethodTransformer tr) {
 		super(tr);
 		this.m = m;
@@ -69,7 +73,9 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		public LabelNode first;
 		public LabelNode last;
 		public Map<Integer, AbstractInsnNode> in;
+		public Map<Integer, AbstractInsnNode> inType;
 		public Map<Integer, AbstractInsnNode> out;
+		public Map<Integer, AbstractInsnNode> outType;
 
 		public List<Block> froms = new ArrayList();
 		public List<Block> tos = new ArrayList();
@@ -95,7 +101,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 			if (temp.length() > 0) {
 				temp.deleteCharAt(0);
 			}
-			sb.append("\nfrom:").append('[').append(temp.toString()).append(']');
+			sb.append(" from:").append('[').append(temp.toString()).append(']');
 
 			temp.setLength(0);
 			for (Block b : tos) {
@@ -104,9 +110,9 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 			if (temp.length() > 0) {
 				temp.deleteCharAt(0);
 			}
-			sb.append("\nto:").append('[').append(temp.toString()).append(']');
+			sb.append(" to:").append('[').append(temp.toString()).append(']');
 			temp.setLength(0);
-			for (int i = 0; i < in.size(); i++) {
+			for (Integer i : in.keySet()) {
 				if (in.get(i) != null) {
 					temp.append(',').append(i);
 				}
@@ -114,10 +120,10 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 			if (temp.length() > 0) {
 				temp.deleteCharAt(0);
 			}
-			sb.append("\nin:").append('[').append(temp.toString()).append(']');
+			sb.append(" in:").append('[').append(temp.toString()).append(']');
 
 			temp.setLength(0);
-			for (int i = 0; i < out.size(); i++) {
+			for (Integer i : out.keySet()) {
 				if (out.get(i) != null) {
 					temp.append(',').append(i);
 				}
@@ -125,14 +131,14 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 			if (temp.length() > 0) {
 				temp.deleteCharAt(0);
 			}
-			sb.append("\nout:").append('[').append(temp.toString()).append(']');
+			sb.append(" out:").append('[').append(temp.toString()).append(']');
 
-			sb.append("\n{\n");
+			sb.append("\n");
 			int i = 0;
 			for (Object o : tr.text) {
 				sb.append(String.format("%04d", i++)).append(o);
 			}
-			sb.append("}");
+			sb.append("");
 			return sb.toString();
 		}
 	}
@@ -235,10 +241,17 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 
 		for (Block block : blocks) {
 			optmizeOut(block);
+		}
+
+		// for (Block block : blocks) {
+		// doZeroNull(block);
+		// }
+		for (Block block : blocks) {
 			doBlock(block);
 		}
 
-		// changeLdc_0(blocks);
+		method.maxLocals = max * 2 + 2;
+		method.maxStack = max + 2;
 		super.transform(method);
 
 		// timeSpend = System.currentTimeMillis() - timeStart;
@@ -269,11 +282,11 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 	 * 递归检查变量是否被读取
 	 * 
 	 * @param i
-	 *          变量的编号
+	 *            变量的编号
 	 * @param block
-	 *          块
+	 *            块
 	 * @param mask
-	 *          结束递归的状态
+	 *            结束递归的状态
 	 * @param checkThis
 	 * @return 是否被读取
 	 */
@@ -647,11 +660,71 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 
 		doVar(block);
 		// dump(block);
-
 		doReIndex(block);
-
 		// System.out.println("AFTER");
 		// dump(block);
+	}
+
+	/**
+	 * @param block
+	 * @deprecated
+	 */
+	protected void doZeroNull(Block block) {
+		AbstractInsnNode p = block.first.getNext();
+		while (p != null && p != block.last) {
+			if (p instanceof LdcInsnNode) {
+				LdcInsnNode ldc = (LdcInsnNode) p;
+				Object o = ldc.cst;
+				if (o instanceof Integer && ((Integer) o).intValue() == 0) {
+					AbstractInsnNode store = ldc.getNext();
+					int v = var(store);
+					AbstractInsnNode q = store.getNext();
+
+					boolean replaceAll = false;
+					while (q != null && q != block.last) {
+						if (isRead(q) && var(q) == v) {
+							if (q.getOpcode() == ALOAD) {
+								replaceAll = true;
+								break;
+							}
+						}
+						q = q.getNext();
+					}
+					if (replaceAll) {
+						rep(ldc, block.last);
+					}
+				}
+			}
+			p = p.getNext();
+		}
+	}
+
+	void rep(LdcInsnNode ldc, AbstractInsnNode end) {
+		ldc.cst = null;
+		AbstractInsnNode _store = ldc.getNext();
+		int v = var(_store);
+		VarInsnNode store_template = new VarInsnNode(ASTORE, v);
+		VarInsnNode load_template = new VarInsnNode(ALOAD, v);
+		{
+			VarInsnNode store = (VarInsnNode) store_template.clone(null);
+			insnList.insertBefore(_store, store);
+			insnList.remove(_store);
+			_store = store;
+		}
+		AbstractInsnNode p = _store.getNext();
+		while (p != null && p != end) {
+			if (isRead(p)) {
+				VarInsnNode load = (VarInsnNode) load_template.clone(null);
+				insnList.insertBefore(p, load);
+				insnList.remove(p);
+				p = load;
+			} else if (isWrite(p)) {
+				VarInsnNode store = (VarInsnNode) store_template.clone(null);
+				insnList.insertBefore(p, store);
+				insnList.remove(p);
+				p = store;
+			}
+		}
 	}
 
 	/**

@@ -25,6 +25,10 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.BasicInterpreter;
+import org.objectweb.asm.tree.analysis.Frame;
 
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.optimize.A;
@@ -86,11 +90,9 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 					}
 				}
 			}
-			MethodVisitor mv = cv.visitMethod(method.getAccessFlags(), method.getName(), method.getType().getDesc(), null,
-					exceptions);
+			MethodVisitor mv = cv.visitMethod(method.getAccessFlags(), method.getName(), method.getType().getDesc(), null, exceptions);
 			if (mv != null) {
-				methodNode = new MethodNode(method.getAccessFlags(), method.getName(), method.getType().getDesc(), null,
-						exceptions);
+				methodNode = new MethodNode(method.getAccessFlags(), method.getName(), method.getType().getDesc(), null, exceptions);
 				for (Ann ann : anns) {
 					AnnotationVisitor av = mv.visitAnnotation(ann.type, ann.visible == 1);
 					V3AnnAdapter.accept(ann.items, av);
@@ -112,9 +114,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java.lang
-	 * .String, int)
+	 * @see pxb.android.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java.lang .String, int)
 	 */
 	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
 		Ann ann = new Ann(name, visitable);
@@ -148,29 +148,16 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 				tr = new A(tr);
 				tr.transform(methodNode);
 			}
-			// System.out.println();
-			// System.out.println(method);
-			// TraceMethodVisitor tr = new TraceMethodVisitor();
-			// methodNode.accept(tr);
-			// int i = 0;
-			// for (Object o : tr.text) {
-			// System.out.print(i++ + "" + o);
-			// }
-			// tr.text.clear();
-			//
-			// methodNode.maxStack += 1000;
-			// // methodNode.maxStack *= 2;
-			// methodNode.maxLocals *= 2;
-			// Analyzer a = new Analyzer(new BasicInterpreter());
-			// try {
-			// a.analyze(method.getOwner(), methodNode);
-			// } catch (AnalyzerException e) {
-			// throw new RuntimeException("fail on " + method, e);
-			// }
-			// Frame[] fs = a.getFrames();
 
-			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(),
-					new LdcOptimizeAdapter(mv)));
+			Analyzer a = new Analyzer(new BasicInterpreter());
+			try {
+				a.analyze(method.getOwner(), methodNode);
+			} catch (AnalyzerException e) {
+				throw new RuntimeException("fail on " + method, e);
+			}
+			Frame[] fs = a.getFrames();
+
+			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
 
 		}
 	}
@@ -178,9 +165,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation
-	 * (int)
+	 * @see pxb.android.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation (int)
 	 */
 	public DexAnnotationAble visitParamesterAnnotation(int index) {
 		final List<Ann> panns = paramAnns[index];

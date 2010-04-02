@@ -34,7 +34,7 @@ public class Util implements Opcodes {
 		}
 		return false;
 	}
-
+	
 	public static int var(AbstractInsnNode p) {
 		return ((VarInsnNode) p).var;
 	}
