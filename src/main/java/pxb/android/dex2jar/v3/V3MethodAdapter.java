@@ -149,13 +149,13 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 				tr.transform(methodNode);
 			}
 
-			Analyzer a = new Analyzer(new BasicInterpreter());
-			try {
-				a.analyze(method.getOwner(), methodNode);
-			} catch (AnalyzerException e) {
-				throw new RuntimeException("fail on " + method, e);
-			}
-			Frame[] fs = a.getFrames();
+//			Analyzer a = new Analyzer(new BasicInterpreter());
+//			try {
+//				a.analyze(method.getOwner(), methodNode);
+//			} catch (AnalyzerException e) {
+//				throw new RuntimeException("fail on " + method, e);
+//			}
+//			Frame[] fs = a.getFrames();
 
 			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
 
