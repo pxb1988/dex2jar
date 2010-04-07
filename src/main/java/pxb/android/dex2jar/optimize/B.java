@@ -247,9 +247,6 @@ public class B implements MethodTransformer, Opcodes {
 		for (Block block : blocks) {
 			doBlock(block);
 		}
-
-		method.maxLocals = max * 2 + 2;
-		method.maxStack = max + 2;
 	}
 
 	/**

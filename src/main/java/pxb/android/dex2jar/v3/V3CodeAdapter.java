@@ -1040,15 +1040,17 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		} else {
 			typeInStack = null;
 		}
-		stack(args.length);
+
 		switch (opcode) {
 		case OP_INVOKE_STATIC:
 		case OP_INVOKE_STATIC_RANGE: {
+			stack(args.length);
 			loadArgument(method, args, true);
 			mv.visitMethodInsn(INVOKESTATIC, method.getOwner(), method.getName(), method.getType().getDesc());
 		}
 			break;
 		default:
+			stack(1 + args.length);
 			loadArgument(method, args, false);
 			switch (opcode) {
 			case OP_INVOKE_DIRECT:

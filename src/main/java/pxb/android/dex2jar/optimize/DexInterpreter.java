@@ -30,6 +30,7 @@ import pxb.android.dex2jar.org.objectweb.asm.tree.MethodInsnNode;
 import pxb.android.dex2jar.org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.AnalyzerException;
 import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.BasicInterpreter;
+import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.BasicValue;
 import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.Value;
 
 /**
@@ -42,13 +43,13 @@ public class DexInterpreter extends BasicInterpreter {
 		return m;
 	}
 
-public	class MayObject implements Value {
+	public class MayObject implements Value {
 		@Override
 		public String toString() {
 			return this.type == null ? "X" : type.equals(Type.INT_TYPE) ? "Y" : "N";
 		}
 
-	public	Type type;
+		public Type type;
 
 		/*
 		 * (non-Javadoc)
@@ -75,6 +76,8 @@ public	class MayObject implements Value {
 				((MayObject) value).type = Type.INT_TYPE;
 				return value;
 			}
+		} else if (((BasicValue) value).isReference()) {
+			C.replace(insn);
 		}
 		return super.copyOperation(insn, value);
 	}
@@ -146,7 +149,13 @@ public	class MayObject implements Value {
 	@Override
 	public Value unaryOperation(AbstractInsnNode insn, Value value) throws AnalyzerException {
 		if (insn.getOpcode() == IFEQ || insn.getOpcode() == IFNE) {
-			addTo(value, insn);
+			if (value instanceof MayObject) {
+				addTo(value, insn);
+			} else {
+				if (((BasicValue) value).isReference()) {
+					C.replace(insn);
+				}
+			}
 		}
 		return super.unaryOperation(insn, value);
 	}

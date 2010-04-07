@@ -136,6 +136,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	 * 
 	 * @see pxb.android.dex2jar.visitors.DexMethodVisitor#visitEnd()
 	 */
+	@SuppressWarnings("unchecked")
 	public void visitEnd() {
 		build();
 		if (mv != null) {

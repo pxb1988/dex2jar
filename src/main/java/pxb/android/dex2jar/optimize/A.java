@@ -21,13 +21,11 @@ import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
 import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
 import pxb.android.dex2jar.org.objectweb.asm.tree.TryCatchBlockNode;
 
-
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-public class A implements MethodTransformer,Opcodes {
-
+public class A implements MethodTransformer, Opcodes {
 
 	/**
 	 * 
@@ -80,7 +78,7 @@ public class A implements MethodTransformer,Opcodes {
 			TryCatchBlockNode tcb = (TryCatchBlockNode) o;
 			AbstractInsnNode end = tcb.end;
 			AbstractInsnNode pop = end.getPrevious();
-			if (pop != null && pop.getOpcode() == POP) {
+			if (pop != null && (pop.getOpcode() == POP || pop.getOpcode() == POP2)) {
 				AbstractInsnNode write = end.getNext();
 				if (write != null && Util.isWrite(write)) {
 					method.instructions.remove(pop);
