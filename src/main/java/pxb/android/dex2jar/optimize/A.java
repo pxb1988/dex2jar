@@ -16,19 +16,16 @@
 package pxb.android.dex2jar.optimize;
 
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
+
+import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.TryCatchBlockNode;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-public class A extends MethodTransformerAdapter implements Opcodes {
-
-	public A(MethodTransformer tr) {
-		super(tr);
-	}
+public class A implements MethodTransformer, Opcodes {
 
 	/**
 	 * 
@@ -76,13 +73,12 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 	 * THROW               |     |throw v6
 	 * </pre>
 	 */
-	@Override
 	public void transform(MethodNode method) {
 		for (Object o : method.tryCatchBlocks) {
 			TryCatchBlockNode tcb = (TryCatchBlockNode) o;
 			AbstractInsnNode end = tcb.end;
 			AbstractInsnNode pop = end.getPrevious();
-			if (pop != null && pop.getOpcode() == POP) {
+			if (pop != null && (pop.getOpcode() == POP || pop.getOpcode() == POP2)) {
 				AbstractInsnNode write = end.getNext();
 				if (write != null && Util.isWrite(write)) {
 					method.instructions.remove(pop);
@@ -91,6 +87,5 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 				}
 			}
 		}
-		super.transform(method);
 	}
 }

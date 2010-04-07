@@ -16,6 +16,7 @@
 package pxb.android.dex2jar.v3;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -24,18 +25,14 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.LocalVariablesSorter;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.analysis.Analyzer;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
-import org.objectweb.asm.tree.analysis.BasicInterpreter;
-import org.objectweb.asm.tree.analysis.Frame;
 
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.optimize.A;
 import pxb.android.dex2jar.optimize.B;
+import pxb.android.dex2jar.optimize.C;
 import pxb.android.dex2jar.optimize.LdcOptimizeAdapter;
 import pxb.android.dex2jar.optimize.MethodTransformer;
-import pxb.android.dex2jar.optimize.MethodTransformerAdapter;
+import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
 import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
@@ -139,27 +136,18 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	 * 
 	 * @see pxb.android.dex2jar.visitors.DexMethodVisitor#visitEnd()
 	 */
+	@SuppressWarnings("unchecked")
 	public void visitEnd() {
 		build();
 		if (mv != null) {
 			if (methodNode.instructions.size() > 2) {
-				MethodTransformer tr = new MethodTransformerAdapter(null);
-				tr = new B(method, tr);
-				tr = new A(tr);
-				tr.transform(methodNode);
+				List<? extends MethodTransformer> trs = Arrays.asList(new A(), new B(method), new C(method));
+				for (MethodTransformer tr : trs) {
+					tr.transform(methodNode);
+				}
 			}
-
-//			Analyzer a = new Analyzer(new BasicInterpreter());
-//			try {
-//				a.analyze(method.getOwner(), methodNode);
-//			} catch (AnalyzerException e) {
-//				throw new RuntimeException("fail on " + method, e);
-//			}
-//			Frame[] fs = a.getFrames();
-
-			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
-
 		}
+		methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
 	}
 
 	/*

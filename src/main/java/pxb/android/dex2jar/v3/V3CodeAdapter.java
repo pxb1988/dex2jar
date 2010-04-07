@@ -16,9 +16,7 @@
 package pxb.android.dex2jar.v3;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -933,8 +931,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	public void visitLabel(int index) {
 		checkResult();
 		mv.visitLabel(labels(index));
-		if (handlers.contains(index)) {
-			methodHashResult = true;
+		if (handlers.containsKey(index)) {
+			typeInStack = handlers.get(index);
 		}
 	}
 
@@ -1027,7 +1025,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		stack(registers.length);
 	}
 
-	boolean methodHashResult = false;
+	Type typeInStack = null;
 
 	/*
 	 * (non-Javadoc)
@@ -1038,17 +1036,21 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		checkResult();
 		Type ret = Type.getType(method.getType().getReturnType());
 		if (!Type.VOID_TYPE.equals(ret)) {
-			methodHashResult = true;
+			typeInStack = ret;
+		} else {
+			typeInStack = null;
 		}
-		stack(args.length);
+
 		switch (opcode) {
 		case OP_INVOKE_STATIC:
 		case OP_INVOKE_STATIC_RANGE: {
+			stack(args.length);
 			loadArgument(method, args, true);
 			mv.visitMethodInsn(INVOKESTATIC, method.getOwner(), method.getName(), method.getType().getDesc());
 		}
 			break;
 		default:
+			stack(1 + args.length);
 			loadArgument(method, args, false);
 			switch (opcode) {
 			case OP_INVOKE_DIRECT:
@@ -1096,13 +1098,17 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	}
 
 	private void checkResult() {
-		if (methodHashResult) {
-			mv.visitInsn(POP);
-			methodHashResult = false;
+		if (typeInStack != null) {
+			if (Type.LONG_TYPE.equals(typeInStack)) {
+				mv.visitInsn(POP2);
+			} else {
+				mv.visitInsn(POP);
+			}
+			typeInStack = null;
 		}
 	}
 
-	private Set<Integer> handlers = new HashSet<Integer>();
+	private Map<Integer, Type> handlers = new HashMap<Integer, Type>();
 
 	/*
 	 * (non-Javadoc)
@@ -1111,7 +1117,10 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 */
 	public void visitTryCatch(int start, int end, int handler, String type) {
 		mv.visitTryCatchBlock(labels(start), labels(end), labels(handler), type);
-		handlers.add(handler);
+		if (type == null) {
+			type = Type.getDescriptor(Throwable.class);
+		}
+		handlers.put(handler, Type.getType(type));
 	}
 
 	protected Label labels(int i) {
@@ -1202,7 +1211,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_MOVE_RESULT_WIDE:
 			//
 		{
-			methodHashResult = false;
+			typeInStack = null;
 			mv.visitVarInsn(ASTORE, map(reg));
 			stack(1);
 		}

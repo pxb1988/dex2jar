@@ -39,7 +39,9 @@ public class LdcOptimizeAdapter extends MethodAdapter implements Opcodes {
 	 */
 	@Override
 	public void visitLdcInsn(Object cst) {
-		if (cst instanceof Integer) {
+		if (cst == null) {
+			this.visitInsn(ACONST_NULL);
+		} else if (cst instanceof Integer) {
 			int value = (Integer) cst;
 			if (value >= 0 && value <= 5) {
 				super.visitInsn(ICONST_0 + value);

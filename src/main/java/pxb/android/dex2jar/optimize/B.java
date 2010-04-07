@@ -32,29 +32,29 @@ import java.util.Set;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.JumpInsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.LdcInsnNode;
-import org.objectweb.asm.tree.LookupSwitchInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TableSwitchInsnNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
-import org.objectweb.asm.tree.TypeInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
 import pxb.android.dex2jar.Method;
+import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.InsnList;
+import pxb.android.dex2jar.org.objectweb.asm.tree.InsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.JumpInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.LabelNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.LdcInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.LookupSwitchInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.MethodInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.TableSwitchInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.TryCatchBlockNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.TypeInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.VarInsnNode;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
 @SuppressWarnings("unchecked")
-public class B extends MethodTransformerAdapter implements Opcodes {
+public class B implements MethodTransformer, Opcodes {
 
 	// private static final Logger log =
 	// LoggerFactory.getLogger(MethodTransformerAdapter.class);
@@ -64,8 +64,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		UNKNOWN, OBJECT, NUMBER
 	}
 
-	public B(Method m, MethodTransformer tr) {
-		super(tr);
+	public B(Method m) {
 		this.m = m;
 	}
 
@@ -162,7 +161,6 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		}
 	}
 
-	@Override
 	public void transform(MethodNode method) {
 
 		// long timeStart = System.currentTimeMillis();
@@ -249,16 +247,6 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		for (Block block : blocks) {
 			doBlock(block);
 		}
-
-		method.maxLocals = max * 2 + 2;
-		method.maxStack = max + 2;
-		super.transform(method);
-
-		// timeSpend = System.currentTimeMillis() - timeStart;
-		// if (timeSpend > 500) {
-		// log.debug("spend {}s,({}ms) {}", new Object[] { timeSpend / 1000,
-		// timeSpend, m.toString() });
-		// }
 	}
 
 	/**
