@@ -26,11 +26,8 @@ import pxb.android.dex2jar.org.objectweb.asm.tree.TryCatchBlockNode;
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-public class A extends MethodTransformerAdapter implements Opcodes {
+public class A implements MethodTransformer,Opcodes {
 
-	public A(MethodTransformer tr) {
-		super(tr);
-	}
 
 	/**
 	 * 
@@ -78,7 +75,6 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 	 * THROW               |     |throw v6
 	 * </pre>
 	 */
-	@Override
 	public void transform(MethodNode method) {
 		for (Object o : method.tryCatchBlocks) {
 			TryCatchBlockNode tcb = (TryCatchBlockNode) o;
@@ -93,6 +89,5 @@ public class A extends MethodTransformerAdapter implements Opcodes {
 				}
 			}
 		}
-		super.transform(method);
 	}
 }

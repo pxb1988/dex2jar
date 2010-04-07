@@ -16,9 +16,7 @@
 package pxb.android.dex2jar.v3;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -933,8 +931,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	public void visitLabel(int index) {
 		checkResult();
 		mv.visitLabel(labels(index));
-		if (handle vrs.contains(index)) {
-			typeInStack = true;
+		if (handlers.containsKey(index)) {
+			typeInStack = handlers.get(index);
 		}
 	}
 
@@ -1039,6 +1037,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		Type ret = Type.getType(method.getType().getReturnType());
 		if (!Type.VOID_TYPE.equals(ret)) {
 			typeInStack = ret;
+		} else {
+			typeInStack = null;
 		}
 		stack(args.length);
 		switch (opcode) {
@@ -1106,7 +1106,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		}
 	}
 
-	private Set<Integer> handlers = new HashSet<Integer>();
+	private Map<Integer, Type> handlers = new HashMap<Integer, Type>();
 
 	/*
 	 * (non-Javadoc)
@@ -1115,7 +1115,10 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	 */
 	public void visitTryCatch(int start, int end, int handler, String type) {
 		mv.visitTryCatchBlock(labels(start), labels(end), labels(handler), type);
-		handlers.add(handler);
+		if (type == null) {
+			type = Type.getDescriptor(Throwable.class);
+		}
+		handlers.put(handler, Type.getType(type));
 	}
 
 	protected Label labels(int i) {

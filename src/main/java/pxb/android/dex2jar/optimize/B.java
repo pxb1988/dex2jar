@@ -54,7 +54,7 @@ import pxb.android.dex2jar.org.objectweb.asm.tree.VarInsnNode;
  * @version $Id$
  */
 @SuppressWarnings("unchecked")
-public class B extends MethodTransformerAdapter implements Opcodes {
+public class B implements MethodTransformer, Opcodes {
 
 	// private static final Logger log =
 	// LoggerFactory.getLogger(MethodTransformerAdapter.class);
@@ -64,8 +64,7 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		UNKNOWN, OBJECT, NUMBER
 	}
 
-	public B(Method m, MethodTransformer tr) {
-		super(tr);
+	public B(Method m) {
 		this.m = m;
 	}
 
@@ -162,7 +161,6 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 		}
 	}
 
-	@Override
 	public void transform(MethodNode method) {
 
 		// long timeStart = System.currentTimeMillis();
@@ -252,13 +250,6 @@ public class B extends MethodTransformerAdapter implements Opcodes {
 
 		method.maxLocals = max * 2 + 2;
 		method.maxStack = max + 2;
-		super.transform(method);
-
-		// timeSpend = System.currentTimeMillis() - timeStart;
-		// if (timeSpend > 500) {
-		// log.debug("spend {}s,({}ms) {}", new Object[] { timeSpend / 1000,
-		// timeSpend, m.toString() });
-		// }
 	}
 
 	/**
