@@ -18,24 +18,37 @@ package pxb.android.dex2jar.v3;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.analysis.Analyzer;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
-import org.objectweb.asm.tree.analysis.BasicInterpreter;
-import org.objectweb.asm.tree.analysis.Frame;
-
+import static pxb.android.dex2jar.optimize.Util.isRead;
+import static pxb.android.dex2jar.optimize.Util.isSameVar;
+import static pxb.android.dex2jar.optimize.Util.isWrite;
+import static pxb.android.dex2jar.optimize.Util.needBreak;
+import static pxb.android.dex2jar.optimize.Util.var;
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.optimize.A;
 import pxb.android.dex2jar.optimize.B;
+import pxb.android.dex2jar.optimize.DexInterpreter;
 import pxb.android.dex2jar.optimize.LdcOptimizeAdapter;
 import pxb.android.dex2jar.optimize.MethodTransformer;
 import pxb.android.dex2jar.optimize.MethodTransformerAdapter;
+import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.InsnList;
+import pxb.android.dex2jar.org.objectweb.asm.tree.JumpInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.LdcInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.VarInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.Analyzer;
+import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.AnalyzerException;
+import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.Frame;
+import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.Value;
 import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
@@ -148,17 +161,57 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 				tr = new A(tr);
 				tr.transform(methodNode);
 			}
-
-			Analyzer a = new Analyzer(new BasicInterpreter());
+			DexInterpreter dx = new DexInterpreter();
+			Analyzer a = new Analyzer(dx);
 			try {
-				a.analyze(method.getOwner(), methodNode);
+				a.analyze(Type.getType(method.getOwner()).getInternalName(), methodNode);
 			} catch (AnalyzerException e) {
 				throw new RuntimeException("fail on " + method, e);
 			}
-			Frame[] fs = a.getFrames();
+			final Frame[] fs = a.getFrames();
 
+			Object o = new Object() {
+				public String toString() {
+					StringBuilder sb = new StringBuilder();
+					InsnList il = methodNode.instructions;
+					int i = 0;
+					for (AbstractInsnNode p = il.getFirst(); p != il.getLast(); p = p.getNext()) {
+						sb.append(String.format("%-20s  %s", fs[i++].toString(), p.toString()));
+					}
+					return sb.toString();
+				}
+			};
+
+			for (Map.Entry<Value, Set<AbstractInsnNode>> entry : dx.getM().entrySet()) {
+				Value value = entry.getKey();
+				if (value instanceof DexInterpreter.MayObject) {
+					if (!(Type.INT_TYPE.equals(((DexInterpreter.MayObject) value).type))) {
+						for (AbstractInsnNode insnNode : entry.getValue()) {
+							replace(insnNode);
+						}
+					}
+				}
+			}
 			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
+		}
+	}
 
+	// void replace(AbstractInsnNode o, AbstractInsnNode n) {
+	// this.methodNode.instructions.insertBefore(o, n);
+	// this.methodNode.instructions.remove(o);
+	// }
+
+	void replace(AbstractInsnNode node) {
+		if (isRead(node)) {
+			((VarInsnNode) node).setOpcode(ALOAD);
+		} else if (isWrite(node)) {
+			((VarInsnNode) node).setOpcode(ASTORE);
+		} else if (node.getOpcode() == IFEQ) {
+			((JumpInsnNode) node).setOpcode(IFNULL);
+		} else if (node.getOpcode() == IFNE) {
+			((JumpInsnNode) node).setOpcode(IFNONNULL);
+		} else if (node.getOpcode() == LDC) {
+			((LdcInsnNode) node).cst = null;
 		}
 	}
 

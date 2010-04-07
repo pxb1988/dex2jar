@@ -15,7 +15,8 @@
  */
 package pxb.android.dex2jar.optimize;
 
-import org.objectweb.asm.tree.MethodNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
+
 
 /**
  * @author Panxiaobo [pxb1988@126.com]

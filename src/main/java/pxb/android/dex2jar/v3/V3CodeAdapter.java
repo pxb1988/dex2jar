@@ -933,8 +933,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	public void visitLabel(int index) {
 		checkResult();
 		mv.visitLabel(labels(index));
-		if (handlers.contains(index)) {
-			methodHashResult = true;
+		if (handle vrs.contains(index)) {
+			typeInStack = true;
 		}
 	}
 
@@ -1027,7 +1027,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		stack(registers.length);
 	}
 
-	boolean methodHashResult = false;
+	Type typeInStack = null;
 
 	/*
 	 * (non-Javadoc)
@@ -1038,7 +1038,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		checkResult();
 		Type ret = Type.getType(method.getType().getReturnType());
 		if (!Type.VOID_TYPE.equals(ret)) {
-			methodHashResult = true;
+			typeInStack = ret;
 		}
 		stack(args.length);
 		switch (opcode) {
@@ -1096,9 +1096,13 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 	}
 
 	private void checkResult() {
-		if (methodHashResult) {
-			mv.visitInsn(POP);
-			methodHashResult = false;
+		if (typeInStack != null) {
+			if (Type.LONG_TYPE.equals(typeInStack)) {
+				mv.visitInsn(POP2);
+			} else {
+				mv.visitInsn(POP);
+			}
+			typeInStack = null;
 		}
 	}
 
@@ -1202,7 +1206,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_MOVE_RESULT_WIDE:
 			//
 		{
-			methodHashResult = false;
+			typeInStack = null;
 			mv.visitVarInsn(ASTORE, map(reg));
 			stack(1);
 		}

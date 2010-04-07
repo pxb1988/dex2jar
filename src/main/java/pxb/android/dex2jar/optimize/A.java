@@ -16,9 +16,11 @@
 package pxb.android.dex2jar.optimize;
 
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
+
+import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
+import pxb.android.dex2jar.org.objectweb.asm.tree.TryCatchBlockNode;
+
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
