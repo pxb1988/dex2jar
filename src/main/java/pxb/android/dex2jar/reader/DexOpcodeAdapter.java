@@ -161,11 +161,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 			if (0 != (value & 0x8)) {
 				value = -((Integer.reverse(value) & 0x7) + 1);
 			}
-			// if (value == 0) {
-			// dcv.visitLdcInsn(opcode, DexCodeVisitor.ZERO_OR_NULL, reg);
-			// } else {
 			dcv.visitLdcInsn(opcode, value, reg);
-			// }
 		}
 			break;
 		default:
@@ -201,16 +197,32 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 			dcv.visitLdcInsn(opcode, string, arg1);
 		}
 			break;
-		case OP_CONST_16:
-		case OP_CONST_HIGH16:
-		case OP_CONST_WIDE_16:
-			//
-		{
-			dcv.visitLdcInsn(opcode, arg2, arg1);
+		case OP_CONST_HIGH16: {
+			// issue 13
+			int intV = arg2 << 16;
+			// float floatV = Float.intBitsToFloat(intV);
+			dcv.visitLdcInsn(opcode, intV, arg1);
+		}
+			break;
+		case OP_CONST_16: {
+			// issue 13
+			int intV = arg2 & 0x0000FFFF;
+			// float floatV = Float.intBitsToFloat(intV);
+			dcv.visitLdcInsn(opcode, intV, arg1);
+		}
+			break;
+		case OP_CONST_WIDE_16: {
+			// issue 13
+			long longV = arg2 & 0x000000000000FFFFL;
+			// double doubleV = Double.longBitsToDouble(longV);
+			dcv.visitLdcInsn(opcode, longV, arg1);
 		}
 			break;
 		case OP_CONST_WIDE_HIGH16: {
-			dcv.visitLdcInsn(opcode, arg2 << 16, arg1);
+			// issue 13
+			long longV = ((long) arg2) << 48;
+			// double doubleV = Double.longBitsToDouble(longV);
+			dcv.visitLdcInsn(opcode, longV, arg1);
 		}
 			break;
 
@@ -415,11 +427,15 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 		}
 			break;
 		case OP_CONST: {
-			dcv.visitLdcInsn(opcode, arg2 & 0xFFFF, arg1);
+			// issue 13
+			int intV = (arg2 & 0xFFFF) | ((arg3 << 16) & 0xFFFF0000);
+			// float floatV = Float.intBitsToFloat(intV);
+			dcv.visitLdcInsn(opcode, intV, arg1);
 		}
 			break;
 		case OP_CONST_WIDE_32: {
-			dcv.visitLdcInsn(opcode, (arg3 << 16) | arg2, arg1);
+			long longV = (arg3 << 16) | arg2;
+			dcv.visitLdcInsn(opcode, longV, arg1);
 		}
 			break;
 

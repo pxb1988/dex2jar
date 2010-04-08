@@ -373,8 +373,13 @@ public class DexCodeReader implements DexOpcodes {
 				break;
 			case 5: {
 				int reg = in.readByte();
-				long value = in.readLongx();
-				dcv.visitLdcInsn(opcode, value, reg);
+				int l = in.readIntx();
+				int h = in.readIntx();
+
+				// issue 13
+				long longV = (((long) h) << 32) | (l & 0x00000000FFFFFFFFL);
+				// double doubleV = Double.longBitsToDouble(v);
+				dcv.visitLdcInsn(opcode, longV, reg);
 				i += 5;
 			}
 				break;
