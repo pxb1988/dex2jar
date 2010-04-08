@@ -18,8 +18,10 @@ package pxb.android.dex2jar.reader;
 import java.util.Map;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 
 import pxb.android.dex2jar.Dex;
+import pxb.android.dex2jar.DexInternalOpcode;
 import pxb.android.dex2jar.DexOpcodeDump;
 import pxb.android.dex2jar.DexOpcodes;
 import pxb.android.dex2jar.Field;
@@ -30,7 +32,7 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-public class DexOpcodeAdapter implements DexOpcodes {
+public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 	private DexCodeVisitor dcv;
 	private Dex dex;
 	Map<Integer, Label> labels;
@@ -179,7 +181,6 @@ public class DexOpcodeAdapter implements DexOpcodes {
 	public void visit(int opcode, int arg1, int arg2) {
 		switch (opcode) {
 		case OP_NEW_INSTANCE:
-		case OP_CONST_CLASS:
 		case OP_CHECK_CAST: {
 			String type = dex.getType(arg2);
 			dcv.visitTypeInsn(opcode, type, arg1);
@@ -190,7 +191,11 @@ public class DexOpcodeAdapter implements DexOpcodes {
 			dcv.visitTypeInsn(opcode, type, arg1 & 0xf, (arg1 >> 4) & 0xf);
 		}
 			break;
-
+		case OP_CONST_CLASS: {
+			String type = dex.getType(arg2);
+			dcv.visitLdcInsn(opcode, Type.getType(type), arg1);
+		}
+			break;
 		case OP_CONST_STRING: {
 			String string = dex.getString(arg2);
 			dcv.visitLdcInsn(opcode, string, arg1);
@@ -208,25 +213,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 			dcv.visitLdcInsn(opcode, arg2 << 16, arg1);
 		}
 			break;
-		case OP_SPUT:
-		case OP_SPUT_WIDE:
-		case OP_SPUT_OBJECT:
-		case OP_SPUT_BOOLEAN:
-		case OP_SPUT_BYTE:
-		case OP_SPUT_CHAR:
-		case OP_SPUT_SHORT:
 
-		case OP_SGET:
-		case OP_SGET_WIDE:
-		case OP_SGET_OBJECT:
-		case OP_SGET_BOOLEAN:
-		case OP_SGET_BYTE:
-		case OP_SGET_CHAR:
-		case OP_SGET_SHORT: {
-			Field field = dex.getField(arg2);
-			dcv.visitFieldInsn(opcode, field, arg1);
-		}
-			break;
 		case OP_IF_EQZ:
 		case OP_IF_NEZ:
 		case OP_IF_LTZ:
@@ -248,27 +235,62 @@ public class DexOpcodeAdapter implements DexOpcodes {
 			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2), reg1, reg2);
 		}
 			break;
+		case OP_IGET_BOOLEAN:
+		case OP_IGET_BYTE:
+		case OP_IGET_CHAR:
+		case OP_IGET_SHORT:
+		case OP_IPUT_BOOLEAN:
+		case OP_IPUT_BYTE:
+		case OP_IPUT_CHAR:
+		case OP_IPUT_SHORT:
 		case OP_IGET:
 		case OP_IGET_WIDE:
 		case OP_IGET_OBJECT:
-		case OP_IGET_BOOLEAN:
-		case OP_IGET_BYTE:
-		case OP_IGET_SHORT:
-
 		case OP_IPUT:
 		case OP_IPUT_WIDE:
-		case OP_IPUT_OBJECT:
-		case OP_IPUT_BOOLEAN:
-		case OP_IPUT_BYTE:
-		case OP_IPUT_SHORT:
-
-			//
-		{
+		case OP_IPUT_OBJECT: {
 			Field field = dex.getField(arg2);
 			dcv.visitFieldInsn(opcode, field, arg1 & 0xf, (arg1 >> 4) & 0xf);
 		}
 			break;
-
+		case OP_SPUT:
+		case OP_SPUT_WIDE:
+		case OP_SPUT_OBJECT:
+		case OP_SGET:
+		case OP_SGET_WIDE:
+		case OP_SGET_OBJECT:
+		case OP_SPUT_BOOLEAN:
+		case OP_SPUT_BYTE:
+		case OP_SPUT_CHAR:
+		case OP_SPUT_SHORT:
+		case OP_SGET_BOOLEAN:
+		case OP_SGET_BYTE:
+		case OP_SGET_CHAR:
+		case OP_SGET_SHORT: {
+			Field field = dex.getField(arg2);
+			dcv.visitFieldInsn(opcode, field, arg1, -1);
+		}
+			break;
+		case OP_APUT:
+		case OP_APUT_WIDE:
+		case OP_APUT_OBJECT:
+		case OP_APUT_BOOLEAN:
+		case OP_APUT_BYTE:
+		case OP_APUT_CHAR:
+		case OP_APUT_SHORT:
+		case OP_AGET:
+		case OP_AGET_WIDE:
+		case OP_AGET_OBJECT:
+		case OP_AGET_BOOLEAN:
+		case OP_AGET_BYTE:
+		case OP_AGET_CHAR:
+		case OP_AGET_SHORT: {
+			int value = arg1;
+			int index = (arg2 >> 8) & 0xff;
+			int array = arg2 & 0xff;
+			dcv.visitArrayInsn(opcode, value, array, index);
+		}
+			break;
 		case OP_ADD_INT_LIT8:
 		case OP_RSUB_INT_LIT8:
 		case OP_MUL_INT_LIT8:
@@ -294,30 +316,6 @@ public class DexOpcodeAdapter implements DexOpcodes {
 		}
 			break;
 
-		case OP_APUT:
-		case OP_APUT_WIDE:
-		case OP_APUT_OBJECT:
-		case OP_APUT_BOOLEAN:
-		case OP_APUT_BYTE:
-		case OP_APUT_CHAR:
-		case OP_APUT_SHORT:
-
-		case OP_AGET:
-		case OP_AGET_WIDE:
-		case OP_AGET_OBJECT:
-		case OP_AGET_BOOLEAN:
-		case OP_AGET_BYTE:
-		case OP_AGET_CHAR:
-		case OP_AGET_SHORT:
-
-			//
-		{
-			int value = arg1;
-			int index = (arg2 >> 8) & 0xff;
-			int array = arg2 & 0xff;
-			dcv.visitArrayInsn(opcode, value, array, index);
-		}
-			break;
 		case OP_NEW_ARRAY: {
 			int a = arg1 & 0xf;
 			int dem = (arg1 >> 4) & 0xf;
@@ -386,20 +384,34 @@ public class DexOpcodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexOpcodeVisitor#visit(int, int, int,
-	 * int)
+	 * @see pxb.android.dex2jar.visitors.DexOpcodeVisitor#visit(int, int, int, int)
 	 */
 	public void visit(int opcode, int arg1, int arg2, int arg3) {
 		switch (opcode) {
-		case OP_INVOKE_VIRTUAL:// invoke-virtual
-		case OP_INVOKE_DIRECT:// invoke-direct
+		case OP_INVOKE_VIRTUAL:
+		case OP_INVOKE_SUPER:
+		case OP_INVOKE_DIRECT:
 		case OP_INVOKE_STATIC:
-		case OP_INVOKE_INTERFACE:// invoke-interface
-		case OP_INVOKE_SUPER: {
+		case OP_INVOKE_INTERFACE: {
 			Method m = dex.getMethod(arg2);
 			int args[] = getValues(arg1, arg3);
 			args = filter(m, args);
 			dcv.visitMethodInsn(opcode, m, args);
+		}
+			break;
+		case OP_INVOKE_VIRTUAL_RANGE:
+		case OP_INVOKE_SUPER_RANGE:
+		case OP_INVOKE_DIRECT_RANGE:
+		case OP_INVOKE_STATIC_RANGE:
+		case OP_INVOKE_INTERFACE_RANGE: {
+			int args[] = new int[arg1];
+			for (int i = 0; i < arg1; i++) {
+				args[i] = arg3 + i;
+			}
+			Method m = dex.getMethod(arg2);
+			args = filter(m, args);
+			// 转换成非Range的指令
+			dcv.visitMethodInsn(opcode - 6, m, args);
 		}
 			break;
 		case OP_CONST: {
@@ -410,20 +422,7 @@ public class DexOpcodeAdapter implements DexOpcodes {
 			dcv.visitLdcInsn(opcode, (arg3 << 16) | arg2, arg1);
 		}
 			break;
-		case OP_INVOKE_DIRECT_RANGE:
-		case OP_INVOKE_INTERFACE_RANGE:
-		case OP_INVOKE_STATIC_RANGE:
-		case OP_INVOKE_SUPER_RANGE:
-		case OP_INVOKE_VIRTUAL_RANGE: {
-			int args[] = new int[arg1];
-			for (int i = 0; i < arg1; i++) {
-				args[i] = arg3 + i;
-			}
-			Method m = dex.getMethod(arg2);
-			args = filter(m, args);
-			dcv.visitMethodInsn(opcode, m, args);
-		}
-			break;
+
 		case OP_FILLED_NEW_ARRAY: {
 			dcv.visitFilledNewArrayIns(opcode, dex.getType(arg2), getValues(arg1, arg3));
 		}

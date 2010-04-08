@@ -65,15 +65,6 @@ public class DexCodeAdapter implements DexCodeVisitor {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int, pxb.android.dex2jar.Field, int)
-	 */
-	public void visitFieldInsn(int opcode, Field field, int reg) {
-		dcv.visitFieldInsn(opcode, field, reg);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int, pxb.android.dex2jar.Field, int, int)
 	 */
 	public void visitFieldInsn(int opcode, Field field, int value_reg, int owner_reg) {

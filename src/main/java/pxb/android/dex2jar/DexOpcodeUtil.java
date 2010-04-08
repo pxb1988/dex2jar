@@ -23,7 +23,7 @@ import org.objectweb.asm.Opcodes;
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
+public final class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpcode {
 	/**
 	 * 获取指令的长度
 	 * 
@@ -579,7 +579,6 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes {
 			return SALOAD;
 		case OP_AGET_WIDE:
 			return LALOAD;
-
 		default:
 			throw new RuntimeException("Not support " + DexOpcodeDump.dump(dexOpcode));
 		}

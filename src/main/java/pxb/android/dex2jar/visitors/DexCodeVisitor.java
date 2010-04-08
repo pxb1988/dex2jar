@@ -72,46 +72,38 @@ public interface DexCodeVisitor {
 	void visitEnd();
 
 	/**
-	 * Static Field
-	 * 
 	 * <pre>
+	 * 		case OP_IGET:
+	 * 		case OP_IGET_WIDE:
+	 * 		case OP_IGET_OBJECT:
+	 * 		case OP_IGET_BOOLEAN:
+	 * 		case OP_IGET_BYTE:
+	 * 		case OP_IGET_CHAR:
+	 * 		case OP_IGET_SHORT:
+	 * 		
+	 * 		case OP_IPUT:
+	 * 		case OP_IPUT_WIDE:
+	 * 		case OP_IPUT_OBJECT:
+	 * 		case OP_IPUT_BOOLEAN:
+	 * 		case OP_IPUT_BYTE:
+	 * 		case OP_IPUT_CHAR:
+	 * 		case OP_IPUT_SHORT:
+
+	 * 		case OP_SPUT:
+	 * 		case OP_SPUT_WIDE:
 	 * 		case OP_SPUT_OBJECT:
-	 * 		case OP_SGET_OBJECT:
 	 * 		case OP_SPUT_BOOLEAN:
 	 * 		case OP_SPUT_BYTE:
 	 * 		case OP_SPUT_CHAR:
 	 * 		case OP_SPUT_SHORT:
-	 * 		case OP_SPUT_WIDE:
+	 * 
+	 * 		case OP_SGET:
+	 * 		case OP_SGET_WIDE:
+	 * 		case OP_SGET_OBJECT:
 	 * 		case OP_SGET_BOOLEAN:
 	 * 		case OP_SGET_BYTE:
 	 * 		case OP_SGET_CHAR:
 	 * 		case OP_SGET_SHORT:
-	 * 		case OP_SGET_WIDE:
-	 * 		case OP_SPUT:
-	 * 		case OP_SGET:
-	 * </pre>
-	 * 
-	 * @param opcode
-	 * @param field
-	 * @param reg
-	 */
-	void visitFieldInsn(int opcode, Field field, int reg);
-
-	/**
-	 * <pre>
-	 * 		case OP_IGET_OBJECT:
-	 * 		case OP_IGET_BOOLEAN:
-	 * 		case OP_IGET_BYTE:
-	 * 		case OP_IGET_SHORT:
-	 * 		case OP_IGET:
-	 * 		case OP_IGET_WIDE:
-	 * 
-	 * 		case OP_IPUT_OBJECT:
-	 * 		case OP_IPUT_BOOLEAN:
-	 * 		case OP_IPUT_BYTE:
-	 * 		case OP_IPUT_SHORT:
-	 * 		case OP_IPUT:
-	 * 		case OP_IPUT_WIDE:
 	 * </pre>
 	 * 
 	 * @param opcode
@@ -314,7 +306,7 @@ public interface DexCodeVisitor {
 	 * 
 	 * @param opcode
 	 * @param value
-	 *          value or 0==ZERO_OR_NULL
+	 *            value or 0==ZERO_OR_NULL, type for .class
 	 * @param reg
 	 */
 	void visitLdcInsn(int opcode, Object value, int reg);
@@ -347,13 +339,8 @@ public interface DexCodeVisitor {
 
 	/**
 	 * <pre>
-	 * 		case OP_INVOKE_DIRECT_RANGE:
 	 * 		case OP_INVOKE_STATIC:
-	 * 		case OP_INVOKE_DIRECT_RANGE:
 	 * 		case OP_INVOKE_DIRECT:
-	 * 		case OP_INVOKE_INTERFACE_RANGE:
-	 * 		case OP_INVOKE_SUPER_RANGE:
-	 * 		case OP_INVOKE_VIRTUAL_RANGE: 
 	 * 		case OP_INVOKE_VIRTUAL: 	 
 	 * 		case OP_INVOKE_INTERFACE:
 	 * 		case OP_INVOKE_SUPER:
@@ -381,14 +368,14 @@ public interface DexCodeVisitor {
 	 * @param start
 	 * @param end
 	 * @param handler
-	 * @param type may null
+	 * @param type
+	 *            may null
 	 */
 	void visitTryCatch(Label start, Label end, Label handler, String type);
 
 	/**
 	 * <pre>
 	 * 		case OP_NEW_INSTANCE:
-	 * 		case OP_CONST_CLASS:
 	 * 		case OP_CHECK_CAST:
 	 * </pre>
 	 * 

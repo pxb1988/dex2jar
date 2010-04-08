@@ -27,7 +27,6 @@ import pxb.android.dex2jar.DexOpcodeDump;
 import pxb.android.dex2jar.DexOpcodes;
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
-import pxb.android.dex2jar.org.objectweb.asm.tree.TryCatchBlockNode;
 import pxb.android.dex2jar.visitors.DexCodeAdapter;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 
@@ -41,7 +40,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	private PrintWriter out;
 	private Method m;
 
-	List<Label> _labels = new ArrayList();
+	List<Label> _labels = new ArrayList<Label>();
 
 	protected int labels(Label label) {
 		int i = _labels.indexOf(label);
@@ -141,14 +140,32 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		super.visitEnd();
 	}
 
+
+
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int, pxb.android.dex2jar.Field, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int, pxb.android.dex2jar.Field, int, int)
 	 */
 	@Override
-	public void visitFieldInsn(int opcode, Field field, int reg) {
+	public void visitFieldInsn(int opcode, Field field, int regFromOrTo, int owner_reg) {
 		switch (opcode) {
+		case OP_IGET_OBJECT:
+		case OP_IGET_BOOLEAN:
+		case OP_IGET_BYTE:
+		case OP_IGET_SHORT:
+		case OP_IGET:
+		case OP_IGET_WIDE:
+			info(opcode, "v%d=v%d.%s  //%s", regFromOrTo, owner_reg, field.getName(), field);
+			break;
+		case OP_IPUT_OBJECT:
+		case OP_IPUT_BOOLEAN:
+		case OP_IPUT_BYTE:
+		case OP_IPUT_SHORT:
+		case OP_IPUT:
+		case OP_IPUT_WIDE:
+			info(opcode, "v%d.%s=v%d  //%s", owner_reg, field.getName(), regFromOrTo, field);
+			break;
 		case OP_SPUT_OBJECT:
 		case OP_SPUT_BOOLEAN:
 		case OP_SPUT_BYTE:
@@ -156,7 +173,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		case OP_SPUT_SHORT:
 		case OP_SPUT_WIDE:
 		case OP_SPUT:
-			info(opcode, "%s.%s=v%d  //%s", c(field.getOwner()), field.getName(), reg, field);
+			info(opcode, "%s.%s=v%d  //%s", c(field.getOwner()), field.getName(), regFromOrTo, field);
 			break;
 		case OP_SGET_OBJECT:
 		case OP_SGET_BOOLEAN:
@@ -165,39 +182,11 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		case OP_SGET_SHORT:
 		case OP_SGET_WIDE:
 		case OP_SGET:
-			info(opcode, "v%d=%s.%s  //%s", reg, c(field.getOwner()), field.getName(), field);
-			break;
-		}
-		super.visitFieldInsn(opcode, field, reg);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int, pxb.android.dex2jar.Field, int, int)
-	 */
-	@Override
-	public void visitFieldInsn(int opcode, Field field, int value_reg, int owner_reg) {
-		switch (opcode) {
-		case OP_IGET_OBJECT:
-		case OP_IGET_BOOLEAN:
-		case OP_IGET_BYTE:
-		case OP_IGET_SHORT:
-		case OP_IGET:
-		case OP_IGET_WIDE:
-			info(opcode, "v%d=v%d.%s  //%s", value_reg, owner_reg, field.getName(), field);
-			break;
-		case OP_IPUT_OBJECT:
-		case OP_IPUT_BOOLEAN:
-		case OP_IPUT_BYTE:
-		case OP_IPUT_SHORT:
-		case OP_IPUT:
-		case OP_IPUT_WIDE:
-			info(opcode, "v%d.%s=v%d  //%s", owner_reg, field.getName(), value_reg, field);
+			info(opcode, "v%d=%s.%s  //%s", regFromOrTo, c(field.getOwner()), field.getName(), field);
 			break;
 		}
 
-		super.visitFieldInsn(opcode, field, value_reg, owner_reg);
+		super.visitFieldInsn(opcode, field, regFromOrTo, owner_reg);
 	}
 
 	/*
@@ -632,8 +621,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	public void visitMethodInsn(int opcode, Method method, int[] regs) {
 
 		switch (opcode) {
-		case OP_INVOKE_STATIC:
-		case OP_INVOKE_STATIC_RANGE: {
+		case OP_INVOKE_STATIC: {
 			int i = 0;
 			StringBuilder sb = new StringBuilder();
 			for (int j = 0; j < method.getType().getParameterTypes().length; j++) {
@@ -650,10 +638,6 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 			}
 		}
 			break;
-		case OP_INVOKE_DIRECT_RANGE:
-		case OP_INVOKE_INTERFACE_RANGE:
-		case OP_INVOKE_SUPER_RANGE:
-		case OP_INVOKE_VIRTUAL_RANGE:
 		case OP_INVOKE_VIRTUAL:
 		case OP_INVOKE_DIRECT:
 		case OP_INVOKE_INTERFACE:
