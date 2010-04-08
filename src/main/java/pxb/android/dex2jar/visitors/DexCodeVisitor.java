@@ -15,6 +15,8 @@
  */
 package pxb.android.dex2jar.visitors;
 
+import org.objectweb.asm.Label;
+
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
 
@@ -23,11 +25,6 @@ import pxb.android.dex2jar.Method;
  * @version $Id$
  */
 public interface DexCodeVisitor {
-	Object ZERO_OR_NULL = new Object() {
-		public String toString() {
-			return "0/null";
-		}
-	};
 
 	/**
 	 * 
@@ -272,7 +269,7 @@ public interface DexCodeVisitor {
 	 * @param opcode
 	 * @param label
 	 */
-	void visitJumpInsn(int opcode, int label);
+	void visitJumpInsn(int opcode, Label label);
 
 	/**
 	 * <pre>
@@ -288,7 +285,7 @@ public interface DexCodeVisitor {
 	 * @param label
 	 * @param reg
 	 */
-	void visitJumpInsn(int opcode, int label, int reg);
+	void visitJumpInsn(int opcode, Label label, int reg);
 
 	/**
 	 * <pre>
@@ -305,13 +302,13 @@ public interface DexCodeVisitor {
 	 * @param reg1
 	 * @param reg2
 	 */
-	void visitJumpInsn(int opcode, int label, int reg1, int reg2);
+	void visitJumpInsn(int opcode, Label label, int reg1, int reg2);
 
 	/**
 	 * 
 	 * @param index
 	 */
-	public void visitLabel(int index);
+	public void visitLabel(Label label);
 
 	/**
 	 * 
@@ -326,7 +323,7 @@ public interface DexCodeVisitor {
 	 * @param line
 	 * @param label
 	 */
-	void visitLineNumber(int line, int label);
+	void visitLineNumber(int line, Label label);
 
 	/**
 	 * @param name
@@ -336,7 +333,7 @@ public interface DexCodeVisitor {
 	 * @param end
 	 * @param reg
 	 */
-	void visitLocalVariable(String name, String type, String signature, int start, int end, int reg);
+	void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg);
 
 	/**
 	 * 
@@ -346,7 +343,7 @@ public interface DexCodeVisitor {
 	 * @param cases
 	 * @param labels
 	 */
-	void visitLookupSwitchInsn(int opcode, int reg, int defaultLabel, int[] cases, int[] labels);
+	void visitLookupSwitchInsn(int opcode, int reg, Label defaultLabel, int[] cases, Label[] labels);
 
 	/**
 	 * <pre>
@@ -377,16 +374,16 @@ public interface DexCodeVisitor {
 	 * @param _defaultLabel
 	 * @param labels
 	 */
-	void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, int defaultLabel, int[] labels);
+	void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, Label defaultLabel, Label[] labels);
 
 	/**
 	 * 
 	 * @param start
 	 * @param end
 	 * @param handler
-	 * @param type
+	 * @param type may null
 	 */
-	void visitTryCatch(int start, int end, int handler, String type);
+	void visitTryCatch(Label start, Label end, Label handler, String type);
 
 	/**
 	 * <pre>

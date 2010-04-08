@@ -17,6 +17,8 @@ package pxb.android.dex2jar.reader;
 
 import java.util.Map;
 
+import org.objectweb.asm.Label;
+
 import pxb.android.dex2jar.Dex;
 import pxb.android.dex2jar.DexOpcodeDump;
 import pxb.android.dex2jar.DexOpcodes;
@@ -31,14 +33,14 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
 public class DexOpcodeAdapter implements DexOpcodes {
 	private DexCodeVisitor dcv;
 	private Dex dex;
-	Map<Integer, Integer> labels;
+	Map<Integer, Label> labels;
 
 	/**
 	 * @param dex
 	 * @param dcv2
 	 * @param labels
 	 */
-	public DexOpcodeAdapter(Dex dex, DexCodeVisitor dcv2, Map<Integer, Integer> labels) {
+	public DexOpcodeAdapter(Dex dex, DexCodeVisitor dcv2, Map<Integer, Label> labels) {
 		this.dex = dex;
 		this.dcv = dcv2;
 		this.labels = labels;
