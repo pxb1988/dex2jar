@@ -140,8 +140,6 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		super.visitEnd();
 	}
 
-
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -571,6 +569,10 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 			info(opcode, "v%d=\"%s\"", reg, value);
 		else if (value instanceof Type) {
 			info(opcode, "v%d=%s.class", reg, ((Type) value).getClassName());
+		} else if (value instanceof Integer) {
+			info(opcode, "v%d=0x%8h  // int:%d   float:%f", reg, value, value, Float.intBitsToFloat((Integer) value));
+		} else if (value instanceof Long) {
+			info(opcode, "v%d=0x%16x  // long:%d   double:%f", reg, value, value, Double.longBitsToDouble((Long) value));
 		} else {
 			info(opcode, "v%d=%s  //", reg, value);
 		}
