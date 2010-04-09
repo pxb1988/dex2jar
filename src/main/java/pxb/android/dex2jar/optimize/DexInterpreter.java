@@ -140,7 +140,95 @@ public class DexInterpreter extends BasicInterpreter {
 
 	@Override
 	public Value ternaryOperation(AbstractInsnNode insn, Value value1, Value value2, Value value3) throws AnalyzerException {
-		// TODO Auto-generated method stub
+		// value1 [value2] =value3
+
+		if (value1 instanceof MayObject) {
+			Type type = null;
+			switch (insn.getOpcode()) {
+			case IASTORE:
+				type = Type.getType("[I");
+				break;
+			case LASTORE:
+				type = Type.getType("[J");
+				break;
+			case FASTORE:
+				type = Type.getType("[F");
+				break;
+			case DASTORE:
+				type = Type.getType("[D");
+				break;
+
+			case BASTORE:
+				type = Type.getType("[B");
+				break;
+			case CASTORE:
+				type = Type.getType("[C");
+				break;
+			case SASTORE:
+				type = Type.getType("[S");
+				break;
+			case AASTORE:
+				if (value3 instanceof MayObject) {
+					if (((MayObject) value3).type == null) {
+						type = Type.getType("[Ljava/lang/Object;");// some type of array
+					} else {
+						type = Type.getType("[" + ((MayObject) value3).type.getDescriptor());
+					}
+				} else {
+					type = Type.getType("[" + ((BasicValue) value3).getType().getDescriptor());
+				}
+
+				break;
+			}
+
+			((MayObject) value1).type = type;
+		}
+
+		if (value2 instanceof MayObject) {// 肯定是int类型
+			((MayObject) value2).type = Type.INT_TYPE;
+		}
+
+		if (value3 instanceof MayObject) {
+			Type type = null;
+			switch (insn.getOpcode()) {
+			case IASTORE:
+				type = Type.INT_TYPE;
+				break;
+			case LASTORE:
+				type = Type.LONG_TYPE;
+				break;
+			case FASTORE:
+				type = Type.FLOAT_TYPE;
+				break;
+			case DASTORE:
+				type = Type.DOUBLE_TYPE;
+				break;
+
+			case BASTORE:
+				type = Type.BYTE_TYPE;
+				break;
+			case CASTORE:
+				type = Type.CHAR_TYPE;
+				break;
+			case SASTORE:
+				type = Type.SHORT_TYPE;
+				break;
+			case AASTORE:
+				if (value1 instanceof MayObject) {
+					if (((MayObject) value1).type == null) {
+						type = Type.getType("Ljava/lang/Object;");// some type of object
+					} else {
+						type = ((MayObject) value1).type.getElementType();
+					}
+				} else {
+					type = ((BasicValue) value1).getType().getElementType();
+				}
+				break;
+			}
+
+			((MayObject) value3).type = type;
+		}
+
 		return super.ternaryOperation(insn, value1, value2, value3);
 	}
 

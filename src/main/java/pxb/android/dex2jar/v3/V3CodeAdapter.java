@@ -340,14 +340,15 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			op = LASTORE;
 			break;
 		}
-
+		mv.visitVarInsn(ALOAD, map(reg));
 		for (int i = 0; i < initLength; i++) {
-			mv.visitVarInsn(ALOAD, map(reg));
+			mv.visitInsn(DUP);
 			mv.visitLdcInsn(i);
 			mv.visitLdcInsn(values[i]);
 			mv.visitInsn(op);
 		}
-		stack(3);
+		mv.visitVarInsn(ASTORE, map(reg));
+		stack(4);
 	}
 
 	/*

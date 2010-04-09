@@ -195,22 +195,13 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	@Override
 	public void visitFillArrayInsn(int opcode, int reg, int elemWidth, int initLength, Object[] values) {
 
-		// switch (elemWidth) {
-		// case 1:
-		// info(opcode, "v%d=new byte[%d]", reg, initLength);
-		// break;
-		// case 2:
-		// info(opcode, "v%d=new short[%d]", reg, initLength);
-		// break;
-		// case 4:
-		// info(opcode, "v%d=new int[%d]", reg, initLength);
-		// break;
-		// case 8:
-		// info(opcode, "v%d=new long[%d]", reg, initLength);
-		// break;
-		// }
-		for (int j = 0; j < initLength; j++) {
+		int j = 0;
+		if (j < initLength) {
 			info(opcode, "v%d[%d]=%d", reg, j, values[j]);
+			j++;
+		}
+		for (; j < initLength; j++) {
+			info(-1, "v%d[%d]=%d", reg, j, values[j]);
 		}
 		super.visitFillArrayInsn(opcode, reg, elemWidth, initLength, values);
 	}
@@ -570,9 +561,9 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		else if (value instanceof Type) {
 			info(opcode, "v%d=%s.class", reg, ((Type) value).getClassName());
 		} else if (value instanceof Integer) {
-			info(opcode, "v%d=0x%8h  // int:%d   float:%f", reg, value, value, Float.intBitsToFloat((Integer) value));
+			info(opcode, "v%d=0x%08x  // int:%d   float:%f", reg,value, value, Float.intBitsToFloat((Integer) value));
 		} else if (value instanceof Long) {
-			info(opcode, "v%d=0x%16x  // long:%d   double:%f", reg, value, value, Double.longBitsToDouble((Long) value));
+			info(opcode, "v%d=0x%016x  // long:%d   double:%f", reg, value, value, Double.longBitsToDouble((Long) value));
 		} else {
 			info(opcode, "v%d=%s  //", reg, value);
 		}
