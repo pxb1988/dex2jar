@@ -221,7 +221,12 @@ public class DexInterpreter extends BasicInterpreter {
 						type = ((MayObject) value1).type.getElementType();
 					}
 				} else {
-					type = ((BasicValue) value1).getType().getElementType();
+					Type t = ((BasicValue) value1).getType();
+					if (t.getDescriptor().startsWith("[")) {// array
+						type = t.getElementType();
+					} else {
+						type = t;
+					}
 				}
 				break;
 			}

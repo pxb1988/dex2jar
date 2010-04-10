@@ -15,9 +15,14 @@
  */
 package pxb.android;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.dump.Dump;
 
@@ -26,8 +31,15 @@ import pxb.android.dex2jar.dump.Dump;
  * 
  */
 public class DumpTest {
+	static final Logger log = LoggerFactory.getLogger(DumpTest.class);
 	@Test
 	public void test() throws IOException {
-		Dump.main("target/test-classes/pxb/android/i_jetty.dex", "target/ijetty.dump.jar");
+		File file = new File("target/test-classes/dexes");
+		Iterator it = FileUtils.iterateFiles(file, new String[] { "dex" }, false);
+		while (it.hasNext()) {
+			File f = (File) it.next();
+			log.info("dump file {}", f);
+			Dump.doFile(f);
+		}
 	}
 }

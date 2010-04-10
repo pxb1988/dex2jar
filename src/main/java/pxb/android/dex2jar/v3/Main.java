@@ -51,6 +51,10 @@ public class Main {
 		}
 	}
 
+	public static void doFile(File srcDex) throws IOException {
+		doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dex2jar.jar"));
+	}
+
 	public static void doFile(File srcDex, File destJar) throws IOException {
 
 		final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(destJar));
