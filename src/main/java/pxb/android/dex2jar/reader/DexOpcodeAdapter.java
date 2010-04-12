@@ -449,8 +449,8 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 				args[i] = arg3 + i;
 			}
 			dcv.visitFilledNewArrayIns(OP_FILLED_NEW_ARRAY, dex.getType(arg2), args);
-
 		}
+			break;
 		default:
 			throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
 		}
