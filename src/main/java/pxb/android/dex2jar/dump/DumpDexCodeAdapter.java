@@ -16,7 +16,10 @@
 package pxb.android.dex2jar.dump;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -36,6 +39,16 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	// LoggerFactory.getLogger(DumpDexCodeAdapter.class);
 	private PrintWriter out;
 	private Method m;
+
+	List<Label> _labels = new ArrayList<Label>();
+
+	protected int labels(Label label) {
+		int i = _labels.indexOf(label);
+		if (i > -1)
+			return i;
+		_labels.add(label);
+		return _labels.indexOf(label);
+	}
 
 	/**
 	 * @param dcv
@@ -130,11 +143,27 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int, pxb.android.dex2jar.Field, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int, pxb.android.dex2jar.Field, int, int)
 	 */
 	@Override
-	public void visitFieldInsn(int opcode, Field field, int reg) {
+	public void visitFieldInsn(int opcode, Field field, int regFromOrTo, int owner_reg) {
 		switch (opcode) {
+		case OP_IGET_OBJECT:
+		case OP_IGET_BOOLEAN:
+		case OP_IGET_BYTE:
+		case OP_IGET_SHORT:
+		case OP_IGET:
+		case OP_IGET_WIDE:
+			info(opcode, "v%d=v%d.%s  //%s", regFromOrTo, owner_reg, field.getName(), field);
+			break;
+		case OP_IPUT_OBJECT:
+		case OP_IPUT_BOOLEAN:
+		case OP_IPUT_BYTE:
+		case OP_IPUT_SHORT:
+		case OP_IPUT:
+		case OP_IPUT_WIDE:
+			info(opcode, "v%d.%s=v%d  //%s", owner_reg, field.getName(), regFromOrTo, field);
+			break;
 		case OP_SPUT_OBJECT:
 		case OP_SPUT_BOOLEAN:
 		case OP_SPUT_BYTE:
@@ -142,7 +171,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		case OP_SPUT_SHORT:
 		case OP_SPUT_WIDE:
 		case OP_SPUT:
-			info(opcode, "%s.%s=v%d  //%s", c(field.getOwner()), field.getName(), reg, field);
+			info(opcode, "%s.%s=v%d  //%s", c(field.getOwner()), field.getName(), regFromOrTo, field);
 			break;
 		case OP_SGET_OBJECT:
 		case OP_SGET_BOOLEAN:
@@ -151,39 +180,11 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 		case OP_SGET_SHORT:
 		case OP_SGET_WIDE:
 		case OP_SGET:
-			info(opcode, "v%d=%s.%s  //%s", reg, c(field.getOwner()), field.getName(), field);
-			break;
-		}
-		super.visitFieldInsn(opcode, field, reg);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitFieldInsn(int, pxb.android.dex2jar.Field, int, int)
-	 */
-	@Override
-	public void visitFieldInsn(int opcode, Field field, int value_reg, int owner_reg) {
-		switch (opcode) {
-		case OP_IGET_OBJECT:
-		case OP_IGET_BOOLEAN:
-		case OP_IGET_BYTE:
-		case OP_IGET_SHORT:
-		case OP_IGET:
-		case OP_IGET_WIDE:
-			info(opcode, "v%d=v%d.%s  //%s", value_reg, owner_reg, field.getName(), field);
-			break;
-		case OP_IPUT_OBJECT:
-		case OP_IPUT_BOOLEAN:
-		case OP_IPUT_BYTE:
-		case OP_IPUT_SHORT:
-		case OP_IPUT:
-		case OP_IPUT_WIDE:
-			info(opcode, "v%d.%s=v%d  //%s", owner_reg, field.getName(), value_reg, field);
+			info(opcode, "v%d=%s.%s  //%s", regFromOrTo, c(field.getOwner()), field.getName(), field);
 			break;
 		}
 
-		super.visitFieldInsn(opcode, field, value_reg, owner_reg);
+		super.visitFieldInsn(opcode, field, regFromOrTo, owner_reg);
 	}
 
 	/*
@@ -194,22 +195,13 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	@Override
 	public void visitFillArrayInsn(int opcode, int reg, int elemWidth, int initLength, Object[] values) {
 
-		// switch (elemWidth) {
-		// case 1:
-		// info(opcode, "v%d=new byte[%d]", reg, initLength);
-		// break;
-		// case 2:
-		// info(opcode, "v%d=new short[%d]", reg, initLength);
-		// break;
-		// case 4:
-		// info(opcode, "v%d=new int[%d]", reg, initLength);
-		// break;
-		// case 8:
-		// info(opcode, "v%d=new long[%d]", reg, initLength);
-		// break;
-		// }
-		for (int j = 0; j < initLength; j++) {
+		int j = 0;
+		if (j < initLength) {
 			info(opcode, "v%d[%d]=%d", reg, j, values[j]);
+			j++;
+		}
+		for (; j < initLength; j++) {
+			info(-1, "v%d[%d]=%d", reg, j, values[j]);
 		}
 		super.visitFillArrayInsn(opcode, reg, elemWidth, initLength, values);
 	}
@@ -460,44 +452,38 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitJumpInsn(int, int)
 	 */
 	@Override
-	public void visitJumpInsn(int opcode, int offset) {
+	public void visitJumpInsn(int opcode, Label label) {
 		switch (opcode) {
 		case OP_GOTO:
 		case OP_GOTO_16:
-			info(opcode, "goto L%d", offset);
+			info(opcode, "goto L%s", labels(label));
 			break;
 		}
-		super.visitJumpInsn(opcode, offset);
+		super.visitJumpInsn(opcode, label);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitJumpInsn(int, int, int)
-	 */
-	@Override
-	public void visitJumpInsn(int opcode, int offset, int reg) {
+	public void visitJumpInsn(int opcode, Label label, int reg) {
 		switch (opcode) {
 		case OP_IF_EQZ:
-			info(opcode, "if v%d == 0 goto L%d", reg, offset);
+			info(opcode, "if v%d == 0 goto L%s", reg, labels(label));
 			break;
 		case OP_IF_NEZ:
-			info(opcode, "if v%d != 0 goto L%d", reg, offset);
+			info(opcode, "if v%d != 0 goto L%s", reg, labels(label));
 			break;
 		case OP_IF_LTZ:
-			info(opcode, "if v%d <  0 goto L%d", reg, offset);
+			info(opcode, "if v%d <  0 goto L%s", reg, labels(label));
 			break;
 		case OP_IF_GEZ:
-			info(opcode, "if v%d >= 0 goto L%d", reg, offset);
+			info(opcode, "if v%d >= 0 goto L%s", reg, labels(label));
 			break;
 		case OP_IF_GTZ:
-			info(opcode, "if v%d >  0 goto L%d", reg, offset);
+			info(opcode, "if v%d >  0 goto L%s", reg, labels(label));
 			break;
 		case OP_IF_LEZ:
-			info(opcode, "if v%d <= 0 goto L%d", reg, offset);
+			info(opcode, "if v%d <= 0 goto L%s", reg, labels(label));
 			break;
 		}
-		super.visitJumpInsn(opcode, offset, reg);
+		super.visitJumpInsn(opcode, label, reg);
 	}
 
 	/*
@@ -506,28 +492,28 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitJumpInsn(int, int, int, int)
 	 */
 	@Override
-	public void visitJumpInsn(int opcode, int offset, int reg1, int reg2) {
+	public void visitJumpInsn(int opcode, Label label, int reg1, int reg2) {
 		switch (opcode) {
 		case OP_IF_EQ:
-			info(opcode, "if v%d == v%d goto L%d", reg1, reg2, offset);
+			info(opcode, "if v%d == v%d goto L%s", reg1, reg2, labels(label));
 			break;
 		case OP_IF_NE:
-			info(opcode, "if v%d != v%d goto L%d", reg1, reg2, offset);
+			info(opcode, "if v%d != v%d goto L%s", reg1, reg2, labels(label));
 			break;
 		case OP_IF_LT:
-			info(opcode, "if v%d <  v%d goto L%d", reg1, reg2, offset);
+			info(opcode, "if v%d <  v%d goto L%s", reg1, reg2, labels(label));
 			break;
 		case OP_IF_GE:
-			info(opcode, "if v%d >= v%d goto L%d", reg1, reg2, offset);
+			info(opcode, "if v%d >= v%d goto L%s", reg1, reg2, labels(label));
 			break;
 		case OP_IF_GT:
-			info(opcode, "if v%d >  v%d goto L%d", reg1, reg2, offset);
+			info(opcode, "if v%d >  v%d goto L%s", reg1, reg2, labels(label));
 			break;
 		case OP_IF_LE:
-			info(opcode, "if v%d <= v%d goto L%d", reg1, reg2, offset);
+			info(opcode, "if v%d <= v%d goto L%s", reg1, reg2, labels(label));
 			break;
 		}
-		super.visitJumpInsn(opcode, offset, reg1, reg2);
+		super.visitJumpInsn(opcode, label, reg1, reg2);
 	}
 
 	/*
@@ -536,9 +522,31 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitLabel(int)
 	 */
 	@Override
-	public void visitLabel(int index) {
-		out.printf("%-20s|%5s:\n", "LABEL", "L" + index);
-		super.visitLabel(index);
+	public void visitLabel(Label label) {
+		boolean find = false;
+		for (TryCatch tc : trys) {
+			if (label.equals(tc.end)) {
+				info(-1, " } // TC_%d", trys.indexOf(tc));
+				find = true;
+				break;
+			}
+
+		}
+		out.printf("%-20s|%5s:\n", "LABEL", "L" + labels(label));
+		if (!find) {
+			for (TryCatch tc : trys) {
+				if (label.equals(tc.start)) {
+					info(-1, "try { // TC_%d ", trys.indexOf(tc));
+					break;
+				}
+				if (label.equals(tc.handler)) {
+					String t = tc.type;
+					info(-1, "catch(%s) // TC_%d", t == null ? "all" : t, trys.indexOf(tc));
+					break;
+				}
+			}
+		}
+		super.visitLabel(label);
 	}
 
 	/*
@@ -552,6 +560,10 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 			info(opcode, "v%d=\"%s\"", reg, value);
 		else if (value instanceof Type) {
 			info(opcode, "v%d=%s.class", reg, ((Type) value).getClassName());
+		} else if (value instanceof Integer) {
+			info(opcode, "v%d=0x%08x  // int:%d   float:%f", reg,value, value, Float.intBitsToFloat((Integer) value));
+		} else if (value instanceof Long) {
+			info(opcode, "v%d=0x%016x  // long:%d   double:%f", reg, value, value, Double.longBitsToDouble((Long) value));
 		} else {
 			info(opcode, "v%d=%s  //", reg, value);
 		}
@@ -564,7 +576,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitLineNumber(int, int)
 	 */
 	@Override
-	public void visitLineNumber(int line, int label) {
+	public void visitLineNumber(int line, Label label) {
 		super.visitLineNumber(line, label);
 	}
 
@@ -574,7 +586,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitLocalVariable(java.lang .String, java.lang.String, java.lang.String, int, int, int)
 	 */
 	@Override
-	public void visitLocalVariable(String name, String type, String signature, int start, int end, int reg) {
+	public void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg) {
 		super.visitLocalVariable(name, type, signature, start, end, reg);
 	}
 
@@ -584,12 +596,12 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitLookupSwitchInsn(int, int, int, int[], int[])
 	 */
 	@Override
-	public void visitLookupSwitchInsn(int opcode, int reg, int label, int[] cases, int[] label2) {
+	public void visitLookupSwitchInsn(int opcode, int reg, Label label, int[] cases, Label[] label2) {
 		info(opcode, "switch(v%d)", reg);
 		for (int i = 0; i < cases.length; i++) {
-			info(-1, "case %d: goto L%d", cases[i], label2[i]);
+			info(-1, "case %d: goto L%s", cases[i], labels(label2[i]));
 		}
-		info(-1, "default: goto L%d", label);
+		info(-1, "default: goto L%s", labels(label));
 		super.visitLookupSwitchInsn(opcode, reg, label, cases, label2);
 	}
 
@@ -602,8 +614,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	public void visitMethodInsn(int opcode, Method method, int[] regs) {
 
 		switch (opcode) {
-		case OP_INVOKE_STATIC:
-		case OP_INVOKE_STATIC_RANGE: {
+		case OP_INVOKE_STATIC: {
 			int i = 0;
 			StringBuilder sb = new StringBuilder();
 			for (int j = 0; j < method.getType().getParameterTypes().length; j++) {
@@ -620,10 +631,6 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 			}
 		}
 			break;
-		case OP_INVOKE_DIRECT_RANGE:
-		case OP_INVOKE_INTERFACE_RANGE:
-		case OP_INVOKE_SUPER_RANGE:
-		case OP_INVOKE_VIRTUAL_RANGE:
 		case OP_INVOKE_VIRTUAL:
 		case OP_INVOKE_DIRECT:
 		case OP_INVOKE_INTERFACE:
@@ -654,15 +661,32 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTableSwitchInsn(int, int, int, int, int, int[])
 	 */
 	@Override
-	public void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, int label, int[] labels) {
+	public void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, Label label, Label[] labels) {
 		info(opcode, "switch(v%d)", reg);
 		for (int i = 0; i < labels.length; i++) {
-			info(opcode, "case %d: goto L%d", first_case + i, labels[i]);
+			info(opcode, "case %d: goto L%s", first_case + i, labels(labels[i]));
 		}
-		info(opcode, "default: goto L%d", label);
+		info(opcode, "default: goto L%s", labels(label));
 
 		super.visitTableSwitchInsn(opcode, reg, first_case, last_case, label, labels);
 	}
+
+	private static class TryCatch {
+		public TryCatch(Label start, Label end, Label handler, String type) {
+			super();
+			this.start = start;
+			this.end = end;
+			this.handler = handler;
+			this.type = type;
+		}
+
+		public Label start;
+		public Label end;
+		public Label handler;
+		public String type;
+	}
+
+	List<TryCatch> trys = new ArrayList<TryCatch>();
 
 	/*
 	 * (non-Javadoc)
@@ -670,13 +694,16 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	 * @see pxb.android.dex2jar.visitors.DexCodeAdapter#visitTryCatch(int, int, int, java.lang.String)
 	 */
 	@Override
-	public void visitTryCatch(int start, int offset, int handler, String type) {
+	public void visitTryCatch(Label start, Label end, Label handler, String type) {
+		TryCatch tc = new TryCatch(start, end, handler, type);
+		trys.add(tc);
+		int id = trys.indexOf(tc);
 		if (type == null) {
-			out.printf("L%d ~ L%d > L%d all\n", start, offset, handler);
+			out.printf("TR_%d L%s ~ L%s > L%s all\n", id, labels(start), labels(end), labels(handler));
 		} else {
-			out.printf("L%d ~ L%d > L%d %s\n", start, offset, handler, type);
+			out.printf("TR_%d L%s ~ L%s > L%s %s\n", id, labels(start), labels(end), labels(handler), type);
 		}
-		super.visitTryCatch(start, offset, handler, type);
+		super.visitTryCatch(start, end, handler, type);
 	}
 
 	/*

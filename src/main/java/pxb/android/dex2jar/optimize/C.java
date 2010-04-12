@@ -34,7 +34,7 @@ public class C implements MethodTransformer, Opcodes {
 
 	public void transform(final MethodNode method) {
 
-		dump(method.instructions);
+//		dump(method.instructions);
 		DexInterpreter dx = new DexInterpreter();
 		Analyzer a = new Analyzer(dx);
 		try {

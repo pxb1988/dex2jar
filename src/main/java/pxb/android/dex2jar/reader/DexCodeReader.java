@@ -18,6 +18,7 @@ package pxb.android.dex2jar.reader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,11 +50,7 @@ public class DexCodeReader implements DexOpcodes {
 	/**
 	 * 标签映射,指令位置->指令编号
 	 */
-	private Map<Integer, Integer> labels = new HashMap<Integer, Integer>();
-	/**
-	 * 用于记录标签的编号，递增
-	 */
-	private int labels_index = 0;
+	private Map<Integer, Label> labels = new HashMap<Integer, Label>();
 
 	/**
 	 * 方法的描述
@@ -307,7 +304,7 @@ public class DexCodeReader implements DexOpcodes {
 						in.readShortx();
 						int switch_size = in.readShortx();
 						int cases[] = new int[switch_size];
-						int label[] = new int[switch_size];
+						Label label[] = new Label[switch_size];
 						for (int j = 0; j < switch_size; j++) {
 							cases[j] = in.readIntx();
 						}
@@ -324,7 +321,7 @@ public class DexCodeReader implements DexOpcodes {
 						int switch_size = in.readShortx();
 						int first_case = in.readIntx();
 						int last_case = first_case - 1 + switch_size;
-						int _labels[] = new int[switch_size];
+						Label _labels[] = new Label[switch_size];
 						for (int j = 0; j < switch_size; j++) {
 							int targetOffset = in.readIntx();
 							_labels[j] = this.labels.get(i + targetOffset);
@@ -376,8 +373,13 @@ public class DexCodeReader implements DexOpcodes {
 				break;
 			case 5: {
 				int reg = in.readByte();
-				long value = in.readLongx();
-				dcv.visitLdcInsn(opcode, value, reg);
+				int l = in.readIntx();
+				int h = in.readIntx();
+
+				// issue 13
+				long longV = (((long) h) << 32) | (l & 0x00000000FFFFFFFFL);
+				// double doubleV = Double.longBitsToDouble(v);
+				dcv.visitLdcInsn(opcode, longV, reg);
 				i += 5;
 			}
 				break;
@@ -396,7 +398,7 @@ public class DexCodeReader implements DexOpcodes {
 	 */
 	private void order(int offset) {
 		if (!labels.containsKey(offset)) {
-			labels.put(offset, this.labels_index++);
+			labels.put(offset, new Label());
 		}
 	}
 }

@@ -15,6 +15,8 @@
  */
 package pxb.android.dex2jar.visitors;
 
+import org.objectweb.asm.Label;
+
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
 
@@ -22,14 +24,12 @@ import pxb.android.dex2jar.Method;
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor,
-		DexCodeVisitor, DexAnnotationVisitor {
+public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor, DexCodeVisitor, DexAnnotationVisitor {
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexFileVisitor#visit(int,
-	 * java.lang.String, java.lang.String, java.lang.String[])
+	 * @see pxb.android.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String, java.lang.String[])
 	 */
 	public DexClassVisitor visit(int accessFlags, String className, String superClass, String... interfaceNames) {
 
@@ -48,8 +48,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang
-	 * .String, int)
+	 * @see pxb.android.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, int)
 	 */
 	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
 
@@ -59,9 +58,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexClassVisitor#visitField(pxb.android.dex2jar
-	 * .Field, java.lang.Object)
+	 * @see pxb.android.dex2jar.visitors.DexClassVisitor#visitField(pxb.android.dex2jar .Field, java.lang.Object)
 	 */
 	public DexFieldVisitor visitField(Field field, Object value) {
 
@@ -71,8 +68,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexClassVisitor#visitMethod(pxb.android.
-	 * dex2jar.Method)
+	 * @see pxb.android.dex2jar.visitors.DexClassVisitor#visitMethod(pxb.android. dex2jar.Method)
 	 */
 	public DexMethodVisitor visitMethod(Method method) {
 
@@ -82,8 +78,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexClassVisitor#visitSource(java.lang.String )
+	 * @see pxb.android.dex2jar.visitors.DexClassVisitor#visitSource(java.lang.String )
 	 */
 	public void visitSource(String file) {
 
@@ -102,9 +97,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation
-	 * (int)
+	 * @see pxb.android.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation (int)
 	 */
 	public DexAnnotationAble visitParamesterAnnotation(int index) {
 
@@ -114,8 +107,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitArrayInsn(int, int,
-	 * int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitArrayInsn(int, int, int, int)
 	 */
 	public void visitArrayInsn(int opcode, int regFromOrTo, int array, int index) {
 
@@ -124,8 +116,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitArrayInsn(int,
-	 * java.lang.String, int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitArrayInsn(int, java.lang.String, int, int)
 	 */
 	public void visitArrayInsn(int opcode, String type, int saveToReg, int demReg) {
 
@@ -134,8 +125,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int,
-	 * pxb.android.dex2jar.Field, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int, pxb.android.dex2jar.Field, int)
 	 */
 	public void visitFieldInsn(int opcode, Field field, int reg) {
 
@@ -144,8 +134,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int,
-	 * pxb.android.dex2jar.Field, int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int, pxb.android.dex2jar.Field, int, int)
 	 */
 	public void visitFieldInsn(int opcode, Field field, int regFromOrTo, int ownerReg) {
 
@@ -154,8 +143,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFillArrayInsn(int,
-	 * int, int, int, java.lang.Object[])
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFillArrayInsn(int, int, int, int, java.lang.Object[])
 	 */
 	public void visitFillArrayInsn(int opcode, int reg, int elemWidth, int initLength, Object[] values) {
 
@@ -164,9 +152,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexCodeVisitor#visitFilledNewArrayIns(int,
-	 * java.lang.String, int[])
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFilledNewArrayIns(int, java.lang.String, int[])
 	 */
 	public void visitFilledNewArrayIns(int opcode, String type, int[] regs) {
 
@@ -184,8 +170,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitInInsn(int, int, int,
-	 * int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitInInsn(int, int, int, int)
 	 */
 	public void visitInInsn(int opcode, int saveToReg, int opReg, int opValueOrReg) {
 
@@ -203,46 +188,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitJumpInsn(int, int)
-	 */
-	public void visitJumpInsn(int opcode, int offset) {
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitJumpInsn(int, int,
-	 * int)
-	 */
-	public void visitJumpInsn(int opcode, int offset, int reg) {
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitJumpInsn(int, int,
-	 * int, int)
-	 */
-	public void visitJumpInsn(int opcode, int offset, int reg1, int reg2) {
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLabel(int)
-	 */
-	public void visitLabel(int index) {
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLdcInsn(int,
-	 * java.lang.Object, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLdcInsn(int, java.lang.Object, int)
 	 */
 	public void visitLdcInsn(int opcode, Object value, int reg) {
 
@@ -251,68 +197,43 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLineNumber(int, int)
-	 */
-	public void visitLineNumber(int line, int label) {
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexCodeVisitor#visitLocalVariable(java.lang
-	 * .String, java.lang.String, java.lang.String, int, int, int)
-	 */
-	public void visitLocalVariable(String name, String type, String signature, int start, int end, int reg) {
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitLookupSwitchInsn(int,
-	 * int, int, int[], int[])
-	 */
-	public void visitLookupSwitchInsn(int opcode, int reg, int defaultOffset, int[] cases, int[] offsets) {
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitMethodInsn(int,
-	 * pxb.android.dex2jar.Method, int[])
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitMethodInsn(int, pxb.android.dex2jar.Method, int[])
 	 */
 	public void visitMethodInsn(int opcode, Method method, int[] args) {
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitTableSwitchInsn(int,
-	 * int, int, int, int, int[])
-	 */
-	public void visitTableSwitchInsn(int opcode, int reg, int firstCase, int lastCase, int defaultLabel, int[] labels) {
+	public void visitJumpInsn(int opcode, Label label, int reg1, int reg2) {
+	}
 
+	public void visitJumpInsn(int opcode, Label label, int reg) {
+	}
+
+	public void visitJumpInsn(int opcode, Label label) {
+	}
+
+	public void visitLabel(Label label) {
+	}
+
+	public void visitLineNumber(int line, Label label) {
+	}
+
+	public void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg) {
+	}
+
+	public void visitLookupSwitchInsn(int opcode, int reg, Label defaultLabel, int[] cases, Label[] labels) {
+	}
+
+	public void visitTableSwitchInsn(int opcode, int reg, int firstCase, int lastCase, Label defaultLabel, Label[] labels) {
+	}
+
+	public void visitTryCatch(Label start, Label end, Label handler, String type) {
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitTryCatch(int, int,
-	 * int, java.lang.String)
-	 */
-	public void visitTryCatch(int start, int offset, int handler, String type) {
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitTypeInsn(int,
-	 * java.lang.String, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitTypeInsn(int, java.lang.String, int)
 	 */
 	public void visitTypeInsn(int opcode, String type, int toReg) {
 
@@ -321,8 +242,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitTypeInsn(int,
-	 * java.lang.String, int, int)
+	 * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitTypeInsn(int, java.lang.String, int, int)
 	 */
 	public void visitTypeInsn(int opcode, String type, int toReg, int fromReg) {
 
@@ -340,9 +260,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexAnnotationVisitor#visit(java.lang.String,
-	 * java.lang.Object)
+	 * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visit(java.lang.String, java.lang.Object)
 	 */
 	public void visit(String name, Object value) {
 
@@ -351,8 +269,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitAnnotation(java
-	 * .lang.String, java.lang.String)
+	 * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitAnnotation(java .lang.String, java.lang.String)
 	 */
 	public DexAnnotationVisitor visitAnnotation(String name, String desc) {
 
@@ -362,8 +279,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitArray(java.lang
-	 * .String)
+	 * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitArray(java.lang .String)
 	 */
 	public DexAnnotationVisitor visitArray(String name) {
 
@@ -373,8 +289,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitEnum(java.lang
-	 * .String, java.lang.String, java.lang.String)
+	 * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitEnum(java.lang .String, java.lang.String, java.lang.String)
 	 */
 	public void visitEnum(String name, String desc, String value) {
 

@@ -15,6 +15,8 @@
  */
 package pxb.android.dex2jar.visitors;
 
+import org.objectweb.asm.Label;
+
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
 
@@ -23,11 +25,6 @@ import pxb.android.dex2jar.Method;
  * @version $Id$
  */
 public interface DexCodeVisitor {
-	Object ZERO_OR_NULL = new Object() {
-		public String toString() {
-			return "0/null";
-		}
-	};
 
 	/**
 	 * 
@@ -75,46 +72,38 @@ public interface DexCodeVisitor {
 	void visitEnd();
 
 	/**
-	 * Static Field
-	 * 
 	 * <pre>
+	 * 		case OP_IGET:
+	 * 		case OP_IGET_WIDE:
+	 * 		case OP_IGET_OBJECT:
+	 * 		case OP_IGET_BOOLEAN:
+	 * 		case OP_IGET_BYTE:
+	 * 		case OP_IGET_CHAR:
+	 * 		case OP_IGET_SHORT:
+	 * 		
+	 * 		case OP_IPUT:
+	 * 		case OP_IPUT_WIDE:
+	 * 		case OP_IPUT_OBJECT:
+	 * 		case OP_IPUT_BOOLEAN:
+	 * 		case OP_IPUT_BYTE:
+	 * 		case OP_IPUT_CHAR:
+	 * 		case OP_IPUT_SHORT:
+
+	 * 		case OP_SPUT:
+	 * 		case OP_SPUT_WIDE:
 	 * 		case OP_SPUT_OBJECT:
-	 * 		case OP_SGET_OBJECT:
 	 * 		case OP_SPUT_BOOLEAN:
 	 * 		case OP_SPUT_BYTE:
 	 * 		case OP_SPUT_CHAR:
 	 * 		case OP_SPUT_SHORT:
-	 * 		case OP_SPUT_WIDE:
+	 * 
+	 * 		case OP_SGET:
+	 * 		case OP_SGET_WIDE:
+	 * 		case OP_SGET_OBJECT:
 	 * 		case OP_SGET_BOOLEAN:
 	 * 		case OP_SGET_BYTE:
 	 * 		case OP_SGET_CHAR:
 	 * 		case OP_SGET_SHORT:
-	 * 		case OP_SGET_WIDE:
-	 * 		case OP_SPUT:
-	 * 		case OP_SGET:
-	 * </pre>
-	 * 
-	 * @param opcode
-	 * @param field
-	 * @param reg
-	 */
-	void visitFieldInsn(int opcode, Field field, int reg);
-
-	/**
-	 * <pre>
-	 * 		case OP_IGET_OBJECT:
-	 * 		case OP_IGET_BOOLEAN:
-	 * 		case OP_IGET_BYTE:
-	 * 		case OP_IGET_SHORT:
-	 * 		case OP_IGET:
-	 * 		case OP_IGET_WIDE:
-	 * 
-	 * 		case OP_IPUT_OBJECT:
-	 * 		case OP_IPUT_BOOLEAN:
-	 * 		case OP_IPUT_BYTE:
-	 * 		case OP_IPUT_SHORT:
-	 * 		case OP_IPUT:
-	 * 		case OP_IPUT_WIDE:
 	 * </pre>
 	 * 
 	 * @param opcode
@@ -272,7 +261,7 @@ public interface DexCodeVisitor {
 	 * @param opcode
 	 * @param label
 	 */
-	void visitJumpInsn(int opcode, int label);
+	void visitJumpInsn(int opcode, Label label);
 
 	/**
 	 * <pre>
@@ -288,7 +277,7 @@ public interface DexCodeVisitor {
 	 * @param label
 	 * @param reg
 	 */
-	void visitJumpInsn(int opcode, int label, int reg);
+	void visitJumpInsn(int opcode, Label label, int reg);
 
 	/**
 	 * <pre>
@@ -305,19 +294,19 @@ public interface DexCodeVisitor {
 	 * @param reg1
 	 * @param reg2
 	 */
-	void visitJumpInsn(int opcode, int label, int reg1, int reg2);
+	void visitJumpInsn(int opcode, Label label, int reg1, int reg2);
 
 	/**
 	 * 
 	 * @param index
 	 */
-	public void visitLabel(int index);
+	public void visitLabel(Label label);
 
 	/**
 	 * 
 	 * @param opcode
 	 * @param value
-	 *          value or 0==ZERO_OR_NULL
+	 *            value or 0==ZERO_OR_NULL, type for .class
 	 * @param reg
 	 */
 	void visitLdcInsn(int opcode, Object value, int reg);
@@ -326,7 +315,7 @@ public interface DexCodeVisitor {
 	 * @param line
 	 * @param label
 	 */
-	void visitLineNumber(int line, int label);
+	void visitLineNumber(int line, Label label);
 
 	/**
 	 * @param name
@@ -336,7 +325,7 @@ public interface DexCodeVisitor {
 	 * @param end
 	 * @param reg
 	 */
-	void visitLocalVariable(String name, String type, String signature, int start, int end, int reg);
+	void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg);
 
 	/**
 	 * 
@@ -346,17 +335,12 @@ public interface DexCodeVisitor {
 	 * @param cases
 	 * @param labels
 	 */
-	void visitLookupSwitchInsn(int opcode, int reg, int defaultLabel, int[] cases, int[] labels);
+	void visitLookupSwitchInsn(int opcode, int reg, Label defaultLabel, int[] cases, Label[] labels);
 
 	/**
 	 * <pre>
-	 * 		case OP_INVOKE_DIRECT_RANGE:
 	 * 		case OP_INVOKE_STATIC:
-	 * 		case OP_INVOKE_DIRECT_RANGE:
 	 * 		case OP_INVOKE_DIRECT:
-	 * 		case OP_INVOKE_INTERFACE_RANGE:
-	 * 		case OP_INVOKE_SUPER_RANGE:
-	 * 		case OP_INVOKE_VIRTUAL_RANGE: 
 	 * 		case OP_INVOKE_VIRTUAL: 	 
 	 * 		case OP_INVOKE_INTERFACE:
 	 * 		case OP_INVOKE_SUPER:
@@ -377,7 +361,7 @@ public interface DexCodeVisitor {
 	 * @param _defaultLabel
 	 * @param labels
 	 */
-	void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, int defaultLabel, int[] labels);
+	void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, Label defaultLabel, Label[] labels);
 
 	/**
 	 * 
@@ -385,13 +369,13 @@ public interface DexCodeVisitor {
 	 * @param end
 	 * @param handler
 	 * @param type
+	 *            may null
 	 */
-	void visitTryCatch(int start, int end, int handler, String type);
+	void visitTryCatch(Label start, Label end, Label handler, String type);
 
 	/**
 	 * <pre>
 	 * 		case OP_NEW_INSTANCE:
-	 * 		case OP_CONST_CLASS:
 	 * 		case OP_CHECK_CAST:
 	 * </pre>
 	 * 

@@ -217,6 +217,10 @@ public class Dump implements DexFileVisitor {
 		doFile(new File(args[0]), new File(args[1]));
 	}
 
+	public static void doFile(File srcDex) throws IOException {
+		doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dump.jar"));
+	}
+
 	public static void doFile(File srcDex, File destJar) throws IOException {
 		final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
 		new DexFileReader(srcDex).accept(new Dump(new EmptyVisitor(), new WriterManager() {
