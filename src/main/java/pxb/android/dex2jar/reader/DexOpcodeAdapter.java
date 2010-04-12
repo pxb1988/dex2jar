@@ -448,7 +448,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 			for (int i = 0; i < arg1; i++) {
 				args[i] = arg3 + i;
 			}
-			dcv.visitFilledNewArrayIns(opcode, dex.getType(arg2), args);
+			dcv.visitFilledNewArrayIns(OP_FILLED_NEW_ARRAY, dex.getType(arg2), args);
 
 		}
 		default:
