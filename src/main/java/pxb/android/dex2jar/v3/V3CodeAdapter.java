@@ -419,6 +419,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_MUL_DOUBLE_2ADDR:
 		case OP_REM_LONG_2ADDR:
 		case OP_REM_INT_2ADDR:
+		case OP_REM_DOUBLE_2ADDR:
+		case OP_REM_FLOAT_2ADDR:
 		case OP_DIV_INT_2ADDR:
 		case OP_DIV_LONG_2ADDR:
 		case OP_DIV_FLOAT_2ADDR:
@@ -469,7 +471,9 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_SUB_FLOAT_2ADDR:
 			case OP_ADD_FLOAT_2ADDR:
 			case OP_DIV_FLOAT_2ADDR:
-			case OP_MUL_FLOAT_2ADDR: {
+			case OP_MUL_FLOAT_2ADDR: 
+			case OP_REM_FLOAT_2ADDR:
+			{
 				load = FLOAD;
 				store = FSTORE;
 			}
@@ -477,7 +481,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			case OP_DIV_DOUBLE_2ADDR:
 			case OP_SUB_DOUBLE_2ADDR:
 			case OP_ADD_DOUBLE_2ADDR:
-			case OP_MUL_DOUBLE_2ADDR: {
+			case OP_MUL_DOUBLE_2ADDR:
+			case OP_REM_DOUBLE_2ADDR:{
 				load = DLOAD;
 				store = DSTORE;
 			}

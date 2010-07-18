@@ -393,6 +393,10 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpco
 			return LREM;
 		case OP_REM_INT_2ADDR:
 			return IREM;
+		case OP_REM_DOUBLE_2ADDR:
+			return DREM;
+		case OP_REM_FLOAT_2ADDR:
+			return FREM;
 
 			// shr
 		case OP_SHR_INT_2ADDR:
