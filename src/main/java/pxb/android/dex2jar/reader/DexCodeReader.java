@@ -199,7 +199,35 @@ public class DexCodeReader implements DexOpcodes {
 				break;
 			}
 			case 0:// OP_NOP
-				i = instruction_size;
+				int x = in.readByte();
+				switch (x) {
+				case 0: // 0000 //spacer
+					i += 1;
+					break;
+				case 1: // packed-switch-data
+				{
+					int switch_size = in.readShortx(); // switch_size
+					//int b = in.readIntx();// first_case
+					in.skip(4);
+					in.skip(switch_size * 4);
+					i += (1 + 2 + 4) + switch_size * 4;
+					break;
+				}
+				case 2:// sparse-switch-data
+				{
+					int switch_size = in.readShortx();
+					in.skip(switch_size * 8);
+					i += 1 + switch_size * 8;
+					break;
+				}
+				case 3: {
+					int elemWidth = in.readShortx();
+					int initLength = in.readIntx();
+					in.skip(elemWidth * initLength);
+					i += elemWidth * initLength;
+					break;
+				}
+				}
 				break;
 			case -1: {
 				in.skip(1);
@@ -291,7 +319,35 @@ public class DexCodeReader implements DexOpcodes {
 				break;
 			}
 			case 0:// OP_NOP
-				i = instruction_size;
+				int x = in.readByte();
+				switch (x) {
+				case 0: // 0000 //spacer
+					i += 1;
+					break;
+				case 1: // packed-switch-data
+				{
+					int switch_size = in.readShortx(); // switch_size
+					//int b = in.readIntx();// first_case
+					in.skip(4);
+					in.skip(switch_size * 4);
+					i += (1 + 2 + 4) + switch_size * 4;
+					break;
+				}
+				case 2:// sparse-switch-data
+				{
+					int switch_size = in.readShortx();
+					in.skip(switch_size * 8);
+					i += 1 + switch_size * 8;
+					break;
+				}
+				case 3: {
+					int elemWidth = in.readShortx();
+					int initLength = in.readIntx();
+					in.skip(elemWidth * initLength);
+					i += elemWidth * initLength;
+					break;
+				}
+				}
 				break;
 			case -1: {
 				int reg = in.readByte();
