@@ -77,6 +77,9 @@ public class DexCodeReader implements DexOpcodes {
 	 * @param dcv
 	 */
 	public void accept(DexCodeVisitor dcv) {
+
+		if (method.toString().contains("org/mortbay/jetty/HttpTokens"))
+			System.out.println("");
 		DataIn in = this.in;
 		DexOpcodeAdapter tadoa = new DexOpcodeAdapter(dex, dcv, this.labels);
 		int total_registers_size = in.readShortx();
@@ -207,7 +210,7 @@ public class DexCodeReader implements DexOpcodes {
 				case 1: // packed-switch-data
 				{
 					int switch_size = in.readShortx(); // switch_size
-					//int b = in.readIntx();// first_case
+					// int b = in.readIntx();// first_case
 					in.skip(4);
 					in.skip(switch_size * 4);
 					i += (1 + 2 + 4) + switch_size * 4;
@@ -217,14 +220,14 @@ public class DexCodeReader implements DexOpcodes {
 				{
 					int switch_size = in.readShortx();
 					in.skip(switch_size * 8);
-					i += 1 + switch_size * 8;
+					i += (1 + 2) + switch_size * 8;
 					break;
 				}
 				case 3: {
 					int elemWidth = in.readShortx();
 					int initLength = in.readIntx();
 					in.skip(elemWidth * initLength);
-					i += elemWidth * initLength;
+					i += (1 + 2 + 4) + elemWidth * initLength;
 					break;
 				}
 				}
@@ -327,7 +330,7 @@ public class DexCodeReader implements DexOpcodes {
 				case 1: // packed-switch-data
 				{
 					int switch_size = in.readShortx(); // switch_size
-					//int b = in.readIntx();// first_case
+					// int b = in.readIntx();// first_case
 					in.skip(4);
 					in.skip(switch_size * 4);
 					i += (1 + 2 + 4) + switch_size * 4;
@@ -337,14 +340,14 @@ public class DexCodeReader implements DexOpcodes {
 				{
 					int switch_size = in.readShortx();
 					in.skip(switch_size * 8);
-					i += 1 + switch_size * 8;
+					i += (1 + 2) + switch_size * 8;
 					break;
 				}
 				case 3: {
 					int elemWidth = in.readShortx();
 					int initLength = in.readIntx();
 					in.skip(elemWidth * initLength);
-					i += elemWidth * initLength;
+					i += (1 + 2 + 4) + elemWidth * initLength;
 					break;
 				}
 				}
