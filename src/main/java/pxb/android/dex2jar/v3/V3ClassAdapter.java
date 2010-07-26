@@ -58,7 +58,8 @@ public class V3ClassAdapter implements DexClassVisitor {
 								Integer access = accessFlagsMap.get(name);
 								int d = name.lastIndexOf('$');
 								String innerName = name.substring(d + 1, name.length() - 1);
-								cv.visitInnerClass(name, className, innerName, access);
+								// TODO设置默认内部类修饰符
+								cv.visitInnerClass(name, className, innerName, access == null ? 0 : access);
 							}
 						}
 					}
@@ -99,8 +100,7 @@ public class V3ClassAdapter implements DexClassVisitor {
 	 * @param superClass
 	 * @param interfaceNames
 	 */
-	public V3ClassAdapter(Map<String, Integer> accessFlagsMap, ClassVisitor cv, int access_flags, String className,
-			String superClass, String[] interfaceNames) {
+	public V3ClassAdapter(Map<String, Integer> accessFlagsMap, ClassVisitor cv, int access_flags, String className, String superClass, String[] interfaceNames) {
 		super();
 		this.accessFlagsMap = accessFlagsMap;
 		this.cv = new TypeNameAdapter(cv);
