@@ -132,7 +132,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 		}
 			break;
 		case OP_GOTO: {
-			dcv.visitJumpInsn(opcode, this.labels.get(offset + ((byte) arg1)));
+			dcv.visitJumpInsn(opcode, this.labels.get(offset + ((byte) arg1) * 2));
 		}
 			break;
 		case OP_RETURN_VOID: {
@@ -233,7 +233,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 		case OP_IF_GTZ:
 		case OP_IF_LEZ: //
 		{
-			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2), arg1);
+			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2 * 2), arg1);
 		}
 			break;
 		case OP_IF_EQ:
@@ -244,7 +244,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 		case OP_IF_LE: {
 			int reg1 = arg1 & 0xf;
 			int reg2 = (arg1 >> 4) & 0xf;
-			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2), reg1, reg2);
+			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2 * 2), reg1, reg2);
 		}
 			break;
 		case OP_IGET_BOOLEAN:
@@ -379,7 +379,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 		}
 			break;
 		case OP_GOTO_16: {
-			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2));
+			dcv.visitJumpInsn(opcode, this.labels.get(offset + arg2 * 2));
 		}
 			break;
 		case OP_MOVE_OBJECT_FROM16:

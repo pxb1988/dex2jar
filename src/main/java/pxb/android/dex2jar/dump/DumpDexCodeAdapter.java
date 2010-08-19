@@ -195,14 +195,16 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 	@Override
 	public void visitFillArrayInsn(int opcode, int reg, int elemWidth, int initLength, Object[] values) {
 
-		int j = 0;
-		if (j < initLength) {
-			info(opcode, "v%d[%d]=%d", reg, j, values[j]);
-			j++;
+		StringBuilder sb = new StringBuilder();
+		for (Object value : values) {
+			sb.append(',').append(value);
 		}
-		for (; j < initLength; j++) {
-			info(-1, "v%d[%d]=%d", reg, j, values[j]);
+		if (sb.length() > 0) {
+			sb.deleteCharAt(0);
 		}
+
+		info(opcode, "v%d[0..%d]=[%s]", reg, initLength - 1, sb.toString());
+
 		super.visitFillArrayInsn(opcode, reg, elemWidth, initLength, values);
 	}
 

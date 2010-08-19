@@ -140,11 +140,15 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	public void visitEnd() {
 		build();
 		if (mv != null) {
-			if (methodNode.instructions.size() > 2) {
-				List<? extends MethodTransformer> trs = Arrays.asList(new A(), new B(method), new C(method));
-				for (MethodTransformer tr : trs) {
-					tr.transform(methodNode);
+			try {
+				if (methodNode.instructions.size() > 2) {
+					List<? extends MethodTransformer> trs = Arrays.asList(new A(), new B(method), new C(method));
+					for (MethodTransformer tr : trs) {
+						tr.transform(methodNode);
+					}
 				}
+			} catch (Exception e) {
+				throw new RuntimeException("Error transform method:" + this.method, e);
 			}
 		}
 		methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
