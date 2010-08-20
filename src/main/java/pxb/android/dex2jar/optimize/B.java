@@ -149,16 +149,10 @@ public class B implements MethodTransformer, Opcodes {
 	List<Block> blocks = new ArrayList();
 	Map<Label, Block> blockMaps = new HashMap();
 
-	int max = -1;
+	int max = 0;
 
 	private int order() {
-		return ++max;
-	}
-
-	private void max(int max) {
-		if (max > this.max) {
-			this.max = max;
-		}
+		return max++;
 	}
 
 	public void transform(MethodNode method) {
@@ -191,7 +185,6 @@ public class B implements MethodTransformer, Opcodes {
 		while (p != null) {
 			if (isRead(p)) {
 				int r = var(p);
-				max(r);
 				if (in.get(r) == null) {
 					if (out.get(r) == null) {
 						in.put(r, p);
@@ -199,7 +192,6 @@ public class B implements MethodTransformer, Opcodes {
 				}
 			} else if (isWrite(p)) {
 				int r = var(p);
-				max(r);
 				out.put(r, p);
 			} else if (needBreak(p)) {
 				if (p.getType() != AbstractInsnNode.LABEL) {
@@ -247,6 +239,21 @@ public class B implements MethodTransformer, Opcodes {
 		for (Block block : blocks) {
 			doBlock(block);
 		}
+		int i = 0;
+		if ((m.getAccessFlags() & ACC_STATIC) == 0) {
+			grobalMap.put(i++, order()); // this
+		}
+		for (String t : m.getType().getParameterTypes()) {
+			grobalMap.put(i++, order());
+		}
+
+		if (m.toString().equals("Lcom/slgmobile/beamreader/Open;.b(Landroid/net/Uri;)Ljava/lang/String;")) {
+			System.out.println("");
+		}
+		for (Block block : blocks) {
+			doReIndex(block);
+		}
+		System.out.println("");
 	}
 
 	/**
@@ -648,10 +655,9 @@ public class B implements MethodTransformer, Opcodes {
 
 		doVar(block);
 		// dump(block);
-		doReIndex(block);
-		// System.out.println("AFTER");
-		// dump(block);
 	}
+
+	Map<Integer, Integer> grobalMap = new HashMap();
 
 	/**
 	 * @param block
@@ -749,14 +755,22 @@ public class B implements MethodTransformer, Opcodes {
 		for (AbstractInsnNode p = block.first; p != block.last; p = p.getNext()) {
 			if (isWrite(p)) {
 				int r = var(p);
-				if (block.out.get(r) == null) {// 不输出
+				if (block.out.get(r) != p) {// 不输出
 					int nr = order();
 					var(p, nr);
 					map.put(r, nr);
+				} else {
+					Integer v = this.grobalMap.get(r);
+					if (v == null) {
+						v = order();
+						grobalMap.put(r, v);
+					}
+					var(p, v);
+					map.put(r, v);
 				}
 			} else if (isRead(p)) {
 				int r = var(p);
-				if (block.in.get(r) == null && block.out.get(r) == null) {// 不输入，不输出
+				if (block.in.get(r) != p) {
 					Integer v = map.get(r);
 					if (v == null) {
 						int nr = order();
@@ -765,8 +779,28 @@ public class B implements MethodTransformer, Opcodes {
 					} else {
 						var(p, v);
 					}
+				} else {
+					Integer v = this.grobalMap.get(r);
+					if (v == null) {
+						v = order();
+						grobalMap.put(r, v);
+					}
+					var(p, v);
+					map.put(r, v);
 				}
 			}
 		}
+
+		Map<Integer, AbstractInsnNode> old = block.in;
+		block.in = new HashMap();
+		for (Map.Entry<Integer, AbstractInsnNode> e : old.entrySet()) {
+			block.in.put(this.grobalMap.get(e.getKey()), e.getValue());
+		}
+		old = block.out;
+		block.out = new HashMap();
+		for (Map.Entry<Integer, AbstractInsnNode> e : old.entrySet()) {
+			block.out.put(this.grobalMap.get(e.getKey()), e.getValue());
+		}
+
 	}
 }
