@@ -78,8 +78,6 @@ public class DexCodeReader implements DexOpcodes {
 	 */
 	public void accept(DexCodeVisitor dcv) {
 
-		if (method.toString().contains("org/mortbay/jetty/HttpTokens"))
-			System.out.println("");
 		DataIn in = this.in;
 		DexOpcodeAdapter tadoa = new DexOpcodeAdapter(dex, dcv, this.labels);
 		int total_registers_size = in.readShortx();

@@ -42,16 +42,18 @@ import pxb.android.dex2jar.org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import pxb.android.dex2jar.org.objectweb.asm.tree.VarInsnNode;
 
 /**
- * !!!!!MODIFIED
- * A symbolic execution stack frame. A stack frame contains a set of local variable slots, and an operand stack. Warning: long and double values are represented
- * by <i>two</i> slots in local variables, and by <i>one</i> slot in the operand stack.
+ * !!!!!MODIFIED A symbolic execution stack frame. A stack frame contains a set
+ * of local variable slots, and an operand stack. Warning: long and double
+ * values are represented by <i>two</i> slots in local variables, and by
+ * <i>one</i> slot in the operand stack.
  * 
  * @author Eric Bruneton
  */
 public class Frame {
 
 	/**
-	 * The expected return type of the analyzed method, or <tt>null</tt> if the method returns void.
+	 * The expected return type of the analyzed method, or <tt>null</tt> if the
+	 * method returns void.
 	 */
 	private Value returnValue;
 
@@ -115,7 +117,8 @@ public class Frame {
 	 * Sets the expected return type of the analyzed method.
 	 * 
 	 * @param v
-	 *            the expected return type of the analyzed method, or <tt>null</tt> if the method returns void.
+	 *            the expected return type of the analyzed method, or
+	 *            <tt>null</tt> if the method returns void.
 	 */
 	public void setReturn(final Value v) {
 		returnValue = v;
@@ -135,8 +138,16 @@ public class Frame {
 			Value[] temp = new Value[i + 2];
 			System.arraycopy(localValues, 0, temp, 0, localValues.length);
 			localValues = temp;
+			for (int j = localValues.length; j < temp.length; j++) {
+				temp[j] = new BasicValue(null);
+			}
 		}
-		return localValues[i];
+		Value v= localValues[i];
+		if(v==null){
+			v=new BasicValue(null);
+		}
+		localValues[i]=v;
+		return v;
 	}
 
 	/**
@@ -151,15 +162,19 @@ public class Frame {
 	 */
 	public void setLocal(final int i, final Value value) throws IndexOutOfBoundsException {
 		if (i >= localValues.length) {
-			Value[] temp = new Value[i + 2];
+			Value[] temp = new Value[i + 1];
 			System.arraycopy(localValues, 0, temp, 0, localValues.length);
 			localValues = temp;
+			for (int j = localValues.length; j < temp.length; j++) {
+				temp[j] = new BasicValue(null);
+			}
 		}
 		localValues[i] = value;
 	}
 
 	/**
-	 * Returns the number of values in the operand stack of this frame. Long and double values are treated as single values.
+	 * Returns the number of values in the operand stack of this frame. Long and
+	 * double values are treated as single values.
 	 * 
 	 * @return the number of values in the operand stack of this frame.
 	 */
@@ -177,10 +192,13 @@ public class Frame {
 	 *             if the operand stack slot does not exist.
 	 */
 	public Value getStack(final int i) throws IndexOutOfBoundsException {
-		if (top >= stackValues.length) {
-			Value[] temp = new Value[top + 2];
+		if (top >= stackValues.length || i >= stackValues.length) {
+			Value[] temp = new Value[Math.max(top, i) + 1];
 			System.arraycopy(stackValues, 0, temp, 0, stackValues.length);
 			stackValues = temp;
+			for (int j = stackValues.length; j < temp.length; j++) {
+				temp[j] = new BasicValue(null);
+			}
 		}
 		return stackValues[i];
 	}
@@ -206,6 +224,13 @@ public class Frame {
 		return this.stackValues[--top];
 	}
 
+	public Value peek() throws IndexOutOfBoundsException {
+		if (top == 0) {
+			throw new IndexOutOfBoundsException("Cannot pop operand off an empty stack.");
+		}
+		return this.stackValues[top - 1];
+	}
+
 	/**
 	 * Pushes a value into the operand stack of this frame.
 	 * 
@@ -216,7 +241,7 @@ public class Frame {
 	 */
 	public void push(final Value value) throws IndexOutOfBoundsException {
 		if (top >= stackValues.length) {
-			Value[] temp = new Value[top + 2];
+			Value[] temp = new Value[top + 1];
 			System.arraycopy(stackValues, 0, temp, 0, stackValues.length);
 			stackValues = temp;
 		}
@@ -644,7 +669,8 @@ public class Frame {
 	 *            a frame.
 	 * @param interpreter
 	 *            the interpreter used to merge values.
-	 * @return <tt>true</tt> if this frame has been changed as a result of the merge operation, or <tt>false</tt> otherwise.
+	 * @return <tt>true</tt> if this frame has been changed as a result of the
+	 *         merge operation, or <tt>false</tt> otherwise.
 	 * @throws AnalyzerException
 	 *             if the frames have incompatible sizes.
 	 */
@@ -678,8 +704,10 @@ public class Frame {
 	 * @param frame
 	 *            a frame
 	 * @param access
-	 *            the local variables that have been accessed by the subroutine to which the RET instruction corresponds.
-	 * @return <tt>true</tt> if this frame has been changed as a result of the merge operation, or <tt>false</tt> otherwise.
+	 *            the local variables that have been accessed by the subroutine
+	 *            to which the RET instruction corresponds.
+	 * @return <tt>true</tt> if this frame has been changed as a result of the
+	 *         merge operation, or <tt>false</tt> otherwise.
 	 */
 	public boolean merge(final Frame frame, final boolean[] access) {
 		boolean changes = false;
@@ -700,12 +728,46 @@ public class Frame {
 	public String toString() {
 		StringBuffer b = new StringBuffer();
 		for (int i = 0; i < localValues.length; ++i) {
-			b.append(getLocal(i));
+			Value v = getLocal(i);
+			if (v == null) {
+				b.append("N");
+			} else {
+				b.append(v);
+			}
 		}
 		b.append(' ');
 		for (int i = 0; i < getStackSize(); ++i) {
-			b.append(getStack(i).toString());
+			Value v = getStack(i);
+			if (v == null) {
+				b.append("N");
+			} else {
+				b.append(v.toString());
+			}
 		}
 		return b.toString();
+	}
+
+	public String toString(int length) {
+		StringBuffer b = new StringBuffer();
+		for (int i = 0; i < localValues.length; ++i) {
+			Value v = getLocal(i);
+			if (v == null) {
+				b.append("N");
+			} else {
+				b.append(v);
+			}
+		}
+		String L = b.toString();
+		b.setLength(0);
+		for (int i = getStackSize() - 1; i >= 0; --i) {
+			Value v = getStack(i);
+			if (v == null) {
+				b.append("N");
+			} else {
+				b.append(v.toString());
+			}
+		}
+		String S = b.toString();
+		return String.format("%s%" + (length - L.length()) + "s", L, S);
 	}
 }

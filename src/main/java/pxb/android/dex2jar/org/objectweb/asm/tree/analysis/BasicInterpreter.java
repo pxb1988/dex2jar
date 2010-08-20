@@ -52,7 +52,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
 
     public Value newValue(final Type type) {
         if (type == null) {
-            return BasicValue.UNINITIALIZED_VALUE;
+            return new BasicValue(type);
         }
         switch (type.getSort()) {
             case Type.VOID:
@@ -71,7 +71,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
                 return BasicValue.DOUBLE_VALUE;
             case Type.ARRAY:
             case Type.OBJECT:
-                return BasicValue.REFERENCE_VALUE;
+                return new BasicValue(type);
             default:
                 throw new Error("Internal error");
         }
@@ -274,7 +274,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case DREM:
                 return BasicValue.DOUBLE_VALUE;
             case AALOAD:
-                return BasicValue.REFERENCE_VALUE;
+                return new BasicValue(null);
             case LCMP:
             case FCMPL:
             case FCMPG:
@@ -324,7 +324,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
     
     public Value merge(final Value v, final Value w) {
         if (!v.equals(w)) {
-            return BasicValue.UNINITIALIZED_VALUE;
+            return new BasicValue(null);
         }
         return v;
     }

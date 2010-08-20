@@ -247,13 +247,9 @@ public class B implements MethodTransformer, Opcodes {
 			grobalMap.put(i++, order());
 		}
 
-		if (m.toString().equals("Lcom/slgmobile/beamreader/Open;.b(Landroid/net/Uri;)Ljava/lang/String;")) {
-			System.out.println("");
-		}
 		for (Block block : blocks) {
 			doReIndex(block);
 		}
-		System.out.println("");
 	}
 
 	/**

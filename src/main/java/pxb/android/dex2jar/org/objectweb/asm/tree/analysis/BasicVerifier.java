@@ -288,8 +288,8 @@ public class BasicVerifier extends BasicInterpreter {
                 break;
             case IF_ACMPEQ:
             case IF_ACMPNE:
-                expected1 = BasicValue.REFERENCE_VALUE;
-                expected2 = BasicValue.REFERENCE_VALUE;
+                expected1 = new BasicValue(null);
+                expected2 = new BasicValue(null);
                 break;
             case PUTFIELD:
                 FieldInsnNode fin = (FieldInsnNode) insn;
@@ -354,7 +354,7 @@ public class BasicVerifier extends BasicInterpreter {
                 break;
             case AASTORE:
                 expected1 = value1;
-                expected3 = BasicValue.REFERENCE_VALUE;
+                expected3 = new BasicValue(null);
                 break;
             default:
                 throw new Error("Internal error.");
@@ -428,7 +428,7 @@ public class BasicVerifier extends BasicInterpreter {
     protected Value getElementValue(final Value objectArrayValue)
             throws AnalyzerException
     {
-        return BasicValue.REFERENCE_VALUE;
+        return new BasicValue(null);
     }
 
     protected boolean isSubTypeOf(final Value value, final Value expected) {

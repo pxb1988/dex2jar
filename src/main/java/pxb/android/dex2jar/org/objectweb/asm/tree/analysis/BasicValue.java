@@ -31,7 +31,6 @@ package pxb.android.dex2jar.org.objectweb.asm.tree.analysis;
 
 import org.objectweb.asm.Type;
 
-
 /**
  * A {@link Value} that is represented by its type in a seven types type system.
  * This type system distinguishes the UNINITIALZED, INT, FLOAT, LONG, DOUBLE,
@@ -41,66 +40,78 @@ import org.objectweb.asm.Type;
  */
 public class BasicValue implements Value {
 
-    public static final Value UNINITIALIZED_VALUE = new BasicValue(null);
+	//public static final Value UNINITIALIZED_VALUE = new BasicValue(null);
 
-    public static final Value INT_VALUE = new BasicValue(Type.INT_TYPE);
+	public static final Value INT_VALUE = new BasicValue(Type.INT_TYPE);
 
-    public static final Value FLOAT_VALUE = new BasicValue(Type.FLOAT_TYPE);
+	public static final Value FLOAT_VALUE = new BasicValue(Type.FLOAT_TYPE);
 
-    public static final Value LONG_VALUE = new BasicValue(Type.LONG_TYPE);
+	public static final Value LONG_VALUE = new BasicValue(Type.LONG_TYPE);
 
-    public static final Value DOUBLE_VALUE = new BasicValue(Type.DOUBLE_TYPE);
+	public static final Value DOUBLE_VALUE = new BasicValue(Type.DOUBLE_TYPE);
 
-    public static final Value REFERENCE_VALUE = new BasicValue(Type.getObjectType("java/lang/Object"));
+	//public static final Value REFERENCE_VALUE = new BasicValue(Type.getObjectType("java/lang/Object"));
 
-    public static final Value RETURNADDRESS_VALUE = new BasicValue(null);
+	public static final Value RETURNADDRESS_VALUE = new BasicValue(null);
 
-    private final Type type;
+	private Type type;
 
-    public BasicValue(final Type type) {
-        this.type = type;
-    }
+	public BasicValue(final Type type) {
+		this.type = type;
+	}
 
-    public Type getType() {
-        return type;
-    }
+	public Type getType() {
+		return type;
+	}
 
-    public int getSize() {
-        return type == Type.LONG_TYPE || type == Type.DOUBLE_TYPE ? 2 : 1;
-    }
+	/**
+	 * @param type
+	 *            the type to set
+	 */
+	public void setType(Type type) {
+		this.type = type;
+	}
 
-    public boolean isReference() {
-        return type != null
-                && (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY);
-    }
+	public int getSize() {
+		return type == Type.LONG_TYPE || type == Type.DOUBLE_TYPE ? 2 : 1;
+	}
 
-    public boolean equals(final Object value) {
-        if (value == this) {
-            return true;
-        } else if (value instanceof BasicValue) {
-            if (type == null) {
-                return ((BasicValue) value).type == null;
-            } else {
-                return type.equals(((BasicValue) value).type);
-            }
-        } else {
-            return false;
-        }
-    }
+	public boolean isReference() {
+		return type != null && (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY);
+	}
 
-    public int hashCode() {
-        return type == null ? 0 : type.hashCode();
-    }
+	public boolean equals(final Object value) {
+		if (value == this) {
+			return true;
+		} else if (value instanceof BasicValue) {
+			if (type == null) {
+				return ((BasicValue) value).type == null;
+			} else {
+				return type.equals(((BasicValue) value).type);
+			}
+		} else {
+			return false;
+		}
+	}
 
-    public String toString() {
-        if (this == UNINITIALIZED_VALUE) {
-            return ".";
-        } else if (this == RETURNADDRESS_VALUE) {
-            return "A";
-        } else if (this == REFERENCE_VALUE) {
-            return "R";
-        } else {
-            return type.getDescriptor();
-        }
-    }
+	public int hashCode() {
+		return type == null ? 0 : type.hashCode();
+	}
+
+	public String toString() {
+//		if (this == UNINITIALIZED_VALUE) {
+//			return ".";
+//		} else
+			if (this.type == null) {
+			return "X";
+		} else if (this == RETURNADDRESS_VALUE) {
+			return "A";
+//		} else if (this == REFERENCE_VALUE) {
+//			return "R";
+		}if(type.getDescriptor().length()==1){
+			return type.getDescriptor();
+		} else {
+			return "O";
+		}
+	}
 }
