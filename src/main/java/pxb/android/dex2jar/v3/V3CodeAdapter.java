@@ -1037,11 +1037,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 			stack(1 + args.length);
 			loadArgument(method, args, false);
 			switch (opcode) {
-			case OP_INVOKE_DIRECT:
-			case OP_INVOKE_SUPER: {
+			case OP_INVOKE_DIRECT: {
 				mv.visitMethodInsn(INVOKESPECIAL, method.getOwner(), method.getName(), method.getType().getDesc());
 			}
 				break;
+			case OP_INVOKE_SUPER:
 			case OP_INVOKE_VIRTUAL: {
 				mv.visitMethodInsn(INVOKEVIRTUAL, method.getOwner(), method.getName(), method.getType().getDesc());
 			}
