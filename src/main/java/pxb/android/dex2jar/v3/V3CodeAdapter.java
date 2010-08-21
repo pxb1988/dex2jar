@@ -682,18 +682,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_XOR_INT_LIT8:
 		case OP_DIV_INT_LIT8:
 		case OP_MUL_INT_LIT8: {
-			if (OP_ADD_INT_LIT8 == opcode && opReg == saveToReg) {
-				// 针对 a=a+1
-				mv.visitIincInsn(map(opReg), opValueOrReg);
-				stack(0);
-			}
-			else {
-				mv.visitVarInsn(ILOAD, map(opReg));
-				mv.visitLdcInsn(opValueOrReg);
-				mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
-				mv.visitVarInsn(ISTORE, map(saveToReg));
-				stack(2);
-			}
+			mv.visitVarInsn(ILOAD, map(opReg));
+			mv.visitLdcInsn(opValueOrReg);
+			mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
+			mv.visitVarInsn(ISTORE, map(saveToReg));
+			stack(2);
 		}
 			break;
 
