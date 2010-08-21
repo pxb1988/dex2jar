@@ -151,7 +151,12 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 				throw new RuntimeException("Error transform method:" + this.method, e);
 			}
 		}
-		methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
+		
+		try {
+			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
+		} catch (Exception e) {
+			throw new RuntimeException("Error visit method:" + this.method, e);
+		}
 	}
 
 	/*

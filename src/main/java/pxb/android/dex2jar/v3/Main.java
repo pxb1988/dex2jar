@@ -65,7 +65,7 @@ public class Main {
 		reader.accept(afa);
 		reader.accept(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-				return new ClassWriter(0) {
+				return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
 					/*
 					 * (non-Javadoc)
 					 * 
