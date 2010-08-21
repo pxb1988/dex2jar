@@ -264,19 +264,19 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_SPUT_OBJECT:
 		case OP_SPUT:
 		case OP_SPUT_WIDE:
-		case OP_SGET_BOOLEAN:
-		case OP_SGET_BYTE:
-		case OP_SGET_CHAR:
-		case OP_SGET_SHORT:
+		case OP_SPUT_BOOLEAN:
+		case OP_SPUT_BYTE:
+		case OP_SPUT_CHAR:
+		case OP_SPUT_SHORT: 
 			switch (opcode) {
 			case OP_SPUT_OBJECT:
 				mv.visitVarInsn(ALOAD, map(regFromOrTo));
 				break;
 			case OP_SPUT:
-			case OP_SGET_BOOLEAN:
-			case OP_SGET_BYTE:
-			case OP_SGET_CHAR:
-			case OP_SGET_SHORT:
+			case OP_SPUT_BOOLEAN:
+			case OP_SPUT_BYTE:
+			case OP_SPUT_CHAR:
+			case OP_SPUT_SHORT:
 				mv.visitVarInsn(ILOAD, map(regFromOrTo));
 				break;
 			case OP_SPUT_WIDE:
@@ -289,10 +289,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 		case OP_SGET_OBJECT:// sget-object
 		case OP_SGET:
 		case OP_SGET_WIDE:
-		case OP_SPUT_BOOLEAN:
-		case OP_SPUT_BYTE:
-		case OP_SPUT_CHAR:
-		case OP_SPUT_SHORT: {
+		case OP_SGET_BOOLEAN:
+		case OP_SGET_BYTE:
+		case OP_SGET_CHAR:
+		case OP_SGET_SHORT:
+		{
 			mv.visitFieldInsn(GETSTATIC, field.getOwner(), field.getName(), field.getType());
 			switch (opcode) {
 			case OP_SGET_OBJECT:// sget-object
@@ -302,10 +303,10 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 				mv.visitVarInsn(LSTORE, map(regFromOrTo));
 				break;
 			case OP_SGET:
-			case OP_SPUT_BOOLEAN:
-			case OP_SPUT_BYTE:
-			case OP_SPUT_CHAR:
-			case OP_SPUT_SHORT:
+			case OP_SGET_BOOLEAN:
+			case OP_SGET_BYTE:
+			case OP_SGET_CHAR:
+			case OP_SGET_SHORT:
 				mv.visitVarInsn(ISTORE, map(regFromOrTo));
 				break;
 			}

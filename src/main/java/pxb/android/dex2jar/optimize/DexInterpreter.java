@@ -63,9 +63,6 @@ public class DexInterpreter extends BasicInterpreter {
 	 */
 	@Override
 	public Value binaryOperation(AbstractInsnNode insn, Value value1, Value value2) throws AnalyzerException {
-		if (insn.getOpcode() == PUTFIELD) {
-
-		}
 		switch (insn.getOpcode()) {
 		case PUTFIELD:
 			FieldInsnNode fieldInsnNode = (FieldInsnNode) insn;
@@ -104,6 +101,8 @@ public class DexInterpreter extends BasicInterpreter {
 		case FMUL:
 		case FDIV:
 		case FREM:
+		case FCMPL:
+		case FCMPG:
 			if (((BasicValue) value1).getType() == null) {
 				((BasicValue) value1).setType(Type.FLOAT_TYPE);
 			}
@@ -123,6 +122,7 @@ public class DexInterpreter extends BasicInterpreter {
 		case LAND:
 		case LOR:
 		case LXOR:
+		case LCMP:
 			if (((BasicValue) value1).getType() == null) {
 				((BasicValue) value1).setType(Type.LONG_TYPE);
 			}
@@ -136,6 +136,8 @@ public class DexInterpreter extends BasicInterpreter {
 		case DMUL:
 		case DDIV:
 		case DREM:
+		case DCMPL:
+		case DCMPG:
 			if (((BasicValue) value1).getType() == null) {
 				((BasicValue) value1).setType(Type.DOUBLE_TYPE);
 			}
@@ -145,30 +147,17 @@ public class DexInterpreter extends BasicInterpreter {
 			break;
 		// case AALOAD:
 		// return BasicValue.REFERENCE_VALUE;
-		// case LCMP:
-		// case FCMPL:
-		// case FCMPG:
-		// case DCMPL:
-		// case DCMPG:
-		// return BasicValue.INT_VALUE;
 		case IF_ICMPEQ:
 		case IF_ICMPNE:
+		case IF_ICMPLT:
+		case IF_ICMPGE:
+		case IF_ICMPGT:
+		case IF_ICMPLE:
 			if (((BasicValue) value1).getType() == null && ((BasicValue) value2).getType() != null) {
 				((BasicValue) value1).setType(((BasicValue) value2).getType());
 			}
 			if (((BasicValue) value2).getType() == null && ((BasicValue) value1).getType() != null) {
 				((BasicValue) value2).setType(((BasicValue) value1).getType());
-			}
-			break;
-		case IF_ICMPLT:
-		case IF_ICMPGE:
-		case IF_ICMPGT:
-		case IF_ICMPLE:
-			if (((BasicValue) value1).getType() == null) {
-				((BasicValue) value1).setType(Type.DOUBLE_TYPE);
-			}
-			if (((BasicValue) value2).getType() == null) {
-				((BasicValue) value2).setType(Type.DOUBLE_TYPE);
 			}
 			break;
 		case IF_ACMPEQ:
