@@ -1069,7 +1069,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
 	private void checkResult() {
 		if (typeInStack != null) {
-			if (Type.LONG_TYPE.equals(typeInStack)) {
+			if (Type.LONG_TYPE.equals(typeInStack) || Type.DOUBLE_TYPE.equals(typeInStack)) {
 				mv.visitInsn(POP2);
 			} else {
 				mv.visitInsn(POP);
