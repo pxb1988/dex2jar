@@ -151,15 +151,12 @@ public class B implements MethodTransformer, Opcodes {
 	private int order() {
 		return max++;
 	}
-
-	public void transform(MethodNode method) {
-
+	private void cut(){
 		// long timeStart = System.currentTimeMillis();
 
 		// log.debug("enter {}", m);
 		int blockIndex = 0;
-		insnList = method.instructions;
-		this.method = method;
+		
 		// dump();
 
 		Map<Integer, AbstractInsnNode> in = new HashMap();
@@ -213,6 +210,13 @@ public class B implements MethodTransformer, Opcodes {
 			}
 			p = p.getNext();
 		}
+	}
+
+	public void transform(MethodNode method) {
+		insnList = method.instructions;
+		this.method = method;
+
+		cut();
 
 		linkTryCatch();
 
