@@ -16,6 +16,7 @@
 package pxb.android.dex2jar.v3;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +49,25 @@ public class V3ClassAdapter implements DexClassVisitor {
 
 	protected void build() {
 		if (!build) {
-			cv.visit(Opcodes.V1_5, access_flags, className, null, superClass, interfaceNames);
+			String signature = null;
+			for (Iterator<Ann> it = anns.iterator(); it.hasNext();) {
+				Ann ann = it.next();
+				if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
+					it.remove();
+					for (Item item : ann.items) {
+						if (item.name.equals("value")) {
+							Ann values = (Ann) item.value;
+							StringBuilder sb = new StringBuilder();
+							for (Item i : values.items) {
+								sb.append(i.value.toString());
+							}
+							signature = sb.toString();
+						}
+					}
+				}
+			}
+
+			cv.visit(Opcodes.V1_5, access_flags, className, signature, superClass, interfaceNames);
 			for (Ann ann : anns) {
 				if (ann.type.equals("Ldalvik/annotation/MemberClasses;")) {
 					for (Item i : ann.items) {
@@ -64,8 +83,7 @@ public class V3ClassAdapter implements DexClassVisitor {
 						}
 					}
 					continue;
-				}
-				if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
+				} else if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
 					for (Item i : ann.items) {
 						if (i.name.equals("value")) {
 							Type t = (Type) i.value;
@@ -75,8 +93,7 @@ public class V3ClassAdapter implements DexClassVisitor {
 						}
 					}
 					continue;
-				}
-				if (ann.type.equals("Ldalvik/annotation/InnerClass;")) {
+				} else if (ann.type.equals("Ldalvik/annotation/InnerClass;")) {
 					continue;
 				}
 				AnnotationVisitor av = cv.visitAnnotation(ann.type, ann.visible == 1);

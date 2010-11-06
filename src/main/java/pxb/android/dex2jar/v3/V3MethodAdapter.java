@@ -71,6 +71,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	protected void build() {
 		if (!build) {
 			String[] exceptions = null;
+			String signature = null;
 			for (Iterator<Ann> it = anns.iterator(); it.hasNext();) {
 				Ann ann = it.next();
 				if ("Ldalvik/annotation/Throws;".equals(ann.type)) {
@@ -85,11 +86,23 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 							}
 						}
 					}
+				} else if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
+					it.remove();
+					for (Item item : ann.items) {
+						if (item.name.equals("value")) {
+							Ann values = (Ann) item.value;
+							StringBuilder sb = new StringBuilder();
+							for (Item i : values.items) {
+								sb.append(i.value.toString());
+							}
+							signature = sb.toString();
+						}
+					}
 				}
 			}
-			MethodVisitor mv = cv.visitMethod(method.getAccessFlags(), method.getName(), method.getType().getDesc(), null, exceptions);
+			MethodVisitor mv = cv.visitMethod(method.getAccessFlags(), method.getName(), method.getType().getDesc(), signature, exceptions);
 			if (mv != null) {
-				methodNode = new MethodNode(method.getAccessFlags(), method.getName(), method.getType().getDesc(), null, exceptions);
+				methodNode = new MethodNode(method.getAccessFlags(), method.getName(), method.getType().getDesc(), signature, exceptions);
 				for (Ann ann : anns) {
 					AnnotationVisitor av = mv.visitAnnotation(ann.type, ann.visible == 1);
 					V3AnnAdapter.accept(ann.items, av);
@@ -151,7 +164,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 				throw new RuntimeException("Error transform method:" + this.method, e);
 			}
 		}
-		
+
 		try {
 			methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
 		} catch (Exception e) {
