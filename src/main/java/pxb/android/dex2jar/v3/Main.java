@@ -15,12 +15,15 @@
  */
 package pxb.android.dex2jar.v3;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
@@ -38,7 +41,7 @@ public class Main {
 	 */
 	public static void main(String... args) {
 		if (args.length == 0) {
-			System.out.println("dex2jar file1.dex file2.dex ...");
+			System.out.println("dex2jar file1.dexORapk file2.dexORapk ...");
 		}
 		for (String file : args) {
 			File dex = new File(file);
@@ -51,15 +54,9 @@ public class Main {
 		}
 	}
 
-	public static void doFile(File srcDex) throws IOException {
-		doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dex2jar.jar"));
-	}
-
-	public static void doFile(File srcDex, File destJar) throws IOException {
-
+	public static void doData(byte[] data, File destJar) throws IOException {
 		final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(destJar));
 
-		byte[] data = FileUtils.readFileToByteArray(srcDex);
 		DexFileReader reader = new DexFileReader(data);
 		V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
 		reader.accept(afa);
@@ -89,6 +86,29 @@ public class Main {
 		}));
 		zos.finish();
 		zos.close();
+	}
+
+	public static void doFile(File srcDex) throws IOException {
+		doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dex2jar.jar"));
+	}
+
+	public static void doFile(File srcDex, File destJar) throws IOException {
+		byte[] data = FileUtils.readFileToByteArray(srcDex);
+		// checkMagic
+		if ("dex".equals(new String(data, 0, 3))) {// dex
+			doData(data, destJar);
+		} else if ("PK".equals(new String(data, 0, 2))) {// ZIP
+			ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
+			for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
+				if (entry.getName().equals("classes.dex")) {
+					data = IOUtils.toByteArray(zis);
+					doData(data, destJar);
+				}
+			}
+		} else {
+			throw new RuntimeException("the src file not a .dex file or a zip file");
+		}
+
 	}
 
 }

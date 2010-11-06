@@ -16,7 +16,6 @@
 package pxb.android;
 
 import java.io.File;
-import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
@@ -31,22 +30,19 @@ import pxb.android.dex2jar.v3.Main;
  * 
  */
 public class ResTest {
-        static final Logger log = LoggerFactory.getLogger(ResTest.class);
+	static final Logger log = LoggerFactory.getLogger(ResTest.class);
 
-        @SuppressWarnings("rawtypes")
-        @Test
-        public void test() throws Exception {
-                File dir = new File("target/test-classes/res");
-                Iterator it = FileUtils.iterateFiles(dir, new String[] { "class" }, false);
-                while (it.hasNext()) {
-                        File f = (File) it.next();
-                        log.info("Testing res file {}", f);
-                        String name = f.getName();
-                        name = name.substring(0, name.length() - ".class".length());
-                        File dex = TestUtils.dex(f, new File(dir, name + ".dex"));
-                        Main.doFile(dex);
-                        Dump.doFile(dex);
-                }
-                log.info("Done.");
-        }
+	@Test
+	public void test() throws Exception {
+		File dir = new File("target/test-classes/res");
+		for (File f : FileUtils.listFiles(dir, new String[] { "class" }, false)) {
+			log.info("Testing res file {}", f);
+			String name = f.getName();
+			name = name.substring(0, name.length() - ".class".length());
+			File dex = TestUtils.dex(f, new File(dir, name + ".dex"));
+			Main.doFile(dex);
+			Dump.doFile(dex);
+		}
+		log.info("Done.");
+	}
 }

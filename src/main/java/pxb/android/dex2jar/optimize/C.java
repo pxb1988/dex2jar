@@ -35,9 +35,9 @@ public class C implements MethodTransformer, Opcodes {
 
 	public void transform(final MethodNode method) {
 
-		//dump(method.instructions);
+		// dump(method.instructions);
 		DexInterpreter dx = new DexInterpreter();
-		//分析出每条指令的Loacl及Stack内数据的类型
+		// 分析出每条指令的Loacl及Stack内数据的类型
 		Analyzer a = new Analyzer(dx);
 		try {
 			a.analyze(Type.getType(m.getOwner()).getInternalName(), method);
@@ -49,7 +49,10 @@ public class C implements MethodTransformer, Opcodes {
 		// 根据当前Stack或者之后的Stack类型值推测当前指令的内容
 		for (int i = 0; i < fs.length; i++) {
 			AbstractInsnNode node = method.instructions.get(i);
-			if (isRead(node)) {//XLOAD
+			if (fs[i] == null) {// should remove dead code?
+				continue;
+			}
+			if (isRead(node)) {// XLOAD
 				Frame f = fs[i + 1];
 				BasicValue v = (BasicValue) f.peek();
 				Type t = v.getType();
@@ -57,13 +60,13 @@ public class C implements MethodTransformer, Opcodes {
 					((VarInsnNode) node).setOpcode(t.getOpcode(ILOAD));
 				}
 			} else if (isWrite(node)) {
-				Frame f = fs[i];//XSTORE
+				Frame f = fs[i];// XSTORE
 				BasicValue v = (BasicValue) f.peek();
 				Type t = v.getType();
 				if (t != null) {
 					((VarInsnNode) node).setOpcode(t.getOpcode(ISTORE));
 				}
-			} else if (node.getOpcode() == LDC) { //LDC
+			} else if (node.getOpcode() == LDC) { // LDC
 				Frame f = fs[i + 1];
 				BasicValue v = (BasicValue) f.peek();
 				Type t = v.getType();
@@ -109,14 +112,14 @@ public class C implements MethodTransformer, Opcodes {
 						}
 					}
 				}
-			} else if (node.getOpcode() == IFNE) { //IFNE
+			} else if (node.getOpcode() == IFNE) { // IFNE
 				Frame f = fs[i];
 				BasicValue v = (BasicValue) f.peek();
 				Type t = v.getType();
 				if (t != null && (t.getSort() == Type.ARRAY || t.getSort() == Type.OBJECT)) {
 					((JumpInsnNode) node).setOpcode(IFNONNULL);
 				}
-			}else if (node.getOpcode() == IFEQ) { //IFEQ
+			} else if (node.getOpcode() == IFEQ) { // IFEQ
 				Frame f = fs[i];
 				BasicValue v = (BasicValue) f.peek();
 				Type t = v.getType();
@@ -125,7 +128,17 @@ public class C implements MethodTransformer, Opcodes {
 				}
 			}
 		}
-
+//		// remove dead code
+//		AbstractInsnNode node = method.instructions.getFirst();
+//		for (int i = 0; i < fs.length; i++) {
+//			if (fs[i] == null) {
+//				AbstractInsnNode p = node;
+//				node = node.getNext();
+//				method.instructions.remove(p);
+//			} else {
+//				node = node.getNext();
+//			}
+//		}
 		// Object o = new Object() {
 		// public String toString() {
 		// StringBuilder sb = new StringBuilder();

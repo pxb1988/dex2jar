@@ -16,13 +16,17 @@
 package pxb.android.dex2jar.dump;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ProxyOutputStream;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -211,7 +215,7 @@ public class Dump implements DexFileVisitor {
 
 	public static void main(String... args) throws IOException {
 		if (args.length < 2) {
-			System.out.println("Dump in.dex out.dump.jar");
+			System.out.println("Dump in.dexORapk out.dump.jar");
 			return;
 		}
 		doFile(new File(args[0]), new File(args[1]));
@@ -222,8 +226,26 @@ public class Dump implements DexFileVisitor {
 	}
 
 	public static void doFile(File srcDex, File destJar) throws IOException {
+		byte[] data = FileUtils.readFileToByteArray(srcDex);
+		// checkMagic
+		if ("dex".equals(new String(data, 0, 3))) {// dex
+			doData(data, destJar);
+		} else if ("PK".equals(new String(data, 0, 2))) {// ZIP
+			ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
+			for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
+				if (entry.getName().equals("classes.dex")) {
+					data = IOUtils.toByteArray(zis);
+					doData(data, destJar);
+				}
+			}
+		} else {
+			throw new RuntimeException("the src file not a .dex file or a zip file");
+		}
+	}
+
+	public static void doData(byte[] data, File destJar) throws IOException {
 		final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
-		new DexFileReader(srcDex).accept(new Dump(new EmptyVisitor(), new WriterManager() {
+		new DexFileReader(data).accept(new Dump(new EmptyVisitor(), new WriterManager() {
 
 			public PrintWriter get(String name) {
 				try {
