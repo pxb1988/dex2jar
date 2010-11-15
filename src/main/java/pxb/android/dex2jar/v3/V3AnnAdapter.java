@@ -55,7 +55,7 @@ public class V3AnnAdapter implements DexAnnotationVisitor {
 				Field e = (Field) v;
 				av.visitEnum(item.name, e.getType(), e.getName());
 			} else if (v instanceof Method) {
-				logger.warn("Find Method Annotation:{}", v);
+				logger.debug("Find Method Annotation:{}", v);
 			} else {
 				av.visit(item.name, v);
 			}

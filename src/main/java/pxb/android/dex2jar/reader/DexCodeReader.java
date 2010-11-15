@@ -128,20 +128,40 @@ public class DexCodeReader implements DexOpcodes {
 					listSize = -listSize;
 					catchAll = true;
 				}
-				order(start);
-				order(start + offset);
 				for (int k = 0; k < listSize; k++) {
 					int type_id = (int) in.readUnsignedLeb128();
 					int handler = (int) in.readUnsignedLeb128() * 2;
-					order(handler);
+					order(start);
+					int end=0;
+					if (handler > start && handler < start + offset) {
+						end = handler;
+						order(handler);
+					} else {
+						end = start + offset;
+						order(start + offset);
+						order(handler);
+					}
+					if(start+2==end){
+						System.out.println(method);
+					}
 					String type = dex.getType(type_id);
-					dcv.visitTryCatch(this.labels.get(start), this.labels.get(start + offset), this.labels.get(handler), type);
+					dcv.visitTryCatch(this.labels.get(start), this.labels.get(end), this.labels.get(handler), type);
 				}
 				if (catchAll) {
 					int handler = (int) in.readUnsignedLeb128() * 2;
-					order(handler);
-					dcv.visitTryCatch(this.labels.get(start), this.labels.get(start + offset), this.labels.get(handler), null);
-
+					order(start);
+					int end = 0;
+					if (handler > start && handler < start + offset) {
+						end = handler;
+						order(handler);
+					} else {
+						end = start + offset;
+						order(start + offset);
+						order(handler);
+					}if(start+2==end){
+						System.out.println(method);
+					}
+					dcv.visitTryCatch(this.labels.get(start), this.labels.get(end), this.labels.get(handler), null);
 				}
 				in.pop();
 			}

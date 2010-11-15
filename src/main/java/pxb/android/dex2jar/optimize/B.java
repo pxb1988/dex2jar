@@ -24,7 +24,6 @@ import static pxb.android.dex2jar.optimize.Util.var;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,13 +52,12 @@ import pxb.android.dex2jar.org.objectweb.asm.tree.VarInsnNode;
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-@SuppressWarnings({"unchecked","rawtypes"})
+@SuppressWarnings( { "unchecked" })
 public class B implements MethodTransformer, Opcodes {
 
 	// private static final Logger log =
 	// LoggerFactory.getLogger(MethodTransformerAdapter.class);
 	Method m;
-
 
 	public B(Method m) {
 		this.m = m;
@@ -151,12 +149,13 @@ public class B implements MethodTransformer, Opcodes {
 	private int order() {
 		return max++;
 	}
-	private void cut(){
+
+	private void cut() {
 		// long timeStart = System.currentTimeMillis();
 
 		// log.debug("enter {}", m);
 		int blockIndex = 0;
-		
+
 		// dump();
 
 		Map<Integer, AbstractInsnNode> in = new HashMap();
@@ -230,7 +229,7 @@ public class B implements MethodTransformer, Opcodes {
 			optmizeOut(i);
 		}
 		set = null;
-		
+
 		// for (Block block : blocks) {
 		// doZeroNull(block);
 		// }
@@ -242,7 +241,7 @@ public class B implements MethodTransformer, Opcodes {
 		if ((m.getAccessFlags() & ACC_STATIC) == 0) {
 			grobalMap.put(i++, order()); // this
 		}
-		for (String t : m.getType().getParameterTypes()) {
+		for (int j = 0; j < m.getType().getParameterTypes().length; j++) {
 			grobalMap.put(i++, order());
 		}
 
@@ -254,7 +253,7 @@ public class B implements MethodTransformer, Opcodes {
 	Boolean doCouldReplace(int r, Block block, Map<Block, Boolean> blocks) {
 		if (blocks.containsKey(block))
 			return blocks.get(block);
-		if(block.out.containsKey(r)){
+		if (block.out.containsKey(r)) {
 			blocks.put(block, false);
 			return false;
 		}
@@ -293,7 +292,7 @@ public class B implements MethodTransformer, Opcodes {
 			AbstractInsnNode p = block.first.getNext();
 			while (p != null && p != block.last) {
 				if (isRead(p)) {
-					Integer var = var(p);
+					int var = var(p);
 					if (r == var) {
 						LdcInsnNode nLdc = (LdcInsnNode) node.clone(null);
 						AbstractInsnNode q = p.getNext();
@@ -303,7 +302,7 @@ public class B implements MethodTransformer, Opcodes {
 						continue;
 					}
 				} else if (isWrite(p)) {
-					Integer var = var(p);
+					int var = var(p);
 					if (r == var) {
 						break;
 					}
@@ -324,7 +323,7 @@ public class B implements MethodTransformer, Opcodes {
 		}
 		return remove;
 	}
-	
+
 	/**
 	 * @param block
 	 */
@@ -336,9 +335,9 @@ public class B implements MethodTransformer, Opcodes {
 			if (p.getOpcode() == Opcodes.LDC) {
 				AbstractInsnNode q = p.getNext();
 				if (isWrite(q)) {
-					Integer var = var(q);
+					int var = var(q);
 					if (block.out.get(var) == q) {
-						Map<Block,Boolean> couldReplace = new HashMap();
+						Map<Block, Boolean> couldReplace = new HashMap();
 						Set<Block> replacedBlock = new HashSet();
 						replacedBlock.add(block);
 						couldReplace.put(block, true);
@@ -357,11 +356,11 @@ public class B implements MethodTransformer, Opcodes {
 							map.put(var, ldc);
 							continue;
 						}
-						
+
 					}
 				}
 			} else if (isRead(p)) {
-				Integer var = var(p);
+				int var = var(p);
 				LdcInsnNode ldc = map.get(var);
 				if (ldc != null) {
 					AbstractInsnNode q = p.getNext();
