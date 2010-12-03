@@ -30,7 +30,5 @@ public interface DexClassVisitor extends DexAnnotationAble {
 
 	public DexMethodVisitor visitMethod(Method method);
 
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable);
-
 	public void visitEnd();
 }

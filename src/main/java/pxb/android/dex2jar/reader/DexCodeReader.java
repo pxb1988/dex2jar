@@ -141,9 +141,6 @@ public class DexCodeReader implements DexOpcodes {
 						order(start + offset);
 						order(handler);
 					}
-					if(start+2==end){
-						System.out.println(method);
-					}
 					String type = dex.getType(type_id);
 					dcv.visitTryCatch(this.labels.get(start), this.labels.get(end), this.labels.get(handler), type);
 				}
@@ -158,8 +155,6 @@ public class DexCodeReader implements DexOpcodes {
 						end = start + offset;
 						order(start + offset);
 						order(handler);
-					}if(start+2==end){
-						System.out.println(method);
 					}
 					dcv.visitTryCatch(this.labels.get(start), this.labels.get(end), this.labels.get(handler), null);
 				}

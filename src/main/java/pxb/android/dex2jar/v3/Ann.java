@@ -44,15 +44,15 @@ public class Ann {
 	public List<Item> items = new ArrayList<Item>();
 
 	public String type;
-	public int visible;
+	public boolean visible;
 
 	/**
 	 * @param type
-	 * @param visible
+	 * @param visitable
 	 */
-	public Ann(String type, int visible) {
+	public Ann(String type, boolean visitable) {
 		super();
 		this.type = type;
-		this.visible = visible;
+		this.visible = visitable;
 	}
 }

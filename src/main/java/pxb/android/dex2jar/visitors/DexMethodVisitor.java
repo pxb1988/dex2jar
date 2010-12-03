@@ -23,22 +23,7 @@ public interface DexMethodVisitor extends DexAnnotationAble {
 
 	public DexAnnotationAble visitParamesterAnnotation(int index);
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexAnnotationAble#visitAnnotation(java.lang
-	 * .String, boolean)
-	 */
-	public DexAnnotationVisitor visitAnnotation(String name, int visiable);
-
-	/**
-	 * 
-	 */
 	public void visitEnd();
 
-	/**
-	 * 
-	 */
 	public DexCodeVisitor visitCode();
 }

@@ -25,7 +25,6 @@ import org.objectweb.asm.FieldVisitor;
 
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.v3.Ann.Item;
-import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 import pxb.android.dex2jar.visitors.DexFieldVisitor;
 
 /**
@@ -62,7 +61,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
 			FieldVisitor fv = cv.visitField(field.getAccessFlags(), field.getName(), field.getType(), signature, value);
 			if (fv != null) {
 				for (Ann ann : anns) {
-					AnnotationVisitor av = fv.visitAnnotation(ann.type, ann.visible == 1);
+					AnnotationVisitor av = fv.visitAnnotation(ann.type, ann.visible);
 					V3AnnAdapter.accept(ann.items, av);
 					av.visitEnd();
 				}
@@ -75,9 +74,9 @@ public class V3FieldAdapter implements DexFieldVisitor {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, int)
+	 * @see pxb.android.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
 	 */
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
+	public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
 		Ann ann = new Ann(name, visitable);
 		anns.add(ann);
 		return new V3AnnAdapter(ann);

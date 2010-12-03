@@ -26,8 +26,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.ClassVisitorFactory;
+import pxb.android.dex2jar.Version;
 import pxb.android.dex2jar.reader.DexFileReader;
 
 /**
@@ -36,22 +39,34 @@ import pxb.android.dex2jar.reader.DexFileReader;
  */
 public class Main {
 
+	private static final Logger log = LoggerFactory.getLogger(Main.class);
+
 	/**
 	 * @param args
 	 */
 	public static void main(String... args) {
+		System.out.println("version:" + Version.getVersionString());
 		if (args.length == 0) {
-			System.out.println("dex2jar file1.dexORapk file2.dexORapk ...");
+			System.err.println("dex2jar file1.dexORapk file2.dexORapk ...");
+			return;
 		}
+		String jreVersion = System.getProperty("java.specification.version");
+		if (jreVersion.compareTo("1.6") < 0) {
+			System.err.println("A JRE version >=1.6 is required");
+			return;
+		}
+
 		for (String file : args) {
 			File dex = new File(file);
 			final File gen = new File(file + ".dex2jar.jar");
+			log.info("dex2jar {} -> {}", dex, gen);
 			try {
 				doFile(dex, gen);
 			} catch (IOException e) {
-				throw new RuntimeException("处理文件时发生异常:" + dex, e);
+				log.warn("Exception while process file " + dex, e);
 			}
 		}
+		System.out.println("Done.");
 	}
 
 	public static void doData(byte[] data, File destJar) throws IOException {

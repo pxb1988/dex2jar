@@ -29,7 +29,6 @@ import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.asm.TypeNameAdapter;
 import pxb.android.dex2jar.v3.Ann.Item;
-import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 import pxb.android.dex2jar.visitors.DexClassVisitor;
 import pxb.android.dex2jar.visitors.DexFieldVisitor;
 import pxb.android.dex2jar.visitors.DexMethodVisitor;
@@ -96,7 +95,7 @@ public class V3ClassAdapter implements DexClassVisitor {
 				} else if (ann.type.equals("Ldalvik/annotation/InnerClass;")) {
 					continue;
 				}
-				AnnotationVisitor av = cv.visitAnnotation(ann.type, ann.visible == 1);
+				AnnotationVisitor av = cv.visitAnnotation(ann.type, ann.visible);
 				V3AnnAdapter.accept(ann.items, av);
 				av.visitEnd();
 			}
@@ -127,7 +126,7 @@ public class V3ClassAdapter implements DexClassVisitor {
 		this.interfaceNames = interfaceNames;
 	}
 
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
+	public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
 		Ann ann = new Ann(name, visitable);
 		anns.add(ann);
 		return new V3AnnAdapter(ann);

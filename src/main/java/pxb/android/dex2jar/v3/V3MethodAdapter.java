@@ -35,7 +35,6 @@ import pxb.android.dex2jar.optimize.MethodTransformer;
 import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
 import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
-import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 import pxb.android.dex2jar.visitors.DexMethodVisitor;
 
@@ -104,13 +103,13 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 			if (mv != null) {
 				methodNode = new MethodNode(method.getAccessFlags(), method.getName(), method.getType().getDesc(), signature, exceptions);
 				for (Ann ann : anns) {
-					AnnotationVisitor av = mv.visitAnnotation(ann.type, ann.visible == 1);
+					AnnotationVisitor av = mv.visitAnnotation(ann.type, ann.visible);
 					V3AnnAdapter.accept(ann.items, av);
 					av.visitEnd();
 				}
 				for (int i = 0; i < paramAnns.length; i++) {
 					for (Ann ann : paramAnns[i]) {
-						AnnotationVisitor av = mv.visitParameterAnnotation(i, ann.type, ann.visible == 1);
+						AnnotationVisitor av = mv.visitParameterAnnotation(i, ann.type, ann.visible);
 						V3AnnAdapter.accept(ann.items, av);
 						av.visitEnd();
 					}
@@ -124,9 +123,9 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java.lang .String, int)
+	 * @see pxb.android.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java.lang .String, boolean)
 	 */
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
+	public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
 		Ann ann = new Ann(name, visitable);
 		anns.add(ann);
 		return new V3AnnAdapter(ann);
@@ -180,7 +179,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 	public DexAnnotationAble visitParamesterAnnotation(int index) {
 		final List<Ann> panns = paramAnns[index];
 		return new DexAnnotationAble() {
-			public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
+			public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
 				Ann ann = new Ann(name, visitable);
 				panns.add(ann);
 				return new V3AnnAdapter(ann);
