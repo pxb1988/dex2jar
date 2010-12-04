@@ -4,7 +4,7 @@
 	<groupId>pxb.android</groupId>
 	<artifactId>dex2jar</artifactId>
 	<name>Dex2jar</name>
-	<version>0.0.7.6-SNAPSHOT</version>
+	<version>0.0.7.7-SNAPSHOT</version>
 	<description>A tool convert Android's .dex format to Java's .class format</description>
 	<dependencies>
 		<dependency>
