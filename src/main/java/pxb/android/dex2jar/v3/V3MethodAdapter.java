@@ -25,6 +25,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.LocalVariablesSorter;
+import org.objectweb.asm.tree.MethodNode;
 
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.optimize.A;
@@ -32,7 +33,6 @@ import pxb.android.dex2jar.optimize.B;
 import pxb.android.dex2jar.optimize.C;
 import pxb.android.dex2jar.optimize.LdcOptimizeAdapter;
 import pxb.android.dex2jar.optimize.MethodTransformer;
-import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
 import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;

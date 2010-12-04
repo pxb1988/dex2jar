@@ -27,9 +27,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-package pxb.android.dex2jar.org.objectweb.asm.tree.analysis;
+package pxb.android.dex2jar.optimize.c;
 
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.analysis.Value;
 
 /**
  * A {@link Value} that is represented by its type in a seven types type system.
@@ -38,25 +39,25 @@ import org.objectweb.asm.Type;
  * 
  * @author Eric Bruneton
  */
-public class BasicValue implements Value {
+public class CBasicValue implements Value {
 
 	//public static final Value UNINITIALIZED_VALUE = new BasicValue(null);
 
-	public static final Value INT_VALUE = new BasicValue(Type.INT_TYPE);
+	public static final Value INT_VALUE = new CBasicValue(Type.INT_TYPE);
 
-	public static final Value FLOAT_VALUE = new BasicValue(Type.FLOAT_TYPE);
+	public static final Value FLOAT_VALUE = new CBasicValue(Type.FLOAT_TYPE);
 
-	public static final Value LONG_VALUE = new BasicValue(Type.LONG_TYPE);
+	public static final Value LONG_VALUE = new CBasicValue(Type.LONG_TYPE);
 
-	public static final Value DOUBLE_VALUE = new BasicValue(Type.DOUBLE_TYPE);
+	public static final Value DOUBLE_VALUE = new CBasicValue(Type.DOUBLE_TYPE);
 
 	//public static final Value REFERENCE_VALUE = new BasicValue(Type.getObjectType("java/lang/Object"));
 
-	public static final Value RETURNADDRESS_VALUE = new BasicValue(null);
+	public static final Value RETURNADDRESS_VALUE = new CBasicValue(null);
 
 	private Type type;
 
-	public BasicValue(final Type type) {
+	public CBasicValue(final Type type) {
 		this.type = type;
 	}
 
@@ -83,11 +84,11 @@ public class BasicValue implements Value {
 	public boolean equals(final Object value) {
 		if (value == this) {
 			return true;
-		} else if (value instanceof BasicValue) {
+		} else if (value instanceof CBasicValue) {
 			if (type == null) {
-				return ((BasicValue) value).type == null;
+				return ((CBasicValue) value).type == null;
 			} else {
-				return type.equals(((BasicValue) value).type);
+				return type.equals(((CBasicValue) value).type);
 			}
 		} else {
 			return false;

@@ -16,9 +16,8 @@
 package pxb.android.dex2jar.optimize;
 
 import org.objectweb.asm.Opcodes;
-
-import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 
 /**

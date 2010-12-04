@@ -27,19 +27,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-package pxb.android.dex2jar.org.objectweb.asm.tree.analysis;
+package pxb.android.dex2jar.optimize.c;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-
-import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.IincInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.MethodInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.MultiANewArrayInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.IincInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MultiANewArrayInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.Interpreter;
+import org.objectweb.asm.tree.analysis.Value;
 
 /**
  * !!!!!MODIFIED A symbolic execution stack frame. A stack frame contains a set
@@ -49,7 +52,7 @@ import pxb.android.dex2jar.org.objectweb.asm.tree.VarInsnNode;
  * 
  * @author Eric Bruneton
  */
-public class Frame {
+public class CFrame extends org.objectweb.asm.tree.analysis.Frame {
 
 	/**
 	 * The expected return type of the analyzed method, or <tt>null</tt> if the
@@ -80,7 +83,8 @@ public class Frame {
 	 * @param nStack
 	 *            the maximum stack size of the frame.
 	 */
-	public Frame(final int nLocals, final int nStack) {
+	public CFrame(final int nLocals, final int nStack) {
+		super(nLocals, nStack);
 		this.localValues = new Value[nLocals];
 		this.stackValues = new Value[nStack];
 	}
@@ -91,7 +95,7 @@ public class Frame {
 	 * @param src
 	 *            a frame.
 	 */
-	public Frame(final Frame src) {
+	public CFrame(final CFrame src) {
 		this(src.localValues.length, src.stackValues.length);
 		init(src);
 	}
@@ -103,7 +107,8 @@ public class Frame {
 	 *            a frame.
 	 * @return this frame.
 	 */
-	public Frame init(final Frame src) {
+	public CFrame init(final Frame s) {
+		CFrame src = (CFrame) s;
 		returnValue = src.returnValue;
 		localValues = new Value[src.localValues.length];
 		stackValues = new Value[src.stackValues.length];
@@ -139,14 +144,14 @@ public class Frame {
 			System.arraycopy(localValues, 0, temp, 0, localValues.length);
 			localValues = temp;
 			for (int j = localValues.length; j < temp.length; j++) {
-				temp[j] = new BasicValue(null);
+				temp[j] = new CBasicValue(null);
 			}
 		}
-		Value v= localValues[i];
-		if(v==null){
-			v=new BasicValue(null);
+		Value v = localValues[i];
+		if (v == null) {
+			v = new CBasicValue(null);
 		}
-		localValues[i]=v;
+		localValues[i] = v;
 		return v;
 	}
 
@@ -166,7 +171,7 @@ public class Frame {
 			System.arraycopy(localValues, 0, temp, 0, localValues.length);
 			localValues = temp;
 			for (int j = localValues.length; j < temp.length; j++) {
-				temp[j] = new BasicValue(null);
+				temp[j] = new CBasicValue(null);
 			}
 		}
 		localValues[i] = value;
@@ -197,7 +202,7 @@ public class Frame {
 			System.arraycopy(stackValues, 0, temp, 0, stackValues.length);
 			stackValues = temp;
 			for (int j = stackValues.length; j < temp.length; j++) {
-				temp[j] = new BasicValue(null);
+				temp[j] = new CBasicValue(null);
 			}
 		}
 		return stackValues[i];
@@ -674,7 +679,8 @@ public class Frame {
 	 * @throws AnalyzerException
 	 *             if the frames have incompatible sizes.
 	 */
-	public boolean merge(final Frame frame, final Interpreter interpreter) throws AnalyzerException {
+	public boolean merge(final Frame f, final Interpreter interpreter) throws AnalyzerException {
+		CFrame frame = (CFrame) f;
 		if (top != frame.top) {
 			throw new AnalyzerException("Incompatible stack heights");
 		}
@@ -709,7 +715,8 @@ public class Frame {
 	 * @return <tt>true</tt> if this frame has been changed as a result of the
 	 *         merge operation, or <tt>false</tt> otherwise.
 	 */
-	public boolean merge(final Frame frame, final boolean[] access) {
+	public boolean merge(final Frame f, final boolean[] access) {
+		CFrame frame = (CFrame) f;
 		boolean changes = false;
 		for (int i = 0; i < Math.min(frame.localValues.length, localValues.length); ++i) {
 			if (!access[i] && !localValues[i].equals(frame.localValues[i])) {

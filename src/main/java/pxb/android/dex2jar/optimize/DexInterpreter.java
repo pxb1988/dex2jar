@@ -18,23 +18,23 @@ package pxb.android.dex2jar.optimize;
 import java.util.List;
 
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MultiANewArrayInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Value;
 
-import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.FieldInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.LdcInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.MethodInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.MultiANewArrayInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.TypeInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.AnalyzerException;
-import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.BasicInterpreter;
-import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.BasicValue;
-import pxb.android.dex2jar.org.objectweb.asm.tree.analysis.Value;
+import pxb.android.dex2jar.optimize.c.CBasicInterpreter;
+import pxb.android.dex2jar.optimize.c.CBasicValue;
 
 /**
  * @author Panxiaobo
  * 
  */
-public class DexInterpreter extends BasicInterpreter {
+public class DexInterpreter extends CBasicInterpreter {
 
 	/*
 	 * (non-Javadoc)
@@ -66,11 +66,11 @@ public class DexInterpreter extends BasicInterpreter {
 		switch (insn.getOpcode()) {
 		case PUTFIELD:
 			FieldInsnNode fieldInsnNode = (FieldInsnNode) insn;
-			if (((BasicValue) value1).getType() == null) {
-				((BasicValue) value1).setType(Type.getType(fieldInsnNode.owner));
+			if (((CBasicValue) value1).getType() == null) {
+				((CBasicValue) value1).setType(Type.getType(fieldInsnNode.owner));
 			}
-			if (((BasicValue) value2).getType() == null) {
-				((BasicValue) value2).setType(Type.getType(fieldInsnNode.desc));
+			if (((CBasicValue) value2).getType() == null) {
+				((CBasicValue) value2).setType(Type.getType(fieldInsnNode.desc));
 			}
 			break;
 		// case IALOAD:
@@ -88,11 +88,11 @@ public class DexInterpreter extends BasicInterpreter {
 		case IAND:
 		case IOR:
 		case IXOR:
-			if (((BasicValue) value1).getType() == null) {
-				((BasicValue) value1).setType(Type.INT_TYPE);
+			if (((CBasicValue) value1).getType() == null) {
+				((CBasicValue) value1).setType(Type.INT_TYPE);
 			}
-			if (((BasicValue) value2).getType() == null) {
-				((BasicValue) value2).setType(Type.INT_TYPE);
+			if (((CBasicValue) value2).getType() == null) {
+				((CBasicValue) value2).setType(Type.INT_TYPE);
 			}
 			break;
 		case FALOAD:
@@ -103,11 +103,11 @@ public class DexInterpreter extends BasicInterpreter {
 		case FREM:
 		case FCMPL:
 		case FCMPG:
-			if (((BasicValue) value1).getType() == null) {
-				((BasicValue) value1).setType(Type.FLOAT_TYPE);
+			if (((CBasicValue) value1).getType() == null) {
+				((CBasicValue) value1).setType(Type.FLOAT_TYPE);
 			}
-			if (((BasicValue) value2).getType() == null) {
-				((BasicValue) value2).setType(Type.FLOAT_TYPE);
+			if (((CBasicValue) value2).getType() == null) {
+				((CBasicValue) value2).setType(Type.FLOAT_TYPE);
 			}
 			break;
 		case LALOAD:
@@ -123,11 +123,11 @@ public class DexInterpreter extends BasicInterpreter {
 		case LOR:
 		case LXOR:
 		case LCMP:
-			if (((BasicValue) value1).getType() == null) {
-				((BasicValue) value1).setType(Type.LONG_TYPE);
+			if (((CBasicValue) value1).getType() == null) {
+				((CBasicValue) value1).setType(Type.LONG_TYPE);
 			}
-			if (((BasicValue) value2).getType() == null) {
-				((BasicValue) value2).setType(Type.LONG_TYPE);
+			if (((CBasicValue) value2).getType() == null) {
+				((CBasicValue) value2).setType(Type.LONG_TYPE);
 			}
 			break;
 		case DALOAD:
@@ -138,11 +138,11 @@ public class DexInterpreter extends BasicInterpreter {
 		case DREM:
 		case DCMPL:
 		case DCMPG:
-			if (((BasicValue) value1).getType() == null) {
-				((BasicValue) value1).setType(Type.DOUBLE_TYPE);
+			if (((CBasicValue) value1).getType() == null) {
+				((CBasicValue) value1).setType(Type.DOUBLE_TYPE);
 			}
-			if (((BasicValue) value2).getType() == null) {
-				((BasicValue) value2).setType(Type.DOUBLE_TYPE);
+			if (((CBasicValue) value2).getType() == null) {
+				((CBasicValue) value2).setType(Type.DOUBLE_TYPE);
 			}
 			break;
 		// case AALOAD:
@@ -153,11 +153,11 @@ public class DexInterpreter extends BasicInterpreter {
 		case IF_ICMPGE:
 		case IF_ICMPGT:
 		case IF_ICMPLE:
-			if (((BasicValue) value1).getType() == null && ((BasicValue) value2).getType() != null) {
-				((BasicValue) value1).setType(((BasicValue) value2).getType());
+			if (((CBasicValue) value1).getType() == null && ((CBasicValue) value2).getType() != null) {
+				((CBasicValue) value1).setType(((CBasicValue) value2).getType());
 			}
-			if (((BasicValue) value2).getType() == null && ((BasicValue) value1).getType() != null) {
-				((BasicValue) value2).setType(((BasicValue) value1).getType());
+			if (((CBasicValue) value2).getType() == null && ((CBasicValue) value1).getType() != null) {
+				((CBasicValue) value2).setType(((CBasicValue) value1).getType());
 			}
 			break;
 		case IF_ACMPEQ:
@@ -186,14 +186,14 @@ public class DexInterpreter extends BasicInterpreter {
 		switch (insn.getOpcode()) {
 		case FLOAD:
 		case FSTORE:
-			if (((BasicValue) value).getType() == null) {
-				((BasicValue) value).setType(Type.FLOAT_TYPE);
+			if (((CBasicValue) value).getType() == null) {
+				((CBasicValue) value).setType(Type.FLOAT_TYPE);
 				break;
 			}
 		case DLOAD:
 		case DSTORE:
-			if (((BasicValue) value).getType() == null) {
-				((BasicValue) value).setType(Type.DOUBLE_TYPE);
+			if (((CBasicValue) value).getType() == null) {
+				((CBasicValue) value).setType(Type.DOUBLE_TYPE);
 				break;
 			}
 		}
@@ -237,37 +237,37 @@ public class DexInterpreter extends BasicInterpreter {
 		case ICONST_3:
 		case ICONST_4:
 		case ICONST_5:
-			return new BasicValue(null);
+			return new CBasicValue(null);
 		case LCONST_0:
 		case LCONST_1:
-			return new BasicValue(null);
+			return new CBasicValue(null);
 		case FCONST_0:
 		case FCONST_1:
 		case FCONST_2:
-			return BasicValue.FLOAT_VALUE;
+			return CBasicValue.FLOAT_VALUE;
 		case DCONST_0:
 		case DCONST_1:
-			return BasicValue.DOUBLE_VALUE;
+			return CBasicValue.DOUBLE_VALUE;
 		case BIPUSH:
 		case SIPUSH:
-			return new BasicValue(null);
+			return new CBasicValue(null);
 		case LDC:
 			Object cst = ((LdcInsnNode) insn).cst;
 			if (cst instanceof Integer) {
-				return new BasicValue(null);
+				return new CBasicValue(null);
 			} else if (cst instanceof Float) {
-				return BasicValue.FLOAT_VALUE;
+				return CBasicValue.FLOAT_VALUE;
 			} else if (cst instanceof Long) {
-				return new BasicValue(null);
+				return new CBasicValue(null);
 			} else if (cst instanceof Double) {
-				return BasicValue.DOUBLE_VALUE;
+				return CBasicValue.DOUBLE_VALUE;
 			} else if (cst instanceof Type) {
 				return newValue(Type.getObjectType("java/lang/Class"));
 			} else {
 				return newValue(Type.getType(cst.getClass()));
 			}
 		case JSR:
-			return BasicValue.RETURNADDRESS_VALUE;
+			return CBasicValue.RETURNADDRESS_VALUE;
 		case GETSTATIC:
 			return newValue(Type.getType(((FieldInsnNode) insn).desc));
 		case NEW:
@@ -288,7 +288,7 @@ public class DexInterpreter extends BasicInterpreter {
 	 */
 	@Override
 	public Value unaryOperation(AbstractInsnNode insn, Value value) throws AnalyzerException {
-		if (((BasicValue) value).getType() == null) {
+		if (((CBasicValue) value).getType() == null) {
 			switch (insn.getOpcode()) {
 			case INEG:
 			case IINC:
@@ -303,14 +303,14 @@ public class DexInterpreter extends BasicInterpreter {
 			case ANEWARRAY:
 			case TABLESWITCH:
 			case LOOKUPSWITCH:
-				((BasicValue) value).setType(Type.INT_TYPE);
+				((CBasicValue) value).setType(Type.INT_TYPE);
 				break;
 			case L2D:
 			case L2F:
 			case L2I:
 			case LRETURN:
 			case LNEG:
-				((BasicValue) value).setType(Type.LONG_TYPE);
+				((CBasicValue) value).setType(Type.LONG_TYPE);
 				break;
 
 			case DNEG:
@@ -318,25 +318,25 @@ public class DexInterpreter extends BasicInterpreter {
 			case D2L:
 			case D2I:
 			case DRETURN:
-				((BasicValue) value).setType(Type.DOUBLE_TYPE);
+				((CBasicValue) value).setType(Type.DOUBLE_TYPE);
 				break;
 			case FNEG:
 			case F2D:
 			case F2L:
 			case F2I:
 			case FRETURN:
-				((BasicValue) value).setType(Type.FLOAT_TYPE);
+				((CBasicValue) value).setType(Type.FLOAT_TYPE);
 				break;
 			case PUTSTATIC:
-				((BasicValue) value).setType(Type.getType(((FieldInsnNode) insn).desc));
+				((CBasicValue) value).setType(Type.getType(((FieldInsnNode) insn).desc));
 				break;
 			case GETFIELD:
-				((BasicValue) value).setType(Type.getType(((FieldInsnNode) insn).owner));
+				((CBasicValue) value).setType(Type.getType(((FieldInsnNode) insn).owner));
 				break;
 			}
 		}
 		if (insn.getOpcode() == GETFIELD) {
-			return new BasicValue(Type.getType(((FieldInsnNode) insn).desc));
+			return new CBasicValue(Type.getType(((FieldInsnNode) insn).desc));
 		}
 		return super.unaryOperation(insn, value);
 	}
@@ -353,12 +353,12 @@ public class DexInterpreter extends BasicInterpreter {
 	public Value merge(Value v, Value w) {
 
 		if (!(w == null || v == null)) {
-			if (((BasicValue) v).getType() == null ^ ((BasicValue) w).getType() == null) {
-				if (((BasicValue) v).getType() == null) {
-					((BasicValue) v).setType(((BasicValue) w).getType());
+			if (((CBasicValue) v).getType() == null ^ ((CBasicValue) w).getType() == null) {
+				if (((CBasicValue) v).getType() == null) {
+					((CBasicValue) v).setType(((CBasicValue) w).getType());
 				}
-				if (((BasicValue) w).getType() == null) {
-					((BasicValue) w).setType(((BasicValue) v).getType());
+				if (((CBasicValue) w).getType() == null) {
+					((CBasicValue) w).setType(((CBasicValue) v).getType());
 				}
 			}
 		}
@@ -381,8 +381,8 @@ public class DexInterpreter extends BasicInterpreter {
 			Type[] args = Type.getArgumentTypes(((MethodInsnNode) insn).desc);
 			for (int i = 0; i < args.length; i++) {
 				Value v = (Value) values.get(i);
-				if (((BasicValue) v).getType() == null) {
-					((BasicValue) v).setType(args[i]);
+				if (((CBasicValue) v).getType() == null) {
+					((CBasicValue) v).setType(args[i]);
 				}
 			}
 			break;
@@ -393,13 +393,13 @@ public class DexInterpreter extends BasicInterpreter {
 		case INVOKEVIRTUAL: {
 			Type[] args = Type.getArgumentTypes(((MethodInsnNode) insn).desc);
 			Value v = (Value) values.get(0);
-			if (((BasicValue) v).getType() == null) {
-				((BasicValue) v).setType(Type.getType(((MethodInsnNode) insn).owner));
+			if (((CBasicValue) v).getType() == null) {
+				((CBasicValue) v).setType(Type.getType(((MethodInsnNode) insn).owner));
 			}
 			for (int i = 0; i < args.length; i++) {
 				v = (Value) values.get(i + 1);
-				if (((BasicValue) v).getType() == null) {
-					((BasicValue) v).setType(args[i]);
+				if (((CBasicValue) v).getType() == null) {
+					((CBasicValue) v).setType(args[i]);
 				}
 			}
 			break;
@@ -409,7 +409,7 @@ public class DexInterpreter extends BasicInterpreter {
 		if (insn.getOpcode() == MULTIANEWARRAY) {
 			return newValue(Type.getType(((MultiANewArrayInsnNode) insn).desc));
 		} else {
-			return new BasicValue(Type.getReturnType(((MethodInsnNode) insn).desc));
+			return new CBasicValue(Type.getReturnType(((MethodInsnNode) insn).desc));
 		}
 	}
 
@@ -425,8 +425,8 @@ public class DexInterpreter extends BasicInterpreter {
 	 */
 	@Override
 	public void returnOperation(AbstractInsnNode insn, Value value, Value expected) throws AnalyzerException {
-		if (((BasicValue) value).getType() == null) {
-			((BasicValue) value).setType(((BasicValue) expected).getType());
+		if (((CBasicValue) value).getType() == null) {
+			((CBasicValue) value).setType(((CBasicValue) expected).getType());
 		}
 
 		super.returnOperation(insn, value, expected);

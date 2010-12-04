@@ -27,32 +27,34 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-package pxb.android.dex2jar.org.objectweb.asm.tree.analysis;
+package pxb.android.dex2jar.optimize.c;
 
 import java.util.List;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-
-import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.FieldInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.IntInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.LdcInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.MethodInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.MultiANewArrayInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MultiANewArrayInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Interpreter;
+import org.objectweb.asm.tree.analysis.Value;
 
 /**
- * An {@link Interpreter} for {@link BasicValue} values.
+ * An {@link Interpreter} for {@link CBasicValue} values.
  * 
  * @author Eric Bruneton
  * @author Bing Ran
  */
-public class BasicInterpreter implements Opcodes, Interpreter {
+public class CBasicInterpreter implements Opcodes, Interpreter {
 
     public Value newValue(final Type type) {
         if (type == null) {
-            return new BasicValue(type);
+            return new CBasicValue(type);
         }
         switch (type.getSort()) {
             case Type.VOID:
@@ -62,16 +64,16 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case Type.BYTE:
             case Type.SHORT:
             case Type.INT:
-                return BasicValue.INT_VALUE;
+                return CBasicValue.INT_VALUE;
             case Type.FLOAT:
-                return BasicValue.FLOAT_VALUE;
+                return CBasicValue.FLOAT_VALUE;
             case Type.LONG:
-                return BasicValue.LONG_VALUE;
+                return CBasicValue.LONG_VALUE;
             case Type.DOUBLE:
-                return BasicValue.DOUBLE_VALUE;
+                return CBasicValue.DOUBLE_VALUE;
             case Type.ARRAY:
             case Type.OBJECT:
-                return new BasicValue(type);
+                return new CBasicValue(type);
             default:
                 throw new Error("Internal error");
         }
@@ -90,37 +92,37 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case ICONST_3:
             case ICONST_4:
             case ICONST_5:
-                return BasicValue.INT_VALUE;
+                return CBasicValue.INT_VALUE;
             case LCONST_0:
             case LCONST_1:
-                return BasicValue.LONG_VALUE;
+                return CBasicValue.LONG_VALUE;
             case FCONST_0:
             case FCONST_1:
             case FCONST_2:
-                return BasicValue.FLOAT_VALUE;
+                return CBasicValue.FLOAT_VALUE;
             case DCONST_0:
             case DCONST_1:
-                return BasicValue.DOUBLE_VALUE;
+                return CBasicValue.DOUBLE_VALUE;
             case BIPUSH:
             case SIPUSH:
-                return BasicValue.INT_VALUE;
+                return CBasicValue.INT_VALUE;
             case LDC:
                 Object cst = ((LdcInsnNode) insn).cst;
                 if (cst instanceof Integer) {
-                    return BasicValue.INT_VALUE;
+                    return CBasicValue.INT_VALUE;
                 } else if (cst instanceof Float) {
-                    return BasicValue.FLOAT_VALUE;
+                    return CBasicValue.FLOAT_VALUE;
                 } else if (cst instanceof Long) {
-                    return BasicValue.LONG_VALUE;
+                    return CBasicValue.LONG_VALUE;
                 } else if (cst instanceof Double) {
-                    return BasicValue.DOUBLE_VALUE;
+                    return CBasicValue.DOUBLE_VALUE;
                 } else if (cst instanceof Type) {
                     return newValue(Type.getObjectType("java/lang/Class"));
                 } else {
                     return newValue(Type.getType(cst.getClass()));
                 }
             case JSR:
-                return BasicValue.RETURNADDRESS_VALUE;
+                return CBasicValue.RETURNADDRESS_VALUE;
             case GETSTATIC:
                 return newValue(Type.getType(((FieldInsnNode) insn).desc));
             case NEW:
@@ -148,22 +150,22 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case I2B:
             case I2C:
             case I2S:
-                return BasicValue.INT_VALUE;
+                return CBasicValue.INT_VALUE;
             case FNEG:
             case I2F:
             case L2F:
             case D2F:
-                return BasicValue.FLOAT_VALUE;
+                return CBasicValue.FLOAT_VALUE;
             case LNEG:
             case I2L:
             case F2L:
             case D2L:
-                return BasicValue.LONG_VALUE;
+                return CBasicValue.LONG_VALUE;
             case DNEG:
             case I2D:
             case L2D:
             case F2D:
-                return BasicValue.DOUBLE_VALUE;
+                return CBasicValue.DOUBLE_VALUE;
             case IFEQ:
             case IFNE:
             case IFLT:
@@ -206,14 +208,14 @@ public class BasicInterpreter implements Opcodes, Interpreter {
                 String desc = ((TypeInsnNode) insn).desc;
                 return newValue(Type.getType("[" + Type.getObjectType(desc)));
             case ARRAYLENGTH:
-                return BasicValue.INT_VALUE;
+                return CBasicValue.INT_VALUE;
             case ATHROW:
                 return null;
             case CHECKCAST:
                 desc = ((TypeInsnNode) insn).desc;
                 return newValue(Type.getObjectType(desc));
             case INSTANCEOF:
-                return BasicValue.INT_VALUE;
+                return CBasicValue.INT_VALUE;
             case MONITORENTER:
             case MONITOREXIT:
             case IFNULL:
@@ -245,14 +247,14 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case IAND:
             case IOR:
             case IXOR:
-                return BasicValue.INT_VALUE;
+                return CBasicValue.INT_VALUE;
             case FALOAD:
             case FADD:
             case FSUB:
             case FMUL:
             case FDIV:
             case FREM:
-                return BasicValue.FLOAT_VALUE;
+                return CBasicValue.FLOAT_VALUE;
             case LALOAD:
             case LADD:
             case LSUB:
@@ -265,22 +267,22 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case LAND:
             case LOR:
             case LXOR:
-                return BasicValue.LONG_VALUE;
+                return CBasicValue.LONG_VALUE;
             case DALOAD:
             case DADD:
             case DSUB:
             case DMUL:
             case DDIV:
             case DREM:
-                return BasicValue.DOUBLE_VALUE;
+                return CBasicValue.DOUBLE_VALUE;
             case AALOAD:
-                return new BasicValue(null);
+                return new CBasicValue(null);
             case LCMP:
             case FCMPL:
             case FCMPG:
             case DCMPL:
             case DCMPG:
-                return BasicValue.INT_VALUE;
+                return CBasicValue.INT_VALUE;
             case IF_ICMPEQ:
             case IF_ICMPNE:
             case IF_ICMPLT:
@@ -324,7 +326,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
     
     public Value merge(final Value v, final Value w) {
         if (!v.equals(w)) {
-            return new BasicValue(null);
+            return new CBasicValue(null);
         }
         return v;
     }
