@@ -28,7 +28,6 @@ import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.tree.MethodNode;
 
 import pxb.android.dex2jar.Method;
-import pxb.android.dex2jar.optimize.A;
 import pxb.android.dex2jar.optimize.B;
 import pxb.android.dex2jar.optimize.C;
 import pxb.android.dex2jar.optimize.LdcOptimizeAdapter;
@@ -140,7 +139,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 		build();
 		if (mv == null)
 			return null;
-		return new V3CodeAdapter(method, methodNode);
+		return new V3CodeAdapter(methodNode);
 	}
 
 	/*
@@ -154,8 +153,16 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 		if (mv != null) {
 			try {
 				if (methodNode.instructions.size() > 2) {
-					List<? extends MethodTransformer> trs = Arrays.asList(new A(), new B(method), new C(method));
+					List<? extends MethodTransformer> trs = Arrays.asList(new B(method), new C(method));
 					for (MethodTransformer tr : trs) {
+//						TraceMethodVisitor tmv = new TraceMethodVisitor();
+//						methodNode.instructions.accept(tmv);
+//						StringBuilder sb=new StringBuilder();
+//						int i=0;
+//						for(Object o:tmv.text){
+//							sb.append(i++).append(o);
+//						}
+//						System.out.println(sb);
 						tr.transform(methodNode);
 					}
 				}

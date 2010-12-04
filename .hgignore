@@ -4,3 +4,6 @@ syntax: glob
 */.classpath
 */.settings/*
 *.bak
+.*
+target/*
+
