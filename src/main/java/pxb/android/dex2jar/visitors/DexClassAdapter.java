@@ -15,6 +15,8 @@
  */
 package pxb.android.dex2jar.visitors;
 
+import org.objectweb.asm.AnnotationVisitor;
+
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
 
@@ -37,9 +39,9 @@ public class DexClassAdapter implements DexClassVisitor {
 	 * (non-Javadoc)
 	 * 
 	 * @see pxb.android.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang
-	 * .String, int)
+	 * .String, boolean)
 	 */
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
+	public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
 		return dcv.visitAnnotation(name, visitable);
 	}
 

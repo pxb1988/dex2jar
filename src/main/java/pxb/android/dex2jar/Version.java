@@ -15,12 +15,21 @@
  */
 package pxb.android.dex2jar;
 
+
 /**
  * 版本号
  * 
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-public interface Version {
-	String version = "$Rev: 60 $";
+public final class Version {
+
+	private static String version;
+
+	public static String getVersionString() {
+		if (version == null) {
+			version = Version.class.getPackage().getImplementationVersion();
+		}
+		return version;
+	}
 }

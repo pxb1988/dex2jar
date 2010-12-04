@@ -275,6 +275,7 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpco
 		case OP_FILLED_NEW_ARRAY:
 		case OP_FILLED_NEW_ARRAY_RANGE:
 		case OP_CONST_WIDE_32:
+		case OP_CONST_STRING_JUMBO:
 			//
 		{
 			return 3;

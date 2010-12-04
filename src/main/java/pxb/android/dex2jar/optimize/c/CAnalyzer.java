@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pxb.android.ins;
+package pxb.android.dex2jar.optimize.c;
 
-import java.io.File;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.Interpreter;
 
-import org.junit.Test;
+public class CAnalyzer extends Analyzer {
 
-import pxb.android.TestUtils;
-import pxb.android.dex2jar.dump.Dump;
-import pxb.android.dex2jar.v3.Main;
+	public CAnalyzer(Interpreter interpreter) {
+		super(interpreter);
+	}
 
-/**
- * @author Panxiaobo
- * 
- */
-public class ArrayResTest {
-	@Test
-	public void test() throws Exception {
-		File f = TestUtils.dex("target/test-classes/res/ArrayRes.class");
-		Main.doFile(f, new File("target/arrayres.dex2jar.jar"));
-		Dump.doFile(f, new File("target/arrayres.dump.jar"));
+	@Override
+	protected org.objectweb.asm.tree.analysis.Frame newFrame(int nLocals, int nStack) {
+		return new CFrame(nLocals, nStack);
+	}
+
+	@Override
+	protected org.objectweb.asm.tree.analysis.Frame newFrame(org.objectweb.asm.tree.analysis.Frame src) {
+		return new CFrame((CFrame) src);
 	}
 }

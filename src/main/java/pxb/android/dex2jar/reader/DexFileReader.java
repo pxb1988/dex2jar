@@ -16,10 +16,12 @@
 package pxb.android.dex2jar.reader;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -73,7 +75,7 @@ public class DexFileReader implements Dex {
 	 * 
 	 * @param data
 	 * @param continueOnException
-	 *          发生异常的时候是否继续
+	 *            发生异常的时候是否继续
 	 */
 	public DexFileReader(byte[] data) {
 		DataIn in = new DataInImpl(data);
@@ -315,14 +317,17 @@ public class DexFileReader implements Dex {
 	 * @see pxb.android.dex2jar.Dex#getField(int)
 	 */
 	public Field getField(int id) {
-		if (id >= this.field_ids_size)
-			throw new RuntimeException("Id out of bound");
+		if (id >= this.field_ids_size || id < 0)
+			throw new IllegalArgumentException("Id out of bound");
 		DataIn in = this.in;
 		int idxOffset = this.field_ids_off + id * 8;
 		in.pushMove(idxOffset);
-		Field m = new Field(this, in);
-		in.pop();
-		return m;
+		try {
+			return new Field(this, in);
+		} finally {
+			in.pop();
+		}
+
 	}
 
 	/*
@@ -331,14 +336,17 @@ public class DexFileReader implements Dex {
 	 * @see pxb.android.dex2jar.Dex#getMethod(int)
 	 */
 	public Method getMethod(int id) {
-		if (id >= this.method_ids_size)
-			throw new RuntimeException("Id out of bound");
+		if (id >= this.method_ids_size || id < 0)
+			throw new IllegalArgumentException("Id out of bound");
 		DataIn in = this.in;
 		int idxOffset = this.method_ids_off + id * 8;
 		in.pushMove(idxOffset);
-		Method m = new Method(this, in);
-		in.pop();
-		return m;
+		try {
+			return new Method(this, in);
+		} finally {
+			in.pop();
+		}
+
 	}
 
 	/*
@@ -347,15 +355,16 @@ public class DexFileReader implements Dex {
 	 * @see pxb.android.dex2jar.Dex#getProto(int)
 	 */
 	public Proto getProto(int id) {
-		if (id >= this.proto_ids_size)
-			throw new RuntimeException("Id out of bound");
+		if (id >= this.proto_ids_size || id < 0)
+			throw new IllegalArgumentException("Id out of bound");
 		DataIn in = this.in;
 		int idxOffset = this.proto_ids_off + id * 12;
-		// log.debug("proto_idx_offset:0x{}", Integer.toHexString(idxOffset));
 		in.pushMove(idxOffset);
-		Proto proto = new Proto(this, in);
-		in.pop();
-		return proto;
+		try {
+			return new Proto(this, in);
+		} finally {
+			in.pop();
+		}
 	}
 
 	/**
@@ -364,19 +373,30 @@ public class DexFileReader implements Dex {
 	 * @see pxb.android.dex2jar.Dex#getString(int)
 	 */
 	public String getString(int id) {
-		if (id >= this.string_ids_size)
-			throw new RuntimeException("Id out of bound");
+		if (id >= this.string_ids_size || id < 0)
+			throw new IllegalArgumentException("Id out of bound");
 		DataIn in = this.in;
 		int idxOffset = this.string_ids_off + id * 4;
 		in.pushMove(idxOffset);
-		int offset = in.readIntx();
-		in.pushMove(offset);
-		int length = (int) in.readUnsignedLeb128();
-		String string = new String(in.readBytes(length));
-		in.pop();
-		in.pop();
-		return string;
+		try {
+			int offset = in.readIntx();
+			in.pushMove(offset);
+			try {
+				int length = (int) in.readUnsignedLeb128();
+				ByteArrayOutputStream baos = new ByteArrayOutputStream(length);
+				for (int b = in.readByte(); b != 0; b = in.readByte()) {
+					baos.write(b);
+				}
+				return new String(baos.toByteArray(), UTF8);
+			} finally {
+				in.pop();
+			}
+		} finally {
+			in.pop();
+		}
 	}
+
+	private static final Charset UTF8 = Charset.forName("UTF-8");
 
 	/*
 	 * (non-Javadoc)
@@ -384,15 +404,17 @@ public class DexFileReader implements Dex {
 	 * @see pxb.android.dex2jar.Dex#getType(int)
 	 */
 	public String getType(int id) {
-		if (id >= this.type_ids_size)
-			throw new RuntimeException("Id out of bound");
+		if (id >= this.type_ids_size || id < 0)
+			throw new IllegalArgumentException("Id out of bound");
 		DataIn in = this.in;
 		int idxOffset = this.type_ids_off + id * 4;
 		in.pushMove(idxOffset);
-		int offset = in.readIntx();
-		String desc = this.getString(offset);
-		in.pop();
-		return desc;
+		try {
+			int offset = in.readIntx();
+			return this.getString(offset);
+		} finally {
+			in.pop();
+		}
 	}
 
 	/**
@@ -404,8 +426,7 @@ public class DexFileReader implements Dex {
 	 * @param value
 	 * @return
 	 */
-	protected int visitField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions,
-			Object value) {
+	protected int visitField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions, Object value) {
 		int diff = (int) in.readUnsignedLeb128();
 		int field_id = lastIndex + diff;
 		Field field = getField(field_id);
@@ -435,8 +456,7 @@ public class DexFileReader implements Dex {
 	 * @param parameterAnnos
 	 * @return
 	 */
-	protected int visitMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos,
-			Map<Integer, Integer> parameterAnnos) {
+	protected int visitMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos, Map<Integer, Integer> parameterAnnos) {
 		int diff = (int) in.readUnsignedLeb128();
 		int method_id = lastIndex + diff;
 		Method method = getMethod(method_id);

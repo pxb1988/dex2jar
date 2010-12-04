@@ -15,16 +15,22 @@
  */
 package pxb.android.dex2jar.v3;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.ClassVisitorFactory;
+import pxb.android.dex2jar.Version;
 import pxb.android.dex2jar.reader.DexFileReader;
 
 /**
@@ -33,39 +39,45 @@ import pxb.android.dex2jar.reader.DexFileReader;
  */
 public class Main {
 
+	private static final Logger log = LoggerFactory.getLogger(Main.class);
+
 	/**
 	 * @param args
 	 */
 	public static void main(String... args) {
+		System.out.println("version:" + Version.getVersionString());
 		if (args.length == 0) {
-			System.out.println("dex2jar file1.dex file2.dex ...");
+			System.err.println("dex2jar file1.dexORapk file2.dexORapk ...");
+			return;
 		}
+		String jreVersion = System.getProperty("java.specification.version");
+		if (jreVersion.compareTo("1.6") < 0) {
+			System.err.println("A JRE version >=1.6 is required");
+			return;
+		}
+
 		for (String file : args) {
 			File dex = new File(file);
 			final File gen = new File(file + ".dex2jar.jar");
+			log.info("dex2jar {} -> {}", dex, gen);
 			try {
 				doFile(dex, gen);
 			} catch (IOException e) {
-				throw new RuntimeException("处理文件时发生异常:" + dex, e);
+				log.warn("Exception while process file " + dex, e);
 			}
 		}
+		System.out.println("Done.");
 	}
 
-	public static void doFile(File srcDex) throws IOException {
-		doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dex2jar.jar"));
-	}
-
-	public static void doFile(File srcDex, File destJar) throws IOException {
-
+	public static void doData(byte[] data, File destJar) throws IOException {
 		final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(destJar));
 
-		byte[] data = FileUtils.readFileToByteArray(srcDex);
 		DexFileReader reader = new DexFileReader(data);
 		V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
 		reader.accept(afa);
 		reader.accept(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
 			public ClassVisitor create(final String name) {
-				return new ClassWriter(0) {
+				return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
 					/*
 					 * (non-Javadoc)
 					 * 
@@ -89,6 +101,29 @@ public class Main {
 		}));
 		zos.finish();
 		zos.close();
+	}
+
+	public static void doFile(File srcDex) throws IOException {
+		doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dex2jar.jar"));
+	}
+
+	public static void doFile(File srcDex, File destJar) throws IOException {
+		byte[] data = FileUtils.readFileToByteArray(srcDex);
+		// checkMagic
+		if ("dex".equals(new String(data, 0, 3))) {// dex
+			doData(data, destJar);
+		} else if ("PK".equals(new String(data, 0, 2))) {// ZIP
+			ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
+			for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
+				if (entry.getName().equals("classes.dex")) {
+					data = IOUtils.toByteArray(zis);
+					doData(data, destJar);
+				}
+			}
+		} else {
+			throw new RuntimeException("the src file not a .dex file or a zip file");
+		}
+
 	}
 
 }

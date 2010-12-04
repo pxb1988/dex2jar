@@ -200,6 +200,14 @@ public class DataInImpl implements DataIn {
 		return ((long) readIntx()) | (((long) readIntx()) << 32);
 	}
 
+	/* (non-Javadoc)
+	 * @see pxb.android.dex2jar.DataIn#getCurrentPosition()
+	 */
+	@Override
+	public int getCurrentPosition() {
+		return  this.in.getPos();
+	}
+
 	// /*
 	// * (non-Javadoc)
 	// *

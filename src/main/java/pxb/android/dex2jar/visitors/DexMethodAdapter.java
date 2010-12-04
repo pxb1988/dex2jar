@@ -15,6 +15,8 @@
  */
 package pxb.android.dex2jar.visitors;
 
+import org.objectweb.asm.AnnotationVisitor;
+
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
@@ -32,12 +34,9 @@ public class DexMethodAdapter implements DexMethodVisitor {
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * pxb.android.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java.lang
-	 * .String, int)
+	 * @see pxb.android.dex2jar.visitors.DexAnnotationAble#visitAnnotation(java.lang.String, boolean)
 	 */
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
+	public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
 		return mv.visitAnnotation(name, visitable);
 	}
 

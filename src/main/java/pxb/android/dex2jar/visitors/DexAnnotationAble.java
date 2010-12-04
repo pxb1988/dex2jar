@@ -15,6 +15,8 @@
  */
 package pxb.android.dex2jar.visitors;
 
+import org.objectweb.asm.AnnotationVisitor;
+
 /**
  * 用于访问注解
  * 
@@ -31,5 +33,5 @@ public interface DexAnnotationAble {
 	 *          是否运行时可见
 	 * @return
 	 */
-	DexAnnotationVisitor visitAnnotation(String name, int visitable);
+	AnnotationVisitor visitAnnotation(String name, boolean visitable);
 }

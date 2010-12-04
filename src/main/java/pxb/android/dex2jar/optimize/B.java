@@ -24,7 +24,6 @@ import static pxb.android.dex2jar.optimize.Util.var;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,37 +31,33 @@ import java.util.Set;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
 import pxb.android.dex2jar.Method;
-import pxb.android.dex2jar.org.objectweb.asm.tree.AbstractInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.InsnList;
-import pxb.android.dex2jar.org.objectweb.asm.tree.InsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.JumpInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.LabelNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.LdcInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.LookupSwitchInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.MethodInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.MethodNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.TableSwitchInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.TryCatchBlockNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.TypeInsnNode;
-import pxb.android.dex2jar.org.objectweb.asm.tree.VarInsnNode;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings( { "unchecked" })
 public class B implements MethodTransformer, Opcodes {
 
 	// private static final Logger log =
 	// LoggerFactory.getLogger(MethodTransformerAdapter.class);
 	Method m;
-
-	private static enum LocalType {
-		UNKNOWN, OBJECT, NUMBER
-	}
 
 	public B(Method m) {
 		this.m = m;
@@ -149,26 +144,18 @@ public class B implements MethodTransformer, Opcodes {
 	List<Block> blocks = new ArrayList();
 	Map<Label, Block> blockMaps = new HashMap();
 
-	int max = -1;
+	int max = 0;
 
 	private int order() {
-		return ++max;
+		return max++;
 	}
 
-	private void max(int max) {
-		if (max > this.max) {
-			this.max = max;
-		}
-	}
-
-	public void transform(MethodNode method) {
-
+	private void cut() {
 		// long timeStart = System.currentTimeMillis();
 
 		// log.debug("enter {}", m);
 		int blockIndex = 0;
-		insnList = method.instructions;
-		this.method = method;
+
 		// dump();
 
 		Map<Integer, AbstractInsnNode> in = new HashMap();
@@ -191,7 +178,6 @@ public class B implements MethodTransformer, Opcodes {
 		while (p != null) {
 			if (isRead(p)) {
 				int r = var(p);
-				max(r);
 				if (in.get(r) == null) {
 					if (out.get(r) == null) {
 						in.put(r, p);
@@ -199,7 +185,6 @@ public class B implements MethodTransformer, Opcodes {
 				}
 			} else if (isWrite(p)) {
 				int r = var(p);
-				max(r);
 				out.put(r, p);
 			} else if (needBreak(p)) {
 				if (p.getType() != AbstractInsnNode.LABEL) {
@@ -224,28 +209,168 @@ public class B implements MethodTransformer, Opcodes {
 			}
 			p = p.getNext();
 		}
+	}
+
+	public void transform(MethodNode method) {
+		insnList = method.instructions;
+		this.method = method;
+
+		cut();
 
 		linkTryCatch();
 
 		linkBlocks();
 
-		// long timeSpend = System.currentTimeMillis() - timeStart;
-		// log.debug("spend ({}ms) init", timeSpend);
-		// if
-		// (m.toString().startsWith("Lorg/mortbay/ijetty/console/HTMLHelper;.doFooter"))
-		// {
-		// log.debug("spend ({}ms) init", timeSpend);
-		// }
-
-		for (Block block : blocks) {
-			optmizeOut(block);
+		Set<Integer> set = new HashSet();
+		for (Block b : blocks) {
+			set.addAll(b.out.keySet());
 		}
+		for (Integer i : set) {
+			optmizeOut(i);
+		}
+		set = null;
 
 		// for (Block block : blocks) {
 		// doZeroNull(block);
 		// }
 		for (Block block : blocks) {
 			doBlock(block);
+		}
+		OptmizeFirstBlockLdc();
+		int i = 0;
+		if ((m.getAccessFlags() & ACC_STATIC) == 0) {
+			grobalMap.put(i++, order()); // this
+		}
+		for (int j = 0; j < m.getType().getParameterTypes().length; j++) {
+			grobalMap.put(i++, order());
+		}
+
+		for (Block block : blocks) {
+			doReIndex(block);
+		}
+	}
+
+	Boolean doCouldReplace(int r, Block block, Map<Block, Boolean> blocks) {
+		if (blocks.containsKey(block))
+			return blocks.get(block);
+		if (block.out.containsKey(r)) {
+			blocks.put(block, false);
+			return false;
+		}
+		blocks.put(block, null);
+		for (Block in : block.froms) {
+			Boolean x = doCouldReplace(r, in, blocks);
+			if (x == null) {
+				// ignore
+			} else if (!x.booleanValue()) {
+				blocks.put(block, false);
+				return false;
+			}
+		}
+		blocks.put(block, true);
+		return true;
+	}
+
+	boolean couldReplace(int r, Block block, Map<Block, Boolean> blocks) {
+		for (Block in : block.froms) {
+			Boolean x = doCouldReplace(r, in, blocks);
+			if (x == null) {
+				// ignore
+			} else if (!x.booleanValue()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	boolean doOptmizeFirstBlockLdc(LdcInsnNode node, int r, Block block, Map<Block, Boolean> couldReplaceBlockIds, Set<Block> replacedBlockIds) {
+		if (replacedBlockIds.contains(block)) {
+			return true;
+		}
+		replacedBlockIds.add(block);
+		if (couldReplace(r, block, couldReplaceBlockIds)) {
+			AbstractInsnNode p = block.first.getNext();
+			while (p != null && p != block.last) {
+				if (isRead(p)) {
+					int var = var(p);
+					if (r == var) {
+						LdcInsnNode nLdc = (LdcInsnNode) node.clone(null);
+						AbstractInsnNode q = p.getNext();
+						insnList.remove(p);
+						insnList.insertBefore(q, nLdc);
+						p = q;
+						continue;
+					}
+				} else if (isWrite(p)) {
+					int var = var(p);
+					if (r == var) {
+						break;
+					}
+				}
+				p = p.getNext();
+			}
+		} else {
+			return false;
+		}
+		boolean remove = true;
+		if (!block.out.containsKey(r)) {
+			for (Block subBlockId : block.tos) {
+				boolean x = doOptmizeFirstBlockLdc(node, r, subBlockId, couldReplaceBlockIds, replacedBlockIds);
+				if (!x) {
+					remove = false;
+				}
+			}
+		}
+		return remove;
+	}
+
+	/**
+	 * @param block
+	 */
+	private void OptmizeFirstBlockLdc() {
+		Block block = this.blocks.get(0);
+		Map<Integer, LdcInsnNode> map = new HashMap();
+		AbstractInsnNode p = block.first.getNext();
+		while (p != null && p != block.last) {
+			if (p.getOpcode() == Opcodes.LDC) {
+				AbstractInsnNode q = p.getNext();
+				if (isWrite(q)) {
+					int var = var(q);
+					if (block.out.get(var) == q) {
+						Map<Block, Boolean> couldReplace = new HashMap();
+						Set<Block> replacedBlock = new HashSet();
+						replacedBlock.add(block);
+						couldReplace.put(block, true);
+						LdcInsnNode ldc = (LdcInsnNode) p;
+						boolean remove = true;
+						for (Block subBlock : block.tos) {
+							boolean x = doOptmizeFirstBlockLdc(ldc, var, subBlock, couldReplace, replacedBlock);
+							if (!x) {
+								remove = false;
+							}
+						}
+						if (remove) {
+							insnList.remove(p);
+							p = q.getNext();
+							insnList.remove(q);
+							map.put(var, ldc);
+							continue;
+						}
+
+					}
+				}
+			} else if (isRead(p)) {
+				int var = var(p);
+				LdcInsnNode ldc = map.get(var);
+				if (ldc != null) {
+					AbstractInsnNode q = p.getNext();
+					insnList.remove(p);
+					insnList.insertBefore(q, ldc.clone(null));
+					p = q;
+					continue;
+				}
+			}
+			p = p.getNext();
 		}
 	}
 
@@ -254,14 +379,23 @@ public class B implements MethodTransformer, Opcodes {
 	 * 
 	 * @param block
 	 */
-	private static void optmizeOut(Block block) {
-		Set<Object> mask = new HashSet();
-		for (Iterator<Integer> it = block.out.keySet().iterator(); it.hasNext();) {
-			Integer i = it.next();
-			mask.clear();
-			boolean read = doOptmizeOut(i, block, mask, false);
+	private void optmizeOut(Integer i) {
+		Map<Object, Boolean> map = new HashMap();
+		for (Block block : blocks) {
+			if (!block.out.containsKey(i)) {
+				continue;
+			}
+			boolean read = false;
+			for (Block n : block.tos) {
+				Boolean xresult = isOutReaded(i, n, map);
+				if (xresult == null) {
+				} else if (xresult.booleanValue()) {
+					read = true;
+					break;
+				}
+			}
 			if (!read) {
-				it.remove();
+				block.out.remove(i);
 			}
 		}
 	}
@@ -278,23 +412,31 @@ public class B implements MethodTransformer, Opcodes {
 	 * @param checkThis
 	 * @return 是否被读取
 	 */
-	private static boolean doOptmizeOut(Integer i, Block block, Set<Object> mask, boolean checkThis) {
-		if (checkThis) {
-			if (block.in.containsKey(i))
-				return true;
+	private static Boolean isOutReaded(Integer i, Block block, Map<Object, Boolean> visited) {
+
+		if (visited.containsKey(block)) {
+			return visited.get(block);
 		}
-		if (!mask.contains(block)) {
-			mask.add(block);
-			for (Block n : block.tos) {
-				if (!mask.contains(n)) {
-					boolean result = doOptmizeOut(i, n, mask, true);
-					if (result) {
-						return true;
+		visited.put(block, null);
+		Boolean result = null;
+		if (block.in.containsKey(i)) {
+			result = true;
+		} else {
+			if (block.out.containsKey(i)) {
+				result = false;
+			} else {
+				for (Block n : block.tos) {
+					Boolean xresult = isOutReaded(i, n, visited);
+					if (xresult == null) {
+					} else if (xresult.booleanValue()) {
+						result = true;
+						break;
 					}
 				}
 			}
 		}
-		return false;
+		visited.put(block, result);
+		return result;
 	}
 
 	private void linkBlocks() {
@@ -648,44 +790,9 @@ public class B implements MethodTransformer, Opcodes {
 
 		doVar(block);
 		// dump(block);
-		doReIndex(block);
-		// System.out.println("AFTER");
-		// dump(block);
 	}
 
-	/**
-	 * @param block
-	 * @deprecated
-	 */
-	protected void doZeroNull(Block block) {
-		AbstractInsnNode p = block.first.getNext();
-		while (p != null && p != block.last) {
-			if (p instanceof LdcInsnNode) {
-				LdcInsnNode ldc = (LdcInsnNode) p;
-				Object o = ldc.cst;
-				if (o instanceof Integer && ((Integer) o).intValue() == 0) {
-					AbstractInsnNode store = ldc.getNext();
-					int v = var(store);
-					AbstractInsnNode q = store.getNext();
-
-					boolean replaceAll = false;
-					while (q != null && q != block.last) {
-						if (isRead(q) && var(q) == v) {
-							if (q.getOpcode() == ALOAD) {
-								replaceAll = true;
-								break;
-							}
-						}
-						q = q.getNext();
-					}
-					if (replaceAll) {
-						rep(ldc, block.last);
-					}
-				}
-			}
-			p = p.getNext();
-		}
-	}
+	Map<Integer, Integer> grobalMap = new HashMap();
 
 	void rep(LdcInsnNode ldc, AbstractInsnNode end) {
 		ldc.cst = null;
@@ -749,14 +856,22 @@ public class B implements MethodTransformer, Opcodes {
 		for (AbstractInsnNode p = block.first; p != block.last; p = p.getNext()) {
 			if (isWrite(p)) {
 				int r = var(p);
-				if (block.out.get(r) == null) {// 不输出
+				if (block.out.get(r) != p) {// 不输出
 					int nr = order();
 					var(p, nr);
 					map.put(r, nr);
+				} else {
+					Integer v = this.grobalMap.get(r);
+					if (v == null) {
+						v = order();
+						grobalMap.put(r, v);
+					}
+					var(p, v);
+					map.put(r, v);
 				}
 			} else if (isRead(p)) {
 				int r = var(p);
-				if (block.in.get(r) == null && block.out.get(r) == null) {// 不输入，不输出
+				if (block.in.get(r) != p) {
 					Integer v = map.get(r);
 					if (v == null) {
 						int nr = order();
@@ -765,8 +880,28 @@ public class B implements MethodTransformer, Opcodes {
 					} else {
 						var(p, v);
 					}
+				} else {
+					Integer v = this.grobalMap.get(r);
+					if (v == null) {
+						v = order();
+						grobalMap.put(r, v);
+					}
+					var(p, v);
+					map.put(r, v);
 				}
 			}
 		}
+
+		Map<Integer, AbstractInsnNode> old = block.in;
+		block.in = new HashMap();
+		for (Map.Entry<Integer, AbstractInsnNode> e : old.entrySet()) {
+			block.in.put(this.grobalMap.get(e.getKey()), e.getValue());
+		}
+		old = block.out;
+		block.out = new HashMap();
+		for (Map.Entry<Integer, AbstractInsnNode> e : old.entrySet()) {
+			block.out.put(this.grobalMap.get(e.getKey()), e.getValue());
+		}
+
 	}
 }

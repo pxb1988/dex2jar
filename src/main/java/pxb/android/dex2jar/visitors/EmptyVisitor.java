@@ -15,6 +15,7 @@
  */
 package pxb.android.dex2jar.visitors;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Label;
 
 import pxb.android.dex2jar.Field;
@@ -24,7 +25,7 @@ import pxb.android.dex2jar.Method;
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor, DexCodeVisitor, DexAnnotationVisitor {
+public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor, DexCodeVisitor, AnnotationVisitor {
 
 	/*
 	 * (non-Javadoc)
@@ -48,9 +49,9 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, int)
+	 * @see pxb.android.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, boolean)
 	 */
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
+	public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
 
 		return this;
 	}
@@ -271,7 +272,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 * 
 	 * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitAnnotation(java .lang.String, java.lang.String)
 	 */
-	public DexAnnotationVisitor visitAnnotation(String name, String desc) {
+	public AnnotationVisitor visitAnnotation(String name, String desc) {
 
 		return this;
 	}
@@ -281,7 +282,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 	 * 
 	 * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitArray(java.lang .String)
 	 */
-	public DexAnnotationVisitor visitArray(String name) {
+	public AnnotationVisitor visitArray(String name) {
 
 		return this;
 	}

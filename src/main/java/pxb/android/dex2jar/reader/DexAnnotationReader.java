@@ -19,12 +19,12 @@ import static pxb.android.dex2jar.reader.Constant.x0246;
 import static pxb.android.dex2jar.reader.Constant.x3;
 import static pxb.android.dex2jar.reader.Constant.xf;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 
 import pxb.android.dex2jar.DataIn;
 import pxb.android.dex2jar.Dex;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
-import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
 
 /**
  * 读取注解
@@ -75,7 +75,7 @@ public class DexAnnotationReader {
 			int visible_i = in.readByte();
 			int type_idx = (int) in.readUnsignedLeb128();
 			String type = dex.getType(type_idx);
-			DexAnnotationVisitor dav = daa.visitAnnotation(type, visible_i);
+			AnnotationVisitor dav = daa.visitAnnotation(type, visible_i == 1);
 			if (dav != null) {
 				int sizex = (int) in.readUnsignedLeb128();
 				for (int k = 0; k < sizex; k++) {
@@ -96,7 +96,7 @@ public class DexAnnotationReader {
 	 * @param name
 	 * @param dav
 	 */
-	private static void acceptAnnotation(Dex dex, DataIn in, String name, DexAnnotationVisitor dav) {
+	private static void acceptAnnotation(Dex dex, DataIn in, String name, AnnotationVisitor dav) {
 		int b = in.readByte();
 		int type = b & 0x1f;
 		Object value = null;
@@ -161,7 +161,7 @@ public class DexAnnotationReader {
 		switch (type) {
 		case VALUE_ARRAY: {
 			int size = in.readByte();
-			DexAnnotationVisitor _dav = null;
+			AnnotationVisitor _dav = null;
 			if (dav != null) {
 				_dav = dav.visitArray(name);
 			}
@@ -175,7 +175,7 @@ public class DexAnnotationReader {
 		case VALUE_ANNOTATION: {
 			int _type = (int) in.readUnsignedLeb128();
 			String _typeString = dex.getType(_type);
-			DexAnnotationVisitor _dav = dav.visitAnnotation(name, _typeString);
+			AnnotationVisitor _dav = dav.visitAnnotation(name, _typeString);
 			int size = (int) in.readUnsignedLeb128();
 			for (int i = 0; i < size; i++) {
 				int nameid = (int) in.readUnsignedLeb128();

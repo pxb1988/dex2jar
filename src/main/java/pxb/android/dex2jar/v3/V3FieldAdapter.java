@@ -16,6 +16,7 @@
 package pxb.android.dex2jar.v3;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.objectweb.asm.AnnotationVisitor;
@@ -23,7 +24,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 
 import pxb.android.dex2jar.Field;
-import pxb.android.dex2jar.visitors.DexAnnotationVisitor;
+import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexFieldVisitor;
 
 /**
@@ -40,10 +41,27 @@ public class V3FieldAdapter implements DexFieldVisitor {
 
 	protected void build() {
 		if (!build) {
-			FieldVisitor fv = cv.visitField(field.getAccessFlags(), field.getName(), field.getType(), null, value);
+			String signature = null;
+			for (Iterator<Ann> it = anns.iterator(); it.hasNext();) {
+				Ann ann = it.next();
+				if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
+					it.remove();
+					for (Item item : ann.items) {
+						if (item.name.equals("value")) {
+							Ann values = (Ann) item.value;
+							StringBuilder sb = new StringBuilder();
+							for (Item i : values.items) {
+								sb.append(i.value.toString());
+							}
+							signature = sb.toString();
+						}
+					}
+				}
+			}
+			FieldVisitor fv = cv.visitField(field.getAccessFlags(), field.getName(), field.getType(), signature, value);
 			if (fv != null) {
 				for (Ann ann : anns) {
-					AnnotationVisitor av = fv.visitAnnotation(ann.type, ann.visible == 1);
+					AnnotationVisitor av = fv.visitAnnotation(ann.type, ann.visible);
 					V3AnnAdapter.accept(ann.items, av);
 					av.visitEnd();
 				}
@@ -56,10 +74,9 @@ public class V3FieldAdapter implements DexFieldVisitor {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see pxb.android.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang
-	 * .String, int)
+	 * @see pxb.android.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
 	 */
-	public DexAnnotationVisitor visitAnnotation(String name, int visitable) {
+	public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
 		Ann ann = new Ann(name, visitable);
 		anns.add(ann);
 		return new V3AnnAdapter(ann);

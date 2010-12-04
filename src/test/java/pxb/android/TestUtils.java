@@ -16,13 +16,9 @@
 package pxb.android;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Properties;
-
-import org.apache.commons.io.FileUtils;
 
 /**
  * @author Panxiaobo
@@ -30,26 +26,25 @@ import org.apache.commons.io.FileUtils;
  */
 public abstract class TestUtils {
 
-	public static File dex(String file) throws Exception {
+        public static File dex(File file, File distFile) throws Exception {
+                String dxJar = "src/test/resources/dx.jar";
+                File dxFile = new File(dxJar);
+                if (!dxFile.exists()) {
+                        throw new RuntimeException("dx.jar文件不存在");
+                }
+                URLClassLoader cl = new URLClassLoader(new URL[] { dxFile.toURI().toURL() });
+                Class<?> c = cl.loadClass("com.android.dx.command.Main");
+                Method m = c.getMethod("main", String[].class);
 
-		Properties ps = new Properties();
-		String dxJar = null;
-		FileInputStream fis = FileUtils.openInputStream(new File("src/test/resources/pxb/android/dx.properties"));
-		ps.load(fis);
+                if (distFile == null)
+                        distFile = File.createTempFile("dex", ".dex");
 
-		dxJar = ps.getProperty("dx.lib.jar");
-		File dxFile = new File(dxJar);
-		if (!dxFile.exists()) {
-			throw new RuntimeException("dx.jar文件不存在");
-		}
-		URLClassLoader cl = new URLClassLoader(new URL[] { dxFile.toURI().toURL() });
-		Class<?> c = cl.loadClass("com.android.dx.command.Main");
-		Method m = c.getMethod("main", String[].class);
+                String[] args = new String[] { "--dex", "--no-strict", "--output=" + distFile.getCanonicalPath(), file.getCanonicalPath() };
+                m.invoke(null, new Object[] { args });
+                return distFile;
+        }
 
-		File tempJar = File.createTempFile("dex", ".dex");
-
-		String[] args = new String[] { "--dex", "--no-strict", "--output=" + tempJar.getCanonicalPath(), new File(file).getCanonicalPath() };
-		m.invoke(null, new Object[] { args });
-		return tempJar;
-	}
+        public static File dex(File file) throws Exception {
+                return dex(file, null);
+        }
 }

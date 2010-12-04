@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pxb.android.dex2jar.optimize;
-
-import org.objectweb.asm.tree.MethodNode;
+package res;
 
 /**
- * @author Panxiaobo [pxb1988@126.com]
- * @version $Id$
+ * @author Panxiaobo [pxb1988@gmail.com]
+ * 
  */
-public interface MethodTransformer {
-	public void transform(MethodNode method);
+public class ChineseRes {
+	public void 你() {
+		System.out.println("你好");
+	}
 }

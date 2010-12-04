@@ -59,4 +59,12 @@ public interface DataIn {
 	 * @param i
 	 */
 	public void skip(int bytes);
+
+	/**
+	 * 获取当前位置
+	 * 
+	 * @return
+	 */
+	public int getCurrentPosition();
+
 }
