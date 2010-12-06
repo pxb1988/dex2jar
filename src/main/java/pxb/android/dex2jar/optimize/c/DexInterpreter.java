@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pxb.android.dex2jar.optimize;
+package pxb.android.dex2jar.optimize.c;
 
 import java.util.List;
 
@@ -27,8 +27,6 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Value;
 
-import pxb.android.dex2jar.optimize.c.CBasicInterpreter;
-import pxb.android.dex2jar.optimize.c.CBasicValue;
 
 /**
  * @author Panxiaobo

@@ -23,13 +23,14 @@ import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.optimize.c.CAnalyzer;
 import pxb.android.dex2jar.optimize.c.CBasicValue;
 import pxb.android.dex2jar.optimize.c.CFrame;
+import pxb.android.dex2jar.optimize.c.DexInterpreter;
 
 /**
  * @author Panxiaobo
  * 
  */
 public class C implements MethodTransformer, Opcodes {
-	Method m;
+	final private Method m;
 
 	public void transform(final MethodNode method) {
 

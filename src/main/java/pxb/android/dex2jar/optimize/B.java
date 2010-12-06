@@ -46,39 +46,25 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
-import pxb.android.dex2jar.Method;
-
 /**
  * @author Panxiaobo [pxb1988@126.com]
  * @version $Id$
  */
-@SuppressWarnings( { "unchecked" })
 public class B implements MethodTransformer, Opcodes {
 
-	// private static final Logger log =
-	// LoggerFactory.getLogger(MethodTransformerAdapter.class);
-	Method m;
-
-	public B(Method m) {
-		this.m = m;
-	}
-
-	public static class Block {
+	private static class Block {
 		public LabelNode first;
-		public LabelNode last;
+		public List<Block> froms = new ArrayList<Block>();
 		public Map<Integer, AbstractInsnNode> in;
-		public Map<Integer, AbstractInsnNode> inType;
+		private final int index;
+		public LabelNode last;
 		public Map<Integer, AbstractInsnNode> out;
-		public Map<Integer, AbstractInsnNode> outType;
 
-		public List<Block> froms = new ArrayList();
-		public List<Block> tos = new ArrayList();
+		public List<Block> tos = new ArrayList<Block>();
 
 		public Block(int index) {
 			this.index = index;
 		}
-
-		private final int index;
 
 		public String toString() {
 			TraceMethodVisitor tr = new TraceMethodVisitor();
@@ -137,17 +123,71 @@ public class B implements MethodTransformer, Opcodes {
 		}
 	}
 
-	InsnList insnList;
-	TraceMethodVisitor tr = new TraceMethodVisitor();
-	MethodNode method;
+	/**
+	 * 递归检查变量是否被读取
+	 * 
+	 * @param i
+	 *            变量的编号
+	 * @param block
+	 *            块
+	 * @param mask
+	 *            结束递归的状态
+	 * @param checkThis
+	 * @return 是否被读取
+	 */
+	private static Boolean isOutReaded(Integer i, Block block, Map<Object, Boolean> visited) {
 
-	List<Block> blocks = new ArrayList();
-	Map<Label, Block> blockMaps = new HashMap();
+		if (visited.containsKey(block)) {
+			return visited.get(block);
+		}
+		visited.put(block, null);
+		Boolean result = null;
+		if (block.in.containsKey(i)) {
+			result = true;
+		} else {
+			if (block.out.containsKey(i)) {
+				result = false;
+			} else {
+				for (Block n : block.tos) {
+					Boolean xresult = isOutReaded(i, n, visited);
+					if (xresult == null) {
+					} else if (xresult.booleanValue()) {
+						result = true;
+						break;
+					}
+				}
+			}
+		}
+		visited.put(block, result);
+		return result;
+	}
 
-	int max = 0;
+	private static void link(Block from, Block to) {
 
-	private int order() {
-		return max++;
+		from.tos.add(to);
+		to.froms.add(from);
+	}
+
+	private Map<Label, Block> blockMaps = new HashMap<Label, Block>();
+	private List<Block> blocks = new ArrayList<Block>();
+	private Map<Integer, Integer> grobalMap = new HashMap<Integer, Integer>();
+
+	private InsnList insnList;
+
+	private int max = 0;
+
+	private MethodNode method;
+
+	private boolean couldReplace(int r, Block block, Map<Block, Boolean> blocks) {
+		for (Block in : block.froms) {
+			Boolean x = doCouldReplace(r, in, blocks);
+			if (x == null) {
+				// ignore
+			} else if (!x.booleanValue()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void cut() {
@@ -158,8 +198,8 @@ public class B implements MethodTransformer, Opcodes {
 
 		// dump();
 
-		Map<Integer, AbstractInsnNode> in = new HashMap();
-		Map<Integer, AbstractInsnNode> out = new HashMap();
+		Map<Integer, AbstractInsnNode> in = new HashMap<Integer, AbstractInsnNode>();
+		Map<Integer, AbstractInsnNode> out = new HashMap<Integer, AbstractInsnNode>();
 
 		AbstractInsnNode p = method.instructions.getFirst();
 
@@ -204,53 +244,28 @@ public class B implements MethodTransformer, Opcodes {
 				blocks.add(block);
 				blockMaps.put(block.first.getLabel(), block);
 				first = p;
-				in = new HashMap();
-				out = new HashMap();
+				in = new HashMap<Integer, AbstractInsnNode>();
+				out = new HashMap<Integer, AbstractInsnNode>();
 			}
 			p = p.getNext();
 		}
 	}
 
-	public void transform(MethodNode method) {
-		insnList = method.instructions;
-		this.method = method;
+	private void doBlock(Block block) {
+		// System.out.println("BEFORE");
+		// dump(block);
 
-		cut();
+		doNew(block);
+		// dump(block);
 
-		linkTryCatch();
+		doLdc(block);
+		// dump(block);
 
-		linkBlocks();
-
-		Set<Integer> set = new HashSet();
-		for (Block b : blocks) {
-			set.addAll(b.out.keySet());
-		}
-		for (Integer i : set) {
-			optmizeOut(i);
-		}
-		set = null;
-
-		// for (Block block : blocks) {
-		// doZeroNull(block);
-		// }
-		for (Block block : blocks) {
-			doBlock(block);
-		}
-		OptmizeFirstBlockLdc();
-		int i = 0;
-		if ((m.getAccessFlags() & ACC_STATIC) == 0) {
-			grobalMap.put(i++, order()); // this
-		}
-		for (int j = 0; j < m.getType().getParameterTypes().length; j++) {
-			grobalMap.put(i++, order());
-		}
-
-		for (Block block : blocks) {
-			doReIndex(block);
-		}
+		doVar(block);
+		// dump(block);
 	}
 
-	Boolean doCouldReplace(int r, Block block, Map<Block, Boolean> blocks) {
+	private Boolean doCouldReplace(int r, Block block, Map<Block, Boolean> blocks) {
 		if (blocks.containsKey(block))
 			return blocks.get(block);
 		if (block.out.containsKey(r)) {
@@ -271,19 +286,168 @@ public class B implements MethodTransformer, Opcodes {
 		return true;
 	}
 
-	boolean couldReplace(int r, Block block, Map<Block, Boolean> blocks) {
-		for (Block in : block.froms) {
-			Boolean x = doCouldReplace(r, in, blocks);
-			if (x == null) {
-				// ignore
-			} else if (!x.booleanValue()) {
-				return false;
+	/**
+	 * <pre>
+	 * BEFORE:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     ASTORE 1
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     ASTORE 2
+	 *     ALOAD 1
+	 *     ALOAD 2
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     ASTORE 0
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * <pre>
+	 * AFTER:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     ASTORE 0
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * @param block
+	 */
+	private void doLdc(Block block) {
+		Map<Integer, LdcInsnNode> map = new HashMap<Integer, LdcInsnNode>();
+		AbstractInsnNode p = block.first.getNext();
+		while (p != null && p != block.last) {
+			if (p.getOpcode() == Opcodes.LDC) {
+				AbstractInsnNode q = p.getNext();
+				if (isWrite(q)) {
+					Integer var = var(q);
+					if (block.out.get(var) == null || block.out.get(var) != q) {
+						map.put(var, (LdcInsnNode) p);
+						insnList.remove(q); // remove store
+						q = p.getPrevious();
+						insnList.remove(p); // remove ldc
+						p = q;
+					}
+				}
+			} else if (isRead(p)) {
+				Integer var = var(p);
+				if (block.out.get(var) == null || block.out.get(var) != p) {
+					LdcInsnNode ldc = map.get(var);
+					if (ldc != null) {
+						AbstractInsnNode _ldc_copy = ldc.clone(null);
+						insnList.insert(p, _ldc_copy);
+						insnList.remove(p);
+						p = _ldc_copy;
+					}
+				}
+			} else if (isWrite(p)) {
+				Integer var = var(p);
+				map.remove(var);
 			}
+			p = p.getNext();
 		}
-		return true;
 	}
 
-	boolean doOptmizeFirstBlockLdc(LdcInsnNode node, int r, Block block, Map<Block, Boolean> couldReplaceBlockIds, Set<Block> replacedBlockIds) {
+	/**
+	 * 
+	 * 
+	 * 调整NEW指令和对应的INVOKESPECIAL指令的位置，使其与直接编译的指令顺序一样
+	 * 
+	 * <pre>
+	 * BEFORE:
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     ASTORE 0
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     ASTORE 1
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     ASTORE 2
+	 *     ALOAD 1
+	 *     ALOAD 2
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     ALOAD 0
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * 
+	 * <pre>
+	 * AFTER:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     ASTORE 1
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     ASTORE 2
+	 *     ALOAD 1
+	 *     ALOAD 2
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     ASTORE 0
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * @param block
+	 */
+	private void doNew(Block block) {
+		Map<String, AbstractInsnNode> map = new HashMap<String, AbstractInsnNode>();
+		AbstractInsnNode p = block.first.getNext();
+		while (p != null && p != block.last) {
+			switch (p.getOpcode()) {
+			case Opcodes.NEW: {
+				AbstractInsnNode store = p.getNext();
+				if (store instanceof VarInsnNode) {
+					map.put(((TypeInsnNode) p).desc + var(store), p);
+					p = store.getNext();
+				} else {
+					p = store;
+				}
+				break;
+			}
+			case Opcodes.INVOKESPECIAL: {
+				MethodInsnNode m = (MethodInsnNode) p;
+				p = p.getNext();
+				if (m.name.equals("<init>")) {
+					int length = Type.getArgumentTypes(m.desc).length;
+					AbstractInsnNode q = m.getPrevious();
+					while (length-- > 0) {
+						q = q.getPrevious();
+					}
+					AbstractInsnNode _new = map.remove(m.owner + var(q));
+					if (_new != null) {
+						AbstractInsnNode _store = _new.getNext();
+						insnList.remove(_new);// remove new
+						insnList.remove(_store); // remove store
+						insnList.insertBefore(q, _new);
+						insnList.insert(_new, new InsnNode(DUP));
+						insnList.remove(q);
+						insnList.insert(m, _store);
+					}
+				}
+				break;
+			}
+			default:
+				p = p.getNext();
+			}
+		}
+	}
+
+	private boolean doOptmizeFirstBlockLdc(LdcInsnNode node, int r, Block block, Map<Block, Boolean> couldReplaceBlockIds, Set<Block> replacedBlockIds) {
 		if (replacedBlockIds.contains(block)) {
 			return true;
 		}
@@ -325,119 +489,171 @@ public class B implements MethodTransformer, Opcodes {
 	}
 
 	/**
+	 * <pre>
+	 * BEFORE:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * <pre>
+	 * AFTER:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 4
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 4
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
 	 * @param block
 	 */
-	private void OptmizeFirstBlockLdc() {
-		Block block = this.blocks.get(0);
-		Map<Integer, LdcInsnNode> map = new HashMap();
-		AbstractInsnNode p = block.first.getNext();
-		while (p != null && p != block.last) {
-			if (p.getOpcode() == Opcodes.LDC) {
-				AbstractInsnNode q = p.getNext();
-				if (isWrite(q)) {
-					int var = var(q);
-					if (block.out.get(var) == q) {
-						Map<Block, Boolean> couldReplace = new HashMap();
-						Set<Block> replacedBlock = new HashSet();
-						replacedBlock.add(block);
-						couldReplace.put(block, true);
-						LdcInsnNode ldc = (LdcInsnNode) p;
-						boolean remove = true;
-						for (Block subBlock : block.tos) {
-							boolean x = doOptmizeFirstBlockLdc(ldc, var, subBlock, couldReplace, replacedBlock);
-							if (!x) {
-								remove = false;
-							}
-						}
-						if (remove) {
-							insnList.remove(p);
-							p = q.getNext();
-							insnList.remove(q);
-							map.put(var, ldc);
-							continue;
-						}
-
+	private void doReIndex(Block block) {
+		Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+		for (AbstractInsnNode p = block.first; p != block.last; p = p.getNext()) {
+			if (isWrite(p)) {
+				int r = var(p);
+				if (block.out.get(r) != p) {// 不输出
+					int nr = order();
+					var(p, nr);
+					map.put(r, nr);
+				} else {
+					Integer v = this.grobalMap.get(r);
+					if (v == null) {
+						v = order();
+						grobalMap.put(r, v);
 					}
+					var(p, v);
+					map.put(r, v);
 				}
 			} else if (isRead(p)) {
-				int var = var(p);
-				LdcInsnNode ldc = map.get(var);
-				if (ldc != null) {
-					AbstractInsnNode q = p.getNext();
-					insnList.remove(p);
-					insnList.insertBefore(q, ldc.clone(null));
-					p = q;
-					continue;
+				int r = var(p);
+				if (block.in.get(r) != p) {
+					Integer v = map.get(r);
+					if (v == null) {
+						int nr = order();
+						var(p, nr);
+						map.put(r, nr);
+					} else {
+						var(p, v);
+					}
+				} else {
+					Integer v = this.grobalMap.get(r);
+					if (v == null) {
+						v = order();
+						grobalMap.put(r, v);
+					}
+					var(p, v);
+					map.put(r, v);
+				}
+			}
+		}
+
+		Map<Integer, AbstractInsnNode> old = block.in;
+		block.in = new HashMap<Integer, AbstractInsnNode>();
+		for (Map.Entry<Integer, AbstractInsnNode> e : old.entrySet()) {
+			block.in.put(this.grobalMap.get(e.getKey()), e.getValue());
+		}
+		old = block.out;
+		block.out = new HashMap<Integer, AbstractInsnNode>();
+		for (Map.Entry<Integer, AbstractInsnNode> e : old.entrySet()) {
+			block.out.put(this.grobalMap.get(e.getKey()), e.getValue());
+		}
+
+	}
+
+	/**
+	 * <pre>
+	 * BEFORE:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     ASTORE 0
+	 *     ALOAD 0
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * <pre>
+	 * AFTER:
+	 *     LDC Ljavax/servlet/GenericServlet;.class
+	 *     LDC "/javax/servlet/LocalStrings.properties"
+	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
+	 *     ASTORE 1
+	 *     NEW Ljava/util/PropertyResourceBundle;
+	 *     DUP
+	 *     ALOAD 1
+	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
+	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
+	 * </pre>
+	 * 
+	 * @param block
+	 */
+	private void doVar(Block block) {
+		AbstractInsnNode p = block.first.getNext();
+		while (p != null && p != block.last) {
+			if (isWrite(p)) {
+				AbstractInsnNode q = p.getNext();
+				if (isRead(q)) {
+					if (isSameVar(p, q)) {
+						int var = var(p);
+						boolean canDel = true;
+						for (AbstractInsnNode i = q.getNext(); i != null && i != block.last; i = i.getNext()) {
+							if (isRead(i) && var == var(i)) {
+								canDel = false;
+								break;
+							}
+							if (isWrite(i) && var == var(i)) {
+								canDel = true;
+								break;
+							}
+						}
+						if (canDel && block.out.get(var) != p) {
+							AbstractInsnNode t = q.getNext();
+							insnList.remove(p);
+							insnList.remove(q);
+							p = t.getPrevious();
+						}
+					}
 				}
 			}
 			p = p.getNext();
 		}
 	}
 
-	/**
-	 * 优化块的输出变量
-	 * 
-	 * @param block
-	 */
-	private void optmizeOut(Integer i) {
-		Map<Object, Boolean> map = new HashMap();
-		for (Block block : blocks) {
-			if (!block.out.containsKey(i)) {
-				continue;
-			}
-			boolean read = false;
-			for (Block n : block.tos) {
-				Boolean xresult = isOutReaded(i, n, map);
-				if (xresult == null) {
-				} else if (xresult.booleanValue()) {
-					read = true;
-					break;
-				}
-			}
-			if (!read) {
-				block.out.remove(i);
-			}
-		}
-	}
-
-	/**
-	 * 递归检查变量是否被读取
-	 * 
-	 * @param i
-	 *            变量的编号
-	 * @param block
-	 *            块
-	 * @param mask
-	 *            结束递归的状态
-	 * @param checkThis
-	 * @return 是否被读取
-	 */
-	private static Boolean isOutReaded(Integer i, Block block, Map<Object, Boolean> visited) {
-
-		if (visited.containsKey(block)) {
-			return visited.get(block);
-		}
-		visited.put(block, null);
-		Boolean result = null;
-		if (block.in.containsKey(i)) {
-			result = true;
-		} else {
-			if (block.out.containsKey(i)) {
-				result = false;
-			} else {
-				for (Block n : block.tos) {
-					Boolean xresult = isOutReaded(i, n, visited);
-					if (xresult == null) {
-					} else if (xresult.booleanValue()) {
-						result = true;
-						break;
-					}
-				}
-			}
-		}
-		visited.put(block, result);
-		return result;
-	}
+//	private void dump() {
+//		insnList.accept(tr);
+//		for (Object o : tr.text) {
+//			System.out.print(o);
+//		}
+//		tr.text.clear();
+//	}
+//	private TraceMethodVisitor tr = new TraceMethodVisitor();
+//	private void dump(Block block) {
+//		AbstractInsnNode p = block.first.getNext();
+//		while (p != null && !(p instanceof LabelNode)) {
+//			p.accept(tr);
+//			p = p.getNext();
+//		}
+//		for (Object o : tr.text) {
+//			System.out.print(o);
+//		}
+//		tr.text.clear();
+//		System.out.println();
+//	}
 
 	private void linkBlocks() {
 		for (int i = 0; i < blocks.size(); i++) {
@@ -505,403 +721,122 @@ public class B implements MethodTransformer, Opcodes {
 		}
 	}
 
-	private static void link(Block from, Block to) {
-
-		from.tos.add(to);
-		to.froms.add(from);
-	}
-
-	public void changeLdc_0(List<Block> blocks) {
-		for (Block a : blocks) {
-			AbstractInsnNode p = a.first.getNext();
-			while (p != null && !(p instanceof LabelNode)) {
-				switch (p.getOpcode()) {
-				case LDC: {
-					LdcInsnNode ldc = (LdcInsnNode) p;
-					Object value = ldc.cst;
-					if (value instanceof Integer) {
-						int i = (Integer) value;
-						if (i == 0) {// may be const null?
-							System.out.println("sssssssssssssssssssssssssssssssssssssssssssss");
-						}
-					}
-				}
-					break;
-				}
-				p = p.getNext();
-			}
-		}
-	}
-
-	public void dump() {
-		insnList.accept(tr);
-		for (Object o : tr.text) {
-			System.out.print(o);
-		}
-		tr.text.clear();
-	}
-
 	/**
-	 * 
-	 * 
-	 * 调整NEW指令和对应的INVOKESPECIAL指令的位置，使其与直接编译的指令顺序一样
-	 * 
-	 * <pre>
-	 * BEFORE:
-	 *     NEW Ljava/util/PropertyResourceBundle;
-	 *     ASTORE 0
-	 *     LDC Ljavax/servlet/GenericServlet;.class
-	 *     ASTORE 1
-	 *     LDC "/javax/servlet/LocalStrings.properties"
-	 *     ASTORE 2
-	 *     ALOAD 1
-	 *     ALOAD 2
-	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
-	 *     ASTORE 1
-	 *     ALOAD 0
-	 *     ALOAD 1
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
-	 *     ALOAD 0
-	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
-	 * </pre>
-	 * 
-	 * 
-	 * <pre>
-	 * AFTER:
-	 *     LDC Ljavax/servlet/GenericServlet;.class
-	 *     ASTORE 1
-	 *     LDC "/javax/servlet/LocalStrings.properties"
-	 *     ASTORE 2
-	 *     ALOAD 1
-	 *     ALOAD 2
-	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
-	 *     ASTORE 1
-	 *     NEW Ljava/util/PropertyResourceBundle;
-	 *     DUP
-	 *     ALOAD 1
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
-	 *     ASTORE 0
-	 *     ALOAD 0
-	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
-	 * </pre>
-	 * 
 	 * @param block
 	 */
-	protected void doNew(Block block) {
-		Map<String, AbstractInsnNode> map = new HashMap();
-		AbstractInsnNode p = block.first.getNext();
-		while (p != null && p != block.last) {
-			switch (p.getOpcode()) {
-			case Opcodes.NEW: {
-				AbstractInsnNode store = p.getNext();
-				if (store instanceof VarInsnNode) {
-					map.put(((TypeInsnNode) p).desc + var(store), p);
-					p = store.getNext();
-				} else {
-					p = store;
-				}
-				break;
-			}
-			case Opcodes.INVOKESPECIAL: {
-				MethodInsnNode m = (MethodInsnNode) p;
-				p = p.getNext();
-				if (m.name.equals("<init>")) {
-					int length = Type.getArgumentTypes(m.desc).length;
-					AbstractInsnNode q = m.getPrevious();
-					while (length-- > 0) {
-						q = q.getPrevious();
-					}
-					AbstractInsnNode _new = map.remove(m.owner + var(q));
-					if (_new != null) {
-						AbstractInsnNode _store = _new.getNext();
-						insnList.remove(_new);// remove new
-						insnList.remove(_store); // remove store
-						insnList.insertBefore(q, _new);
-						insnList.insert(_new, new InsnNode(DUP));
-						insnList.remove(q);
-						insnList.insert(m, _store);
-					}
-				}
-				break;
-			}
-			default:
-				p = p.getNext();
-			}
-		}
-	}
-
-	protected void dump(Block block) {
-		AbstractInsnNode p = block.first.getNext();
-		while (p != null && !(p instanceof LabelNode)) {
-			p.accept(tr);
-			p = p.getNext();
-		}
-		for (Object o : tr.text) {
-			System.out.print(o);
-		}
-		tr.text.clear();
-		System.out.println();
-	}
-
-	/**
-	 * <pre>
-	 * BEFORE:
-	 *     LDC Ljavax/servlet/GenericServlet;.class
-	 *     ASTORE 1
-	 *     LDC "/javax/servlet/LocalStrings.properties"
-	 *     ASTORE 2
-	 *     ALOAD 1
-	 *     ALOAD 2
-	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
-	 *     ASTORE 1
-	 *     NEW Ljava/util/PropertyResourceBundle;
-	 *     DUP
-	 *     ALOAD 1
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
-	 *     ASTORE 0
-	 *     ALOAD 0
-	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
-	 * </pre>
-	 * 
-	 * <pre>
-	 * AFTER:
-	 *     LDC Ljavax/servlet/GenericServlet;.class
-	 *     LDC "/javax/servlet/LocalStrings.properties"
-	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
-	 *     ASTORE 1
-	 *     NEW Ljava/util/PropertyResourceBundle;
-	 *     DUP
-	 *     ALOAD 1
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
-	 *     ASTORE 0
-	 *     ALOAD 0
-	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
-	 * </pre>
-	 * 
-	 * @param block
-	 */
-	protected void doLdc(Block block) {
-		Map<Integer, LdcInsnNode> map = new HashMap();
+	private void OptmizeFirstBlockLdc() {
+		Block block = this.blocks.get(0);
+		Map<Integer, LdcInsnNode> map = new HashMap<Integer, LdcInsnNode>();
 		AbstractInsnNode p = block.first.getNext();
 		while (p != null && p != block.last) {
 			if (p.getOpcode() == Opcodes.LDC) {
 				AbstractInsnNode q = p.getNext();
 				if (isWrite(q)) {
-					Integer var = var(q);
-					if (block.out.get(var) == null || block.out.get(var) != q) {
-						map.put(var, (LdcInsnNode) p);
-						insnList.remove(q); // remove store
-						q = p.getPrevious();
-						insnList.remove(p); // remove ldc
-						p = q;
-					}
-				}
-			} else if (isRead(p)) {
-				Integer var = var(p);
-				if (block.out.get(var) == null || block.out.get(var) != p) {
-					LdcInsnNode ldc = map.get(var);
-					if (ldc != null) {
-						AbstractInsnNode _ldc_copy = ldc.clone(null);
-						insnList.insert(p, _ldc_copy);
-						insnList.remove(p);
-						p = _ldc_copy;
-					}
-				}
-			} else if (isWrite(p)) {
-				Integer var = var(p);
-				map.remove(var);
-			}
-			p = p.getNext();
-		}
-	}
-
-	/**
-	 * <pre>
-	 * BEFORE:
-	 *     LDC Ljavax/servlet/GenericServlet;.class
-	 *     LDC "/javax/servlet/LocalStrings.properties"
-	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
-	 *     ASTORE 1
-	 *     NEW Ljava/util/PropertyResourceBundle;
-	 *     DUP
-	 *     ALOAD 1
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
-	 *     ASTORE 0
-	 *     ALOAD 0
-	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
-	 * </pre>
-	 * 
-	 * <pre>
-	 * AFTER:
-	 *     LDC Ljavax/servlet/GenericServlet;.class
-	 *     LDC "/javax/servlet/LocalStrings.properties"
-	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
-	 *     ASTORE 1
-	 *     NEW Ljava/util/PropertyResourceBundle;
-	 *     DUP
-	 *     ALOAD 1
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
-	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
-	 * </pre>
-	 * 
-	 * @param block
-	 */
-	protected void doVar(Block block) {
-		AbstractInsnNode p = block.first.getNext();
-		while (p != null && p != block.last) {
-			if (isWrite(p)) {
-				AbstractInsnNode q = p.getNext();
-				if (isRead(q)) {
-					if (isSameVar(p, q)) {
-						int var = var(p);
-						boolean canDel = true;
-						for (AbstractInsnNode i = q.getNext(); i != null && i != block.last; i = i.getNext()) {
-							if (isRead(i) && var == var(i)) {
-								canDel = false;
-								break;
-							}
-							if (isWrite(i) && var == var(i)) {
-								canDel = true;
-								break;
+					int var = var(q);
+					if (block.out.get(var) == q) {
+						Map<Block, Boolean> couldReplace = new HashMap<Block, Boolean>();
+						Set<Block> replacedBlock = new HashSet<Block>();
+						replacedBlock.add(block);
+						couldReplace.put(block, true);
+						LdcInsnNode ldc = (LdcInsnNode) p;
+						boolean remove = true;
+						for (Block subBlock : block.tos) {
+							boolean x = doOptmizeFirstBlockLdc(ldc, var, subBlock, couldReplace, replacedBlock);
+							if (!x) {
+								remove = false;
 							}
 						}
-						if (canDel && block.out.get(var) != p) {
-							AbstractInsnNode t = q.getNext();
+						if (remove) {
 							insnList.remove(p);
+							p = q.getNext();
 							insnList.remove(q);
-							p = t.getPrevious();
+							map.put(var, ldc);
+							continue;
 						}
+
 					}
+				}
+			} else if (isRead(p)) {
+				int var = var(p);
+				LdcInsnNode ldc = map.get(var);
+				if (ldc != null) {
+					AbstractInsnNode q = p.getNext();
+					insnList.remove(p);
+					insnList.insertBefore(q, ldc.clone(null));
+					p = q;
+					continue;
 				}
 			}
 			p = p.getNext();
 		}
 	}
 
-	public void doBlock(Block block) {
-		// System.out.println("BEFORE");
-		// dump(block);
-
-		doNew(block);
-		// dump(block);
-
-		doLdc(block);
-		// dump(block);
-
-		doVar(block);
-		// dump(block);
-	}
-
-	Map<Integer, Integer> grobalMap = new HashMap();
-
-	void rep(LdcInsnNode ldc, AbstractInsnNode end) {
-		ldc.cst = null;
-		AbstractInsnNode _store = ldc.getNext();
-		int v = var(_store);
-		VarInsnNode store_template = new VarInsnNode(ASTORE, v);
-		VarInsnNode load_template = new VarInsnNode(ALOAD, v);
-		{
-			VarInsnNode store = (VarInsnNode) store_template.clone(null);
-			insnList.insertBefore(_store, store);
-			insnList.remove(_store);
-			_store = store;
-		}
-		AbstractInsnNode p = _store.getNext();
-		while (p != null && p != end) {
-			if (isRead(p)) {
-				VarInsnNode load = (VarInsnNode) load_template.clone(null);
-				insnList.insertBefore(p, load);
-				insnList.remove(p);
-				p = load;
-			} else if (isWrite(p)) {
-				VarInsnNode store = (VarInsnNode) store_template.clone(null);
-				insnList.insertBefore(p, store);
-				insnList.remove(p);
-				p = store;
-			}
-		}
-	}
-
 	/**
-	 * <pre>
-	 * BEFORE:
-	 *     LDC Ljavax/servlet/GenericServlet;.class
-	 *     LDC "/javax/servlet/LocalStrings.properties"
-	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
-	 *     ASTORE 1
-	 *     NEW Ljava/util/PropertyResourceBundle;
-	 *     DUP
-	 *     ALOAD 1
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
-	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
-	 * </pre>
-	 * 
-	 * <pre>
-	 * AFTER:
-	 *     LDC Ljavax/servlet/GenericServlet;.class
-	 *     LDC "/javax/servlet/LocalStrings.properties"
-	 *     INVOKEVIRTUAL Ljava/lang/Class;.getResourceAsStream (Ljava/lang/String;)Ljava/io/InputStream;
-	 *     ASTORE 4
-	 *     NEW Ljava/util/PropertyResourceBundle;
-	 *     DUP
-	 *     ALOAD 4
-	 *     INVOKESPECIAL Ljava/util/PropertyResourceBundle;.&lt;init> (Ljava/io/InputStream;)V
-	 *     PUTSTATIC Ljavax/servlet/GenericServlet;.lStrings : Ljava/util/ResourceBundle;
-	 * </pre>
+	 * 优化块的输出变量
 	 * 
 	 * @param block
 	 */
-	protected void doReIndex(Block block) {
-		Map<Integer, Integer> map = new HashMap();
-		for (AbstractInsnNode p = block.first; p != block.last; p = p.getNext()) {
-			if (isWrite(p)) {
-				int r = var(p);
-				if (block.out.get(r) != p) {// 不输出
-					int nr = order();
-					var(p, nr);
-					map.put(r, nr);
-				} else {
-					Integer v = this.grobalMap.get(r);
-					if (v == null) {
-						v = order();
-						grobalMap.put(r, v);
-					}
-					var(p, v);
-					map.put(r, v);
-				}
-			} else if (isRead(p)) {
-				int r = var(p);
-				if (block.in.get(r) != p) {
-					Integer v = map.get(r);
-					if (v == null) {
-						int nr = order();
-						var(p, nr);
-						map.put(r, nr);
-					} else {
-						var(p, v);
-					}
-				} else {
-					Integer v = this.grobalMap.get(r);
-					if (v == null) {
-						v = order();
-						grobalMap.put(r, v);
-					}
-					var(p, v);
-					map.put(r, v);
+	private void optmizeOut(Integer i) {
+		Map<Object, Boolean> map = new HashMap<Object, Boolean>();
+		for (Block block : blocks) {
+			if (!block.out.containsKey(i)) {
+				continue;
+			}
+			boolean read = false;
+			for (Block n : block.tos) {
+				Boolean xresult = isOutReaded(i, n, map);
+				if (xresult == null) {
+				} else if (xresult.booleanValue()) {
+					read = true;
+					break;
 				}
 			}
+			if (!read) {
+				block.out.remove(i);
+			}
+		}
+	}
+
+	private int order() {
+		return max++;
+	}
+
+	public void transform(MethodNode method) {
+		insnList = method.instructions;
+		this.method = method;
+
+		cut();
+
+		linkTryCatch();
+
+		linkBlocks();
+
+		Set<Integer> set = new HashSet<Integer>();
+		for (Block b : blocks) {
+			set.addAll(b.out.keySet());
+		}
+		for (Integer i : set) {
+			optmizeOut(i);
+		}
+		set = null;
+
+		// for (Block block : blocks) {
+		// doZeroNull(block);
+		// }
+		for (Block block : blocks) {
+			doBlock(block);
+		}
+		OptmizeFirstBlockLdc();
+		int i = 0;
+		if ((method.access & ACC_STATIC) == 0) {
+			grobalMap.put(i++, order()); // this
+		}
+		for (int j = 0; j < Type.getArgumentTypes(method.desc).length; j++) {
+			grobalMap.put(i++, order());
 		}
 
-		Map<Integer, AbstractInsnNode> old = block.in;
-		block.in = new HashMap();
-		for (Map.Entry<Integer, AbstractInsnNode> e : old.entrySet()) {
-			block.in.put(this.grobalMap.get(e.getKey()), e.getValue());
+		for (Block block : blocks) {
+			doReIndex(block);
 		}
-		old = block.out;
-		block.out = new HashMap();
-		for (Map.Entry<Integer, AbstractInsnNode> e : old.entrySet()) {
-			block.out.put(this.grobalMap.get(e.getKey()), e.getValue());
-		}
-
 	}
 }
