@@ -65,8 +65,8 @@ public class V3ClassAdapter implements DexClassVisitor {
 					}
 				}
 			}
-
-			cv.visit(Opcodes.V1_5, access_flags, className, signature, superClass, interfaceNames);
+			access_flags |= Opcodes.ACC_SUPER;// 解决生成的class文件使用dx重新转换时使用的指令与原始指令不同的问题
+			cv.visit(Opcodes.V1_6, access_flags|0x20, className, signature, superClass, interfaceNames);
 			for (Ann ann : anns) {
 				if (ann.type.equals("Ldalvik/annotation/MemberClasses;")) {
 					for (Item i : ann.items) {
