@@ -36,33 +36,31 @@ import res.SwitchRes;
  * 
  */
 public class DTest {
+	private void dump(MethodNode methodNode) {
+		TraceMethodVisitor tv = new TraceMethodVisitor();
+		methodNode.accept(tv);
+		int i = 0;
+		for (Object o : tv.text) {
+			System.out.print(String.format("%4d%s", i++, o));
+		}
+	}
+
 	@Test
 	public void testSwitch() throws IOException {
 		InputStream is = DTest.class.getResourceAsStream('/' + SwitchRes.class.getName().replace('.', '/') + ".class");
 		ClassNode cn = new ClassNode();
 		new ClassReader(is).accept(cn, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-		D d = new D();
-		TraceMethodVisitor tv = new TraceMethodVisitor();
 		for (Iterator<?> it = cn.methods.iterator(); it.hasNext();) {
 			MethodNode methodNode = (MethodNode) it.next();
-			methodNode.accept(tv);
-			int i = 0;
 			System.out.println("============BEFORE");
-			for (Object o : tv.text) {
-				System.out.print(String.format("%4d%s", i++, o));
-			}
-			d.transform(methodNode);
+			dump(methodNode);
+			new D().transform(methodNode);
 			System.out.println("============AFTER");
-			tv.text.clear();
-			methodNode.accept(tv);
-			i = 0;
-			for (Object o : tv.text) {
-				System.out.print(String.format("%4d%s", i++, o));
-			}
+			dump(methodNode);
 		}
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 		cn.accept(cw);
 		byte[] data = cw.toByteArray();
-		FileUtils.writeByteArrayToFile(new File("target/a.class"), data);
+		FileUtils.writeByteArrayToFile(new File("target/" + SwitchRes.class.getName().replace('.', '/') + ".class"), data);
 	}
 }

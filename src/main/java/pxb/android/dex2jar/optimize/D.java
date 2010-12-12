@@ -16,12 +16,15 @@
 package pxb.android.dex2jar.optimize;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
+import java.util.TreeMap;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
@@ -29,6 +32,7 @@ import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
 /**
@@ -38,42 +42,65 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 public class D implements MethodTransformer, Opcodes {
 
 	private static class Block {
-		public Block(int id, Label label) {
+		final public int id;
+
+		public List<AbstractInsnNode> insns = new ArrayList<AbstractInsnNode>();
+		final public LabelNode label;
+		public LabelNode next;
+
+		public Block(int id, LabelNode label) {
 			this.id = id;
 			this.label = label;
 		}
 
-		final public int id;
-		final public Label label;
-		public Label next;
-		public InsnList insns = new InsnList();
+		public String toString() {
+			return String.format("B%03d", id);
+		}
 	}
 
 	private static final class BranchBlock extends Block {
-		public BranchBlock(int id, Label label, AbstractInsnNode insn) {
+		public final AbstractInsnNode branchInsn;
+
+		public BranchBlock(int id, LabelNode label, AbstractInsnNode insn) {
 			super(id, label);
 			this.branchInsn = insn;
 		}
-
-		public final AbstractInsnNode branchInsn;
 	}
 
 	private static class EndBlock extends Block {
-		public EndBlock(int id, Label label, AbstractInsnNode endInsn) {
+		public final AbstractInsnNode endInsn;
+
+		public EndBlock(int id, LabelNode label, AbstractInsnNode endInsn) {
 			super(id, label);
 			this.endInsn = endInsn;
 		}
 
-		public final AbstractInsnNode endInsn;
-
 		public EndBlock clone() {
-			EndBlock n = new EndBlock(id, new Label(), endInsn.clone(null));
-			InsnList insnList = new InsnList();
-			for (AbstractInsnNode p = insns.getFirst(); p != null; p = p.getNext()) {
+			EndBlock n = new EndBlock(id, new LabelNode(), endInsn.clone(null));
+			List<AbstractInsnNode> insnList = new ArrayList<AbstractInsnNode>();
+			for (AbstractInsnNode p : insns) {
 				insnList.add(p.clone(null));
 			}
 			n.insns = insnList;
 			return n;
+		}
+	}
+
+	private static class TcbK {
+		final public Block start, end;
+
+		public TcbK(Block start, Block end) {
+			this.start = start;
+			this.end = end;
+		}
+
+		public boolean equals(Object obj) {
+			TcbK tcbk = (TcbK) obj;
+			return tcbk.start.id == start.id && tcbk.end.id == end.id;
+		}
+
+		public int hashCode() {
+			return start.id * 31 + end.id;
 		}
 	}
 
@@ -88,18 +115,19 @@ public class D implements MethodTransformer, Opcodes {
 		}
 	}
 
-	private static class Tcb {
-		public TryCatchBlockNode tcn;
-		public Block start;
-		public Block end;
-		public Block handler;
-	}
-
-	private Map<Label, Block> map = new HashMap<Label, Block>();
-
-	private List<Tcb> tcbs = new ArrayList<Tcb>();
-
 	private Block first;
+
+	private Map<LabelNode, Block> map = new HashMap<LabelNode, Block>();
+
+	private Map<TcbK, Map<Block, String>> tcbs = new TreeMap<TcbK, Map<Block, String>>(new Comparator<TcbK>() {
+
+		@Override
+		public int compare(TcbK o1, TcbK o2) {
+			int i = o1.start.id - o2.start.id;
+			int j = o1.end.id - o2.end.id;
+			return i == 0 ? j : i;
+		}
+	});
 
 	private void addToMap(Block block) {
 		map.put(block.label, block);
@@ -110,44 +138,58 @@ public class D implements MethodTransformer, Opcodes {
 
 	private void cut(MethodNode method) {
 		InsnList insns = method.instructions;
+		method.instructions = null;
 		{
-			AbstractInsnNode p = method.instructions.getFirst();
+			AbstractInsnNode p = insns.getFirst();
 			if (!(p instanceof LabelNode)) {
 				insns.insertBefore(p, new LabelNode());
 			}
-			AbstractInsnNode q = method.instructions.getLast();
+			AbstractInsnNode q = insns.getLast();
 			if (!(q instanceof LabelNode)) {
 				insns.insert(q, new LabelNode());
 			}
 		}
-		Map<Label, Block> preBlockMap = new HashMap<Label, Block>();
+		@SuppressWarnings("serial")
+		Map<LabelNode, LabelNode> cloneMap = new HashMap<LabelNode, LabelNode>() {
+			public LabelNode get(Object key) {
+
+				LabelNode l = super.get(key);
+				if (l == null) {
+					l = new LabelNode();
+					put((LabelNode) key, l);
+				}
+				return l;
+			}
+		};
+		Map<LabelNode, Block> preBlockMap = new HashMap<LabelNode, Block>();
 		int i = 0;
-		Label label = null;
+		LabelNode label = null;
 		Block block = null;
-		InsnList currentInsnList = null;
+		List<AbstractInsnNode> currentInsnList = null;
 		for (AbstractInsnNode p = insns.getFirst(); p != null; p = p.getNext()) {
-			switch (p.getType()) {
+			final AbstractInsnNode cp = p.clone(cloneMap);
+			switch (cp.getType()) {
 			case AbstractInsnNode.LABEL: {
 				if (label != null) {
 					block = new Block(i++, label);
 					block.insns = currentInsnList;
-					block.next = ((LabelNode) p).getLabel();
+					block.next = (LabelNode) cp;
 					addToMap(block);
 				}
-				currentInsnList = new InsnList();
-				label = ((LabelNode) p).getLabel();
+				currentInsnList = new ArrayList<AbstractInsnNode>();
+				label = (LabelNode) cp;
 				preBlockMap.put(label, block);
 				break;
 			}
 			case AbstractInsnNode.JUMP_INSN:
 			case AbstractInsnNode.LOOKUPSWITCH_INSN:
 			case AbstractInsnNode.TABLESWITCH_INSN: {
-				if (p.getOpcode() == GOTO) {
+				if (cp.getOpcode() == GOTO) {
 					block = new Block(i++, label);
-					block.next = ((JumpInsnNode) p).label.getLabel();
+					block.next = (LabelNode) ((JumpInsnNode) cp).label;
 				} else {//
-					block = new BranchBlock(i++, label, p);
-					block.next = getNextLabelNode(p, insns).getLabel();
+					block = new BranchBlock(i++, label, cp);
+					block.next = (LabelNode) getNextLabelNode(p, insns).clone(cloneMap);
 				}
 				block.insns = currentInsnList;
 				addToMap(block);
@@ -155,8 +197,12 @@ public class D implements MethodTransformer, Opcodes {
 				label = null;
 				break;
 			}
+			case AbstractInsnNode.FRAME:
+			case AbstractInsnNode.LINE:
+				// ignore
+				break;
 			default:
-				switch (p.getOpcode()) {
+				switch (cp.getOpcode()) {
 				case IRETURN:
 				case LRETURN:
 				case FRETURN:
@@ -164,15 +210,16 @@ public class D implements MethodTransformer, Opcodes {
 				case ARETURN:
 				case RETURN:
 				case ATHROW:
-					block = new EndBlock(i++, label, p);
-					getNextLabelNode(p, insns).getLabel();
+					block = new EndBlock(i++, label, cp);
+					block.next = null;
+					getNextLabelNode(p, insns);
 					block.insns = currentInsnList;
 					addToMap(block);
 					currentInsnList = null;
 					label = null;
 					break;
 				default:
-					currentInsnList.add(p.clone(null));
+					currentInsnList.add(cp);
 				}
 
 			}
@@ -180,12 +227,116 @@ public class D implements MethodTransformer, Opcodes {
 
 		for (Iterator<?> it = method.tryCatchBlocks.iterator(); it.hasNext();) {
 			TryCatchBlockNode tcn = (TryCatchBlockNode) it.next();
-			Tcb tcb = new Tcb();
-			tcbs.add(tcb);
-			tcb.tcn = tcn;
-			tcb.start = map.get(tcn.start.getLabel());
-			tcb.end = preBlockMap.get(tcn.end);
-			tcb.handler = map.get(tcn.handler.getLabel());
+
+			Block s = map.get((LabelNode) tcn.start.clone(cloneMap));
+			Block e = map.get((LabelNode) tcn.end.clone(cloneMap));
+			Block handler = map.get(tcn.handler.clone(cloneMap));
+			TcbK key = new TcbK(s, e);
+
+			Map<Block, String> handlers = tcbs.get(key);
+			if (handlers == null) {
+				handlers = new TreeMap<Block, String>(new Comparator<Block>() {
+					@Override
+					public int compare(Block o1, Block o2) {
+						return o1.id - o2.id;
+					}
+				});
+				tcbs.put(key, handlers);
+			}
+			handlers.put(handler, tcn.type);
+			tcn.start = s.label;
+			tcn.end = e.label;
+			tcn.handler = handler.label;
+		}
+	}
+
+	// private void dump(Block block) {
+	// TraceMethodVisitor tv = new TraceMethodVisitor();
+	// for (AbstractInsnNode insn : block.insns) {
+	// insn.accept(tv);
+	// }
+	// int i = 0;
+	// for (Object o : tv.text) {
+	// System.out.print(String.format("%4d%s", i++, o));
+	// }
+	// }
+
+	private void doRebuild(InsnList insnList, Stack<Block> toWriteBlock, List<LabelNode> visited) {
+		while (!toWriteBlock.empty()) {
+			Block b = toWriteBlock.pop();
+			if (visited.contains(b.label)) {
+				continue;
+			}
+			visited.add(b.label);
+			insnList.add(b.label);
+			for (AbstractInsnNode p : b.insns) {
+				insnList.add(p);
+			}
+			if (b instanceof BranchBlock) {
+				BranchBlock bb = (BranchBlock) b;
+				switch (bb.branchInsn.getType()) {
+				case AbstractInsnNode.JUMP_INSN:
+					JumpInsnNode jump = (JumpInsnNode) bb.branchInsn;
+					insnList.add(jump);
+					toWriteBlock.push(map.get(jump.label));
+					if (visited.contains(bb.next)) {
+						insnList.add(new JumpInsnNode(GOTO, bb.next));
+					} else {
+						toWriteBlock.push(map.get(bb.next));
+					}
+					continue;
+				case AbstractInsnNode.LOOKUPSWITCH_INSN:
+				case AbstractInsnNode.TABLESWITCH_INSN: {
+					AbstractInsnNode ts = bb.branchInsn;
+					LabelNode dfltLabel = ts.getType() == AbstractInsnNode.LOOKUPSWITCH_INSN ? ((LookupSwitchInsnNode) ts).dflt
+							: ((TableSwitchInsnNode) ts).dflt;
+					@SuppressWarnings("unchecked")
+					List<LabelNode> labels = ts.getType() == AbstractInsnNode.LOOKUPSWITCH_INSN ? ((LookupSwitchInsnNode) ts).labels
+							: ((TableSwitchInsnNode) ts).labels;
+
+					insnList.add(ts);
+					toWriteBlock.push(map.get(dfltLabel));
+					List<LabelNode> cLables = new ArrayList<LabelNode>(labels);
+					Collections.reverse(cLables);
+					for (LabelNode labelNode : cLables) {
+						toWriteBlock.push(map.get(labelNode));
+					}
+
+					continue;
+				}
+				}
+			} else {
+				if (b instanceof EndBlock) {
+					EndBlock eb = (EndBlock) b;
+					insnList.add(eb.endInsn);
+				}
+				if (b.next != null) {
+					if (visited.contains(b.next)) {
+						insnList.add(new JumpInsnNode(GOTO, b.next));
+					} else {
+						toWriteBlock.push(map.get(b.next));
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param method
+	 */
+	@SuppressWarnings("rawtypes")
+	private void rebuild(MethodNode method) {
+		InsnList insnList = new InsnList();
+		method.instructions = insnList;
+		List<LabelNode> visited = new ArrayList<LabelNode>();
+		Stack<Block> toWriteBlock = new Stack<Block>();
+		toWriteBlock.push(first);
+		doRebuild(insnList, toWriteBlock, visited);
+		method.tryCatchBlocks = new ArrayList();
+		for (Iterator<?> it = method.tryCatchBlocks.iterator(); it.hasNext();) {
+			TryCatchBlockNode tcn = (TryCatchBlockNode) it.next();
+			toWriteBlock.push(map.get(tcn.handler));
+			doRebuild(insnList, toWriteBlock, visited);
 		}
 	}
 
@@ -198,86 +349,5 @@ public class D implements MethodTransformer, Opcodes {
 	public void transform(MethodNode method) {
 		cut(method);
 		rebuild(method);
-	}
-
-	/**
-	 * @param method
-	 */
-	@SuppressWarnings("rawtypes")
-	private void rebuild(MethodNode method) {
-		InsnList insnList = new InsnList();
-		method.instructions = insnList;
-		List<Label> visited = new ArrayList<Label>();
-		doRebuild(insnList, first, visited);
-		method.tryCatchBlocks = new ArrayList();
-		for (Tcb tcb : tcbs) {
-			TryCatchBlockNode tcn = tcb.tcn;
-			tcn.start = new LabelNode(tcb.start.label);
-			tcn.handler = new LabelNode(tcb.handler.label);
-			int index = visited.indexOf(tcb.end.label);
-			tcn.end = new LabelNode(visited.get(index + 1));
-			doRebuild(insnList, tcb.handler, visited);
-		}
-	}
-
-	private void doRebuild(InsnList insnList, Block b, List<Label> visited) {
-		if (b == null) {
-			return;
-		}
-		if (visited.contains(b.label)) {
-			return;
-		}
-		visited.add(b.label);
-		insnList.add(new LabelNode(b.label));
-		for (AbstractInsnNode p = b.insns.getFirst(); p != null; p = p.getNext()) {
-			insnList.add(p.clone(null));
-		}
-		if (b instanceof BranchBlock) {
-			BranchBlock bb = (BranchBlock) b;
-			switch (bb.branchInsn.getType()) {
-			case AbstractInsnNode.JUMP_INSN:
-				JumpInsnNode jump = (JumpInsnNode) bb.branchInsn;
-				insnList.add(jump);
-				if (visited.contains(bb.next)) {
-					insnList.add(new JumpInsnNode(GOTO, new LabelNode(bb.next)));
-				} else {
-					doRebuild(insnList, map.get(bb.next), visited);
-				}
-				doRebuild(insnList, map.get(jump.label.getLabel()), visited);
-				return;
-			case AbstractInsnNode.LOOKUPSWITCH_INSN: {
-				LookupSwitchInsnNode ls = (LookupSwitchInsnNode) bb.branchInsn;
-				insnList.add(ls);
-				doRebuild(insnList, map.get(ls.dflt.getLabel()), visited);
-				for (Iterator<?> it = ls.labels.iterator(); it.hasNext();) {
-					doRebuild(insnList, map.get(((LabelNode) it.next()).getLabel()), visited);
-				}
-				doRebuild(insnList, map.get(bb.next), visited);
-				return;
-			}
-			case AbstractInsnNode.TABLESWITCH_INSN: {
-				LookupSwitchInsnNode ts = (LookupSwitchInsnNode) bb.branchInsn;
-				insnList.add(ts);
-				doRebuild(insnList, map.get(ts.dflt.getLabel()), visited);
-				for (Iterator<?> it = ts.labels.iterator(); it.hasNext();) {
-					doRebuild(insnList, map.get(((LabelNode) it.next()).getLabel()), visited);
-				}
-				doRebuild(insnList, map.get(bb.next), visited);
-				return;
-			}
-			}
-		} else {
-			if (b instanceof EndBlock) {
-				EndBlock eb = (EndBlock) b;
-				insnList.add(eb.endInsn);
-			}
-			if (b.next != null) {
-				if (visited.contains(b.next)) {
-					insnList.add(new JumpInsnNode(GOTO, new LabelNode(b.next)));
-				} else {
-					doRebuild(insnList, map.get(b.next), visited);
-				}
-			}
-		}
 	}
 }
