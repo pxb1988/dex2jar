@@ -460,7 +460,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
 			dcv.visitFilledNewArrayIns(OP_FILLED_NEW_ARRAY, dex.getType(arg2 & 0xFFFF), args);
 		}
 		case OP_CONST_STRING_JUMBO: {
-			dcv.visitLdcInsn(OP_CONST_STRING, dex.getString((arg3 << 16) | (arg2 & 0xFFFF)), arg1);
+			dcv.visitLdcInsn(OP_CONST_STRING, dex.getString(((arg3 << 16) & 0xFFFF) | (arg2 & 0xFFFF)), arg1);
 		}
 			break;
 		default:
