@@ -21,9 +21,9 @@ package pxb.android.dex2jar.visitors;
  */
 public interface DexMethodVisitor extends DexAnnotationAble {
 
-	public DexAnnotationAble visitParamesterAnnotation(int index);
+    public DexAnnotationAble visitParamesterAnnotation(int index);
 
-	public void visitEnd();
+    public void visitEnd();
 
-	public DexCodeVisitor visitCode();
+    public DexCodeVisitor visitCode();
 }

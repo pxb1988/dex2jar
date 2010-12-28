@@ -25,34 +25,34 @@ import java.util.List;
  * @version $Id$
  */
 public class Ann {
-	public static class Item {
-		public String name;
+    public static class Item {
+        public String name;
 
-		public Object value;
+        public Object value;
 
-		/**
-		 * @param name
-		 * @param value
-		 */
-		public Item(String name, Object value) {
-			super();
-			this.name = name;
-			this.value = value;
-		}
-	}
+        /**
+         * @param name
+         * @param value
+         */
+        public Item(String name, Object value) {
+            super();
+            this.name = name;
+            this.value = value;
+        }
+    }
 
-	public List<Item> items = new ArrayList<Item>();
+    public List<Item> items = new ArrayList<Item>();
 
-	public String type;
-	public boolean visible;
+    public String type;
+    public boolean visible;
 
-	/**
-	 * @param type
-	 * @param visitable
-	 */
-	public Ann(String type, boolean visitable) {
-		super();
-		this.type = type;
-		this.visible = visitable;
-	}
+    /**
+     * @param type
+     * @param visitable
+     */
+    public Ann(String type, boolean visitable) {
+        super();
+        this.type = type;
+        this.visible = visitable;
+    }
 }

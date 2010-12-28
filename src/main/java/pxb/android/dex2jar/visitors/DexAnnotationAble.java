@@ -24,14 +24,14 @@ import org.objectweb.asm.AnnotationVisitor;
  * @version $Id$
  */
 public interface DexAnnotationAble {
-	/**
-	 * 访问注解
-	 * 
-	 * @param name
-	 *          注解名
-	 * @param visitable
-	 *          是否运行时可见
-	 * @return
-	 */
-	AnnotationVisitor visitAnnotation(String name, boolean visitable);
+    /**
+     * 访问注解
+     * 
+     * @param name
+     *            注解名
+     * @param visitable
+     *            是否运行时可见
+     * @return
+     */
+    AnnotationVisitor visitAnnotation(String name, boolean visitable);
 }

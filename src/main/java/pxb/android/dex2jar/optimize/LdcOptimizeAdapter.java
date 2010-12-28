@@ -25,36 +25,36 @@ import org.objectweb.asm.Opcodes;
  */
 public class LdcOptimizeAdapter extends MethodAdapter implements Opcodes {
 
-	/**
-	 * @param mv
-	 */
-	public LdcOptimizeAdapter(MethodVisitor mv) {
-		super(mv);
-	}
+    /**
+     * @param mv
+     */
+    public LdcOptimizeAdapter(MethodVisitor mv) {
+        super(mv);
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.objectweb.asm.MethodAdapter#visitLdcInsn(java.lang.Object)
-	 */
-	@Override
-	public void visitLdcInsn(Object cst) {
-		if (cst == null) {
-			this.visitInsn(ACONST_NULL);
-		} else if (cst instanceof Integer) {
-			int value = (Integer) cst;
-			if (value >= 0 && value <= 5) {
-				super.visitInsn(ICONST_0 + value);
-			} else if (value <= Byte.MAX_VALUE && value >= Byte.MIN_VALUE) {
-				super.visitIntInsn(BIPUSH, value);
-			} else if (value <= Short.MAX_VALUE && value >= Short.MIN_VALUE) {
-				super.visitIntInsn(SIPUSH, value);
-			} else {
-				super.visitLdcInsn(cst);
-			}
-		} else {
-			super.visitLdcInsn(cst);
-		}
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.objectweb.asm.MethodAdapter#visitLdcInsn(java.lang.Object)
+     */
+    @Override
+    public void visitLdcInsn(Object cst) {
+        if (cst == null) {
+            this.visitInsn(ACONST_NULL);
+        } else if (cst instanceof Integer) {
+            int value = (Integer) cst;
+            if (value >= 0 && value <= 5) {
+                super.visitInsn(ICONST_0 + value);
+            } else if (value <= Byte.MAX_VALUE && value >= Byte.MIN_VALUE) {
+                super.visitIntInsn(BIPUSH, value);
+            } else if (value <= Short.MAX_VALUE && value >= Short.MIN_VALUE) {
+                super.visitIntInsn(SIPUSH, value);
+            } else {
+                super.visitLdcInsn(cst);
+            }
+        } else {
+            super.visitLdcInsn(cst);
+        }
+    }
 
 }

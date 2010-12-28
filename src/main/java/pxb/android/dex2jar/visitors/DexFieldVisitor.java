@@ -21,5 +21,5 @@ package pxb.android.dex2jar.visitors;
  */
 public interface DexFieldVisitor extends DexAnnotationAble {
 
-	public void visitEnd();
+    public void visitEnd();
 }

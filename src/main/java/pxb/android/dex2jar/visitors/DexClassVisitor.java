@@ -24,11 +24,11 @@ import pxb.android.dex2jar.Method;
  */
 public interface DexClassVisitor extends DexAnnotationAble {
 
-	public void visitSource(String file);
+    public void visitSource(String file);
 
-	public DexFieldVisitor visitField(Field field, Object value);
+    public DexFieldVisitor visitField(Field field, Object value);
 
-	public DexMethodVisitor visitMethod(Method method);
+    public DexMethodVisitor visitMethod(Method method);
 
-	public void visitEnd();
+    public void visitEnd();
 }

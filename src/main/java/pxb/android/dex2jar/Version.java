@@ -15,7 +15,6 @@
  */
 package pxb.android.dex2jar;
 
-
 /**
  * 版本号
  * 
@@ -24,12 +23,12 @@ package pxb.android.dex2jar;
  */
 public final class Version {
 
-	private static String version;
+    private static String version;
 
-	public static String getVersionString() {
-		if (version == null) {
-			version = Version.class.getPackage().getImplementationVersion();
-		}
-		return version;
-	}
+    public static String getVersionString() {
+        if (version == null) {
+            version = Version.class.getPackage().getImplementationVersion();
+        }
+        return version;
+    }
 }

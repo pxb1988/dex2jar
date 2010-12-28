@@ -26,29 +26,29 @@ import pxb.android.dex2jar.visitors.DexFileVisitor;
  * @version $Id$
  */
 public class V3AccessFlagsAdapter implements DexFileVisitor {
-	Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<String, Integer>();
 
-	public Map<String, Integer> getAccessFlagsMap() {
-		return map;
-	}
+    public Map<String, Integer> getAccessFlagsMap() {
+        return map;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexFileVisitor#visit(int,
-	 * java.lang.String, java.lang.String, java.lang.String[])
-	 */
-	public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames) {
-		map.put(className, access_flags);
-		return null;
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see pxb.android.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
+     * java.lang.String[])
+     */
+    public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames) {
+        map.put(className, access_flags);
+        return null;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexFileVisitor#visitEnd()
-	 */
-	public void visitEnd() {
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see pxb.android.dex2jar.visitors.DexFileVisitor#visitEnd()
+     */
+    public void visitEnd() {
+    }
 
 }

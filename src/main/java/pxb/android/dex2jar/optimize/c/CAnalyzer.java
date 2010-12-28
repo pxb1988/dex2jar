@@ -20,17 +20,17 @@ import org.objectweb.asm.tree.analysis.Interpreter;
 
 public class CAnalyzer extends Analyzer {
 
-	public CAnalyzer(Interpreter interpreter) {
-		super(interpreter);
-	}
+    public CAnalyzer(Interpreter interpreter) {
+        super(interpreter);
+    }
 
-	@Override
-	protected org.objectweb.asm.tree.analysis.Frame newFrame(int nLocals, int nStack) {
-		return new CFrame(nLocals, nStack);
-	}
+    @Override
+    protected org.objectweb.asm.tree.analysis.Frame newFrame(int nLocals, int nStack) {
+        return new CFrame(nLocals, nStack);
+    }
 
-	@Override
-	protected org.objectweb.asm.tree.analysis.Frame newFrame(org.objectweb.asm.tree.analysis.Frame src) {
-		return new CFrame((CFrame) src);
-	}
+    @Override
+    protected org.objectweb.asm.tree.analysis.Frame newFrame(org.objectweb.asm.tree.analysis.Frame src) {
+        return new CFrame((CFrame) src);
+    }
 }

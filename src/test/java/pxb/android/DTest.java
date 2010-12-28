@@ -36,31 +36,31 @@ import res.SwitchRes;
  * 
  */
 public class DTest {
-	private void dump(MethodNode methodNode) {
-		TraceMethodVisitor tv = new TraceMethodVisitor();
-		methodNode.accept(tv);
-		int i = 0;
-		for (Object o : tv.text) {
-			System.out.print(String.format("%4d%s", i++, o));
-		}
-	}
+    private void dump(MethodNode methodNode) {
+        TraceMethodVisitor tv = new TraceMethodVisitor();
+        methodNode.accept(tv);
+        int i = 0;
+        for (Object o : tv.text) {
+            System.out.print(String.format("%4d%s", i++, o));
+        }
+    }
 
-	@Test
-	public void testSwitch() throws IOException {
-		InputStream is = DTest.class.getResourceAsStream('/' + SwitchRes.class.getName().replace('.', '/') + ".class");
-		ClassNode cn = new ClassNode();
-		new ClassReader(is).accept(cn, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-		for (Iterator<?> it = cn.methods.iterator(); it.hasNext();) {
-			MethodNode methodNode = (MethodNode) it.next();
-			System.out.println("============BEFORE");
-			dump(methodNode);
-			new D().transform(methodNode);
-			System.out.println("============AFTER");
-			dump(methodNode);
-		}
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cn.accept(cw);
-		byte[] data = cw.toByteArray();
-		FileUtils.writeByteArrayToFile(new File("target/" + SwitchRes.class.getName().replace('.', '/') + ".class"), data);
-	}
+    @Test
+    public void testSwitch() throws IOException {
+        InputStream is = DTest.class.getResourceAsStream('/' + SwitchRes.class.getName().replace('.', '/') + ".class");
+        ClassNode cn = new ClassNode();
+        new ClassReader(is).accept(cn, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+        for (Iterator<?> it = cn.methods.iterator(); it.hasNext();) {
+            MethodNode methodNode = (MethodNode) it.next();
+            System.out.println("============BEFORE");
+            dump(methodNode);
+            new D().transform(methodNode);
+            System.out.println("============AFTER");
+            dump(methodNode);
+        }
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+        cn.accept(cw);
+        byte[] data = cw.toByteArray();
+        FileUtils.writeByteArrayToFile(new File("target/" + SwitchRes.class.getName().replace('.', '/') + ".class"), data);
+    }
 }
