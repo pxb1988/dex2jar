@@ -24,7 +24,6 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.tree.MethodNode;
 
 import pxb.android.dex2jar.Method;
@@ -62,7 +61,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
             paramAnns[i] = new ArrayList<Ann>();
         }
         this.paramAnns = paramAnns;
-        methodNode.tryCatchBlocks = new ArrayList();
+        methodNode.tryCatchBlocks = new ArrayList<Object>();
     }
 
     private void build() {
@@ -169,7 +168,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
                 (String[]) methodNode.exceptions.toArray(new String[methodNode.exceptions.size()]));
         if (mv != null) {
             try {
-                methodNode.accept(new LocalVariablesSorter(method.getAccessFlags(), method.getType().getDesc(), new LdcOptimizeAdapter(mv)));
+                methodNode.accept(new LdcOptimizeAdapter(mv));
             } catch (Exception e) {
                 throw new RuntimeException("Error visit method:" + this.method, e);
             }

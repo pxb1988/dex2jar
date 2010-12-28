@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 Panxiaobo
+ * Copyright (c) 2009-2011 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pxb.android.dex2jar.optimize.c;
+package res;
 
-import org.objectweb.asm.tree.analysis.Interpreter;
-
-public class CAnalyzer extends Analyzer {
-
-    public CAnalyzer(Interpreter interpreter) {
-        super(interpreter);
-    }
-
-    @Override
-    protected org.objectweb.asm.tree.analysis.Frame newFrame(int nLocals, int nStack) {
-        return new CFrame(nLocals, nStack);
-    }
-
-    @Override
-    protected org.objectweb.asm.tree.analysis.Frame newFrame(org.objectweb.asm.tree.analysis.Frame src) {
-        return new CFrame((CFrame) src);
+/**
+ * @author Panxiaobo [pxb1988@gmail.com]
+ * 
+ */
+public class LongDoubleRes {
+    long a(double d, double d2, long l1, long l2) {
+        long l3 = l1 + l2;
+        double d3 = d + d2;
+        return (long) (d3 + l3);
     }
 }

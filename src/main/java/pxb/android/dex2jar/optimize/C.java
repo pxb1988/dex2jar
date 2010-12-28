@@ -6,6 +6,9 @@ package pxb.android.dex2jar.optimize;
 import static pxb.android.dex2jar.optimize.Util.isRead;
 import static pxb.android.dex2jar.optimize.Util.isWrite;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -45,6 +48,20 @@ public class C implements MethodTransformer, Opcodes {
         }
         final Frame[] fs = a.getFrames();
 
+        Map<Integer, Integer> remap = new HashMap<Integer, Integer>();
+        int nIndex = 0;// new index
+        int oIndex = 0;// old index
+
+        if ((method.access & ACC_STATIC) == 0) {// not static
+            remap.put(oIndex++, nIndex++); // this
+        }
+        for (Type t : Type.getArgumentTypes(method.desc)) {
+            remap.put(oIndex++, nIndex++); // the arg
+            if (t.getSize() > 1) { // long
+                nIndex++;
+            }
+        }
+
         // 根据当前Stack或者之后的Stack类型值推测当前指令的内容
         for (int i = 0; i < fs.length; i++) {
             AbstractInsnNode node = method.instructions.get(i);
@@ -58,6 +75,16 @@ public class C implements MethodTransformer, Opcodes {
                 if (t != null) {
                     ((VarInsnNode) node).setOpcode(t.getOpcode(ILOAD));
                 }
+                Integer oldVar = Util.var(node);
+                Integer nVar = remap.get(oldVar);
+                if (nVar == null) {
+                    nVar = nIndex++;
+                    remap.put(oldVar, nVar);
+                    if (t != null && t.getSize() > 1) {
+                        nIndex++;
+                    }
+                }
+                Util.var(node, nVar);
             } else if (isWrite(node)) {
                 CFrame f = (CFrame) fs[i];// XSTORE
                 CBasicValue v = (CBasicValue) f.peek();
@@ -65,6 +92,16 @@ public class C implements MethodTransformer, Opcodes {
                 if (t != null) {
                     ((VarInsnNode) node).setOpcode(t.getOpcode(ISTORE));
                 }
+                Integer oldVar = Util.var(node);
+                Integer nVar = remap.get(oldVar);
+                if (nVar == null) {
+                    nVar = nIndex++;
+                    remap.put(oldVar, nVar);
+                    if (t != null && t.getSize() > 1) {
+                        nIndex++;
+                    }
+                }
+                Util.var(node, nVar);
             } else if (node.getOpcode() == LDC) { // LDC
                 CFrame f = (CFrame) fs[i + 1];
                 CBasicValue v = (CBasicValue) f.peek();
