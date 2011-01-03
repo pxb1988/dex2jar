@@ -30,14 +30,14 @@ import pxb.android.dex2jar.dump.Dump;
  * 
  */
 public class DumpTest {
-	static final Logger log = LoggerFactory.getLogger(DumpTest.class);
+    static final Logger log = LoggerFactory.getLogger(DumpTest.class);
 
-	@Test
-	public void test() throws IOException {
-		File file = new File("target/test-classes/dexes");
-		for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
-			log.info("dump file {}", f);
-			Dump.doFile(f);
-		}
-	}
+    @Test
+    public void test() throws IOException {
+        File file = new File("target/test-classes/dexes");
+        for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
+            log.info("dump file {}", f);
+            Dump.doFile(f);
+        }
+    }
 }

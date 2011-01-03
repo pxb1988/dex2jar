@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 Panxiaobo
+ * Copyright (c) 2009-2011 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pxb.android.dex2jar.visitors;
-
-import org.objectweb.asm.AnnotationVisitor;
+package res;
 
 /**
- * 用于访问注解
+ * @author Panxiaobo [pxb1988@gmail.com]
  * 
- * @author Panxiaobo [pxb1988@126.com]
- * @version $Id$
  */
-public interface DexAnnotationAble {
-    /**
-     * 访问注解
-     * 
-     * @param name
-     *            注解名
-     * @param visitable
-     *            是否运行时可见
-     * @return
-     */
-    AnnotationVisitor visitAnnotation(String name, boolean visitable);
+public class LongDoubleRes {
+    long a(double d, double d2, long l1, long l2) {
+        long l3 = l1 + l2;
+        double d3 = d + d2;
+        return (long) (d3 + l3);
+    }
 }

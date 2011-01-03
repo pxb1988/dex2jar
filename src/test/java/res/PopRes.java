@@ -21,11 +21,11 @@ package res;
  */
 public class PopRes {
 
-	long aaa() {
-		return 0;
-	}
+    long aaa() {
+        return 0;
+    }
 
-	void bbb() {
-		aaa();
-	}
+    void bbb() {
+        aaa();
+    }
 }

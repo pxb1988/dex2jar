@@ -32,76 +32,76 @@ import pxb.android.dex2jar.visitors.DexFieldVisitor;
  * @version $Id$
  */
 public class V3FieldAdapter implements DexFieldVisitor {
-	protected List<Ann> anns = new ArrayList<Ann>();
-	protected boolean build = false;
-	protected ClassVisitor cv;
-	protected Field field;
-	protected FieldVisitor fv;
-	Object value;
+    protected List<Ann> anns = new ArrayList<Ann>();
+    protected boolean build = false;
+    protected ClassVisitor cv;
+    protected Field field;
+    protected FieldVisitor fv;
+    Object value;
 
-	protected void build() {
-		if (!build) {
-			String signature = null;
-			for (Iterator<Ann> it = anns.iterator(); it.hasNext();) {
-				Ann ann = it.next();
-				if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
-					it.remove();
-					for (Item item : ann.items) {
-						if (item.name.equals("value")) {
-							Ann values = (Ann) item.value;
-							StringBuilder sb = new StringBuilder();
-							for (Item i : values.items) {
-								sb.append(i.value.toString());
-							}
-							signature = sb.toString();
-						}
-					}
-				}
-			}
-			FieldVisitor fv = cv.visitField(field.getAccessFlags(), field.getName(), field.getType(), signature, value);
-			if (fv != null) {
-				for (Ann ann : anns) {
-					AnnotationVisitor av = fv.visitAnnotation(ann.type, ann.visible);
-					V3AnnAdapter.accept(ann.items, av);
-					av.visitEnd();
-				}
-			}
-			this.fv = fv;
-			build = true;
-		}
-	}
+    protected void build() {
+        if (!build) {
+            String signature = null;
+            for (Iterator<Ann> it = anns.iterator(); it.hasNext();) {
+                Ann ann = it.next();
+                if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
+                    it.remove();
+                    for (Item item : ann.items) {
+                        if (item.name.equals("value")) {
+                            Ann values = (Ann) item.value;
+                            StringBuilder sb = new StringBuilder();
+                            for (Item i : values.items) {
+                                sb.append(i.value.toString());
+                            }
+                            signature = sb.toString();
+                        }
+                    }
+                }
+            }
+            FieldVisitor fv = cv.visitField(field.getAccessFlags(), field.getName(), field.getType(), signature, value);
+            if (fv != null) {
+                for (Ann ann : anns) {
+                    AnnotationVisitor av = fv.visitAnnotation(ann.type, ann.visible);
+                    V3AnnAdapter.accept(ann.items, av);
+                    av.visitEnd();
+                }
+            }
+            this.fv = fv;
+            build = true;
+        }
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
-	 */
-	public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-		Ann ann = new Ann(name, visitable);
-		anns.add(ann);
-		return new V3AnnAdapter(ann);
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see pxb.android.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
+     */
+    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+        Ann ann = new Ann(name, visitable);
+        anns.add(ann);
+        return new V3AnnAdapter(ann);
+    }
 
-	/**
-	 * @param cv
-	 * @param field
-	 */
-	public V3FieldAdapter(ClassVisitor cv, Field field, Object value) {
-		super();
-		this.cv = cv;
-		this.field = field;
-		this.value = value;
-	}
+    /**
+     * @param cv
+     * @param field
+     */
+    public V3FieldAdapter(ClassVisitor cv, Field field, Object value) {
+        super();
+        this.cv = cv;
+        this.field = field;
+        this.value = value;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pxb.android.dex2jar.visitors.DexFieldVisitor#visitEnd()
-	 */
-	public void visitEnd() {
-		build();
-		if (fv != null)
-			fv.visitEnd();
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see pxb.android.dex2jar.visitors.DexFieldVisitor#visitEnd()
+     */
+    public void visitEnd() {
+        build();
+        if (fv != null)
+            fv.visitEnd();
+    }
 
 }

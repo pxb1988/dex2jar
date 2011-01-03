@@ -25,59 +25,59 @@ import java.util.List;
  * @version $Id$
  */
 public class Proto {
-	/**
-	 * 描述
-	 */
-	private String desc;
-	/**
-	 * 参数类型
-	 */
-	private String[] parameterTypes;
-	/**
-	 * 返回类型
-	 */
-	private String returnType;
+    /**
+     * 描述
+     */
+    private String desc;
+    /**
+     * 参数类型
+     */
+    private String[] parameterTypes;
+    /**
+     * 返回类型
+     */
+    private String returnType;
 
-	public Proto(Dex dex, DataIn in) {
-		// int shorty_idx =
-		in.readIntx();
-		int return_type_idx = in.readIntx();
-		int parameters_off = in.readIntx();
+    public Proto(Dex dex, DataIn in) {
+        // int shorty_idx =
+        in.readIntx();
+        int return_type_idx = in.readIntx();
+        int parameters_off = in.readIntx();
 
-		returnType = dex.getType(return_type_idx);
-		List<String> parameterTypeList = new ArrayList<String>();
-		StringBuilder ps = new StringBuilder("(");
-		if (parameters_off != 0) {
-			in.pushMove(parameters_off);
-			int size = in.readIntx();
-			for (int i = 0; i < size; i++) {
-				String p = dex.getType(in.readShortx());
-				parameterTypeList.add(p);
-				ps.append(p);
-			}
-			in.pop();
-		}
-		ps.append(")").append(returnType);
-		desc = ps.toString();
-		parameterTypes = parameterTypeList.toArray(new String[parameterTypeList.size()]);
-	}
+        returnType = dex.getType(return_type_idx);
+        List<String> parameterTypeList = new ArrayList<String>();
+        StringBuilder ps = new StringBuilder("(");
+        if (parameters_off != 0) {
+            in.pushMove(parameters_off);
+            int size = in.readIntx();
+            for (int i = 0; i < size; i++) {
+                String p = dex.getType(in.readShortx());
+                parameterTypeList.add(p);
+                ps.append(p);
+            }
+            in.pop();
+        }
+        ps.append(")").append(returnType);
+        desc = ps.toString();
+        parameterTypes = parameterTypeList.toArray(new String[parameterTypeList.size()]);
+    }
 
-	public String getDesc() {
-		return desc;
-	}
+    public String getDesc() {
+        return desc;
+    }
 
-	/**
-	 * @return the parameterTypes
-	 */
-	public String[] getParameterTypes() {
-		return parameterTypes;
-	}
+    /**
+     * @return the parameterTypes
+     */
+    public String[] getParameterTypes() {
+        return parameterTypes;
+    }
 
-	public String getReturnType() {
-		return returnType;
-	}
+    public String getReturnType() {
+        return returnType;
+    }
 
-	public String toString() {
-		return desc;
-	}
+    public String toString() {
+        return desc;
+    }
 }

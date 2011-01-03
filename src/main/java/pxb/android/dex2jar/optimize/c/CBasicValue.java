@@ -33,86 +33,86 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.analysis.Value;
 
 /**
- * A {@link Value} that is represented by its type in a seven types type system.
- * This type system distinguishes the UNINITIALZED, INT, FLOAT, LONG, DOUBLE,
- * REFERENCE and RETURNADDRESS types.
+ * A {@link Value} that is represented by its type in a seven types type system. This type system distinguishes the
+ * UNINITIALZED, INT, FLOAT, LONG, DOUBLE, REFERENCE and RETURNADDRESS types.
  * 
  * @author Eric Bruneton
  */
 public class CBasicValue implements Value {
 
-	//public static final Value UNINITIALIZED_VALUE = new BasicValue(null);
+    // public static final Value UNINITIALIZED_VALUE = new BasicValue(null);
 
-	public static final Value INT_VALUE = new CBasicValue(Type.INT_TYPE);
+    public static final Value INT_VALUE = new CBasicValue(Type.INT_TYPE);
 
-	public static final Value FLOAT_VALUE = new CBasicValue(Type.FLOAT_TYPE);
+    public static final Value FLOAT_VALUE = new CBasicValue(Type.FLOAT_TYPE);
 
-	public static final Value LONG_VALUE = new CBasicValue(Type.LONG_TYPE);
+    public static final Value LONG_VALUE = new CBasicValue(Type.LONG_TYPE);
 
-	public static final Value DOUBLE_VALUE = new CBasicValue(Type.DOUBLE_TYPE);
+    public static final Value DOUBLE_VALUE = new CBasicValue(Type.DOUBLE_TYPE);
 
-	//public static final Value REFERENCE_VALUE = new BasicValue(Type.getObjectType("java/lang/Object"));
+    // public static final Value REFERENCE_VALUE = new BasicValue(Type.getObjectType("java/lang/Object"));
 
-	public static final Value RETURNADDRESS_VALUE = new CBasicValue(null);
+    public static final Value RETURNADDRESS_VALUE = new CBasicValue(null);
 
-	private Type type;
+    private Type type;
 
-	public CBasicValue(final Type type) {
-		this.type = type;
-	}
+    public CBasicValue(final Type type) {
+        this.type = type;
+    }
 
-	public Type getType() {
-		return type;
-	}
+    public Type getType() {
+        return type;
+    }
 
-	/**
-	 * @param type
-	 *            the type to set
-	 */
-	public void setType(Type type) {
-		this.type = type;
-	}
+    /**
+     * @param type
+     *            the type to set
+     */
+    public void setType(Type type) {
+        this.type = type;
+    }
 
-	public int getSize() {
-		return type == Type.LONG_TYPE || type == Type.DOUBLE_TYPE ? 2 : 1;
-	}
+    public int getSize() {
+        return type == Type.LONG_TYPE || type == Type.DOUBLE_TYPE ? 2 : 1;
+    }
 
-	public boolean isReference() {
-		return type != null && (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY);
-	}
+    public boolean isReference() {
+        return type != null && (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY);
+    }
 
-	public boolean equals(final Object value) {
-		if (value == this) {
-			return true;
-		} else if (value instanceof CBasicValue) {
-			if (type == null) {
-				return ((CBasicValue) value).type == null;
-			} else {
-				return type.equals(((CBasicValue) value).type);
-			}
-		} else {
-			return false;
-		}
-	}
+    public boolean equals(final Object value) {
+        if (value == this) {
+            return true;
+        } else if (value instanceof CBasicValue) {
+            if (type == null) {
+                return ((CBasicValue) value).type == null;
+            } else {
+                return type.equals(((CBasicValue) value).type);
+            }
+        } else {
+            return false;
+        }
+    }
 
-	public int hashCode() {
-		return type == null ? 0 : type.hashCode();
-	}
+    public int hashCode() {
+        return type == null ? 0 : type.hashCode();
+    }
 
-	public String toString() {
-//		if (this == UNINITIALIZED_VALUE) {
-//			return ".";
-//		} else
-			if (this.type == null) {
-			return "X";
-		} else if (this == RETURNADDRESS_VALUE) {
-			return "A";
-//		} else if (this == REFERENCE_VALUE) {
-//			return "R";
-		}if(type.getDescriptor().length()==1){
-			return type.getDescriptor();
-		} else {
-			return "O";
-		}
-	}
+    public String toString() {
+        // if (this == UNINITIALIZED_VALUE) {
+        // return ".";
+        // } else
+        if (this.type == null) {
+            return "X";
+        } else if (this == RETURNADDRESS_VALUE) {
+            return "A";
+            // } else if (this == REFERENCE_VALUE) {
+            // return "R";
+        }
+        if (type.getDescriptor().length() == 1) {
+            return type.getDescriptor();
+        } else {
+            return "O";
+        }
+    }
 }

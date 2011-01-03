@@ -20,7 +20,7 @@ package res;
  * 
  */
 public class ChineseRes {
-	public void 你() {
-		System.out.println("你好");
-	}
+    public void 你() {
+        System.out.println("你好");
+    }
 }

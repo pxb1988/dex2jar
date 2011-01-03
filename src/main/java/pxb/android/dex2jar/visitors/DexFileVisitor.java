@@ -20,10 +20,10 @@ package pxb.android.dex2jar.visitors;
  * @version $Id$
  */
 public interface DexFileVisitor {
-	public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames);
+    public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames);
 
-	/**
+    /**
 	 * 
 	 */
-	public void visitEnd();
+    public void visitEnd();
 }

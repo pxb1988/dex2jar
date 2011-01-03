@@ -30,14 +30,14 @@ import pxb.android.dex2jar.v3.Main;
  * 
  */
 public class V3Test {
-	static final Logger log = LoggerFactory.getLogger(V3Test.class);
+    static final Logger log = LoggerFactory.getLogger(V3Test.class);
 
-	@Test
-	public void test() throws IOException {
-		File file = new File("target/test-classes/dexes");
-		for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
-			log.info("dex2jar file {}", f);
-			Main.doFile(f);
-		}
-	}
+    @Test
+    public void test() throws IOException {
+        File file = new File("target/test-classes/dexes");
+        for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
+            log.info("dex2jar file {}", f);
+            Main.doFile(f);
+        }
+    }
 }
