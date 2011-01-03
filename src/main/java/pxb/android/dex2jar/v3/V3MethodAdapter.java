@@ -24,7 +24,10 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.optimize.B;
@@ -46,6 +49,13 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     final protected Method method;
     final protected List<Ann>[] paramAnns;
     final protected MethodNode methodNode = new MethodNode();
+    private static final Logger log = LoggerFactory.getLogger(V3MethodAdapter.class);
+
+    static {
+        log.debug("InsnList.check=false");
+        // Optmize Tree Analyzer
+        InsnList.check = false;
+    }
 
     /**
      * @param cv

@@ -71,6 +71,8 @@ public class Analyzer extends org.objectweb.asm.tree.analysis.Analyzer implement
 
     private boolean[] queued;
 
+    private int[] visited;
+
     private int[] queue;
 
     private int top;
@@ -111,6 +113,7 @@ public class Analyzer extends org.objectweb.asm.tree.analysis.Analyzer implement
         frames = new Frame[n];
         subroutines = new Subroutine[n];
         queued = new boolean[n];
+        visited = new int[n];
         queue = new int[n];
         top = 0;
 
@@ -179,6 +182,10 @@ public class Analyzer extends org.objectweb.asm.tree.analysis.Analyzer implement
             Subroutine subroutine = subroutines[insn];
             queued[insn] = false;
 
+            if (visited[insn] >= 5) {// loop 5 times max
+                continue;
+            }
+            visited[insn] = visited[insn] + 1;
             try {
                 AbstractInsnNode insnNode = m.instructions.get(insn);
                 int insnOpcode = insnNode.getOpcode();
