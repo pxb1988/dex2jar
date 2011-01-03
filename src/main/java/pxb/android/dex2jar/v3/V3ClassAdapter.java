@@ -114,6 +114,8 @@ public class V3ClassAdapter implements DexClassVisitor {
                     continue;
                 } else if (ann.type.equals("Ldalvik/annotation/InnerClass;")) {
                     continue;
+                } else if (ann.type.equals("Ldalvik/annotation/EnclosingMethod;")) {
+                    continue;
                 }
                 AnnotationVisitor av = cv.visitAnnotation(ann.type, ann.visible);
                 V3AnnAdapter.accept(ann.items, av);

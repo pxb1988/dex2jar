@@ -440,6 +440,7 @@ public class DexFileReader implements Dex {
      * @return
      */
     protected int visitField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions, Object value) {
+        DataIn in = this.in;
         int diff = (int) in.readUnsignedLeb128();
         int field_id = lastIndex + diff;
         Field field = getField(field_id);
@@ -473,6 +474,7 @@ public class DexFileReader implements Dex {
      * @return
      */
     protected int visitMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos, Map<Integer, Integer> parameterAnnos) {
+        DataIn in = this.in;
         int diff = (int) in.readUnsignedLeb128();
         int method_id = lastIndex + diff;
         Method method = getMethod(method_id);
