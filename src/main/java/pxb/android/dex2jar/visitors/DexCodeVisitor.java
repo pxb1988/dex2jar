@@ -300,7 +300,7 @@ public interface DexCodeVisitor {
      * 
      * @param index
      */
-    public void visitLabel(Label label);
+    void visitLabel(Label label);
 
     /**
      * 

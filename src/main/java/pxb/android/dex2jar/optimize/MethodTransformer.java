@@ -22,5 +22,5 @@ import org.objectweb.asm.tree.MethodNode;
  * @version $Id$
  */
 public interface MethodTransformer {
-    public void transform(MethodNode method);
+    void transform(MethodNode method);
 }

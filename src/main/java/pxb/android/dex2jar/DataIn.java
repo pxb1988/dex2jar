@@ -23,48 +23,60 @@ package pxb.android.dex2jar;
  */
 public interface DataIn {
 
-    public int readIntx();
+    /**
+     * 获取当前位置
+     * 
+     * @return
+     */
+    int getCurrentPosition();
 
-    public long readLongx();
+    void move(int offset);
 
-    public short readShortx();
+    boolean needPadding();
 
-    public void move(int offset);
+    void pop();
 
-    public void pushMove(int offset);
+    void push();
 
-    public void push();
+    /**
+     * equals to
+     * 
+     * <pre>
+     * push();
+     * move(offset);
+     * </pre>
+     * 
+     * @see #push()
+     * @see #move(int)
+     * @param offset
+     */
+    void pushMove(int offset);
 
-    public void pop();
+    /**
+	 * 
+	 */
+    int readByte();
 
     byte[] readBytes(int size);
 
-    long readUnsignedLeb128();
+    int readIntx();
+
+    long readLongx();
+
+    short readShortx();
 
     long readSignedLeb128();
 
     /**
      * @return
      */
-    public int readUnsignedByte();
+    int readUnsignedByte();
 
-    public boolean needPadding();
-
-    /**
-	 * 
-	 */
-    public int readByte();
+    long readUnsignedLeb128();
 
     /**
      * @param i
      */
-    public void skip(int bytes);
-
-    /**
-     * 获取当前位置
-     * 
-     * @return
-     */
-    public int getCurrentPosition();
+    void skip(int bytes);
 
 }

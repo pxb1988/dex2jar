@@ -39,12 +39,32 @@ import pxb.android.dex2jar.visitors.DexMethodVisitor;
  */
 public class V3ClassAdapter implements DexClassVisitor {
 
-    protected ClassVisitor cv;
-    protected boolean build = false;
     protected int access_flags;
+    protected Map<String, Integer> accessFlagsMap;
+    protected List<Ann> anns = new ArrayList<Ann>();
+    protected boolean build = false;
     protected String className;
-    protected String superClass;
+    protected ClassVisitor cv;
+    protected String file;
     protected String[] interfaceNames;
+    protected String superClass;
+
+    /**
+     * @param cv
+     * @param access_flags
+     * @param className
+     * @param superClass
+     * @param interfaceNames
+     */
+    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, ClassVisitor cv, int access_flags, String className, String superClass, String[] interfaceNames) {
+        super();
+        this.accessFlagsMap = accessFlagsMap;
+        this.cv = new TypeNameAdapter(cv);
+        this.access_flags = access_flags;
+        this.className = className;
+        this.superClass = superClass;
+        this.interfaceNames = interfaceNames;
+    }
 
     protected void build() {
         if (!build) {
@@ -66,7 +86,7 @@ public class V3ClassAdapter implements DexClassVisitor {
                 }
             }
             access_flags |= Opcodes.ACC_SUPER;// 解决生成的class文件使用dx重新转换时使用的指令与原始指令不同的问题
-            cv.visit(Opcodes.V1_6, access_flags | 0x20, className, signature, superClass, interfaceNames);
+            cv.visit(Opcodes.V1_6, access_flags, className, signature, superClass, interfaceNames);
             for (Ann ann : anns) {
                 if (ann.type.equals("Ldalvik/annotation/MemberClasses;")) {
                     for (Item i : ann.items) {
@@ -76,7 +96,7 @@ public class V3ClassAdapter implements DexClassVisitor {
                                 Integer access = accessFlagsMap.get(name);
                                 int d = name.lastIndexOf('$');
                                 String innerName = name.substring(d + 1, name.length() - 1);
-                                // TODO设置默认内部类修饰符
+                                // TODO 设置默认内部类修饰符
                                 cv.visitInnerClass(name, className, innerName, access == null ? 0 : access);
                             }
                         }
@@ -106,26 +126,6 @@ public class V3ClassAdapter implements DexClassVisitor {
         }
     }
 
-    protected List<Ann> anns = new ArrayList<Ann>();
-    Map<String, Integer> accessFlagsMap;
-
-    /**
-     * @param cv
-     * @param access_flags
-     * @param className
-     * @param superClass
-     * @param interfaceNames
-     */
-    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, ClassVisitor cv, int access_flags, String className, String superClass, String[] interfaceNames) {
-        super();
-        this.accessFlagsMap = accessFlagsMap;
-        this.cv = new TypeNameAdapter(cv);
-        this.access_flags = access_flags;
-        this.className = className;
-        this.superClass = superClass;
-        this.interfaceNames = interfaceNames;
-    }
-
     public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
         Ann ann = new Ann(name, visitable);
         anns.add(ann);
@@ -146,8 +146,6 @@ public class V3ClassAdapter implements DexClassVisitor {
         build();
         return new V3MethodAdapter(cv, method);
     }
-
-    protected String file;
 
     public void visitSource(String file) {
         this.file = file;

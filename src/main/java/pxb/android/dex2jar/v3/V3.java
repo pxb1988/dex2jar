@@ -30,7 +30,7 @@ import pxb.android.dex2jar.visitors.DexFileVisitor;
  */
 public class V3 implements DexFileVisitor {
     protected ClassVisitorFactory cvf;
-    Map<String, Integer> accessFlagsMap;
+    protected Map<String, Integer> accessFlagsMap;
 
     /**
      * @param accessFlagsMap

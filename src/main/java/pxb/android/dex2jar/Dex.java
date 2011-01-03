@@ -28,7 +28,7 @@ public interface Dex {
      *            编号
      * @return
      */
-    public String getType(int id);
+    String getType(int id);
 
     /**
      * 获取字符串
@@ -37,7 +37,7 @@ public interface Dex {
      *            字编号
      * @return
      */
-    public String getString(int id);
+    String getString(int id);
 
     /**
      * 获取方法的参数及其返回值
@@ -46,7 +46,7 @@ public interface Dex {
      *            编号
      * @return
      */
-    public Proto getProto(int id);
+    Proto getProto(int id);
 
     /**
      * 获取方法
@@ -55,7 +55,7 @@ public interface Dex {
      *            编号
      * @return
      */
-    public Method getMethod(int id);
+    Method getMethod(int id);
 
     /**
      * 获取成员
@@ -64,5 +64,5 @@ public interface Dex {
      *            编号
      * @return
      */
-    public Field getField(int id);
+    Field getField(int id);
 }

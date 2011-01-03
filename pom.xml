@@ -3,9 +3,10 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>pxb.android</groupId>
 	<artifactId>dex2jar</artifactId>
-	<name>Dex2jar</name>
+	<name>dex2jar</name>
 	<version>0.0.7.9-SNAPSHOT</version>
-	<description>A tool convert Android's .dex format to Java's .class format</description>
+	<description>A tool for converting Android's .dex format to Java's .class format</description>
+	<url>http://code.google.como/p/dex2jar/</url>
 	<dependencies>
 		<dependency>
 			<groupId>org.slf4j</groupId>

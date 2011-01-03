@@ -33,9 +33,23 @@ import pxb.android.dex2jar.visitors.DexCodeVisitor;
  * @version $Id$
  */
 public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
+    private static int[] getValues(int arg1, int value) {
+        int size = (arg1 >> 4) & 0xf;
+        int[] a = new int[size];
+        for (int i = 0; i < size && i < 4; i++) {
+            a[i] = value & 0xf;
+            value >>= 4;
+        }
+        if (size == 5) {
+            a[4] = arg1 & 0xf;
+        }
+        return a;
+    }
+
     private DexCodeVisitor dcv;
     private Dex dex;
-    Map<Integer, Label> labels;
+    private Map<Integer, Label> labels;
+    private int offset;
 
     /**
      * @param dex
@@ -48,8 +62,37 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         this.labels = labels;
     }
 
-    // private static final Logger log =
-    // LoggerFactory.getLogger(ToAsmDexOpcodeAdapter.class);
+    private int[] filter(Method m, int[] args) {
+
+        String types[] = m.getType().getParameterTypes();
+        if (types.length == 0 || types.length == args.length)
+            return args;
+        int index = args.length - 1;
+        int i = args.length - 1;
+        for (int j = types.length - 1; j >= 0; j--) {
+            String type = types[j];
+            if ("J".equals(type) || "D".equals(type)) {
+                i--;
+            }
+            args[index--] = args[i--];
+        }
+        switch (i) {
+        case -1:
+            break;
+        case 0:
+            args[index--] = args[i--];
+            break;
+        default:
+            throw new RuntimeException("Should never happen.");
+        }
+        int start = index + 1;
+        if (start == 0)
+            return args;
+        int length = args.length - start;
+        int[] nArgs = new int[length];
+        System.arraycopy(args, start, nArgs, 0, length);
+        return nArgs;
+    }
 
     /**
      * @param opcode
@@ -467,53 +510,6 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
-
-    private int[] filter(Method m, int[] args) {
-
-        String types[] = m.getType().getParameterTypes();
-        if (types.length == 0 || types.length == args.length)
-            return args;
-        int index = args.length - 1;
-        int i = args.length - 1;
-        for (int j = types.length - 1; j >= 0; j--) {
-            String type = types[j];
-            if ("J".equals(type) || "D".equals(type)) {
-                i--;
-            }
-            args[index--] = args[i--];
-        }
-        switch (i) {
-        case -1:
-            break;
-        case 0:
-            args[index--] = args[i--];
-            break;
-        default:
-            throw new RuntimeException("Should never happen.");
-        }
-        int start = index + 1;
-        if (start == 0)
-            return args;
-        int length = args.length - start;
-        int[] nArgs = new int[length];
-        System.arraycopy(args, start, nArgs, 0, length);
-        return nArgs;
-    }
-
-    private static int[] getValues(int arg1, int value) {
-        int size = (arg1 >> 4) & 0xf;
-        int[] a = new int[size];
-        for (int i = 0; i < size && i < 4; i++) {
-            a[i] = value & 0xf;
-            value >>= 4;
-        }
-        if (size == 5) {
-            a[4] = arg1 & 0xf;
-        }
-        return a;
-    }
-
-    int offset;
 
     public void visitOffset(int i) {
         this.offset = i;

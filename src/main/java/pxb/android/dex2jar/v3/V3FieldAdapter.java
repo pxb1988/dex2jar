@@ -37,7 +37,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
     protected ClassVisitor cv;
     protected Field field;
     protected FieldVisitor fv;
-    Object value;
+    protected Object value;
 
     protected void build() {
         if (!build) {

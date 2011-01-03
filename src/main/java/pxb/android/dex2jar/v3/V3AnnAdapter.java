@@ -31,7 +31,7 @@ import pxb.android.dex2jar.v3.Ann.Item;
  */
 public class V3AnnAdapter implements AnnotationVisitor {
 
-    Ann ann;
+    protected Ann ann;
     private static final Logger logger = LoggerFactory.getLogger(V3AnnAdapter.class);
 
     public static void accept(List<Item> items, AnnotationVisitor av) {

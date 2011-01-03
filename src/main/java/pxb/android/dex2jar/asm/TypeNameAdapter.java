@@ -171,12 +171,6 @@ public class TypeNameAdapter extends ClassAdapter {
 
     public static String x(String s) {
         return Type.getType(s).getInternalName();
-        // if (s == null)
-        // return null;
-        // if (s.charAt(0) == 'L') {
-        // return s.substring(1, s.length() - 1);
-        // }
-        // return s;
     }
 
     /*

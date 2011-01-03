@@ -39,8 +39,8 @@ public class Proto {
     private String returnType;
 
     public Proto(Dex dex, DataIn in) {
-        // int shorty_idx =
-        in.readIntx();
+        // int shorty_idx = in.readIntx();
+        in.skip(4);
         int return_type_idx = in.readIntx();
         int parameters_off = in.readIntx();
 
@@ -49,13 +49,16 @@ public class Proto {
         StringBuilder ps = new StringBuilder("(");
         if (parameters_off != 0) {
             in.pushMove(parameters_off);
-            int size = in.readIntx();
-            for (int i = 0; i < size; i++) {
-                String p = dex.getType(in.readShortx());
-                parameterTypeList.add(p);
-                ps.append(p);
+            try {
+                int size = in.readIntx();
+                for (int i = 0; i < size; i++) {
+                    String p = dex.getType(in.readShortx());
+                    parameterTypeList.add(p);
+                    ps.append(p);
+                }
+            } finally {
+                in.pop();
             }
-            in.pop();
         }
         ps.append(")").append(returnType);
         desc = ps.toString();

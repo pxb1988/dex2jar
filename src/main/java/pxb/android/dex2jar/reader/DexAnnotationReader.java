@@ -72,20 +72,23 @@ public class DexAnnotationReader {
         for (int j = 0; j < size; j++) {
             int field_annotation_offset = in.readIntx();
             in.pushMove(field_annotation_offset);
-            int visible_i = in.readByte();
-            int type_idx = (int) in.readUnsignedLeb128();
-            String type = dex.getType(type_idx);
-            AnnotationVisitor dav = daa.visitAnnotation(type, visible_i == 1);
-            if (dav != null) {
-                int sizex = (int) in.readUnsignedLeb128();
-                for (int k = 0; k < sizex; k++) {
-                    int name_idx = (int) in.readUnsignedLeb128();
-                    String name = dex.getString(name_idx);
-                    acceptAnnotation(dex, in, name, dav);
+            try {
+                int visible_i = in.readByte();
+                int type_idx = (int) in.readUnsignedLeb128();
+                String type = dex.getType(type_idx);
+                AnnotationVisitor dav = daa.visitAnnotation(type, visible_i == 1);
+                if (dav != null) {
+                    int sizex = (int) in.readUnsignedLeb128();
+                    for (int k = 0; k < sizex; k++) {
+                        int name_idx = (int) in.readUnsignedLeb128();
+                        String name = dex.getString(name_idx);
+                        acceptAnnotation(dex, in, name, dav);
+                    }
+                    dav.visitEnd();
                 }
-                dav.visitEnd();
+            } finally {
+                in.pop();
             }
-            in.pop();
         }
     }
 

@@ -42,8 +42,8 @@ public class DataInImpl implements DataIn {
         }
     }
 
-    Stack<Integer> stack = new Stack<Integer>();
-    XByteArrayInputStream in;
+    private Stack<Integer> stack = new Stack<Integer>();
+    private XByteArrayInputStream in;
 
     /**
      * @param in
@@ -58,7 +58,7 @@ public class DataInImpl implements DataIn {
      * @see pxb.android.DataIn#move(int)
      */
     public void move(int offset) {
-        ((XByteArrayInputStream) in).setPos(offset);
+        in.setPos(offset);
     }
 
     /*
@@ -143,7 +143,7 @@ public class DataInImpl implements DataIn {
      * @see pxb.android.DataIn#push()
      */
     public void push() {
-        stack.push(((XByteArrayInputStream) in).getPos());
+        stack.push(in.getPos());
     }
 
     /*
@@ -209,23 +209,4 @@ public class DataInImpl implements DataIn {
     public int getCurrentPosition() {
         return this.in.getPos();
     }
-
-    // /*
-    // * (non-Javadoc)
-    // *
-    // * @see pxb.android.DataIn#readStringx(int)
-    // */
-    // public String readStringx(int offset) throws IOException {
-    // this.pushMove(offset);
-    // int count = 0;
-    // while (this.read() != 0) {
-    // count++;
-    // }
-    // byte[] data = new byte[count];
-    // this.move(offset);
-    // this.read(data);
-    // this.pupBack();
-    // return new String(data);
-    // }
-
 }

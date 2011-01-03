@@ -48,12 +48,52 @@ import pxb.android.dex2jar.visitors.EmptyVisitor;
  * @version $Id$
  */
 public class Dump implements DexFileVisitor {
-    private int class_count = 0;
-    private DexFileVisitor dfv;
-    private PrintWriter out;
-
     public interface WriterManager {
         PrintWriter get(String name);
+    }
+    public static void doData(byte[] data, File destJar) throws IOException {
+        final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
+        new DexFileReader(data).accept(new Dump(new EmptyVisitor(), new WriterManager() {
+
+            public PrintWriter get(String name) {
+                try {
+                    String s = name.replace('.', '/') + ".dump.txt";
+                    ZipEntry zipEntry = new ZipEntry(s);
+                    zos.putNextEntry(zipEntry);
+                    return new PrintWriter(new ProxyOutputStream(zos) {
+                        @Override
+                        public void close() throws IOException {
+                            zos.closeEntry();
+                        }
+                    });
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }));
+        zos.finish();
+        zos.close();
+    }
+    public static void doFile(File srcDex) throws IOException {
+        doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dump.jar"));
+    }
+
+    public static void doFile(File srcDex, File destJar) throws IOException {
+        byte[] data = FileUtils.readFileToByteArray(srcDex);
+        // checkMagic
+        if ("dex".equals(new String(data, 0, 3))) {// dex
+            doData(data, destJar);
+        } else if ("PK".equals(new String(data, 0, 2))) {// ZIP
+            ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
+            for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
+                if (entry.getName().equals("classes.dex")) {
+                    data = IOUtils.toByteArray(zis);
+                    doData(data, destJar);
+                }
+            }
+        } else {
+            throw new RuntimeException("the src file not a .dex file or a zip file");
+        }
     }
 
     public static String getAccDes(int acc) {
@@ -112,6 +152,22 @@ public class Dump implements DexFileVisitor {
         return sb.toString();
     }
 
+    public static void main(String... args) throws IOException {
+        if (args.length < 2) {
+            System.out.println("Dump in.dexORapk out.dump.jar");
+            return;
+        }
+        doFile(new File(args[0]), new File(args[1]));
+    }
+
+    private int class_count = 0;
+
+    private DexFileVisitor dfv;
+
+    private PrintWriter out;
+
+    private WriterManager writerManager;
+
     /**
      * @param dfv
      */
@@ -120,8 +176,6 @@ public class Dump implements DexFileVisitor {
         this.dfv = dfv;
         this.writerManager = writerManager;
     }
-
-    WriterManager writerManager;
 
     /*
      * (non-Javadoc)
@@ -158,6 +212,17 @@ public class Dump implements DexFileVisitor {
             return null;
         return new DexClassAdapter(dcv) {
 
+            int field_count = 0;
+
+            int method_count = 0;
+
+            @Override
+            public void visitEnd() {
+                out.flush();
+                out.close();
+                out = null;
+                super.visitEnd();
+            }
             public DexFieldVisitor visitField(Field field, Object value) {
                 out.printf("//field:%04d  access:0x%04x\n", field_count++, field.getAccessFlags());
                 out.printf("//%s\n", field);
@@ -170,17 +235,6 @@ public class Dump implements DexFileVisitor {
 
                 return dcv.visitField(field, value);
             }
-
-            @Override
-            public void visitEnd() {
-                out.flush();
-                out.close();
-                out = null;
-                super.visitEnd();
-            }
-
-            int method_count = 0;
-            int field_count = 0;
 
             public DexMethodVisitor visitMethod(final Method method) {
                 out.println();
@@ -212,60 +266,6 @@ public class Dump implements DexFileVisitor {
                 };
             }
         };
-    }
-
-    public static void main(String... args) throws IOException {
-        if (args.length < 2) {
-            System.out.println("Dump in.dexORapk out.dump.jar");
-            return;
-        }
-        doFile(new File(args[0]), new File(args[1]));
-    }
-
-    public static void doFile(File srcDex) throws IOException {
-        doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dump.jar"));
-    }
-
-    public static void doFile(File srcDex, File destJar) throws IOException {
-        byte[] data = FileUtils.readFileToByteArray(srcDex);
-        // checkMagic
-        if ("dex".equals(new String(data, 0, 3))) {// dex
-            doData(data, destJar);
-        } else if ("PK".equals(new String(data, 0, 2))) {// ZIP
-            ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
-            for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-                if (entry.getName().equals("classes.dex")) {
-                    data = IOUtils.toByteArray(zis);
-                    doData(data, destJar);
-                }
-            }
-        } else {
-            throw new RuntimeException("the src file not a .dex file or a zip file");
-        }
-    }
-
-    public static void doData(byte[] data, File destJar) throws IOException {
-        final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
-        new DexFileReader(data).accept(new Dump(new EmptyVisitor(), new WriterManager() {
-
-            public PrintWriter get(String name) {
-                try {
-                    String s = name.replace('.', '/') + ".dump.txt";
-                    ZipEntry zipEntry = new ZipEntry(s);
-                    zos.putNextEntry(zipEntry);
-                    return new PrintWriter(new ProxyOutputStream(zos) {
-                        @Override
-                        public void close() throws IOException {
-                            zos.closeEntry();
-                        }
-                    });
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }));
-        zos.finish();
-        zos.close();
     }
 
     /*

@@ -127,15 +127,6 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
     /*
      * (non-Javadoc)
      * 
-     * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int, pxb.android.dex2jar.Field, int)
-     */
-    public void visitFieldInsn(int opcode, Field field, int reg) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see pxb.android.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int, pxb.android.dex2jar.Field, int, int)
      */
     public void visitFieldInsn(int opcode, Field field, int regFromOrTo, int ownerReg) {

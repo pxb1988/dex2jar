@@ -176,7 +176,7 @@ public class B implements MethodTransformer, Opcodes {
 
     private int max = 0;
 
-    private MethodNode method;
+    private MethodNode methodNode;
 
     private boolean couldReplace(int r, Block block, Map<Block, Boolean> blocks) {
         for (Block in : block.froms) {
@@ -201,18 +201,18 @@ public class B implements MethodTransformer, Opcodes {
         Map<Integer, AbstractInsnNode> in = new HashMap<Integer, AbstractInsnNode>();
         Map<Integer, AbstractInsnNode> out = new HashMap<Integer, AbstractInsnNode>();
 
-        AbstractInsnNode p = method.instructions.getFirst();
+        AbstractInsnNode p = methodNode.instructions.getFirst();
 
         if (!(p instanceof LabelNode)) {
             insnList.insertBefore(p, new LabelNode());
         }
 
-        AbstractInsnNode q = method.instructions.getLast();
+        AbstractInsnNode q = methodNode.instructions.getLast();
         if (!(q instanceof LabelNode)) {
             insnList.insert(q, new LabelNode());
         }
 
-        AbstractInsnNode first = method.instructions.getFirst();
+        AbstractInsnNode first = methodNode.instructions.getFirst();
         p = first.getNext();
         // Blocks
         while (p != null) {
@@ -232,7 +232,7 @@ public class B implements MethodTransformer, Opcodes {
                     if (q != null && q.getType() == AbstractInsnNode.LABEL) {
                         p = q;
                     } else {
-                        method.instructions.insert(p, new LabelNode());
+                        methodNode.instructions.insert(p, new LabelNode());
                         p = p.getNext();
                     }
                 }
@@ -698,7 +698,7 @@ public class B implements MethodTransformer, Opcodes {
     }
 
     private void linkTryCatch() {
-        for (Object o : method.tryCatchBlocks) {
+        for (Object o : methodNode.tryCatchBlocks) {
             TryCatchBlockNode tcb = (TryCatchBlockNode) o;
             Block b_handle = blockMaps.get(tcb.handler.getLabel());
             int i = 0;
@@ -803,7 +803,7 @@ public class B implements MethodTransformer, Opcodes {
 
     public void transform(MethodNode method) {
         insnList = method.instructions;
-        this.method = method;
+        this.methodNode = method;
 
         cut();
 

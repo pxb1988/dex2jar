@@ -12,7 +12,6 @@ import java.util.Map;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -20,7 +19,6 @@ import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Frame;
-import org.objectweb.asm.util.TraceMethodVisitor;
 
 import pxb.android.dex2jar.Method;
 import pxb.android.dex2jar.optimize.c.CAnalyzer;
@@ -218,30 +216,4 @@ public class C implements MethodTransformer, Opcodes {
     public C(Method m) {
         this.m = m;
     }
-
-    public void dump(InsnList insnList) {
-        TraceMethodVisitor tr = new TraceMethodVisitor();
-        tr.text.clear();
-        insnList.accept(tr);
-        int i = 0;
-        for (Object o : tr.text) {
-            System.out.print((i++) + " " + o);
-        }
-        tr.text.clear();
-    }
-
-    public static void replace(AbstractInsnNode node) {
-        if (isRead(node)) {
-            ((VarInsnNode) node).setOpcode(ALOAD);
-        } else if (isWrite(node)) {
-            ((VarInsnNode) node).setOpcode(ASTORE);
-        } else if (node.getOpcode() == IFEQ) {
-            ((JumpInsnNode) node).setOpcode(IFNULL);
-        } else if (node.getOpcode() == IFNE) {
-            ((JumpInsnNode) node).setOpcode(IFNONNULL);
-        } else if (node.getOpcode() == LDC) {
-            ((LdcInsnNode) node).cst = null;
-        }
-    }
-
 }

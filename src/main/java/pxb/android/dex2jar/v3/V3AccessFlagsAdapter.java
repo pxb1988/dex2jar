@@ -26,7 +26,7 @@ import pxb.android.dex2jar.visitors.DexFileVisitor;
  * @version $Id$
  */
 public class V3AccessFlagsAdapter implements DexFileVisitor {
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    private Map<String, Integer> map = new HashMap<String, Integer>();
 
     public Map<String, Integer> getAccessFlagsMap() {
         return map;

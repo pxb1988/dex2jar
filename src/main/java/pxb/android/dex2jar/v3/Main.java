@@ -45,7 +45,7 @@ public class Main {
      * @param args
      */
     public static void main(String... args) {
-        System.out.println("version:" + Version.getVersionString());
+        log.info("version:" + Version.getVersionString());
         if (args.length == 0) {
             System.err.println("dex2jar file1.dexORapk file2.dexORapk ...");
             return;
@@ -55,6 +55,9 @@ public class Main {
             System.err.println("A JRE version >=1.6 is required");
             return;
         }
+
+        log.debug("DexFileReader.ContinueOnException = true;");
+        DexFileReader.ContinueOnException = true;
 
         for (String file : args) {
             File dex = new File(file);
@@ -66,7 +69,7 @@ public class Main {
                 log.warn("Exception while process file " + dex, e);
             }
         }
-        System.out.println("Done.");
+        log.info("Done.");
     }
 
     public static void doData(byte[] data, File destJar) throws IOException {

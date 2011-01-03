@@ -17,7 +17,9 @@ package pxb.android.dex2jar.optimize;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.util.TraceMethodVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@126.com]
@@ -88,5 +90,16 @@ public class Util implements Opcodes {
             return true;
         }
         return false;
+    }
+
+    public static void dump(InsnList insnList) {
+        TraceMethodVisitor tr = new TraceMethodVisitor();
+        tr.text.clear();
+        insnList.accept(tr);
+        int i = 0;
+        for (Object o : tr.text) {
+            System.out.print((i++) + " " + o);
+        }
+        tr.text.clear();
     }
 }
