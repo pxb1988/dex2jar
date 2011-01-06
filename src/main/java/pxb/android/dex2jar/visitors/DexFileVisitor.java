@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 Panxiaobo
+ * Copyright (c) 2009-2011 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package pxb.android.dex2jar.visitors;
 
 /**
- * @author Panxiaobo [pxb1988@126.com]
+ * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
 public interface DexFileVisitor {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 Panxiaobo
+ * Copyright (c) 2009-2011 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
 /**
- * @author Panxiaobo [pxb1988@126.com]
+ * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
 public class B implements MethodTransformer, Opcodes {
