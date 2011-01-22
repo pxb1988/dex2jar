@@ -175,9 +175,10 @@ public class DexFileReader implements Dex {
             try {
                 acceptClass(dv);
             } catch (Exception e) {
-                log.error("Fail on class", e);
                 if (!ContinueOnException) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Fail on class id:" + cid, e);
+                } else {
+                    log.error("Fail on class id:" + cid + ", but dex2jar will continue.", e);
                 }
             } finally {
                 in.pop();
@@ -189,9 +190,10 @@ public class DexFileReader implements Dex {
     private void acceptClass(DexFileVisitor dv) {
         DataIn in = this.in;
         DexClassVisitor dcv;
+        String className;
         {
             int class_idx = in.readIntx();
-            String className = this.getType(class_idx);
+            className = this.getType(class_idx);
             int access_flags = in.readIntx();
             int superclass_idx = in.readIntx();
             String superClassName = superclass_idx == -1 ? null : this.getType(superclass_idx);
@@ -238,6 +240,8 @@ public class DexFileReader implements Dex {
                         in.pushMove(class_annotations_off);
                         try {
                             new DexAnnotationReader(this).accept(in, dcv);
+                        } catch (Exception e) {
+                            throw new RuntimeException("error on reading Annotation of class " + className, e);
                         } finally {
                             in.pop();
                         }

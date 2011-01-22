@@ -23,8 +23,9 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 
+import pxb.android.dex2jar.Annotation;
 import pxb.android.dex2jar.Field;
-import pxb.android.dex2jar.v3.Ann.Item;
+import pxb.android.dex2jar.Annotation.Item;
 import pxb.android.dex2jar.visitors.DexFieldVisitor;
 
 /**
@@ -32,7 +33,7 @@ import pxb.android.dex2jar.visitors.DexFieldVisitor;
  * @version $Id$
  */
 public class V3FieldAdapter implements DexFieldVisitor {
-    protected List<Ann> anns = new ArrayList<Ann>();
+    protected List<Annotation> anns = new ArrayList<Annotation>();
     protected boolean build = false;
     protected ClassVisitor cv;
     protected Field field;
@@ -42,13 +43,13 @@ public class V3FieldAdapter implements DexFieldVisitor {
     protected void build() {
         if (!build) {
             String signature = null;
-            for (Iterator<Ann> it = anns.iterator(); it.hasNext();) {
-                Ann ann = it.next();
+            for (Iterator<Annotation> it = anns.iterator(); it.hasNext();) {
+                Annotation ann = it.next();
                 if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
                     it.remove();
                     for (Item item : ann.items) {
                         if (item.name.equals("value")) {
-                            Ann values = (Ann) item.value;
+                            Annotation values = (Annotation) item.value;
                             StringBuilder sb = new StringBuilder();
                             for (Item i : values.items) {
                                 sb.append(i.value.toString());
@@ -60,7 +61,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
             }
             FieldVisitor fv = cv.visitField(field.getAccessFlags(), field.getName(), field.getType(), signature, value);
             if (fv != null) {
-                for (Ann ann : anns) {
+                for (Annotation ann : anns) {
                     AnnotationVisitor av = fv.visitAnnotation(ann.type, ann.visible);
                     V3AnnAdapter.accept(ann.items, av);
                     av.visitEnd();
@@ -77,7 +78,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
      * @see pxb.android.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
      */
     public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-        Ann ann = new Ann(name, visitable);
+        Annotation ann = new Annotation(name, visitable);
         anns.add(ann);
         return new V3AnnAdapter(ann);
     }

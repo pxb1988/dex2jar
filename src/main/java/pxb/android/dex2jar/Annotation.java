@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pxb.android.dex2jar.v3;
+package pxb.android.dex2jar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.List;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class Ann {
+public class Annotation {
     public static class Item {
         public String name;
 
@@ -50,7 +50,7 @@ public class Ann {
      * @param type
      * @param visitable
      */
-    public Ann(String type, boolean visitable) {
+    public Annotation(String type, boolean visitable) {
         super();
         this.type = type;
         this.visible = visitable;

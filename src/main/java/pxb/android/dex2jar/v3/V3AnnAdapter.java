@@ -19,9 +19,10 @@ import java.util.List;
 
 import org.objectweb.asm.AnnotationVisitor;
 
+import pxb.android.dex2jar.Annotation;
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
-import pxb.android.dex2jar.v3.Ann.Item;
+import pxb.android.dex2jar.Annotation.Item;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -29,15 +30,15 @@ import pxb.android.dex2jar.v3.Ann.Item;
  */
 public class V3AnnAdapter implements AnnotationVisitor {
 
-    protected Ann ann;
+    protected Annotation ann;
 
     public static void accept(List<Item> items, AnnotationVisitor av) {
         if (av == null)
             return;
         for (Item item : items) {
             Object v = item.value;
-            if (v instanceof Ann) {
-                Ann a = (Ann) v;
+            if (v instanceof Annotation) {
+                Annotation a = (Annotation) v;
                 if (a.type != null) {
                     AnnotationVisitor av1 = av.visitAnnotation(item.name, a.type);
                     accept(a.items, av1);
@@ -67,7 +68,7 @@ public class V3AnnAdapter implements AnnotationVisitor {
     /**
      * @param ann
      */
-    public V3AnnAdapter(Ann ann) {
+    public V3AnnAdapter(Annotation ann) {
         super();
         this.ann = ann;
     }
@@ -87,7 +88,7 @@ public class V3AnnAdapter implements AnnotationVisitor {
      * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitAnnotation(java .lang.String, java.lang.String)
      */
     public AnnotationVisitor visitAnnotation(String name, String desc) {
-        Ann ann = new Ann(desc, true);
+        Annotation ann = new Annotation(desc, true);
         this.ann.items.add(new Item(name, ann));
         return new V3AnnAdapter(ann);
     }
@@ -98,7 +99,7 @@ public class V3AnnAdapter implements AnnotationVisitor {
      * @see pxb.android.dex2jar.visitors.DexAnnotationVisitor#visitArray(java.lang .String)
      */
     public AnnotationVisitor visitArray(String name) {
-        Ann ann = new Ann(null, true);
+        Annotation ann = new Annotation(null, true);
         this.ann.items.add(new Item(name, ann));
         return new V3AnnAdapter(ann);
     }

@@ -25,10 +25,11 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import pxb.android.dex2jar.Annotation;
 import pxb.android.dex2jar.Field;
 import pxb.android.dex2jar.Method;
+import pxb.android.dex2jar.Annotation.Item;
 import pxb.android.dex2jar.asm.TypeNameAdapter;
-import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexClassVisitor;
 import pxb.android.dex2jar.visitors.DexFieldVisitor;
 import pxb.android.dex2jar.visitors.DexMethodVisitor;
@@ -41,7 +42,7 @@ public class V3ClassAdapter implements DexClassVisitor {
 
     protected int access_flags;
     protected Map<String, Integer> accessFlagsMap;
-    protected List<Ann> anns = new ArrayList<Ann>();
+    protected List<Annotation> anns = new ArrayList<Annotation>();
     protected boolean build = false;
     protected String className;
     protected ClassVisitor cv;
@@ -69,13 +70,13 @@ public class V3ClassAdapter implements DexClassVisitor {
     protected void build() {
         if (!build) {
             String signature = null;
-            for (Iterator<Ann> it = anns.iterator(); it.hasNext();) {
-                Ann ann = it.next();
+            for (Iterator<Annotation> it = anns.iterator(); it.hasNext();) {
+                Annotation ann = it.next();
                 if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
                     it.remove();
                     for (Item item : ann.items) {
                         if (item.name.equals("value")) {
-                            Ann values = (Ann) item.value;
+                            Annotation values = (Annotation) item.value;
                             StringBuilder sb = new StringBuilder();
                             for (Item i : values.items) {
                                 sb.append(i.value.toString());
@@ -87,11 +88,11 @@ public class V3ClassAdapter implements DexClassVisitor {
             }
             access_flags |= Opcodes.ACC_SUPER;// 解决生成的class文件使用dx重新转换时使用的指令与原始指令不同的问题
             cv.visit(Opcodes.V1_6, access_flags, className, signature, superClass, interfaceNames);
-            for (Ann ann : anns) {
+            for (Annotation ann : anns) {
                 if (ann.type.equals("Ldalvik/annotation/MemberClasses;")) {
                     for (Item i : ann.items) {
                         if (i.name.equals("value")) {
-                            for (Item j : ((Ann) i.value).items) {
+                            for (Item j : ((Annotation) i.value).items) {
                                 String name = j.value.toString();
                                 Integer access = accessFlagsMap.get(name);
                                 int d = name.lastIndexOf('$');
@@ -129,7 +130,7 @@ public class V3ClassAdapter implements DexClassVisitor {
     }
 
     public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-        Ann ann = new Ann(name, visitable);
+        Annotation ann = new Annotation(name, visitable);
         anns.add(ann);
         return new V3AnnAdapter(ann);
     }

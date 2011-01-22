@@ -29,12 +29,13 @@ import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pxb.android.dex2jar.Annotation;
 import pxb.android.dex2jar.Method;
+import pxb.android.dex2jar.Annotation.Item;
 import pxb.android.dex2jar.optimize.B;
 import pxb.android.dex2jar.optimize.C;
 import pxb.android.dex2jar.optimize.LdcOptimizeAdapter;
 import pxb.android.dex2jar.optimize.MethodTransformer;
-import pxb.android.dex2jar.v3.Ann.Item;
 import pxb.android.dex2jar.visitors.DexAnnotationAble;
 import pxb.android.dex2jar.visitors.DexCodeVisitor;
 import pxb.android.dex2jar.visitors.DexMethodVisitor;
@@ -44,10 +45,10 @@ import pxb.android.dex2jar.visitors.DexMethodVisitor;
  * @version $Id$
  */
 public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
-    final protected List<Ann> anns = new ArrayList<Ann>();
+    final protected List<Annotation> anns = new ArrayList<Annotation>();
     final protected ClassVisitor cv;
     final protected Method method;
-    final protected List<Ann>[] paramAnns;
+    final protected List<Annotation>[] paramAnns;
     final protected MethodNode methodNode = new MethodNode();
     private static final Logger log = LoggerFactory.getLogger(V3MethodAdapter.class);
 
@@ -66,9 +67,9 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         super();
         this.cv = cv;
         this.method = method;
-        List<Ann>[] paramAnns = new List[method.getType().getParameterTypes().length];
+        List<Annotation>[] paramAnns = new List[method.getType().getParameterTypes().length];
         for (int i = 0; i < paramAnns.length; i++) {
-            paramAnns[i] = new ArrayList<Ann>();
+            paramAnns[i] = new ArrayList<Annotation>();
         }
         this.paramAnns = paramAnns;
         methodNode.tryCatchBlocks = new ArrayList<Object>();
@@ -77,13 +78,13 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     private void build() {
         List<String> exceptions = new ArrayList<String>();
         String signature = null;
-        for (Iterator<Ann> it = anns.iterator(); it.hasNext();) {
-            Ann ann = it.next();
+        for (Iterator<Annotation> it = anns.iterator(); it.hasNext();) {
+            Annotation ann = it.next();
             if ("Ldalvik/annotation/Throws;".equals(ann.type)) {
                 it.remove();
                 for (Item item : ann.items) {
                     if (item.name.equals("value")) {
-                        Ann values = (Ann) item.value;
+                        Annotation values = (Annotation) item.value;
                         for (Item i : values.items) {
                             exceptions.add(i.value.toString());
                         }
@@ -93,7 +94,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
                 it.remove();
                 for (Item item : ann.items) {
                     if (item.name.equals("value")) {
-                        Ann values = (Ann) item.value;
+                        Annotation values = (Annotation) item.value;
                         StringBuilder sb = new StringBuilder();
                         for (Item i : values.items) {
                             sb.append(i.value.toString());
@@ -110,14 +111,14 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         methodNode.desc = method.getType().getDesc();
         methodNode.signature = signature;
         methodNode.exceptions = exceptions;
-        for (Ann ann : anns) {
+        for (Annotation ann : anns) {
             AnnotationVisitor av = methodNode.visitAnnotation(ann.type, ann.visible);
             V3AnnAdapter.accept(ann.items, av);
             av.visitEnd();
         }
 
         for (int i = 0; i < paramAnns.length; i++) {
-            for (Ann ann : paramAnns[i]) {
+            for (Annotation ann : paramAnns[i]) {
                 AnnotationVisitor av = methodNode.visitParameterAnnotation(i, ann.type, ann.visible);
                 V3AnnAdapter.accept(ann.items, av);
                 av.visitEnd();
@@ -131,7 +132,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * @see pxb.android.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java.lang .String, boolean)
      */
     public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-        Ann ann = new Ann(name, visitable);
+        Annotation ann = new Annotation(name, visitable);
         anns.add(ann);
         return new V3AnnAdapter(ann);
     }
@@ -191,10 +192,10 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * @see pxb.android.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation (int)
      */
     public DexAnnotationAble visitParamesterAnnotation(int index) {
-        final List<Ann> panns = paramAnns[index];
+        final List<Annotation> panns = paramAnns[index];
         return new DexAnnotationAble() {
             public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-                Ann ann = new Ann(name, visitable);
+                Annotation ann = new Annotation(name, visitable);
                 panns.add(ann);
                 return new V3AnnAdapter(ann);
             }
