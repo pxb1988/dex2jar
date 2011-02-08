@@ -20,4 +20,4 @@ for k in $PRGDIR/lib/*.jar
 do
  _classpath="${_classpath}:${k}"
 done
-java  -classpath "${_classpath}" "pxb.android.dex2jar.dump.Dump" $1 $2 $3 $4 $5 $6
+java  -classpath "${_classpath}" "com.googlecode.dex2jar.dump.Dump" $1 $2 $3 $4 $5 $6
