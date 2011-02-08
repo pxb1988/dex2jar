@@ -55,7 +55,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 
     static {
         log.debug("InsnList.check=false");
-        // Optmize Tree Analyzer
+        // Optimize Tree Analyzer
         InsnList.check = false;
     }
 
