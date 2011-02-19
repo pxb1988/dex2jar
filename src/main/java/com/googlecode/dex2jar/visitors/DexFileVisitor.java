@@ -20,6 +20,15 @@ package com.googlecode.dex2jar.visitors;
  * @version $Id$
  */
 public interface DexFileVisitor {
+    /**
+     * 
+     * @param access_flags
+     * @param className
+     * @param superClass
+     *            maybe null
+     * @param interfaceNames
+     * @return
+     */
     DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames);
 
     void visitEnd();

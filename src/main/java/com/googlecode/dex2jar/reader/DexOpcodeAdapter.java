@@ -21,6 +21,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexInternalOpcode;
 import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
@@ -84,7 +85,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             args[index--] = args[i--];
             break;
         default:
-            throw new RuntimeException("Should never happen.");
+            throw new DexException("Should never happen.");
         }
         int start = index + 1;
         if (start == 0)
@@ -210,7 +211,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
+            throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -437,7 +438,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
+            throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -508,7 +509,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
+            throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 

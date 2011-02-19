@@ -20,6 +20,7 @@ import org.objectweb.asm.Type;
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.DexException;
 
 
 /**
@@ -129,7 +130,7 @@ public class Constant {
             return ann;
         }
         default:
-            throw new RuntimeException("Not support yet.");
+            throw new DexException("Not support yet.");
         }
     }
 

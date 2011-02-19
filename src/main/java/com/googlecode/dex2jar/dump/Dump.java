@@ -43,7 +43,6 @@ import com.googlecode.dex2jar.visitors.DexMethodAdapter;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
-
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
@@ -52,6 +51,7 @@ public class Dump implements DexFileVisitor {
     public interface WriterManager {
         PrintWriter get(String name);
     }
+
     public static void doData(byte[] data, File destJar) throws IOException {
         final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
         new DexFileReader(data).accept(new Dump(new EmptyVisitor(), new WriterManager() {
@@ -75,6 +75,7 @@ public class Dump implements DexFileVisitor {
         zos.finish();
         zos.close();
     }
+
     public static void doFile(File srcDex) throws IOException {
         doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dump.jar"));
     }
@@ -195,9 +196,11 @@ public class Dump implements DexFileVisitor {
         }
         out.print(javaClassName);
 
-        if (!"Ljava/lang/Object;".equals(superClass)) {
-            out.print(" extends ");
-            out.print(Type.getType(superClass).getClassName());
+        if (superClass != null) {
+            if (!"Ljava/lang/Object;".equals(superClass)) {
+                out.print(" extends ");
+                out.print(Type.getType(superClass).getClassName());
+            }
         }
         if (interfaceNames != null && interfaceNames.length > 0) {
             out.print(" implements ");
@@ -224,6 +227,7 @@ public class Dump implements DexFileVisitor {
                 out = null;
                 super.visitEnd();
             }
+
             public DexFieldVisitor visitField(Field field, Object value) {
                 out.printf("//field:%04d  access:0x%04x\n", field_count++, field.getAccessFlags());
                 out.printf("//%s\n", field);

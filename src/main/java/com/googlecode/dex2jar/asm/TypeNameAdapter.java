@@ -182,7 +182,7 @@ public class TypeNameAdapter extends ClassAdapter {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         name = x(name);
-        superName = x(superName);
+        superName = superName == null ? null : x(superName);
         if (interfaces != null) {
             for (int i = 0; i < interfaces.length; i++) {
                 interfaces[i] = x(interfaces[i]);

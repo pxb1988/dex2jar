@@ -30,9 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.ClassVisitorFactory;
+import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.Version;
 import com.googlecode.dex2jar.reader.DexFileReader;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -41,6 +41,25 @@ import com.googlecode.dex2jar.reader.DexFileReader;
 public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
+
+    public static void niceExceptionMessage(Logger log, Throwable t, int deep) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < deep + 1; i++) {
+            sb.append(".");
+        }
+        sb.append(' ');
+        if (t instanceof DexException) {
+            sb.append(t.getMessage());
+            log.error(sb.toString());
+            if (t.getCause() != null) {
+                niceExceptionMessage(log, t.getCause(), deep + 1);
+            }
+        } else {
+            if (t != null) {
+                log.error(sb.append("ROOT cause:").toString(), t);
+            }
+        }
+    }
 
     /**
      * @param args
@@ -60,17 +79,21 @@ public class Main {
         log.debug("DexFileReader.ContinueOnException = true;");
         DexFileReader.ContinueOnException = true;
 
+        boolean containsError = false;
+
         for (String file : args) {
             File dex = new File(file);
             final File gen = new File(file + ".dex2jar.jar");
             log.info("dex2jar {} -> {}", dex, gen);
             try {
                 doFile(dex, gen);
-            } catch (IOException e) {
-                log.warn("Exception while process file " + dex, e);
+            } catch (Exception e) {
+                containsError = true;
+                niceExceptionMessage(log,new DexException(e, "while process file: [%s]", dex), 0);
             }
         }
         log.info("Done.");
+        System.exit(containsError ? -1 : 0);
     }
 
     public static void doData(byte[] data, File destJar) throws IOException {

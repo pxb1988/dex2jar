@@ -31,15 +31,17 @@ import org.slf4j.LoggerFactory;
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.DataInImpl;
 import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.Proto;
+import com.googlecode.dex2jar.v3.Main;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
-
+import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 
 /**
  * 读取dex文件
@@ -173,13 +175,42 @@ public class DexFileReader implements Dex {
         for (int cid = 0; cid < class_defs_size; cid++) {
             int idxOffset = this.class_defs_off + cid * 32;
             in.pushMove(idxOffset);
+            String className = null;
             try {
-                acceptClass(dv);
+                int class_idx = in.readIntx();
+                className = this.getType(class_idx);
+                int access_flags = in.readIntx();
+                int superclass_idx = in.readIntx();
+                String superClassName = superclass_idx == -1 ? null : this.getType(superclass_idx);
+                // 获取接口
+                String[] interfaceNames = null;
+                {
+                    int interfaces_off = in.readIntx();
+                    if (interfaces_off != 0) {
+                        in.pushMove(interfaces_off);
+                        try {
+                            int size = in.readIntx();
+                            interfaceNames = new String[size];
+                            for (int i = 0; i < size; i++) {
+                                interfaceNames[i] = getType(in.readShortx());
+                            }
+                        } finally {
+                            in.pop();
+                        }
+                    }
+                }
+                DexClassVisitor dcv = dv.visit(access_flags, className, superClassName, interfaceNames);
+                if (dcv != null)// 不处理
+                {
+                    acceptClass(dv, dcv, className);
+                }
             } catch (Exception e) {
+                DexException dexException = new DexException(e, "while accept class id:[%d],name:[%s]", cid, className);
                 if (!ContinueOnException) {
-                    throw new RuntimeException("Fail on class id:" + cid, e);
+                    throw dexException;
                 } else {
-                    log.error("Fail on class id:" + cid + ", but dex2jar will continue.", e);
+                    log.error("dex2jar got an Exception, but will continue.");
+                    Main.niceExceptionMessage(log, dexException, 0);
                 }
             } finally {
                 in.pop();
@@ -188,39 +219,9 @@ public class DexFileReader implements Dex {
         dv.visitEnd();
     }
 
-    private void acceptClass(DexFileVisitor dv) {
+    private void acceptClass(DexFileVisitor dv, DexClassVisitor dcv, String className) {
         DataIn in = this.in;
-        DexClassVisitor dcv;
-        String className;
-        {
-            int class_idx = in.readIntx();
-            className = this.getType(class_idx);
-            int access_flags = in.readIntx();
-            int superclass_idx = in.readIntx();
-            String superClassName = superclass_idx == -1 ? null : this.getType(superclass_idx);
-            // 获取接口
-            String[] interfaceNames = null;
-            {
-                int interfaces_off = in.readIntx();
-                if (interfaces_off != 0) {
-                    in.pushMove(interfaces_off);
-                    try {
-                        int size = in.readIntx();
-                        interfaceNames = new String[size];
-                        for (int i = 0; i < size; i++) {
-                            interfaceNames[i] = getType(in.readShortx());
-                        }
-                    } finally {
-                        in.pop();
-                    }
-                }
-            }
-            dcv = dv.visit(access_flags, className, superClassName, interfaceNames);
-        }
-        if (dcv == null)// 不处理
-        {
-            return;
-        }
+
         // 获取源文件
         {
             int source_file_idx = in.readIntx();
@@ -306,20 +307,20 @@ public class DexFileReader implements Dex {
                             if (constant != null && i < constant.length) {
                                 value = constant[i];
                             }
-                            lastIndex = visitField(lastIndex, dcv, fieldAnnotationPositions, value);
+                            lastIndex = acceptField(lastIndex, dcv, fieldAnnotationPositions, value);
                         }
                     }
                     lastIndex = 0;
                     for (int i = 0; i < instance_fields; i++) {
-                        lastIndex = visitField(lastIndex, dcv, fieldAnnotationPositions, null);
+                        lastIndex = acceptField(lastIndex, dcv, fieldAnnotationPositions, null);
                     }
                     lastIndex = 0;
                     for (int i = 0; i < direct_methods; i++) {
-                        lastIndex = visitMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions);
+                        lastIndex = acceptMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions);
                     }
                     lastIndex = 0;
                     for (int i = 0; i < virtual_methods; i++) {
-                        lastIndex = visitMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions);
+                        lastIndex = acceptMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions);
                     }
                 }
             } finally {
@@ -444,7 +445,7 @@ public class DexFileReader implements Dex {
      * @param value
      * @return
      */
-    protected int visitField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions, Object value) {
+    protected int acceptField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions, Object value) {
         DataIn in = this.in;
         int diff = (int) in.readUnsignedLeb128();
         int field_id = lastIndex + diff;
@@ -459,6 +460,8 @@ public class DexFileReader implements Dex {
                 in.pushMove(annotation_offset);
                 try {
                     new DexAnnotationReader(this).accept(in, dfv);
+                } catch (Exception e) {
+                    throw new DexException(e, "while accept annotation in field:%s.", field.toString());
                 } finally {
                     in.pop();
                 }
@@ -478,7 +481,7 @@ public class DexFileReader implements Dex {
      * @param parameterAnnos
      * @return
      */
-    protected int visitMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos, Map<Integer, Integer> parameterAnnos) {
+    protected int acceptMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos, Map<Integer, Integer> parameterAnnos) {
         DataIn in = this.in;
         int diff = (int) in.readUnsignedLeb128();
         int method_id = lastIndex + diff;
@@ -486,57 +489,65 @@ public class DexFileReader implements Dex {
         int method_access_flags = (int) in.readUnsignedLeb128();
         int code_off = (int) in.readUnsignedLeb128();
         method.setAccessFlags(method_access_flags);
-        com.googlecode.dex2jar.visitors.DexMethodVisitor dmv = cv.visitMethod(method);
-        if (dmv != null) {
-            {
-                Integer annotation_offset = methodAnnos.get(method_id);
-                if (annotation_offset != null) {
-                    in.pushMove(annotation_offset);
-                    try {
-                        new DexAnnotationReader(this).accept(in, dmv);
-                    } finally {
-                        in.pop();
+        try {
+            DexMethodVisitor dmv = cv.visitMethod(method);
+            if (dmv != null) {
+                {
+                    Integer annotation_offset = methodAnnos.get(method_id);
+                    if (annotation_offset != null) {
+                        in.pushMove(annotation_offset);
+                        try {
+                            new DexAnnotationReader(this).accept(in, dmv);
+                        } catch (Exception e) {
+                            throw new DexException(e, "while accept annotation in method:%s.", method.toString());
+                        } finally {
+                            in.pop();
+                        }
                     }
                 }
-            }
-            {
-                Integer parameter_annotation_offset = parameterAnnos.get(method_id);
-                if (parameter_annotation_offset != null) {
-                    in.pushMove(parameter_annotation_offset);
+                {
+                    Integer parameter_annotation_offset = parameterAnnos.get(method_id);
+                    if (parameter_annotation_offset != null) {
+                        in.pushMove(parameter_annotation_offset);
+                        try {
+                            int sizeJ = in.readIntx();
+                            for (int j = 0; j < sizeJ; j++) {
+                                int field_annotation_offset = in.readIntx();
+                                in.pushMove(field_annotation_offset);
+                                try {
+                                    DexAnnotationAble dpav = dmv.visitParamesterAnnotation(j);
+                                    if (dpav != null)
+                                        new DexAnnotationReader(this).accept(in, dpav);
+                                } catch (Exception e) {
+                                    throw new DexException(e, "while accept parameter annotation in method:[%s], parameter:[%d]", method.toString(), j);
+                                } finally {
+                                    in.pop();
+                                }
+                            }
+                        } finally {
+                            in.pop();
+                        }
+                    }
+                }
+                if (code_off != 0) {
+                    in.pushMove(code_off);
                     try {
-                        int sizeJ = in.readIntx();
-                        for (int j = 0; j < sizeJ; j++) {
-                            int field_annotation_offset = in.readIntx();
-                            in.pushMove(field_annotation_offset);
+                        DexCodeVisitor dcv = dmv.visitCode();
+                        if (dcv != null) {
                             try {
-                                DexAnnotationAble dpav = dmv.visitParamesterAnnotation(j);
-                                if (dpav != null)
-                                    new DexAnnotationReader(this).accept(in, dpav);
-                            } finally {
-                                in.pop();
+                                new DexCodeReader(this, in, method).accept(dcv);
+                            } catch (Exception e) {
+                                throw new DexException(e, "while accept code in method:[%s]", method.toString());
                             }
                         }
                     } finally {
                         in.pop();
                     }
                 }
+                dmv.visitEnd();
             }
-            if (code_off != 0) {
-                in.pushMove(code_off);
-                try {
-                    DexCodeVisitor dcv = dmv.visitCode();
-                    if (dcv != null) {
-                        try {
-                            new DexCodeReader(this, in, method).accept(dcv);
-                        } catch (Exception e) {
-                            throw new RuntimeException("Error in method:[" + method + "]", e);
-                        }
-                    }
-                } finally {
-                    in.pop();
-                }
-            }
-            dmv.visitEnd();
+        } catch (Exception e) {
+            throw new DexException(e, "while accept method:[%s]", method.toString());
         }
         return method_id;
     }

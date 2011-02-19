@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodeUtil;
 import com.googlecode.dex2jar.DexOpcodes;
@@ -459,7 +460,7 @@ public class DexCodeReader implements DexOpcodes {
             }
                 break;
             default:
-                throw new RuntimeException(String.format("Not support Opcode :0x%02x=%s @[0x%04x]", opcode, DexOpcodeDump.dump(opcode), currentOffset));
+                throw new DexException(String.format("Not support Opcode :0x%02x=%s @[0x%04x]", opcode, DexOpcodeDump.dump(opcode), currentOffset));
             }
         }
         // 结尾可能有一个Label
