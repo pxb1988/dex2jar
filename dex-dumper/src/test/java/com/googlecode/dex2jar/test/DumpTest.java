@@ -23,22 +23,23 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.googlecode.dex2jar.v3.Main;
-
+import com.googlecode.dex2jar.dump.Dump;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * 
  */
-public class V3Test {
-    static final Logger log = LoggerFactory.getLogger(V3Test.class);
+public class DumpTest {
+    static final Logger log = LoggerFactory.getLogger(DumpTest.class);
 
     @Test
     public void test() throws IOException {
         File file = new File("target/test-classes/dexes");
-        for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
-            log.info("dex2jar file {}", f);
-            Main.doFile(f);
+        if (file.exists() && file.isDirectory()) {
+            for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
+                log.info("dump file {}", f);
+                Dump.doFile(f);
+            }
         }
     }
 }

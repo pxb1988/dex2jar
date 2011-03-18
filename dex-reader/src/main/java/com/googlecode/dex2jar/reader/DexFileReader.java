@@ -32,10 +32,10 @@ import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.DataInImpl;
 import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.DexException;
+import com.googlecode.dex2jar.ExceptionUtils;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.Proto;
-import com.googlecode.dex2jar.v3.Main;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -210,7 +210,7 @@ public class DexFileReader implements Dex {
                     throw dexException;
                 } else {
                     log.error("dex2jar got an Exception, but will continue.");
-                    Main.niceExceptionMessage(log, dexException, 0);
+                    ExceptionUtils.niceExceptionMessage(log, dexException, 0);
                 }
             } finally {
                 in.pop();
@@ -445,7 +445,8 @@ public class DexFileReader implements Dex {
      * @param value
      * @return
      */
-    protected int acceptField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions, Object value) {
+    protected int acceptField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions,
+            Object value) {
         DataIn in = this.in;
         int diff = (int) in.readUnsignedLeb128();
         int field_id = lastIndex + diff;
@@ -481,7 +482,8 @@ public class DexFileReader implements Dex {
      * @param parameterAnnos
      * @return
      */
-    protected int acceptMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos, Map<Integer, Integer> parameterAnnos) {
+    protected int acceptMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos,
+            Map<Integer, Integer> parameterAnnos) {
         DataIn in = this.in;
         int diff = (int) in.readUnsignedLeb128();
         int method_id = lastIndex + diff;
@@ -519,7 +521,9 @@ public class DexFileReader implements Dex {
                                     if (dpav != null)
                                         new DexAnnotationReader(this).accept(in, dpav);
                                 } catch (Exception e) {
-                                    throw new DexException(e, "while accept parameter annotation in method:[%s], parameter:[%d]", method.toString(), j);
+                                    throw new DexException(e,
+                                            "while accept parameter annotation in method:[%s], parameter:[%d]",
+                                            method.toString(), j);
                                 } finally {
                                     in.pop();
                                 }

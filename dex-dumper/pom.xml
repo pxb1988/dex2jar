@@ -2,17 +2,21 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.googlecode.dex2jar</groupId>
-	<artifactId>dex-reader</artifactId>
-	<name>dex2jar-Dex file reader</name>
+	<artifactId>dex-dumper</artifactId>
+	<name>dex2jar</name>
 	<version>1.0</version>
 	<description>A tool for converting Android's .dex format to Java's .class format</description>
 	<url>http://code.google.como/p/dex2jar/</url>
 	<dependencies>
 		<dependency>
+			<groupId>com.googlecode.dex2jar</groupId>
+			<artifactId>dex-reader</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.5.6</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -35,7 +39,6 @@
 			<groupId>asm</groupId>
 			<artifactId>asm-debug-all</artifactId>
 			<version>3.2</version>
-			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	<build>

@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.googlecode.dex2jar.dump.Dump;
 import com.googlecode.dex2jar.v3.Main;
 
 
@@ -42,7 +41,6 @@ public class ResTest {
             name = name.substring(0, name.length() - ".class".length());
             File dex = TestUtils.dex(f, new File(dir, name + ".dex"));
             Main.doFile(dex);
-            Dump.doFile(dex);
         }
         log.info("Done.");
     }
