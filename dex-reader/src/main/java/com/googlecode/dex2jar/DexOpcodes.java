@@ -202,4 +202,15 @@ public abstract interface DexOpcodes {
     public static final int OP_INVOKE_SUPER_QUICK = 250;
     public static final int OP_INVOKE_SUPER_QUICK_RANGE = 251;
 
+    public static final int OP_ADD_INT_LIT_X = 0x00FF0000 | 216;
+    public static final int OP_RSUB_INT_LIT_X = 0x00FF0000 | 217;
+    public static final int OP_MUL_INT_LIT_X = 0x00FF0000 | 218;
+    public static final int OP_DIV_INT_LIT_X = 0x00FF0000 | 219;
+    public static final int OP_REM_INT_LIT_X = 0x00FF0000 | 220;
+    public static final int OP_AND_INT_LIT_X = 0x00FF0000 | 221;
+    public static final int OP_OR_INT_LIT_X = 0x00FF0000 | 222;
+    public static final int OP_XOR_INT_LIT_X = 0x00FF0000 | 223;
+    public static final int OP_SHL_INT_LIT_X = 0x00FF0000 | 224;
+    public static final int OP_SHR_INT_LIT_X = 0x00FF0000 | 225;
+    public static final int OP_USHR_INT_LIT_X = 0x00FF0000 | 226;
 }

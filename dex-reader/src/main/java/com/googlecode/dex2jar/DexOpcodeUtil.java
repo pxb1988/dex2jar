@@ -314,110 +314,26 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpco
      */
     public static int mapOpcode(int dexOpcode) {
         switch (dexOpcode) {
-        case OP_ADD_INT_LIT8:
+        case OP_ADD_INT_LIT_X:
             return IADD;
-        case OP_MUL_INT_LIT8:
+        case OP_MUL_INT_LIT_X:
             return IMUL;
-        case OP_DIV_INT_LIT8:
+        case OP_DIV_INT_LIT_X:
             return IDIV;
-        case OP_REM_INT_LIT8:
+        case OP_REM_INT_LIT_X:
             return IREM;
-        case OP_AND_INT_LIT8:
+        case OP_AND_INT_LIT_X:
             return IAND;
-        case OP_OR_INT_LIT8:
+        case OP_OR_INT_LIT_X:
             return IOR;
-        case OP_XOR_INT_LIT8:
+        case OP_XOR_INT_LIT_X:
             return IXOR;
-        case OP_SHR_INT_LIT8:
+        case OP_SHR_INT_LIT_X:
             return ISHR;
-        case OP_USHR_INT_LIT8:
+        case OP_USHR_INT_LIT_X:
             return IUSHR;
-        case OP_SHL_INT_LIT8:
+        case OP_SHL_INT_LIT_X:
             return ISHL;
-
-            // &
-        case OP_AND_INT_2ADDR:
-            return IAND;
-        case OP_AND_LONG_2ADDR:
-            return LAND;
-            // |
-        case OP_OR_INT_2ADDR:
-            return IOR;
-        case OP_OR_LONG_2ADDR:
-            return LOR;
-            // ^
-        case OP_XOR_INT_2ADDR:
-            return IXOR;
-        case OP_XOR_LONG_2ADDR:
-            return LXOR;
-
-            // +
-        case OP_ADD_INT_2ADDR:
-            return IADD;
-        case OP_ADD_LONG_2ADDR:
-            return LADD;
-        case OP_ADD_FLOAT_2ADDR:
-            return FADD;
-        case OP_ADD_DOUBLE_2ADDR:
-            return DADD;
-
-            // -
-        case OP_SUB_INT_2ADDR:
-            return ISUB;
-        case OP_SUB_LONG_2ADDR:
-            return LSUB;
-        case OP_SUB_FLOAT_2ADDR:
-            return FSUB;
-        case OP_SUB_DOUBLE_2ADDR:
-            return DSUB;
-
-            // *
-        case OP_MUL_INT_2ADDR:
-            return IMUL;
-        case OP_MUL_LONG_2ADDR:
-            return LMUL;
-        case OP_MUL_FLOAT_2ADDR:
-            return FMUL;
-        case OP_MUL_DOUBLE_2ADDR:
-            return DMUL;
-
-            // /
-        case OP_DIV_INT_2ADDR:
-            return IDIV;
-        case OP_DIV_LONG_2ADDR:
-            return LDIV;
-        case OP_DIV_FLOAT_2ADDR:
-            return FDIV;
-        case OP_DIV_DOUBLE_2ADDR:
-            return DDIV;
-
-        case OP_REM_LONG_2ADDR:
-            return LREM;
-        case OP_REM_INT_2ADDR:
-            return IREM;
-        case OP_REM_DOUBLE_2ADDR:
-            return DREM;
-        case OP_REM_FLOAT_2ADDR:
-            return FREM;
-
-            // shr
-        case OP_SHR_INT_2ADDR:
-            return ISHR;
-        case OP_SHR_LONG_2ADDR:
-            return LSHR;
-
-            // ushr
-        case OP_USHR_INT_2ADDR:
-            return IUSHR;
-        case OP_USHR_LONG_2ADDR:
-            return LUSHR;
-
-            // shl
-        case OP_SHL_INT_2ADDR:
-            return ISHL;
-        case OP_SHL_LONG_2ADDR:
-            return LSHL;
-
         case OP_AND_LONG:
             return LAND;
         case OP_AND_INT:
@@ -492,21 +408,6 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpco
             return DCMPG;
         case OP_CMPG_FLOAT:
             return FCMPG;
-
-        case OP_MUL_INT_LIT16:
-            return IMUL;
-        case OP_DIV_INT_LIT16:
-            return IDIV;
-        case OP_REM_INT_LIT16:
-            return IREM;
-        case OP_ADD_INT_LIT16:
-            return IADD;
-        case OP_AND_INT_LIT16:
-            return IAND;
-        case OP_OR_INT_LIT16:
-            return IOR;
-        case OP_XOR_INT_LIT16:
-            return IXOR;
 
         case OP_NEG_INT:
             return INEG;

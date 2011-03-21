@@ -356,7 +356,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         }
             break;
         case OP_RSUB_INT_LIT8:
-            dcv.visitInInsn(OP_SUB_INT, arg1, (byte) ((arg2 >> 8) & 0xff), arg2 & 0xff);
+            dcv.visitInInsn(OP_RSUB_INT_LIT_X, arg1, arg2 & 0xff, (byte) ((arg2 >> 8) & 0xff));
             break;
         case OP_ADD_INT_LIT8:
         case OP_MUL_INT_LIT8:
@@ -368,11 +368,12 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_SHL_INT_LIT8:
         case OP_SHR_INT_LIT8:
         case OP_USHR_INT_LIT8: {
-            dcv.visitInInsn(opcode - (OP_ADD_INT_LIT8 - OP_ADD_INT), arg1, arg2 & 0xff, (byte) ((arg2 >> 8) & 0xff));
+            dcv.visitInInsn(opcode - (OP_ADD_INT_LIT8 - OP_ADD_INT_LIT_X), arg1, arg2 & 0xff,
+                    (byte) ((arg2 >> 8) & 0xff));
         }
             break;
         case OP_RSUB_INT:
-            dcv.visitInInsn(opcode, arg1 & 0xf, (short) (arg2), (arg1 >> 4) & 0xf);
+            dcv.visitInInsn(OP_RSUB_INT_LIT_X, (arg1 >> 4) & 0xf, arg1 & 0xf, (short) (arg2));
             break;
         case OP_ADD_INT_LIT16:
         case OP_MUL_INT_LIT16:
@@ -381,7 +382,8 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_AND_INT_LIT16:
         case OP_OR_INT_LIT16:
         case OP_XOR_INT_LIT16: {
-            dcv.visitInInsn(opcode - (OP_ADD_INT_LIT16 - OP_ADD_INT), arg1 & 0xf, (arg1 >> 4) & 0xf, (short) (arg2));
+            dcv.visitInInsn(opcode - (OP_ADD_INT_LIT16 - OP_ADD_INT_LIT_X), arg1 & 0xf, (arg1 >> 4) & 0xf,
+                    (short) (arg2));
         }
             break;
 

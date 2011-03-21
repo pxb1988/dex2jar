@@ -20,7 +20,6 @@ import org.objectweb.asm.Label;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 
-
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
@@ -194,6 +193,19 @@ public interface DexCodeVisitor {
      * 		case OP_REM_DOUBLE:
      * 		case OP_CMPL_DOUBLE:
      * 		case OP_CMPL_FLOAT:
+     * 
+     *     case  OP_ADD_INT_LIT_X:
+     *     case  OP_RSUB_INT_LIT_X:
+     *     case  OP_MUL_INT_LIT_X:
+     *     case  OP_DIV_INT_LIT_X:
+     *     case  OP_REM_INT_LIT_X:
+     *     case  OP_AND_INT_LIT_X:
+     *     case  OP_OR_INT_LIT_X:
+     *     case  OP_XOR_INT_LIT_X:
+     *     case  OP_SHL_INT_LIT_X:
+     *     case  OP_SHR_INT_LIT_X:
+     *     case  OP_USHR_INT_LIT_X:
+     * 
      * </pre>
      * 
      * @param opcode
