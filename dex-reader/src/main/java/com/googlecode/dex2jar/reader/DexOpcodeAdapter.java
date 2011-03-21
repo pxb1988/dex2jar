@@ -29,7 +29,6 @@ import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
-
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
@@ -105,27 +104,6 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     public void visit(int opcode, int arg1) {
 
         switch (opcode) {
-
-        case OP_MOVE_OBJECT:
-        case OP_MOVE:
-        case OP_MOVE_WIDE:
-
-        case OP_INT_TO_BYTE:
-        case OP_INT_TO_CHAR:
-        case OP_INT_TO_DOUBLE:
-        case OP_INT_TO_FLOAT:
-        case OP_INT_TO_LONG:
-        case OP_INT_TO_SHORT:
-        case OP_LONG_TO_DOUBLE:
-        case OP_LONG_TO_FLOAT:
-        case OP_LONG_TO_INT:
-        case OP_DOUBLE_TO_FLOAT:
-        case OP_DOUBLE_TO_INT:
-        case OP_DOUBLE_TO_LONG:
-        case OP_FLOAT_TO_INT:
-        case OP_FLOAT_TO_DOUBLE:
-        case OP_FLOAT_TO_LONG:
-
         case OP_ADD_INT_2ADDR:
         case OP_SUB_INT_2ADDR:
         case OP_MUL_INT_2ADDR:
@@ -160,7 +138,31 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_DIV_DOUBLE_2ADDR:
         case OP_MUL_DOUBLE_2ADDR:
         case OP_ADD_DOUBLE_2ADDR:
-        case OP_REM_DOUBLE_2ADDR:
+        case OP_REM_DOUBLE_2ADDR: {
+            int to = arg1 & 0xf;
+            int from = (arg1 >> 4) & 0xf;
+            dcv.visitInInsn(opcode - (OP_ADD_INT_2ADDR - OP_ADD_INT), to, to, from);
+        }
+            break;
+        case OP_MOVE_OBJECT:
+        case OP_MOVE:
+        case OP_MOVE_WIDE:
+
+        case OP_INT_TO_BYTE:
+        case OP_INT_TO_CHAR:
+        case OP_INT_TO_DOUBLE:
+        case OP_INT_TO_FLOAT:
+        case OP_INT_TO_LONG:
+        case OP_INT_TO_SHORT:
+        case OP_LONG_TO_DOUBLE:
+        case OP_LONG_TO_FLOAT:
+        case OP_LONG_TO_INT:
+        case OP_DOUBLE_TO_FLOAT:
+        case OP_DOUBLE_TO_INT:
+        case OP_DOUBLE_TO_LONG:
+        case OP_FLOAT_TO_INT:
+        case OP_FLOAT_TO_DOUBLE:
+        case OP_FLOAT_TO_LONG:
 
         case OP_NEG_INT:
         case OP_NOT_INT:
@@ -211,7 +213,8 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         }
             break;
         default:
-            throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
+            throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode,
+                    DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -352,8 +355,10 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             dcv.visitArrayInsn(opcode, value, array, index);
         }
             break;
-        case OP_ADD_INT_LIT8:
         case OP_RSUB_INT_LIT8:
+            dcv.visitInInsn(OP_SUB_INT, arg1, (byte) ((arg2 >> 8) & 0xff), arg2 & 0xff);
+            break;
+        case OP_ADD_INT_LIT8:
         case OP_MUL_INT_LIT8:
         case OP_DIV_INT_LIT8:
         case OP_REM_INT_LIT8:
@@ -363,17 +368,20 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_SHL_INT_LIT8:
         case OP_SHR_INT_LIT8:
         case OP_USHR_INT_LIT8: {
-            dcv.visitInInsn(opcode, arg1, arg2 & 0xff, (byte) ((arg2 >> 8) & 0xff));
+            dcv.visitInInsn(opcode - (OP_ADD_INT_LIT8 - OP_ADD_INT), arg1, arg2 & 0xff, (byte) ((arg2 >> 8) & 0xff));
         }
             break;
+        case OP_RSUB_INT:
+            dcv.visitInInsn(opcode, arg1 & 0xf, (short) (arg2), (arg1 >> 4) & 0xf);
+            break;
+        case OP_ADD_INT_LIT16:
         case OP_MUL_INT_LIT16:
         case OP_DIV_INT_LIT16:
         case OP_REM_INT_LIT16:
-        case OP_ADD_INT_LIT16:
         case OP_AND_INT_LIT16:
         case OP_OR_INT_LIT16:
         case OP_XOR_INT_LIT16: {
-            dcv.visitInInsn(opcode, arg1 & 0xf, (arg1 >> 4) & 0xf, (short) (arg2));
+            dcv.visitInInsn(opcode - (OP_ADD_INT_LIT16 - OP_ADD_INT), arg1 & 0xf, (arg1 >> 4) & 0xf, (short) (arg2));
         }
             break;
 
@@ -438,7 +446,8 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         }
             break;
         default:
-            throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
+            throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode,
+                    DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -509,7 +518,8 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         }
             break;
         default:
-            throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
+            throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode,
+                    DexOpcodeDump.dump(opcode)));
         }
     }
 

@@ -125,30 +125,6 @@ public interface DexCodeVisitor {
 
     /**
      * <pre>
-     * 		case OP_AND_INT_2ADDR:
-     * 		case OP_AND_LONG_2ADDR:
-     * 		case OP_OR_INT_2ADDR:
-     * 		case OP_OR_LONG_2ADDR:
-     * 		case OP_XOR_INT_2ADDR:
-     * 		case OP_XOR_LONG_2ADDR:
-     * 		case OP_MUL_LONG_2ADDR:
-     * 		case OP_MUL_INT_2ADDR:
-     * 		case OP_MUL_FLOAT_2ADDR:
-     * 		case OP_MUL_DOUBLE_2ADDR:
-     * 		case OP_SUB_INT_2ADDR:
-     * 		case OP_SUB_LONG_2ADDR:
-     * 		case OP_SUB_FLOAT_2ADDR:
-     * 		case OP_SUB_DOUBLE_2ADDR:
-     * 		case OP_REM_INT_2ADDR:
-     * 		case OP_REM_LONG_2ADDR:
-     * 		case OP_DIV_INT_2ADDR:
-     * 		case OP_DIV_LONG_2ADDR:
-     * 		case OP_DIV_FLOAT_2ADDR:
-     * 		case OP_DIV_DOUBLE_2ADDR:
-     * 		case OP_ADD_INT_2ADDR:
-     * 		case OP_ADD_LONG_2ADDR:
-     * 		case OP_ADD_FLOAT_2ADDR:
-     * 		case OP_ADD_DOUBLE_2ADDR:
      * 
      * 		case OP_NEG_INT:
      * 		case OP_NEG_DOUBLE:
@@ -218,23 +194,6 @@ public interface DexCodeVisitor {
      * 		case OP_REM_DOUBLE:
      * 		case OP_CMPL_DOUBLE:
      * 		case OP_CMPL_FLOAT:
-     * 		case OP_MUL_INT_LIT16:
-     * 		case OP_DIV_INT_LIT16:
-     * 		case OP_REM_INT_LIT16:
-     * 		case OP_ADD_INT_LIT16:
-     * 		case OP_AND_INT_LIT16:
-     * 		case OP_OR_INT_LIT16:
-     * 		case OP_XOR_INT_LIT16: 
-     * 		case OP_AND_INT_LIT8:
-     * 		case OP_ADD_INT_LIT8:
-     * 		case OP_REM_INT_LIT8:
-     * 		case OP_DIV_INT_LIT8:
-     * 		case OP_MUL_INT_LIT8:
-     * 		case OP_SHR_INT_LIT8:
-     * 		case OP_SHL_INT_LIT8:
-     * 		case OP_USHR_INT_LIT8:
-     * 		case OP_OR_INT_LIT8:
-     * 		case OP_XOR_INT_LIT8:
      * </pre>
      * 
      * @param opcode
