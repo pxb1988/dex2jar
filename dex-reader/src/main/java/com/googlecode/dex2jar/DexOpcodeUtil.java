@@ -39,6 +39,7 @@ public final class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpco
         case OP_MOVE_EXCEPTION:
         case OP_MOVE_OBJECT:
         case OP_MOVE_WIDE:
+        case OP_MOVE_16:
         case OP_MOVE_RESULT:
         case OP_MOVE:
         case OP_MOVE_RESULT_WIDE:

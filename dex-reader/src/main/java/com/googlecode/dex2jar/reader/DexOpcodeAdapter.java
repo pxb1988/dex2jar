@@ -144,10 +144,15 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             dcv.visitInInsn(opcode - (OP_ADD_INT_2ADDR - OP_ADD_INT), to, to, from);
         }
             break;
+        case OP_MOVE_16: {
+            int to = arg1 & 0xf;
+            int from = (arg1 >> 4) & 0xf;
+            dcv.visitInInsn(OP_MOVE, to, from);
+        }
+            break;
         case OP_MOVE_OBJECT:
         case OP_MOVE:
         case OP_MOVE_WIDE:
-
         case OP_INT_TO_BYTE:
         case OP_INT_TO_CHAR:
         case OP_INT_TO_DOUBLE:
@@ -442,9 +447,11 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         }
             break;
         case OP_MOVE_OBJECT_FROM16:
+            dcv.visitInInsn(OP_MOVE_OBJECT, arg1, arg2 & 0xff);
+            break;
         case OP_MOVE_FROM16:
         case OP_MOVE_WIDE_FROM16: {
-            dcv.visitInInsn(opcode, arg1, arg2 & 0xff);
+            dcv.visitInInsn(OP_MOVE, arg1, arg2 & 0xff);
         }
             break;
         default:
