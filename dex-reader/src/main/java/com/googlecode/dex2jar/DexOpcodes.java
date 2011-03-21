@@ -24,14 +24,8 @@ package com.googlecode.dex2jar;
 public abstract interface DexOpcodes {
     public static final int OP_NOP = 0;
     public static final int OP_MOVE = 1;
-    public static final int OP_MOVE_FROM16 = 2;
-    public static final int OP_MOVE_16 = 3;
     public static final int OP_MOVE_WIDE = 4;
-    public static final int OP_MOVE_WIDE_FROM16 = 5;
-    public static final int OP_MOVE_WIDE_16 = 6;
     public static final int OP_MOVE_OBJECT = 7;
-    public static final int OP_MOVE_OBJECT_FROM16 = 8;
-    public static final int OP_MOVE_OBJECT_16 = 9;
     public static final int OP_MOVE_RESULT = 10;
     public static final int OP_MOVE_RESULT_WIDE = 11;
     public static final int OP_MOVE_RESULT_OBJECT = 12;
@@ -40,16 +34,10 @@ public abstract interface DexOpcodes {
     public static final int OP_RETURN = 15;
     public static final int OP_RETURN_WIDE = 16;
     public static final int OP_RETURN_OBJECT = 17;
-    public static final int OP_CONST_4 = 18;
-    public static final int OP_CONST_16 = 19;
+
     public static final int OP_CONST = 20;
-    public static final int OP_CONST_HIGH16 = 21;
-    public static final int OP_CONST_WIDE_16 = 22;
-    public static final int OP_CONST_WIDE_32 = 23;
     public static final int OP_CONST_WIDE = 24;
-    public static final int OP_CONST_WIDE_HIGH16 = 25;
     public static final int OP_CONST_STRING = 26;
-    public static final int OP_CONST_STRING_JUMBO = 27;
     public static final int OP_CONST_CLASS = 28;
     public static final int OP_MONITOR_ENTER = 29;
     public static final int OP_MONITOR_EXIT = 30;
@@ -63,8 +51,7 @@ public abstract interface DexOpcodes {
     public static final int OP_FILL_ARRAY_DATA = 38;
     public static final int OP_THROW = 39;
     public static final int OP_GOTO = 40;
-    public static final int OP_GOTO_16 = 41;
-    public static final int OP_GOTO_32 = 42;
+
     public static final int OP_PACKED_SWITCH = 43;
     public static final int OP_SPARSE_SWITCH = 44;
     public static final int OP_CMPL_FLOAT = 45;

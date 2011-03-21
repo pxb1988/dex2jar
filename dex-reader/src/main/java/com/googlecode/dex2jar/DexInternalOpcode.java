@@ -21,6 +21,19 @@ package com.googlecode.dex2jar;
  */
 public interface DexInternalOpcode {
 
+    public static final int OP_MOVE_FROM16 = 2;
+    public static final int OP_MOVE_16 = 3;
+    public static final int OP_MOVE_WIDE_FROM16 = 5;
+    public static final int OP_MOVE_WIDE_16 = 6;
+    public static final int OP_MOVE_OBJECT_FROM16 = 8;
+    public static final int OP_MOVE_OBJECT_16 = 9;
+    public static final int OP_CONST_4 = 18;
+    public static final int OP_CONST_16 = 19;
+    public static final int OP_CONST_HIGH16 = 21;
+    public static final int OP_CONST_WIDE_16 = 22;
+    public static final int OP_CONST_WIDE_32 = 23;
+    public static final int OP_CONST_WIDE_HIGH16 = 25;
+    public static final int OP_CONST_STRING_JUMBO = 27;
     public static final int OP_UNUSED_3e = 62;
     public static final int OP_UNUSED_3f = 63;
     public static final int OP_UNUSED_40 = 64;
@@ -110,4 +123,6 @@ public interface DexInternalOpcode {
     public static final int OP_SHR_INT_LIT8 = 225;
     public static final int OP_USHR_INT_LIT8 = 226;
 
+    public static final int OP_GOTO_16 = 41;
+    public static final int OP_GOTO_32 = 42;
 }
