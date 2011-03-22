@@ -18,7 +18,6 @@ package com.googlecode.dex2jar.reader;
 import java.util.Map;
 
 import org.objectweb.asm.Label;
-import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.DexOpcodes;
@@ -128,7 +127,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             dcv.visitConstStmt(OP_CONST_STRING, A, dex.getString(B));
             break;
         case OP_CONST_CLASS:
-            dcv.visitConstStmt(OP_CONST_CLASS, A, Type.getType(dex.getType(B)));
+            dcv.visitConstStmt(OP_CONST_CLASS, A, dex.getType(B));
             break;
         case OP_CHECK_CAST:
         case OP_NEW_INSTANCE:

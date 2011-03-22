@@ -517,7 +517,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
             info(opcode, "v%d=\"%s\"", reg, value);
             break;
         case OP_CONST_CLASS:
-            info(opcode, "v%d=%s.class", reg, ((Type) value).getClassName());
+            info(opcode, "v%d=%s.class", reg, value);
             break;
         default:
             info(opcode, "v%d=%s  //", reg, value);
