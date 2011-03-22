@@ -23,6 +23,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.googlecode.dex2jar.DexException;
+import com.googlecode.dex2jar.ExceptionUtils;
 import com.googlecode.dex2jar.dump.Dump;
 
 /**
@@ -38,7 +40,13 @@ public class DumpTest {
         if (file.exists() && file.isDirectory()) {
             for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
                 log.info("dump file {}", f);
-                Dump.doFile(f);
+                try {
+                    Dump.doFile(f);
+                } catch (Exception e) {
+                    DexException t = new DexException("while accept file: " + f, e);
+                    ExceptionUtils.niceExceptionMessage(log, t, 0);
+                    throw t;
+                }
             }
         }
     }
