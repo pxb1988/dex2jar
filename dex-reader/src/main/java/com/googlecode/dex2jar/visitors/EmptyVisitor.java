@@ -271,4 +271,9 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 
     }
 
+    @Override
+    public void visitLabel(Label label) {
+
+    }
+
 }

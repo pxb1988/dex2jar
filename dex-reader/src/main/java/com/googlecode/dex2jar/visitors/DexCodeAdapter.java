@@ -165,4 +165,9 @@ public class DexCodeAdapter implements DexCodeVisitor {
         dcv.visitEnd();
     }
 
+    @Override
+    public void visitLabel(Label label) {
+        dcv.visitEnd();
+    }
+
 }

@@ -31,12 +31,12 @@ public interface DexCodeVisitor {
      * OP_APUT
      * </pre>
      * 
-     * @param opAget
+     * @param opcode
      * @param formOrToReg
      * @param arrayReg
      * @param indexReg
      */
-    void visitArrayStmt(int opAget, int formOrToReg, int arrayReg, int indexReg);
+    void visitArrayStmt(int opcode, int formOrToReg, int arrayReg, int indexReg);
 
     /**
      * <pre>
@@ -124,11 +124,11 @@ public interface DexCodeVisitor {
      * OP_NEW_INSTANCE
      * </pre>
      * 
-     * @param opCheckCast
+     * @param opcode
      * @param saveTo
      * @param type
      */
-    void visitClassStmt(int opCheckCast, int saveTo, String type);
+    void visitClassStmt(int opcode, int saveTo, String type);
 
     /**
      * <pre>
@@ -154,11 +154,11 @@ public interface DexCodeVisitor {
      * OP_CONST_CLASS
      * </pre>
      * 
-     * @param opConst
+     * @param opcode
      * @param a
      * @param b
      */
-    void visitConstStmt(int opConst, int toReg, Object value);
+    void visitConstStmt(int opcode, int toReg, Object value);
 
     /**
      * <pre>
@@ -225,19 +225,19 @@ public interface DexCodeVisitor {
      * OP_IF_LEZ
      * </pre>
      * 
-     * @param opConst
+     * @param opcode
      * @param reg
      * @param label
      */
-    void visitJumpStmt(int opConst, int reg, Label label);
+    void visitJumpStmt(int opcode, int reg, Label label);
 
     /**
      * OP_GOTO
      * 
-     * @param opGoto
+     * @param opcode
      * @param label
      */
-    void visitJumpStmt(int opGoto, Label label);
+    void visitJumpStmt(int opcode, Label label);
 
     void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels);
 
@@ -275,10 +275,10 @@ public interface DexCodeVisitor {
      * OP_MOVE_EXCEPTION
      * </pre>
      * 
-     * @param opConst
+     * @param opcode
      * @param toReg
      */
-    void visitMoveStmt(int opConst, int toReg);
+    void visitMoveStmt(int opcode, int toReg);
 
     /**
      * <pre>
@@ -306,10 +306,10 @@ public interface DexCodeVisitor {
      * OP_THROW
      * </pre>
      * 
-     * @param opConst
+     * @param opcode
      * @param reg
      */
-    void visitReturnStmt(int opConst, int reg);
+    void visitReturnStmt(int opcode, int reg);
 
     void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels);
 
@@ -350,4 +350,6 @@ public interface DexCodeVisitor {
     void visitArguments(int[] args);
 
     void visitEnd();
+
+    void visitLabel(Label label);
 }
