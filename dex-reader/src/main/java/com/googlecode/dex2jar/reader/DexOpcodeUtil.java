@@ -42,6 +42,7 @@ import static com.googlecode.dex2jar.reader.OpcodeFormat.F51l;
 
 import org.objectweb.asm.Opcodes;
 
+import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
 
 /**
@@ -932,7 +933,8 @@ class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpcode {
         case OP_USHR_INT_LIT8:
             return 2;
         }
-        throw new RuntimeException("opcode length for " + opcode + " not found!");
+        throw new RuntimeException("opcode length for 0x" + Integer.toHexString(opcode) + DexOpcodeDump.dump(opcode)
+                + " not found!");
     }
 
 }

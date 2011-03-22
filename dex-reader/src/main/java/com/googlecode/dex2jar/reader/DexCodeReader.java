@@ -45,9 +45,12 @@ import java.util.Map;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -59,6 +62,9 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @version $Id$
  */
 public class DexCodeReader implements DexOpcodes {
+
+    private static final Logger log = LoggerFactory.getLogger(DexCodeReader.class);
+
     /**
      * dex文件
      */
@@ -155,6 +161,7 @@ public class DexCodeReader implements DexOpcodes {
                 } finally {
                     in.pop();
                 }
+                break;
             }
 
             case OP_NOP:// OP_NOP
@@ -188,7 +195,7 @@ public class DexCodeReader implements DexOpcodes {
                 break;
             default: {
                 int size = DexOpcodeUtil.length(opcode);
-                in.skip(size * 2 + 1);
+                in.skip(size * 2 - 1);
                 break;
             }
 
@@ -197,16 +204,13 @@ public class DexCodeReader implements DexOpcodes {
     }
 
     private void findTryCatch(DataIn in, DexCodeVisitor dcv, int tries_size) {
-        if (in.needPadding()) {
-            in.skip(2);
-        }
         for (int i = 0; i < tries_size; i++) {
-            int start = in.readIntx() * 2;
-            int offset = in.readShortx() * 2;
-            int handlers = in.readShortx();
+            int start_addr = in.readIntx() * 2;
+            int insn_count = in.readShortx() * 2;
+            int handler_offset = in.readShortx();
             in.push();
             try {
-                in.skip((tries_size - i - 1) * 8 + handlers);
+                in.skip((tries_size - i - 1) * 8 + handler_offset);
                 boolean catchAll = false;
                 int listSize = (int) in.readSignedLeb128();
                 if (listSize <= 0) {
@@ -216,32 +220,32 @@ public class DexCodeReader implements DexOpcodes {
                 for (int k = 0; k < listSize; k++) {
                     int type_id = (int) in.readUnsignedLeb128();
                     int handler = (int) in.readUnsignedLeb128() * 2;
-                    order(start);
+                    order(start_addr);
                     int end = 0;
-                    if (handler > start && handler < start + offset) {
+                    if (handler > start_addr && handler < start_addr + insn_count) {
                         end = handler;
                         order(handler);
                     } else {
-                        end = start + offset;
-                        order(start + offset);
+                        end = start_addr + insn_count;
+                        order(start_addr + insn_count);
                         order(handler);
                     }
                     String type = dex.getType(type_id);
-                    dcv.visitTryCatch(this.labels.get(start), this.labels.get(end), this.labels.get(handler), type);
+                    dcv.visitTryCatch(this.labels.get(start_addr), this.labels.get(end), this.labels.get(handler), type);
                 }
                 if (catchAll) {
                     int handler = (int) in.readUnsignedLeb128() * 2;
-                    order(start);
+                    order(start_addr);
                     int end = 0;
-                    if (handler > start && handler < start + offset) {
+                    if (handler > start_addr && handler < start_addr + insn_count) {
                         end = handler;
                         order(handler);
                     } else {
-                        end = start + offset;
-                        order(start + offset);
+                        end = start_addr + insn_count;
+                        order(start_addr + insn_count);
                         order(handler);
                     }
-                    dcv.visitTryCatch(this.labels.get(start), this.labels.get(end), this.labels.get(handler), null);
+                    dcv.visitTryCatch(this.labels.get(start_addr), this.labels.get(end), this.labels.get(handler), null);
                 }
             } finally {
                 in.pop();
@@ -290,15 +294,18 @@ public class DexCodeReader implements DexOpcodes {
             in.push();
             try {
                 in.skip(instruction_size * 2);
-                findTryCatch(in, dcv, instruction_size);
+                if (tries_size > 0 && instruction_size % 2 != 0) {
+                    in.skip(2);
+                }
+                findTryCatch(in, dcv, tries_size);
             } finally {
                 in.pop();
             }
         }
-        // 处理debug信息
+        // TODO 处理debug信息
         if (debug_off != 0) {
             // in.pushMove(debug_off);
-            // new DexDebugInfoReader(in, dex,total_registers_size).accept(dcv);
+            // new DexDebugInfoReader(in, dex, total_registers_size).accept(dcv);
             // in.pop();
         }
         // 查找标签
@@ -319,9 +326,16 @@ public class DexCodeReader implements DexOpcodes {
         for (int baseOffset = in.getCurrentPosition(); currentOffset < instruction_size * 2; currentOffset = in
                 .getCurrentPosition() - baseOffset) {
             int opcode = in.readByte() & 0xff;
+
             n.offset(currentOffset);
 
-            switch (DexOpcodeUtil.format(opcode)) {
+            int format = DexOpcodeUtil.format(opcode);
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("%04x: %s", currentOffset / 2, DexOpcodeDump.dump(opcode)));
+            }
+
+            switch (format) {
             case F10t:
                 n.x0t(opcode, (byte) (in.readByte() & 0xFF));
                 break;
@@ -558,15 +572,15 @@ public class DexCodeReader implements DexOpcodes {
             }
 
             case F35c: {
-                int V = in.readByte() & 0xF;
-                int A = V & 0xF;
-                int B = (V >>> 4) & 0xF;
+                int VV = in.readByte() & 0xFF;
+                int A = VV & 0xF;
+                int B = (VV >>> 4) & 0xF;
                 int CCCC = in.readShortx() & 0xFFFF;
-                V = in.readShortx();
-                int D = V & 0xF;
-                int E = (V >> 4) & 0xF;
-                int F = (V >> 8) & 0xF;
-                int G = (V >>> 12) & 0xF;
+                VV = in.readShortx();
+                int D = VV & 0xF;
+                int E = (VV >> 4) & 0xF;
+                int F = (VV >> 8) & 0xF;
+                int G = (VV >>> 12) & 0xF;
                 n.x5c(opcode, B, D, E, F, G, A, CCCC);
                 break;
             }

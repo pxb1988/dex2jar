@@ -132,7 +132,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             break;
         case OP_CHECK_CAST:
         case OP_NEW_INSTANCE:
-            dcv.visitClassStmt(OP_CHECK_CAST, A, dex.getType(B));
+            dcv.visitClassStmt(opcode, A, dex.getType(B));
             break;
         case OP_SGET:
         case OP_SGET_WIDE:
@@ -257,6 +257,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_MONITOR_ENTER:
         case OP_MONITOR_EXIT:
             dcv.visitMonitorStmt(opcode, A);
+            break;
         default:
             throw new RuntimeException("");
         }
@@ -495,6 +496,9 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     public void x5c(int opcode, int b, int d, int e, int f, int g, int a, int cCCC) {
         int args[];
         switch (b) {
+        case 0:
+            args = new int[0];
+            break;
         case 1:
             args = new int[] { d };
             break;
