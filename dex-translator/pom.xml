@@ -23,7 +23,7 @@
 		<dependency>
 			<groupId>com.googlecode.dex2jar</groupId>
 			<artifactId>dex-reader</artifactId>
-			<version>1.1</version>
+			<version>1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

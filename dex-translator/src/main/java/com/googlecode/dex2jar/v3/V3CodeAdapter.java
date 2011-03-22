@@ -30,6 +30,7 @@ import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
+
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
@@ -148,8 +149,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -192,8 +192,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -325,8 +324,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
 
         }
     }
@@ -417,6 +415,97 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     public void visitInInsn(int opcode, int saveToReg, int opReg) {
         checkResult();
         switch (opcode) {
+        case OP_AND_INT_2ADDR:
+        case OP_AND_LONG_2ADDR:
+        case OP_OR_INT_2ADDR:
+        case OP_OR_LONG_2ADDR:
+        case OP_XOR_INT_2ADDR:
+        case OP_XOR_LONG_2ADDR:
+        case OP_SUB_DOUBLE_2ADDR:
+        case OP_SUB_FLOAT_2ADDR:
+        case OP_SUB_INT_2ADDR:
+        case OP_SUB_LONG_2ADDR:
+        case OP_MUL_LONG_2ADDR:
+        case OP_MUL_INT_2ADDR:
+        case OP_MUL_FLOAT_2ADDR:
+        case OP_MUL_DOUBLE_2ADDR:
+        case OP_REM_LONG_2ADDR:
+        case OP_REM_INT_2ADDR:
+        case OP_REM_DOUBLE_2ADDR:
+        case OP_REM_FLOAT_2ADDR:
+        case OP_DIV_INT_2ADDR:
+        case OP_DIV_LONG_2ADDR:
+        case OP_DIV_FLOAT_2ADDR:
+        case OP_DIV_DOUBLE_2ADDR:
+        case OP_ADD_INT_2ADDR:
+        case OP_ADD_LONG_2ADDR:
+        case OP_ADD_FLOAT_2ADDR:
+        case OP_ADD_DOUBLE_2ADDR:
+        case OP_SHR_LONG_2ADDR:
+        case OP_SHL_LONG_2ADDR:
+        case OP_USHR_LONG_2ADDR:
+        case OP_SHR_INT_2ADDR:
+        case OP_SHL_INT_2ADDR:
+        case OP_USHR_INT_2ADDR: {
+            int load = 0;
+            int store = 0;
+            switch (opcode) {
+            case OP_AND_INT_2ADDR:
+            case OP_SUB_INT_2ADDR:
+            case OP_OR_INT_2ADDR:
+            case OP_MUL_INT_2ADDR:
+            case OP_XOR_INT_2ADDR:
+            case OP_ADD_INT_2ADDR:
+            case OP_REM_INT_2ADDR:
+            case OP_DIV_INT_2ADDR:
+            case OP_SHR_INT_2ADDR:
+            case OP_SHL_INT_2ADDR:
+            case OP_USHR_INT_2ADDR: {
+                load = ILOAD;
+                store = ISTORE;
+            }
+                break;
+            case OP_SUB_LONG_2ADDR:
+            case OP_MUL_LONG_2ADDR:
+            case OP_ADD_LONG_2ADDR:
+            case OP_AND_LONG_2ADDR:
+            case OP_OR_LONG_2ADDR:
+            case OP_XOR_LONG_2ADDR:
+            case OP_REM_LONG_2ADDR:
+            case OP_DIV_LONG_2ADDR:
+            case OP_SHR_LONG_2ADDR:
+            case OP_SHL_LONG_2ADDR:
+            case OP_USHR_LONG_2ADDR: {
+                load = LLOAD;
+                store = LSTORE;
+            }
+                break;
+            case OP_SUB_FLOAT_2ADDR:
+            case OP_ADD_FLOAT_2ADDR:
+            case OP_DIV_FLOAT_2ADDR:
+            case OP_MUL_FLOAT_2ADDR:
+            case OP_REM_FLOAT_2ADDR: {
+                load = FLOAD;
+                store = FSTORE;
+            }
+                break;
+            case OP_DIV_DOUBLE_2ADDR:
+            case OP_SUB_DOUBLE_2ADDR:
+            case OP_ADD_DOUBLE_2ADDR:
+            case OP_MUL_DOUBLE_2ADDR:
+            case OP_REM_DOUBLE_2ADDR: {
+                load = DLOAD;
+                store = DSTORE;
+            }
+                break;
+            }
+            mv.visitVarInsn(load, map(saveToReg));
+            mv.visitVarInsn(load, map(opReg));
+            mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
+            mv.visitVarInsn(store, map(saveToReg));
+            stack(2);
+        }
+            break;
         case OP_NEG_INT:
         case OP_NEG_DOUBLE:
         case OP_NEG_FLOAT:
@@ -581,8 +670,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
 
         }
     }
@@ -595,6 +683,24 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     public void visitInInsn(int opcode, int saveToReg, int opReg, int opValueOrReg) {
         checkResult();
         switch (opcode) {
+        case OP_USHR_INT_LIT8:
+        case OP_SHR_INT_LIT8:
+        case OP_SHL_INT_LIT8:
+        case OP_ADD_INT_LIT8:
+        case OP_REM_INT_LIT8:
+        case OP_AND_INT_LIT8:
+        case OP_OR_INT_LIT8:
+        case OP_XOR_INT_LIT8:
+        case OP_DIV_INT_LIT8:
+        case OP_MUL_INT_LIT8: {
+            mv.visitVarInsn(ILOAD, map(opReg));
+            mv.visitLdcInsn(opValueOrReg);
+            mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
+            mv.visitVarInsn(ISTORE, map(saveToReg));
+            stack(2);
+        }
+            break;
+
         case OP_AND_LONG:
         case OP_AND_INT:
         case OP_OR_LONG:
@@ -699,34 +805,24 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             stack(2);
         }
             break;
-        case OP_RSUB_INT_LIT_X: {
+
+        case OP_MUL_INT_LIT16:
+        case OP_DIV_INT_LIT16:
+        case OP_REM_INT_LIT16:
+        case OP_ADD_INT_LIT16:
+        case OP_AND_INT_LIT16:
+        case OP_OR_INT_LIT16:
+        case OP_XOR_INT_LIT16: {
+            mv.visitVarInsn(ILOAD, map(opReg));
             mv.visitLdcInsn(opValueOrReg);
-            mv.visitVarInsn(ILOAD, map(opReg));
-            mv.visitInsn(ISUB);
-            mv.visitVarInsn(ISTORE, map(saveToReg));
-            stack(2);
-        }
-            break;
-        case OP_ADD_INT_LIT_X:
-        case OP_MUL_INT_LIT_X:
-        case OP_DIV_INT_LIT_X:
-        case OP_REM_INT_LIT_X:
-        case OP_AND_INT_LIT_X:
-        case OP_OR_INT_LIT_X:
-        case OP_XOR_INT_LIT_X:
-        case OP_SHL_INT_LIT_X:
-        case OP_SHR_INT_LIT_X:
-        case OP_USHR_INT_LIT_X: {
-            mv.visitVarInsn(ILOAD, map(opValueOrReg));
-            mv.visitVarInsn(ILOAD, map(opReg));
             mv.visitInsn(DexOpcodeUtil.mapOpcode(opcode));
             mv.visitVarInsn(ISTORE, map(saveToReg));
             stack(2);
         }
             break;
+
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
 
         }
     }
@@ -745,8 +841,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             break;
         case OP_CONST_4:
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -764,8 +859,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
 
         }
     }
@@ -806,8 +900,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             break;
 
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -872,8 +965,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
 
         }
     }
@@ -958,8 +1050,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
                 break;
 
             default:
-                throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                        DexOpcodeDump.dump(opcode)));
+                throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
             }
         }
         Type ret = Type.getType(method.getType().getReturnType());
@@ -974,8 +1065,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitTableSwitchInsn(int, int, int, int, int, int[])
      */
-    public void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, Label default_label,
-            Label[] labels) {
+    public void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, Label default_label, Label[] labels) {
         checkResult();
         switch (opcode) {
         case OP_PACKED_SWITCH:
@@ -1032,8 +1122,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -1053,8 +1142,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 
@@ -1129,8 +1217,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         default:
-            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode,
-                    DexOpcodeDump.dump(opcode)));
+            throw new RuntimeException(String.format("Not support Opcode:[0x%04x]=%s yet!", opcode, DexOpcodeDump.dump(opcode)));
         }
     }
 
