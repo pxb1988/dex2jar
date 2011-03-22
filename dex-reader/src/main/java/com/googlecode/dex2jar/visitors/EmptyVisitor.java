@@ -21,12 +21,12 @@ import org.objectweb.asm.Label;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 
-
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor, DexCodeVisitor, AnnotationVisitor {
+public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor,
+        DexCodeVisitor, AnnotationVisitor {
 
     /*
      * (non-Javadoc)
@@ -110,150 +110,6 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitArrayInsn(int, int, int, int)
-     */
-    public void visitArrayInsn(int opcode, int regFromOrTo, int array, int index) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitArrayInsn(int, java.lang.String, int, int)
-     */
-    public void visitArrayInsn(int opcode, String type, int saveToReg, int demReg) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int, com.googlecode.dex2jar.Field, int, int)
-     */
-    public void visitFieldInsn(int opcode, Field field, int regFromOrTo, int ownerReg) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitFillArrayInsn(int, int, int, int, java.lang.Object[])
-     */
-    public void visitFillArrayInsn(int opcode, int reg, int elemWidth, int initLength, Object[] values) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitFilledNewArrayIns(int, java.lang.String, int[])
-     */
-    public void visitFilledNewArrayIns(int opcode, String type, int[] regs) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitInInsn(int, int, int)
-     */
-    public void visitInInsn(int opcode, int saveToReg, int opReg) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitInInsn(int, int, int, int)
-     */
-    public void visitInInsn(int opcode, int saveToReg, int opReg, int opValueOrReg) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitInsn(int)
-     */
-    public void visitInsn(int opcode) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitLdcInsn(int, java.lang.Object, int)
-     */
-    public void visitLdcInsn(int opcode, Object value, int reg) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitMethodInsn(int, com.googlecode.dex2jar.Method, int[])
-     */
-    public void visitMethodInsn(int opcode, Method method, int[] args) {
-
-    }
-
-    public void visitJumpInsn(int opcode, Label label, int reg1, int reg2) {
-    }
-
-    public void visitJumpInsn(int opcode, Label label, int reg) {
-    }
-
-    public void visitJumpInsn(int opcode, Label label) {
-    }
-
-    public void visitLabel(Label label) {
-    }
-
-    public void visitLineNumber(int line, Label label) {
-    }
-
-    public void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg) {
-    }
-
-    public void visitLookupSwitchInsn(int opcode, int reg, Label defaultLabel, int[] cases, Label[] labels) {
-    }
-
-    public void visitTableSwitchInsn(int opcode, int reg, int firstCase, int lastCase, Label defaultLabel, Label[] labels) {
-    }
-
-    public void visitTryCatch(Label start, Label end, Label handler, String type) {
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitTypeInsn(int, java.lang.String, int)
-     */
-    public void visitTypeInsn(int opcode, String type, int toReg) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitTypeInsn(int, java.lang.String, int, int)
-     */
-    public void visitTypeInsn(int opcode, String type, int toReg, int fromReg) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitVarInsn(int, int)
-     */
-    public void visitVarInsn(int opcode, int reg) {
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visit(java.lang.String, java.lang.Object)
      */
     public void visit(String name, Object value) {
@@ -290,7 +146,128 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 
     }
 
-    public void visitInitLocal(int... args) {
+    @Override
+    public void visitArrayStmt(int opAget, int formOrToReg, int arrayReg, int indexReg) {
+
+    }
+
+    @Override
+    public void visitBinopLitXStmt(int opcode, int aA, int bB, int cC) {
+
+    }
+
+    @Override
+    public void visitBinopStmt(int opcode, int toReg, int r1, int r2) {
+
+    }
+
+    @Override
+    public void visitClassStmt(int opcode, int a, int b, String type) {
+
+    }
+
+    @Override
+    public void visitClassStmt(int opCheckCast, int saveTo, String type) {
+
+    }
+
+    @Override
+    public void visitCmpStmt(int opcode, int distReg, int bB, int cC) {
+
+    }
+
+    @Override
+    public void visitConstStmt(int opConst, int toReg, Object value) {
+
+    }
+
+    @Override
+    public void visitFieldStmt(int opcode, int fromOrToReg, Field field) {
+
+    }
+
+    @Override
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field) {
+
+    }
+
+    @Override
+    public void visitFillArrayStmt(int opcode, int aA, int elemWidth, int initLength, Object[] values) {
+
+    }
+
+    @Override
+    public void visitFilledNewArrayStmt(int opcode, int[] args, String type) {
+
+    }
+
+    @Override
+    public void visitJumpStmt(int opcode, int a, int b, Label label) {
+
+    }
+
+    @Override
+    public void visitJumpStmt(int opConst, int reg, Label label) {
+
+    }
+
+    @Override
+    public void visitJumpStmt(int opGoto, Label label) {
+
+    }
+
+    @Override
+    public void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels) {
+
+    }
+
+    @Override
+    public void visitMethodStmt(int opcode, int[] args, Method method) {
+
+    }
+
+    @Override
+    public void visitMonitorStmt(int opcode, int reg) {
+
+    }
+
+    @Override
+    public void visitMoveStmt(int opConst, int toReg) {
+
+    }
+
+    @Override
+    public void visitMoveStmt(int opcode, int toReg, int fromReg) {
+
+    }
+
+    @Override
+    public void visitReturnStmt(int opcode) {
+
+    }
+
+    @Override
+    public void visitReturnStmt(int opConst, int reg) {
+
+    }
+
+    @Override
+    public void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels) {
+
+    }
+
+    @Override
+    public void visitUnopStmt(int opcode, int toReg, int fromReg) {
+
+    }
+
+    @Override
+    public void visitTryCatch(Label start, Label end, Label handler, String type) {
+
+    }
+
+    @Override
+    public void visitArguments(int[] args) {
 
     }
 

@@ -45,13 +45,9 @@ import java.util.Map;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Dex;
-import com.googlecode.dex2jar.DexInternalOpcode;
-import com.googlecode.dex2jar.DexOpcodeUtil;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -63,7 +59,6 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @version $Id$
  */
 public class DexCodeReader implements DexOpcodes {
-    private static final Logger log = LoggerFactory.getLogger(DexCodeReader.class);
     /**
      * dex文件
      */
@@ -287,7 +282,7 @@ public class DexCodeReader implements DexOpcodes {
                     i++;
                 }
             }
-            dcv.visitInitLocal(args);
+            dcv.visitArguments(args);
         }
 
         // 处理异常处理
@@ -313,12 +308,12 @@ public class DexCodeReader implements DexOpcodes {
         } finally {
             in.pop();
         }
-        NewOpcodeAdapter n = new NewOpcodeAdapter(this.dex, this.labels, null);
+        DexOpcodeAdapter n = new DexOpcodeAdapter(this.dex, this.labels, dcv);
         acceptInsn(in, instruction_size, n);
         dcv.visitEnd();
     }
 
-    private void acceptInsn(DataIn in, int instruction_size, NewOpcodeAdapter n) {
+    private void acceptInsn(DataIn in, int instruction_size, DexOpcodeAdapter n) {
         // 处理指令
         int currentOffset = 0;
         for (int baseOffset = in.getCurrentPosition(); currentOffset < instruction_size * 2; currentOffset = in

@@ -20,7 +20,6 @@ import org.objectweb.asm.Label;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 
-
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
@@ -36,170 +35,134 @@ public class DexCodeAdapter implements DexCodeVisitor {
         this.dcv = dcv;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitArrayInsn(int, int, int, int)
-     */
-    public void visitArrayInsn(int opcode, int value, int array, int index) {
-        dcv.visitArrayInsn(opcode, value, array, index);
+    @Override
+    public void visitArrayStmt(int opAget, int formOrToReg, int arrayReg, int indexReg) {
+        dcv.visitArrayStmt(opAget, formOrToReg, arrayReg, indexReg);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitArrayInsn(int, java.lang.String, int, int)
-     */
-    public void visitArrayInsn(int opcode, String type, int saveToReg, int demReg) {
-        dcv.visitArrayInsn(opcode, type, saveToReg, demReg);
+    @Override
+    public void visitBinopLitXStmt(int opcode, int aA, int bB, int cC) {
+        dcv.visitBinopLitXStmt(opcode, aA, bB, cC);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitEnd()
-     */
-    public void visitEnd() {
-        dcv.visitEnd();
+    @Override
+    public void visitBinopStmt(int opcode, int toReg, int r1, int r2) {
+        dcv.visitBinopStmt(opcode, toReg, r1, r2);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitFieldInsn(int, com.googlecode.dex2jar.Field, int, int)
-     */
-    public void visitFieldInsn(int opcode, Field field, int value_reg, int owner_reg) {
-        dcv.visitFieldInsn(opcode, field, value_reg, owner_reg);
+    @Override
+    public void visitClassStmt(int opcode, int a, int b, String type) {
+        dcv.visitClassStmt(opcode, a, b, type);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitFillArrayInsn(int, int, int, int, java.lang.Object[])
-     */
-    public void visitFillArrayInsn(int opcode, int reg, int elemWidth, int initLength, Object[] values) {
-        dcv.visitFillArrayInsn(opcode, reg, elemWidth, initLength, values);
+    @Override
+    public void visitClassStmt(int opCheckCast, int saveTo, String type) {
+        dcv.visitClassStmt(opCheckCast, saveTo, type);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitFilledNewArrayIns(int, java.lang.String, int[])
-     */
-    public void visitFilledNewArrayIns(int opcode, String type, int[] regs) {
-        dcv.visitFilledNewArrayIns(opcode, type, regs);
+    @Override
+    public void visitCmpStmt(int opcode, int distReg, int bB, int cC) {
+        dcv.visitCmpStmt(opcode, distReg, bB, cC);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitIntInsn(int, int, int)
-     */
-    public void visitInInsn(int opcode, int saveToReg, int opReg) {
-        dcv.visitInInsn(opcode, saveToReg, opReg);
+    @Override
+    public void visitConstStmt(int opConst, int toReg, Object value) {
+        dcv.visitConstStmt(opConst, toReg, value);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitIntInsn(int, int, int, int)
-     */
-    public void visitInInsn(int opcode, int saveToReg, int opReg, int opValueOrReg) {
-        dcv.visitInInsn(opcode, saveToReg, opReg, opValueOrReg);
+    @Override
+    public void visitFieldStmt(int opcode, int fromOrToReg, Field field) {
+        dcv.visitFieldStmt(opcode, fromOrToReg, field);
     }
 
-    public void visitInitLocal(int... args) {
-        dcv.visitInitLocal(args);
+    @Override
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field) {
+        dcv.visitFieldStmt(opcode, fromOrToReg, objReg, field);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitInsn(int)
-     */
-    public void visitInsn(int opcode) {
-        dcv.visitInsn(opcode);
+    @Override
+    public void visitFillArrayStmt(int opcode, int aA, int elemWidth, int initLength, Object[] values) {
+        dcv.visitFillArrayStmt(opcode, aA, elemWidth, initLength, values);
     }
 
-    public void visitJumpInsn(int opcode, Label label) {
-        dcv.visitJumpInsn(opcode, label);
+    @Override
+    public void visitFilledNewArrayStmt(int opcode, int[] args, String type) {
+        dcv.visitFilledNewArrayStmt(opcode, args, type);
     }
 
-    public void visitJumpInsn(int opcode, Label label, int reg) {
-        dcv.visitJumpInsn(opcode, label, reg);
+    @Override
+    public void visitJumpStmt(int opcode, int a, int b, Label label) {
+        dcv.visitJumpStmt(opcode, a, b, label);
     }
 
-    public void visitJumpInsn(int opcode, Label label, int reg1, int reg2) {
-        dcv.visitJumpInsn(opcode, label, reg1, reg2);
+    @Override
+    public void visitJumpStmt(int opConst, int reg, Label label) {
+        dcv.visitJumpStmt(opConst, reg, label);
     }
 
-    public void visitLabel(Label label) {
-        dcv.visitLabel(label);
+    @Override
+    public void visitJumpStmt(int opGoto, Label label) {
+        dcv.visitJumpStmt(opGoto, label);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitLdcInsn(int, java.lang.Object, int)
-     */
-    public void visitLdcInsn(int opcode, Object value, int reg) {
-        dcv.visitLdcInsn(opcode, value, reg);
+    @Override
+    public void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels) {
+        dcv.visitLookupSwitchStmt(opcode, aA, label, cases, labels);
     }
 
-    public void visitLineNumber(int line, Label label) {
-        dcv.visitLineNumber(line, label);
+    @Override
+    public void visitMethodStmt(int opcode, int[] args, Method method) {
+        dcv.visitMethodStmt(opcode, args, method);
     }
 
-    public void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg) {
-        dcv.visitLocalVariable(name, type, signature, start, end, reg);
+    @Override
+    public void visitMonitorStmt(int opcode, int reg) {
+        dcv.visitMonitorStmt(opcode, reg);
     }
 
-    public void visitLookupSwitchInsn(int opcode, int reg, Label defaultLabel, int[] cases, Label[] labels) {
-        dcv.visitLookupSwitchInsn(opcode, reg, defaultLabel, cases, labels);
+    @Override
+    public void visitMoveStmt(int opConst, int toReg) {
+        dcv.visitMoveStmt(opConst, toReg);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitMethodInsn(int, com.googlecode.dex2jar.Method, int[])
-     */
-    public void visitMethodInsn(int opcode, Method method, int[] regs) {
-        dcv.visitMethodInsn(opcode, method, regs);
+    @Override
+    public void visitMoveStmt(int opcode, int toReg, int fromReg) {
+        dcv.visitMoveStmt(opcode, toReg, fromReg);
     }
 
-    public void visitTableSwitchInsn(int opcode, int reg, int firstCase, int lastCase, Label defaultLabel, Label[] labels) {
-        dcv.visitTableSwitchInsn(opcode, reg, firstCase, lastCase, defaultLabel, labels);
+    @Override
+    public void visitReturnStmt(int opcode) {
+        dcv.visitReturnStmt(opcode);
     }
 
+    @Override
+    public void visitReturnStmt(int opConst, int reg) {
+        dcv.visitReturnStmt(opConst, reg);
+    }
+
+    @Override
+    public void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels) {
+        dcv.visitTableSwitchStmt(opcode, aA, label, first_case, last_case, labels);
+    }
+
+    @Override
+    public void visitUnopStmt(int opcode, int toReg, int fromReg) {
+        dcv.visitUnopStmt(opcode, toReg, fromReg);
+    }
+
+    @Override
     public void visitTryCatch(Label start, Label end, Label handler, String type) {
         dcv.visitTryCatch(start, end, handler, type);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitTypeInsn(int, java.lang.String, int)
-     */
-    public void visitTypeInsn(int opcode, String type, int toReg) {
-        dcv.visitTypeInsn(opcode, type, toReg);
+    @Override
+    public void visitArguments(int[] args) {
+        dcv.visitArguments(args);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitTypeInsn(int, java.lang.String, int, int)
-     */
-    public void visitTypeInsn(int opcode, String type, int toReg, int fromReg) {
-        dcv.visitTypeInsn(opcode, type, toReg, fromReg);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitVarInsn(int, int)
-     */
-    public void visitVarInsn(int opcode, int reg) {
-        dcv.visitVarInsn(opcode, reg);
+    @Override
+    public void visitEnd() {
+        dcv.visitEnd();
     }
 
 }

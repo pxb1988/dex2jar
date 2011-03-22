@@ -25,368 +25,329 @@ import com.googlecode.dex2jar.Method;
  * @version $Id$
  */
 public interface DexCodeVisitor {
-
     /**
+     * <pre>
+     * OP_AGET
+     * OP_APUT
+     * </pre>
      * 
-     * @param args
+     * @param opAget
+     * @param formOrToReg
+     * @param arrayReg
+     * @param indexReg
      */
-    void visitInitLocal(int... args);
+    void visitArrayStmt(int opAget, int formOrToReg, int arrayReg, int indexReg);
 
     /**
      * <pre>
-     * 		case OP_APUT:
-     * 		case OP_APUT_BOOLEAN:
-     * 		case OP_APUT_BYTE:
-     * 		case OP_APUT_CHAR:
-     * 		case OP_APUT_OBJECT:
-     * 		case OP_APUT_SHORT:
-     * 		case OP_APUT_WIDE:
-     * 		case OP_AGET:
-     * 		case OP_AGET_BOOLEAN:
-     * 		case OP_AGET_BYTE:
-     * 		case OP_AGET_CHAR:
-     * 		case OP_AGET_OBJECT:
-     * 		case OP_AGET_SHORT:
-     * 		case OP_AGET_WIDE:
+     * OP_ADD_INT_LIT_X
+     * OP_RSUB_INT_LIT_X
+     * OP_MUL_INT_LIT_X
+     * OP_DIV_INT_LIT_X
+     * OP_REM_INT_LIT_X
+     * OP_AND_INT_LIT_X
+     * OP_OR_INT_LIT_X
+     * OP_XOR_INT_LIT_X
+     * OP_SHL_INT_LIT_X
+     * OP_SHR_INT_LIT_X
+     * OP_USHR_INT_LIT_X
      * </pre>
      * 
      * @param opcode
-     * @param regFromOrTo
-     * @param array
-     * @param index
+     * @param aA
+     * @param bB
+     * @param cC
      */
-    void visitArrayInsn(int opcode, int regFromOrTo, int array, int index);
+    void visitBinopLitXStmt(int opcode, int aA, int bB, int cC);
 
     /**
      * <pre>
-     * case OP_NEW_ARRAY:
+     * 
+     * OP_ADD_INT
+     * OP_SUB_INT
+     * OP_MUL_INT
+     * OP_DIV_INT
+     * OP_REM_INT
+     * OP_AND_INT
+     * OP_OR_INT
+     * OP_XOR_INT
+     * OP_SHL_INT
+     * OP_SHR_INT
+     * OP_USHR_INT
+     * OP_ADD_LONG
+     * OP_SUB_LONG
+     * OP_MUL_LONG
+     * OP_DIV_LONG
+     * OP_REM_LONG
+     * OP_AND_LONG
+     * OP_OR_LONG
+     * OP_XOR_LONG
+     * OP_SHL_LONG
+     * OP_SHR_LONG
+     * OP_USHR_LONG
+     * OP_ADD_FLOAT
+     * OP_SUB_FLOAT
+     * OP_MUL_FLOAT
+     * OP_DIV_FLOAT
+     * OP_REM_FLOAT
+     * OP_ADD_DOUBLE
+     * OP_SUB_DOUBLE
+     * OP_MUL_DOUBLE
+     * OP_DIV_DOUBLE
+     * OP_REM_DOUBLE
+     * 
      * </pre>
      * 
      * @param opcode
+     * @param toReg
+     * @param r1
+     * @param r2
+     */
+    void visitBinopStmt(int opcode, int toReg, int r1, int r2);
+
+    /**
+     * <pre>
+     * OP_INSTANCE_OF
+     * OP_NEW_ARRAY
+     * </pre>
+     * 
+     * @param opcode
+     * @param a
+     * @param b
      * @param type
-     * @param saveToReg
-     * @param demReg
      */
-    void visitArrayInsn(int opcode, String type, int saveToReg, int demReg);
-
-    void visitEnd();
+    void visitClassStmt(int opcode, int a, int b, String type);
 
     /**
      * <pre>
-     * 		case OP_IGET:
-     * 		case OP_IGET_WIDE:
-     * 		case OP_IGET_OBJECT:
-     * 		case OP_IGET_BOOLEAN:
-     * 		case OP_IGET_BYTE:
-     * 		case OP_IGET_CHAR:
-     * 		case OP_IGET_SHORT:
-     * 		
-     * 		case OP_IPUT:
-     * 		case OP_IPUT_WIDE:
-     * 		case OP_IPUT_OBJECT:
-     * 		case OP_IPUT_BOOLEAN:
-     * 		case OP_IPUT_BYTE:
-     * 		case OP_IPUT_CHAR:
-     * 		case OP_IPUT_SHORT:
+     * OP_CHECK_CAST
+     * OP_NEW_INSTANCE
+     * </pre>
      * 
-     * 		case OP_SPUT:
-     * 		case OP_SPUT_WIDE:
-     * 		case OP_SPUT_OBJECT:
-     * 		case OP_SPUT_BOOLEAN:
-     * 		case OP_SPUT_BYTE:
-     * 		case OP_SPUT_CHAR:
-     * 		case OP_SPUT_SHORT:
-     * 
-     * 		case OP_SGET:
-     * 		case OP_SGET_WIDE:
-     * 		case OP_SGET_OBJECT:
-     * 		case OP_SGET_BOOLEAN:
-     * 		case OP_SGET_BYTE:
-     * 		case OP_SGET_CHAR:
-     * 		case OP_SGET_SHORT:
+     * @param opCheckCast
+     * @param saveTo
+     * @param type
+     */
+    void visitClassStmt(int opCheckCast, int saveTo, String type);
+
+    /**
+     * <pre>
+     * OP_CMPL_FLOAT
+     * OP_CMPG_FLOAT
+     * OP_CMPL_DOUBLE
+     * OP_CMPG_DOUBLE
+     * OP_CMP_LONG
      * </pre>
      * 
      * @param opcode
+     * @param distReg
+     * @param bB
+     * @param cC
+     */
+    void visitCmpStmt(int opcode, int distReg, int bB, int cC);
+
+    /**
+     * <pre>
+     * OP_CONST
+     * OP_CONST_WIDE
+     * OP_CONST_STRING
+     * OP_CONST_CLASS
+     * </pre>
+     * 
+     * @param opConst
+     * @param a
+     * @param b
+     */
+    void visitConstStmt(int opConst, int toReg, Object value);
+
+    /**
+     * <pre>
+     * OP_SGET
+     * OP_SPUT
+     * </pre>
+     * 
+     * @param opcode
+     * @param fromOrToReg
      * @param field
-     * @param regFromOrTo
-     * @param ownerReg
      */
-    void visitFieldInsn(int opcode, Field field, int regFromOrTo, int ownerReg);
-
-    /**
-     * @param opcode
-     * @param reg
-     * @param elemWidth
-     * @param initLength
-     * @param values
-     */
-    void visitFillArrayInsn(int opcode, int reg, int elemWidth, int initLength, Object[] values);
+    void visitFieldStmt(int opcode, int fromOrToReg, Field field);
 
     /**
      * <pre>
-     * 
-     * 		case OP_NEG_INT:
-     * 		case OP_NEG_DOUBLE:
-     * 		case OP_NEG_FLOAT:
-     * 		case OP_NEG_LONG:
-     * 
-     * 		case OP_MOVE_OBJECT:
-     * 		case OP_MOVE:
-     * 		case OP_MOVE_WIDE:
-     * 		case OP_INT_TO_BYTE:
-     * 		case OP_INT_TO_CHAR:
-     * 		case OP_INT_TO_DOUBLE:
-     * 		case OP_INT_TO_FLOAT:
-     * 		case OP_INT_TO_LONG:
-     * 		case OP_INT_TO_SHORT:
-     * 		case OP_LONG_TO_DOUBLE:
-     * 		case OP_LONG_TO_FLOAT:
-     * 		case OP_LONG_TO_INT:
-     * 		case OP_DOUBLE_TO_FLOAT:
-     * 		case OP_DOUBLE_TO_INT:
-     * 		case OP_DOUBLE_TO_LONG:
-     * 		case OP_FLOAT_TO_INT:
-     * 		case OP_FLOAT_TO_DOUBLE:
-     * 		case OP_FLOAT_TO_LONG:
-     * 
-     * 		case OP_MOVE_OBJECT_FROM16:
-     * 		case OP_MOVE_FROM16:
-     * 		case OP_MOVE_WIDE_FROM16:
-     * 
-     * 		case OP_ARRAY_LENGTH:
+     * OP_IGET
+     * OP_IPUT
      * </pre>
      * 
      * @param opcode
-     * @param saveToReg
-     * @param opReg
+     * @param fromOrToReg
+     * @param objReg
+     * @param field
      */
-    void visitInInsn(int opcode, int saveToReg, int opReg);
+    void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field);
+
+    void visitFillArrayStmt(int opcode, int aA, int elemWidth, int initLength, Object[] values);
 
     /**
      * <pre>
-     * 		case OP_AND_INT:
-     * 		case OP_AND_LONG:
-     * 		case OP_OR_INT:
-     * 		case OP_OR_LONG:
-     * 		case OP_XOR_INT:
-     * 		case OP_XOR_LONG:
-     * 		case OP_CMP_LONG:
-     * 		case OP_MUL_INT:
-     * 		case OP_MUL_LONG:
-     * 		case OP_MUL_FLOAT:
-     * 		case OP_MUL_DOUBLE:
-     * 		case OP_DIV_INT:
-     * 		case OP_DIV_LONG:
-     * 		case OP_DIV_FLOAT:
-     * 		case OP_DIV_DOUBLE:
-     * 		case OP_ADD_INT:
-     * 		case OP_ADD_LONG:
-     * 		case OP_ADD_FLOAT:
-     * 		case OP_ADD_DOUBLE:
-     * 		case OP_SUB_INT:
-     * 		case OP_SUB_DOUBLE:
-     * 		case OP_SUB_FLOAT:
-     * 		case OP_SUB_LONG:
-     * 		case OP_REM_LONG:
-     * 		case OP_REM_INT:
-     * 		case OP_REM_FLOAT:
-     * 		case OP_REM_DOUBLE:
-     * 		case OP_CMPL_DOUBLE:
-     * 		case OP_CMPL_FLOAT:
-     * 
-     *     case  OP_ADD_INT_LIT_X:
-     *     case  OP_RSUB_INT_LIT_X:
-     *     case  OP_MUL_INT_LIT_X:
-     *     case  OP_DIV_INT_LIT_X:
-     *     case  OP_REM_INT_LIT_X:
-     *     case  OP_AND_INT_LIT_X:
-     *     case  OP_OR_INT_LIT_X:
-     *     case  OP_XOR_INT_LIT_X:
-     *     case  OP_SHL_INT_LIT_X:
-     *     case  OP_SHR_INT_LIT_X:
-     *     case  OP_USHR_INT_LIT_X:
-     * 
+     * OP_FILLED_NEW_ARRAY
      * </pre>
      * 
      * @param opcode
-     * @param saveToReg
-     * @param opReg
-     * @param opValueOrReg
-     */
-    void visitInInsn(int opcode, int saveToReg, int opReg, int opValueOrReg);
-
-    /**
-     * <pre>
-     * case OP_RETURN_VOID:
-     * </pre>
-     * 
-     * @param opcode
-     */
-    void visitInsn(int opcode);
-
-    /**
-     * <pre>
-     * case OP_GOTO:
-     * case OP_GOTO_16:
-     * </pre>
-     * 
-     * @param opcode
-     * @param label
-     */
-    void visitJumpInsn(int opcode, Label label);
-
-    /**
-     * <pre>
-     * 		case OP_IF_EQZ:
-     * 		case OP_IF_NEZ:
-     * 		case OP_IF_LTZ:
-     * 		case OP_IF_GEZ:
-     * 		case OP_IF_GTZ:
-     * 		case OP_IF_LEZ:
-     * </pre>
-     * 
-     * @param opcode
-     * @param label
-     * @param reg
-     */
-    void visitJumpInsn(int opcode, Label label, int reg);
-
-    /**
-     * <pre>
-     * 		case OP_IF_EQ:
-     * 		case OP_IF_NE:
-     * 		case OP_IF_LT:
-     * 		case OP_IF_GE:
-     * 		case OP_IF_GT:
-     * 		case OP_IF_LE:
-     * </pre>
-     * 
-     * @param opcode
-     * @param label
-     * @param reg1
-     * @param reg2
-     */
-    void visitJumpInsn(int opcode, Label label, int reg1, int reg2);
-
-    /**
-     * 
-     * @param index
-     */
-    void visitLabel(Label label);
-
-    /**
-     * 
-     * @param opcode
-     * @param value
-     *            value or 0==ZERO_OR_NULL, type for .class
-     * @param reg
-     */
-    void visitLdcInsn(int opcode, Object value, int reg);
-
-    /**
-     * @param line
-     * @param label
-     */
-    void visitLineNumber(int line, Label label);
-
-    /**
-     * @param name
+     * @param args
      * @param type
-     * @param signature
-     * @param start
-     * @param end
-     * @param reg
      */
-    void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg);
-
-    /**
-     * 
-     * @param opcode
-     * @param reg
-     * @param defaultLabel
-     * @param cases
-     * @param labels
-     */
-    void visitLookupSwitchInsn(int opcode, int reg, Label defaultLabel, int[] cases, Label[] labels);
+    void visitFilledNewArrayStmt(int opcode, int[] args, String type);
 
     /**
      * <pre>
-     * 		case OP_INVOKE_STATIC:
-     * 		case OP_INVOKE_DIRECT:
-     * 		case OP_INVOKE_VIRTUAL: 	 
-     * 		case OP_INVOKE_INTERFACE:
-     * 		case OP_INVOKE_SUPER:
+     * OP_IF_EQ
+     * OP_IF_NE
+     * OP_IF_LT
+     * OP_IF_GE
+     * OP_IF_GT
+     * OP_IF_LE
      * </pre>
      * 
      * @param opcode
+     * @param a
+     * @param b
+     * @param label
+     */
+    void visitJumpStmt(int opcode, int a, int b, Label label);
+
+    /**
+     * <pre>
+     * OP_IF_EQZ
+     * OP_IF_NEZ
+     * OP_IF_LTZ
+     * OP_IF_GEZ
+     * OP_IF_GTZ
+     * OP_IF_LEZ
+     * </pre>
+     * 
+     * @param opConst
+     * @param reg
+     * @param label
+     */
+    void visitJumpStmt(int opConst, int reg, Label label);
+
+    /**
+     * OP_GOTO
+     * 
+     * @param opGoto
+     * @param label
+     */
+    void visitJumpStmt(int opGoto, Label label);
+
+    void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels);
+
+    /**
+     * <pre>
+     * OP_INVOKE_VIRTUAL
+     * OP_INVOKE_SUPER
+     * OP_INVOKE_DIRECT
+     * OP_INVOKE_STATIC
+     * OP_INVOKE_INTERFACE
+     * </pre>
+     * 
+     * @param opcode
+     * @param args
      * @param method
-     * @param regs
      */
-    void visitMethodInsn(int opcode, Method method, int[] args);
-
-    /**
-     * 
-     * @param opcode
-     * @param reg
-     * @param first_case
-     * @param last_case
-     * @param _defaultLabel
-     * @param labels
-     */
-    void visitTableSwitchInsn(int opcode, int reg, int first_case, int last_case, Label defaultLabel, Label[] labels);
-
-    /**
-     * 
-     * @param start
-     * @param end
-     * @param handler
-     * @param type
-     *            may null
-     */
-    void visitTryCatch(Label start, Label end, Label handler, String type);
+    void visitMethodStmt(int opcode, int[] args, Method method);
 
     /**
      * <pre>
-     * 		case OP_NEW_INSTANCE:
-     * 		case OP_CHECK_CAST:
+     * OP_MONITOR_ENTER
+     * OP_MONITOR_EXIT
      * </pre>
      * 
      * @param opcode
-     * @param type
+     * @param reg
+     */
+    void visitMonitorStmt(int opcode, int reg);
+
+    /**
+     * <pre>
+     * OP_MOVE_RESULT
+     * OP_MOVE_RESULT_WIDE
+     * OP_MOVE_RESULT_OBJECT
+     * OP_MOVE_EXCEPTION
+     * </pre>
+     * 
+     * @param opConst
      * @param toReg
      */
-    void visitTypeInsn(int opcode, String type, int toReg);
+    void visitMoveStmt(int opConst, int toReg);
 
     /**
      * <pre>
-     * case OP_INSTANCE_OF:
+     * OP_MOVE
+     * OP_MOVE_WIDE
+     * OP_MOVE_OBJECT
      * </pre>
      * 
      * @param opcode
-     * @param type
      * @param toReg
      * @param fromReg
      */
-    void visitTypeInsn(int opcode, String type, int toReg, int fromReg);
+    void visitMoveStmt(int opcode, int toReg, int fromReg);
+
+    /**
+     * {@link #OP_RETURN_VOID}
+     * 
+     * @param opcode
+     */
+    void visitReturnStmt(int opcode);
 
     /**
      * <pre>
-     * 		case OP_MOVE_RESULT_OBJECT:
-     * 		case OP_MOVE_RESULT:
-     * 		case OP_MOVE_RESULT_WIDE:
-     * 		case OP_MOVE_EXCEPTION:
-     * 		case OP_THROW:
-     * 		case OP_RETURN_OBJECT:
-     * 		case OP_RETURN:
-     * 		case OP_RETURN_WIDE:
-     * 		case OP_MONITOR_ENTER:
-     * 		case OP_MONITOR_EXIT:
+     * OP_RETURN
+     * OP_THROW
+     * </pre>
+     * 
+     * @param opConst
+     * @param reg
+     */
+    void visitReturnStmt(int opConst, int reg);
+
+    void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels);
+
+    /**
+     * <pre>
+     * OP_ARRAY_LENGTH
+     * OP_NEG_INT
+     * OP_NOT_INT
+     * OP_NEG_LONG
+     * OP_NOT_LONG
+     * OP_NEG_FLOAT
+     * OP_NEG_DOUBLE
+     * OP_INT_TO_LONG
+     * OP_INT_TO_FLOAT
+     * OP_INT_TO_DOUBLE
+     * OP_LONG_TO_INT
+     * OP_LONG_TO_FLOAT
+     * OP_LONG_TO_DOUBLE
+     * OP_FLOAT_TO_INT
+     * OP_FLOAT_TO_LONG
+     * OP_FLOAT_TO_DOUBLE
+     * OP_DOUBLE_TO_INT
+     * OP_DOUBLE_TO_LONG
+     * OP_DOUBLE_TO_FLOAT
+     * OP_INT_TO_BYTE
+     * OP_INT_TO_CHAR
+     * OP_INT_TO_SHORT
      * </pre>
      * 
      * @param opcode
-     * @param arg1
+     * @param toReg
+     * @param fromReg
      */
-    void visitVarInsn(int opcode, int reg);
+    void visitUnopStmt(int opcode, int toReg, int fromReg);
 
-    void visitFilledNewArrayIns(int opcode, String type, int[] regs);
+    void visitTryCatch(Label start, Label end, Label handler, String type);
+
+    void visitArguments(int[] args);
+
+    void visitEnd();
 }

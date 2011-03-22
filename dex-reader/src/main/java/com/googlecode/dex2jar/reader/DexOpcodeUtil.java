@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar;
+package com.googlecode.dex2jar.reader;
 
 import static com.googlecode.dex2jar.reader.OpcodeFormat.F10t;
 import static com.googlecode.dex2jar.reader.OpcodeFormat.F10x;
@@ -42,13 +42,15 @@ import static com.googlecode.dex2jar.reader.OpcodeFormat.F51l;
 
 import org.objectweb.asm.Opcodes;
 
+import com.googlecode.dex2jar.DexOpcodes;
+
 /**
  * 指令的工具类
  * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public final class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpcode {
+class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpcode {
     public static int format(int opcode) {
         switch (opcode) {
         case OP_NOP:
