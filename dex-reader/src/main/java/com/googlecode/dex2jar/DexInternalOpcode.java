@@ -27,6 +27,10 @@ public interface DexInternalOpcode {
     public static final int OP_MOVE_WIDE_16 = 6;
     public static final int OP_MOVE_OBJECT_FROM16 = 8;
     public static final int OP_MOVE_OBJECT_16 = 9;
+    
+    public static final int OP_RETURN_WIDE = 16;
+    public static final int OP_RETURN_OBJECT = 17;
+    
     public static final int OP_CONST_4 = 18;
     public static final int OP_CONST_16 = 19;
     public static final int OP_CONST_HIGH16 = 21;
@@ -41,6 +45,35 @@ public interface DexInternalOpcode {
     public static final int OP_UNUSED_42 = 66;
     public static final int OP_UNUSED_43 = 67;
 
+    
+    
+    public static final int OP_IGET_WIDE = 83;
+    public static final int OP_IGET_OBJECT = 84;
+    public static final int OP_IGET_BOOLEAN = 85;
+    public static final int OP_IGET_BYTE = 86;
+    public static final int OP_IGET_CHAR = 87;
+    public static final int OP_IGET_SHORT = 88;
+    public static final int OP_IPUT_WIDE = 90;
+    public static final int OP_IPUT_OBJECT = 91;
+    public static final int OP_IPUT_BOOLEAN = 92;
+    public static final int OP_IPUT_BYTE = 93;
+    public static final int OP_IPUT_CHAR = 94;
+    public static final int OP_IPUT_SHORT = 95;
+    
+    public static final int OP_SGET_WIDE = 97;
+    public static final int OP_SGET_OBJECT = 98;
+    public static final int OP_SGET_BOOLEAN = 99;
+    public static final int OP_SGET_BYTE = 100;
+    public static final int OP_SGET_CHAR = 101;
+    public static final int OP_SGET_SHORT = 102;
+    
+    public static final int OP_SPUT_WIDE = 104;
+    public static final int OP_SPUT_OBJECT = 105;
+    public static final int OP_SPUT_BOOLEAN = 106;
+    public static final int OP_SPUT_BYTE = 107;
+    public static final int OP_SPUT_CHAR = 108;
+    public static final int OP_SPUT_SHORT = 109;
+    
     public static final int OP_UNUSED_73 = 115;
     public static final int OP_INVOKE_VIRTUAL_RANGE = 116;
     public static final int OP_INVOKE_SUPER_RANGE = 117;

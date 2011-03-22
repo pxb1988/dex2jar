@@ -32,8 +32,7 @@ public abstract interface DexOpcodes {
     public static final int OP_MOVE_EXCEPTION = 13;
     public static final int OP_RETURN_VOID = 14;
     public static final int OP_RETURN = 15;
-    public static final int OP_RETURN_WIDE = 16;
-    public static final int OP_RETURN_OBJECT = 17;
+
 
     public static final int OP_CONST = 20;
     public static final int OP_CONST_WIDE = 24;
@@ -87,33 +86,13 @@ public abstract interface DexOpcodes {
     public static final int OP_APUT_CHAR = 80;
     public static final int OP_APUT_SHORT = 81;
     public static final int OP_IGET = 82;
-    public static final int OP_IGET_WIDE = 83;
-    public static final int OP_IGET_OBJECT = 84;
-    public static final int OP_IGET_BOOLEAN = 85;
-    public static final int OP_IGET_BYTE = 86;
-    public static final int OP_IGET_CHAR = 87;
-    public static final int OP_IGET_SHORT = 88;
+
     public static final int OP_IPUT = 89;
-    public static final int OP_IPUT_WIDE = 90;
-    public static final int OP_IPUT_OBJECT = 91;
-    public static final int OP_IPUT_BOOLEAN = 92;
-    public static final int OP_IPUT_BYTE = 93;
-    public static final int OP_IPUT_CHAR = 94;
-    public static final int OP_IPUT_SHORT = 95;
+
     public static final int OP_SGET = 96;
-    public static final int OP_SGET_WIDE = 97;
-    public static final int OP_SGET_OBJECT = 98;
-    public static final int OP_SGET_BOOLEAN = 99;
-    public static final int OP_SGET_BYTE = 100;
-    public static final int OP_SGET_CHAR = 101;
-    public static final int OP_SGET_SHORT = 102;
+
     public static final int OP_SPUT = 103;
-    public static final int OP_SPUT_WIDE = 104;
-    public static final int OP_SPUT_OBJECT = 105;
-    public static final int OP_SPUT_BOOLEAN = 106;
-    public static final int OP_SPUT_BYTE = 107;
-    public static final int OP_SPUT_CHAR = 108;
-    public static final int OP_SPUT_SHORT = 109;
+
     public static final int OP_INVOKE_VIRTUAL = 110;
     public static final int OP_INVOKE_SUPER = 111;
     public static final int OP_INVOKE_DIRECT = 112;

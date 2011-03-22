@@ -508,7 +508,7 @@ public class DexCodeReader implements DexOpcodes {
                                 int targetOffset = in.readIntx();
                                 _labels[j] = targetOffset;
                             }
-                            n.visitTableSwitchStmt(opcode, AA, first_case, last_case, 3, _labels);
+                            n.visitTableSwitchStmt(opcode, AA, 3, first_case, last_case, _labels);
 
                         }
                             break;
