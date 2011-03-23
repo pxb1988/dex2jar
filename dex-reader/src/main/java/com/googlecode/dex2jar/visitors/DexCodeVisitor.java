@@ -347,7 +347,7 @@ public interface DexCodeVisitor {
 
     void visitTryCatch(Label start, Label end, Label handler, String type);
 
-    void visitArguments(int[] args);
+    void visitArguments(int total, int[] args);
 
     void visitEnd();
 

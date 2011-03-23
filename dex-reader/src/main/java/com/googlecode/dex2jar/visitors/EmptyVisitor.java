@@ -267,7 +267,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
     }
 
     @Override
-    public void visitArguments(int[] args) {
+    public void visitArguments(int total, int[] args) {
 
     }
 

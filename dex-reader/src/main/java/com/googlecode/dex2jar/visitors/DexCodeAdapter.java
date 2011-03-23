@@ -156,8 +156,8 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitArguments(int[] args) {
-        dcv.visitArguments(args);
+    public void visitArguments(int total, int[] args) {
+        dcv.visitArguments(total, args);
     }
 
     @Override

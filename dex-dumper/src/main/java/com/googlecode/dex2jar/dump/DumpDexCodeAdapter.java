@@ -378,7 +378,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
     }
 
     @Override
-    public void visitArguments(int[] args) {
+    public void visitArguments(int total, int[] args) {
         int i = 0;
         if ((method.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
             int reg = args[i++];

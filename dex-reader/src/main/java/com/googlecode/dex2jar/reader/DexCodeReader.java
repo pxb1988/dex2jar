@@ -286,7 +286,7 @@ public class DexCodeReader implements DexOpcodes {
                     i++;
                 }
             }
-            dcv.visitArguments(args);
+            dcv.visitArguments(total_registers_size, args);
         }
 
         // 处理异常处理
