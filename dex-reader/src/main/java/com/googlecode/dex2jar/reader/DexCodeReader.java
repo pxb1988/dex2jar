@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
@@ -101,104 +102,108 @@ public class DexCodeReader implements DexOpcodes {
         for (int baseOffset = in.getCurrentPosition(), currentOffset = 0; currentOffset < instruction_size; currentOffset = (in
                 .getCurrentPosition() - baseOffset) >>> 1) {
             int opcode = in.readByte() & 0xff;
-            switch (opcode) {
-            case OP_GOTO:// 10t
-                order(currentOffset + (byte) (in.readByte() & 0xFF));
-                break;
-            case OP_IF_EQZ:// 21t
-            case OP_IF_NEZ:
-            case OP_IF_LTZ:
-            case OP_IF_GEZ:
-            case OP_IF_GTZ:
-            case OP_IF_LEZ:
-            case OP_IF_EQ:// 22t
-            case OP_IF_NE:
-            case OP_IF_LT:
-            case OP_IF_GE:
-            case OP_IF_GT:
-            case OP_IF_LE:
-            case DexInternalOpcode.OP_GOTO_16:// 20t;
-                in.skip(1);
-                order(currentOffset + (short) (in.readShortx() & 0xFFFF));
-                break;
-            case DexInternalOpcode.OP_GOTO_32:// 30t;
-                in.skip(1);
-                order(currentOffset + in.readIntx());
-                break;
+            try {
+                switch (opcode) {
+                case OP_GOTO:// 10t
+                    order(currentOffset + (byte) (in.readByte() & 0xFF));
+                    break;
+                case OP_IF_EQZ:// 21t
+                case OP_IF_NEZ:
+                case OP_IF_LTZ:
+                case OP_IF_GEZ:
+                case OP_IF_GTZ:
+                case OP_IF_LEZ:
+                case OP_IF_EQ:// 22t
+                case OP_IF_NE:
+                case OP_IF_LT:
+                case OP_IF_GE:
+                case OP_IF_GT:
+                case OP_IF_LE:
+                case DexInternalOpcode.OP_GOTO_16:// 20t;
+                    in.skip(1);
+                    order(currentOffset + (short) (in.readShortx() & 0xFFFF));
+                    break;
+                case DexInternalOpcode.OP_GOTO_32:// 30t;
+                    in.skip(1);
+                    order(currentOffset + in.readIntx());
+                    break;
 
-            case OP_SPARSE_SWITCH:
-            case OP_PACKED_SWITCH: {
+                case OP_SPARSE_SWITCH:
+                case OP_PACKED_SWITCH: {
 
-                in.skip(1);
-                int offset = in.readIntx();
-                in.push();
-                try {
-                    in.skip((offset - 3) * 2);
-                    switch (opcode) {
-                    case OP_SPARSE_SWITCH: {
-                        in.skip(2);
-                        int switch_size = in.readShortx();
-                        in.skip(4 * switch_size);// skip keys
-                        for (int j = 0; j < switch_size; j++) {
-                            order(currentOffset + in.readIntx());
+                    in.skip(1);
+                    int offset = in.readIntx();
+                    in.push();
+                    try {
+                        in.skip((offset - 3) * 2);
+                        switch (opcode) {
+                        case OP_SPARSE_SWITCH: {
+                            in.skip(2);
+                            int switch_size = in.readShortx();
+                            in.skip(4 * switch_size);// skip keys
+                            for (int j = 0; j < switch_size; j++) {
+                                order(currentOffset + in.readIntx());
+                            }
+                            order(currentOffset + 3);
                         }
-                        order(currentOffset + 3);
-                    }
-                        break;
-                    case OP_PACKED_SWITCH: {
+                            break;
+                        case OP_PACKED_SWITCH: {
 
-                        in.skip(2);
-                        int switch_size = in.readShortx();
-                        in.skip(4);
-                        for (int j = 0; j < switch_size; j++) {
-                            int targetOffset = in.readIntx();
-                            order(currentOffset + targetOffset);
+                            in.skip(2);
+                            int switch_size = in.readShortx();
+                            in.skip(4);
+                            for (int j = 0; j < switch_size; j++) {
+                                int targetOffset = in.readIntx();
+                                order(currentOffset + targetOffset);
+                            }
+                            order(currentOffset + 3);
                         }
-                        order(currentOffset + 3);
+                            break;
+                        }
+                    } finally {
+                        in.pop();
                     }
+                    break;
+                }
+
+                case OP_NOP:// OP_NOP
+                    int x = in.readByte();
+                    switch (x) {
+                    case 0: // 0000 //spacer
+                        break;
+                    case 1: // packed-switch-data
+                    {
+                        int switch_size = in.readShortx(); // switch_size
+                        in.skip(4);// first_case
+                        in.skip(switch_size * 4);
                         break;
                     }
-                } finally {
-                    in.pop();
-                }
-                break;
-            }
-
-            case OP_NOP:// OP_NOP
-                int x = in.readByte();
-                switch (x) {
-                case 0: // 0000 //spacer
-                    break;
-                case 1: // packed-switch-data
-                {
-                    int switch_size = in.readShortx(); // switch_size
-                    in.skip(4);// first_case
-                    in.skip(switch_size * 4);
-                    break;
-                }
-                case 2:// sparse-switch-data
-                {
-                    int switch_size = in.readShortx();
-                    in.skip(switch_size * 8);
-                    break;
-                }
-                case 3: {
-                    int elemWidth = in.readShortx();
-                    int initLength = in.readIntx();
-                    in.skip(elemWidth * initLength);
-                    if (elemWidth == 1 && initLength % 2 != 0) {
-                        in.skip(1);
+                    case 2:// sparse-switch-data
+                    {
+                        int switch_size = in.readShortx();
+                        in.skip(switch_size * 8);
+                        break;
+                    }
+                    case 3: {
+                        int elemWidth = in.readShortx();
+                        int initLength = in.readIntx();
+                        in.skip(elemWidth * initLength);
+                        if (elemWidth == 1 && initLength % 2 != 0) {
+                            in.skip(1);
+                        }
+                        break;
+                    }
                     }
                     break;
+                default: {
+                    int size = DexOpcodeUtil.length(opcode);
+                    in.skip(size * 2 - 1);
+                    break;
                 }
-                }
-                break;
-            default: {
-                int size = DexOpcodeUtil.length(opcode);
-                in.skip(size * 2 - 1);
-                break;
-            }
 
+                }
+            } catch (Exception e) {
+                throw new DexException(e, String.format("while scan for label, Posotion :%04x", currentOffset));
             }
         }
     }
@@ -531,7 +536,7 @@ public class DexCodeReader implements DexOpcodes {
                             switch (elemWidth) {
                             case 1:
                                 for (int j = 0; j < initLength; j++) {
-                                    values[j] = in.readByte();
+                                    values[j] = (byte) in.readByte();
                                 }
                                 break;
                             case 2:

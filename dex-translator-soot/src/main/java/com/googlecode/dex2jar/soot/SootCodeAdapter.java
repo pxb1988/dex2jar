@@ -88,6 +88,7 @@ import soot.toolkits.scalar.LocalSplitter;
 import soot.toolkits.scalar.UnusedLocalEliminator;
 import soot.util.Chain;
 
+import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
@@ -139,7 +140,6 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
      * @param sootMethod
      */
     public SootCodeAdapter(Method method, SootMethod sootMethod) {
-        log.info("{}", method);
         this.method = method;
         this.body = ji.newBody();
 
@@ -311,7 +311,8 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
                     ji.newInstanceOfExpr(safeGetLocal(b), SootUtil.toSootType(type))));
             break;
         case OP_NEW_ARRAY:
-            units.add(ji.newAssignStmt(safeGetLocal(a), ji.newNewArrayExpr(SootUtil.toSootType(type), safeGetLocal(b))));
+            units.add(ji.newAssignStmt(safeGetLocal(a),
+                    ji.newNewArrayExpr(SootUtil.toSootType(Type.getType(type).getElementType()), safeGetLocal(b))));
             break;
         }
     }
@@ -380,7 +381,8 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
                     JGotoStmt jGotoStmt = (JGotoStmt) u;
                     Unit target = jGotoStmt.getTarget();
                     if ((target instanceof JReturnStmt) || (target instanceof JReturnVoidStmt)
-                            || (target instanceof JThrowStmt)) {
+                    // || (target instanceof JThrowStmt)
+                    ) {
                         units.insertAfter((Unit) target.clone(), u);
                         units.remove(u);
                     }
@@ -432,7 +434,8 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
                         if (intConstant.value == 0) {
                             as.setRightOp(NullConstant.v());
                         } else {
-                            throw new RuntimeException();
+                            // FIXME
+                            // throw new RuntimeException();
                         }
                     }
                 }
@@ -454,16 +457,18 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
         // PackManager.v().getPack("jb").apply(body);
 
-        if (method.getName().equals("parseName")) {
+        if (method.getName().equals("run")) {
             System.out.println("");
         }
-
-        for (BodyTransformer t : new BodyTransformer[] { jb_ne, jb_dex_goto, jb_tt, jb_ls, jb_a, jb_ule, jb_tr,
-                // new TypeA(),
-                jb_dex_jump, jb_ulp, jb_lns, jb_cp, jb_dae, jb_cp_ule, jb_lp, jb_ne }) {
-            t.transform(body);
+        try {
+            for (BodyTransformer t : new BodyTransformer[] { jb_ne, jb_dex_goto, jb_tt, jb_ls, jb_a, jb_ule, jb_tr,
+                    // new TypeA(),
+                    jb_dex_jump, jb_ulp, jb_lns, jb_cp, jb_dae, jb_cp_ule, jb_lp, jb_ne }) {
+                t.transform(body);
+            }
+        } catch (Exception e) {
+            throw new DexException(e, "Error transform body");
         }
-
         // PackManager.v().getPack("jop").apply(body);
         BafBody bd = Baf.v().newBody(body);
         PackManager.v().getPack("bop").apply(bd);
@@ -667,11 +672,11 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         default:
             throw new RuntimeException();
         }
-//        if (method.getType().getReturnType().equals("V")) {
-//            units.add(ji.newInvokeStmt(value));
-//        } else {
-            units.add(ji.newAssignStmt(safeGetLocal(Integer.MAX_VALUE), value));
-//        }
+        // if (method.getType().getReturnType().equals("V")) {
+        // units.add(ji.newInvokeStmt(value));
+        // } else {
+        units.add(ji.newAssignStmt(safeGetLocal(Integer.MAX_VALUE), value));
+        // }
     }
 
     @Override

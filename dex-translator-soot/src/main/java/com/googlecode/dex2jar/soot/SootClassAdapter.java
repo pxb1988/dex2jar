@@ -26,14 +26,19 @@ import java.util.Map;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import soot.PackManager;
 import soot.RefType;
 import soot.SootClass;
 import soot.SootField;
+import soot.tagkit.DoubleConstantValueTag;
+import soot.tagkit.FloatConstantValueTag;
 import soot.tagkit.InnerClassTag;
+import soot.tagkit.IntegerConstantValueTag;
+import soot.tagkit.LongConstantValueTag;
 import soot.tagkit.SignatureTag;
-import soot.tagkit.StringConstantValueTag;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
@@ -49,6 +54,7 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  */
 public class SootClassAdapter implements DexClassVisitor {
 
+    private static final Logger log = LoggerFactory.getLogger(SootClassAdapter.class);
     protected Map<String, Integer> accessFlagsMap;
     protected List<Annotation> anns = new ArrayList<Annotation>();
     protected String file;
@@ -124,7 +130,11 @@ public class SootClassAdapter implements DexClassVisitor {
 
     public void visitEnd() {
         build();
-        PackManager.v().writeClass(sootClass);
+        try {
+            PackManager.v().writeClass(sootClass);
+        } catch (Exception e) {
+            log.error("Error while wrting class", e);
+        }
     }
 
     public DexFieldVisitor visitField(Field field, Object value) {
@@ -133,8 +143,37 @@ public class SootClassAdapter implements DexClassVisitor {
                 field.getAccessFlags());
         sootClass.addField(f);
         if (value != null) {
-            // FIXME
-            // f.addTag(new StringConstantValueTag(value.toString()));
+            switch (Type.getType(field.getType()).getSort()) {
+
+            case Type.BOOLEAN:
+                f.addTag(new IntegerConstantValueTag(((Boolean) value) ? 1 : 0));
+                break;
+            case Type.BYTE:
+                f.addTag(new IntegerConstantValueTag(((Byte) value)));
+                break;
+            case Type.CHAR:
+                f.addTag(new IntegerConstantValueTag(((Character) value)));
+                break;
+            case Type.DOUBLE:
+                f.addTag(new DoubleConstantValueTag(((Double) value)));
+                break;
+            case Type.FLOAT:
+                f.addTag(new FloatConstantValueTag(((Float) value)));
+                break;
+            case Type.INT:
+                f.addTag(new IntegerConstantValueTag(((Integer) value)));
+                break;
+            case Type.LONG:
+                f.addTag(new LongConstantValueTag(((Long) value)));
+                break;
+            case Type.SHORT:
+                f.addTag(new IntegerConstantValueTag(((Short) value)));
+                break;
+            case Type.ARRAY:
+            case Type.OBJECT:
+            case Type.VOID:
+                // FIXME
+            }
         }
         return null;
     }

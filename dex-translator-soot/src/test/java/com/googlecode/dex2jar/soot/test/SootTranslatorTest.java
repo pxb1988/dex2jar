@@ -23,10 +23,14 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.googlecode.dex2jar.DexException;
+import com.googlecode.dex2jar.ExceptionUtils;
+import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.soot.Main;
 
 /**
@@ -39,11 +43,14 @@ public class SootTranslatorTest {
     @Test
     public void test() throws IOException {
         File file = new File("target/test-classes/dexes");
+        boolean fail = false;
+        DexFileReader.ContinueOnException = true;
         if (file.exists() && file.isDirectory()) {
             for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
                 log.info("dex2jar file {}", f);
                 Main.doFile(f);
             }
         }
+        Assert.assertFalse(fail);
     }
 }
