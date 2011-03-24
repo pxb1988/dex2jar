@@ -46,7 +46,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     }
 
     private Label getLabel(int offset) {
-        return labels.get(this.offset + offset * 2);
+        return labels.get(this.offset + offset);
     }
 
     public void offset(int currentOffset) {

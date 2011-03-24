@@ -98,12 +98,12 @@ public class DexCodeReader implements DexOpcodes {
     }
 
     private void findLabels(DataIn in, int instruction_size) {
-        for (int baseOffset = in.getCurrentPosition(), currentOffset = 0; currentOffset < instruction_size * 2; currentOffset = in
-                .getCurrentPosition() - baseOffset) {
+        for (int baseOffset = in.getCurrentPosition(), currentOffset = 0; currentOffset < instruction_size; currentOffset = (in
+                .getCurrentPosition() - baseOffset) >>> 1) {
             int opcode = in.readByte() & 0xff;
             switch (opcode) {
             case OP_GOTO:// 10t
-                order(currentOffset + ((byte) (in.readByte() & 0xFF)) * 2);
+                order(currentOffset + (byte) (in.readByte() & 0xFF));
                 break;
             case OP_IF_EQZ:// 21t
             case OP_IF_NEZ:
@@ -119,11 +119,11 @@ public class DexCodeReader implements DexOpcodes {
             case OP_IF_LE:
             case DexInternalOpcode.OP_GOTO_16:// 20t;
                 in.skip(1);
-                order(currentOffset + ((short) (in.readShortx() & 0xFFFF)) * 2);
+                order(currentOffset + (short) (in.readShortx() & 0xFFFF));
                 break;
             case DexInternalOpcode.OP_GOTO_32:// 30t;
                 in.skip(1);
-                order(currentOffset + in.readIntx() * 2);
+                order(currentOffset + in.readIntx());
                 break;
 
             case OP_SPARSE_SWITCH:
@@ -133,16 +133,16 @@ public class DexCodeReader implements DexOpcodes {
                 int offset = in.readIntx();
                 in.push();
                 try {
-                    in.move((offset - 3) * 2);
+                    in.skip((offset - 3) * 2);
                     switch (opcode) {
                     case OP_SPARSE_SWITCH: {
                         in.skip(2);
                         int switch_size = in.readShortx();
                         in.skip(4 * switch_size);// skip keys
                         for (int j = 0; j < switch_size; j++) {
-                            order(currentOffset + in.readIntx() * 2);
+                            order(currentOffset + in.readIntx());
                         }
-                        order(currentOffset + 3 * 2);
+                        order(currentOffset + 3);
                     }
                         break;
                     case OP_PACKED_SWITCH: {
@@ -152,9 +152,9 @@ public class DexCodeReader implements DexOpcodes {
                         in.skip(4);
                         for (int j = 0; j < switch_size; j++) {
                             int targetOffset = in.readIntx();
-                            order(currentOffset + targetOffset * 2);
+                            order(currentOffset + targetOffset);
                         }
-                        order(currentOffset + 3 * 2);
+                        order(currentOffset + 3);
                     }
                         break;
                     }
@@ -205,8 +205,8 @@ public class DexCodeReader implements DexOpcodes {
 
     private void findTryCatch(DataIn in, DexCodeVisitor dcv, int tries_size) {
         for (int i = 0; i < tries_size; i++) {
-            int start_addr = in.readIntx() * 2;
-            int insn_count = in.readShortx() * 2;
+            int start_addr = in.readIntx();
+            int insn_count = in.readShortx();
             int handler_offset = in.readShortx();
             in.push();
             try {
@@ -219,7 +219,7 @@ public class DexCodeReader implements DexOpcodes {
                 }
                 for (int k = 0; k < listSize; k++) {
                     int type_id = (int) in.readUnsignedLeb128();
-                    int handler = (int) in.readUnsignedLeb128() * 2;
+                    int handler = (int) in.readUnsignedLeb128();
                     order(start_addr);
                     int end = 0;
                     if (handler > start_addr && handler < start_addr + insn_count) {
@@ -234,7 +234,7 @@ public class DexCodeReader implements DexOpcodes {
                     dcv.visitTryCatch(this.labels.get(start_addr), this.labels.get(end), this.labels.get(handler), type);
                 }
                 if (catchAll) {
-                    int handler = (int) in.readUnsignedLeb128() * 2;
+                    int handler = (int) in.readUnsignedLeb128();
                     order(start_addr);
                     int end = 0;
                     if (handler > start_addr && handler < start_addr + insn_count) {
@@ -323,8 +323,8 @@ public class DexCodeReader implements DexOpcodes {
     private void acceptInsn(DataIn in, int instruction_size, DexOpcodeAdapter n) {
         // 处理指令
         int currentOffset = 0;
-        for (int baseOffset = in.getCurrentPosition(); currentOffset < instruction_size * 2; currentOffset = in
-                .getCurrentPosition() - baseOffset) {
+        for (int baseOffset = in.getCurrentPosition(); currentOffset < instruction_size; currentOffset = (in
+                .getCurrentPosition() - baseOffset) >>> 1) {
             int opcode = in.readByte() & 0xff;
 
             n.offset(currentOffset);
@@ -332,7 +332,7 @@ public class DexCodeReader implements DexOpcodes {
             int format = DexOpcodeUtil.format(opcode);
 
             if (log.isDebugEnabled()) {
-                log.debug(String.format("%04x: %s", currentOffset / 2, DexOpcodeDump.dump(opcode)));
+                log.debug(String.format("%04x: %s", currentOffset, DexOpcodeDump.dump(opcode)));
             }
 
             switch (format) {
