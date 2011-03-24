@@ -27,6 +27,10 @@ public class SootUtil {
         return toSootType(Type.getType(clz));
     }
 
+    public static String toJavaClassName(String typeDesc) {
+        return Type.getType(typeDesc).getClassName();
+    }
+
     public static soot.Type toSootType(org.objectweb.asm.Type type) {
         switch (type.getSort()) {
         case Type.ARRAY:

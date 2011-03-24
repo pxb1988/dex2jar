@@ -26,9 +26,11 @@ import org.objectweb.asm.Type;
 
 import soot.RefType;
 import soot.SootClass;
+import soot.options.Options;
 
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
+import static com.googlecode.dex2jar.soot.SootUtil.*;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -36,6 +38,10 @@ import com.googlecode.dex2jar.visitors.DexFileVisitor;
  */
 public class SootDexFileVisitor implements DexFileVisitor {
     protected Map<String, Integer> accessFlagsMap;
+
+    static {
+        Options.v().set_allow_phantom_refs(true);
+    }
 
     /**
      * @param accessFlagsMap
@@ -53,7 +59,11 @@ public class SootDexFileVisitor implements DexFileVisitor {
      */
     public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames) {
         access_flags |= Opcodes.ACC_SUPER;// 解决生成的class文件使用dx重新转换时使用的指令与原始指令不同的问题
-        SootClass sootClass = new SootClass(Type.getType(className).getClassName(), access_flags);
+        SootClass sootClass = soot.Scene.v().getSootClass(toJavaClassName(className));
+
+        sootClass.setPhantom(false);
+        sootClass.setModifiers(access_flags);
+
         if (superClass != null) {
             sootClass.setSuperclass(RefType.v(Type.getType(superClass).getClassName()).getSootClass());
         }

@@ -33,9 +33,12 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import soot.Body;
+import soot.BodyTransformer;
 import soot.ByteType;
 import soot.CharType;
 import soot.DoubleType;
+import soot.FastHierarchy;
 import soot.FloatType;
 import soot.IntType;
 import soot.Local;
@@ -53,17 +56,36 @@ import soot.UnknownType;
 import soot.Value;
 import soot.baf.Baf;
 import soot.baf.BafBody;
+import soot.jimple.AssignStmt;
 import soot.jimple.ClassConstant;
+import soot.jimple.EqExpr;
+import soot.jimple.IfStmt;
 import soot.jimple.IntConstant;
 import soot.jimple.Jimple;
 import soot.jimple.JimpleBody;
 import soot.jimple.LongConstant;
-import soot.jimple.NopStmt;
+import soot.jimple.NeExpr;
+import soot.jimple.NullConstant;
+import soot.jimple.Stmt;
 import soot.jimple.StringConstant;
+import soot.jimple.internal.JGotoStmt;
 import soot.jimple.internal.JInterfaceInvokeExpr;
+import soot.jimple.internal.JReturnStmt;
+import soot.jimple.internal.JReturnVoidStmt;
 import soot.jimple.internal.JSpecialInvokeExpr;
 import soot.jimple.internal.JStaticInvokeExpr;
+import soot.jimple.internal.JThrowStmt;
 import soot.jimple.internal.JVirtualInvokeExpr;
+import soot.jimple.toolkits.base.Aggregator;
+import soot.jimple.toolkits.scalar.CopyPropagator;
+import soot.jimple.toolkits.scalar.DeadAssignmentEliminator;
+import soot.jimple.toolkits.scalar.LocalNameStandardizer;
+import soot.jimple.toolkits.scalar.NopEliminator;
+import soot.jimple.toolkits.scalar.UnreachableCodeEliminator;
+import soot.jimple.toolkits.typing.TypeAssigner;
+import soot.toolkits.scalar.LocalPacker;
+import soot.toolkits.scalar.LocalSplitter;
+import soot.toolkits.scalar.UnusedLocalEliminator;
 import soot.util.Chain;
 
 import com.googlecode.dex2jar.DexOpcodes;
@@ -77,12 +99,27 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  */
 public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
+    static {
+
+        Scene.v().setFastHierarchy(new FastHierarchy() {
+
+            @Override
+            protected boolean canStoreClass(SootClass child, SootClass parent) {
+                return true;
+            }
+
+        });
+
+    }
+
     static Jimple ji = Jimple.v();
     private static final Logger log = LoggerFactory.getLogger(SootCodeAdapter.class);
     static Scene s = Scene.v();
+
     static String x(String x) {
         return Type.getType(x).getClassName();
     }
+
     Map<Label, Unit> _label2Unit = new HashMap<Label, Unit>();
     JimpleBody body;
 
@@ -323,22 +360,110 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             units.add(ji.newAssignStmt(safeGetLocal(toReg), StringConstant.v((String) value)));
             break;
         case OP_CONST_CLASS:
-            units.add(ji.newAssignStmt(safeGetLocal(toReg), ClassConstant.v((String) value)));
+            units.add(ji.newAssignStmt(safeGetLocal(toReg), ClassConstant.v(SootUtil.toJavaClassName((String) value))));
             break;
         }
 
     }
 
-    @Override
-    public void visitEnd() {
-        for (Iterator<Unit> it = units.iterator(); it.hasNext();) {
-            Unit u = it.next();
-            if (u instanceof NopStmt) {
-                it.remove();
+    static BodyTransformer jb_dex_goto = new BodyTransformer() {
+
+        @Override
+        protected void internalTransform(Body b, String phaseName, Map options) {
+
+            Chain<Unit> units = b.getUnits();
+            Iterator<Unit> stmtIt = units.snapshotIterator();
+
+            while (stmtIt.hasNext()) {
+                Stmt u = (Stmt) stmtIt.next();
+                if (u instanceof JGotoStmt) {
+                    JGotoStmt jGotoStmt = (JGotoStmt) u;
+                    Unit target = jGotoStmt.getTarget();
+                    if ((target instanceof JReturnStmt) || (target instanceof JReturnVoidStmt)
+                            || (target instanceof JThrowStmt)) {
+                        units.insertAfter((Unit) target.clone(), u);
+                        units.remove(u);
+                    }
+
+                }
             }
         }
+    };
 
-        PackManager.v().getPack("jb").apply(body);
+    static BodyTransformer jb_tt = soot.toolkits.exceptions.TrapTightener.v();
+    static BodyTransformer jb_ls = LocalSplitter.v();
+    static BodyTransformer jb_a = Aggregator.v();
+    static BodyTransformer jb_ule = UnusedLocalEliminator.v();
+    static BodyTransformer jb_tr = TypeAssigner.v();
+
+    static BodyTransformer jb_dex_jump = new BodyTransformer() {
+
+        @Override
+        protected void internalTransform(Body b, String phaseName, Map options) {
+
+            Chain<Unit> units = b.getUnits();
+            Iterator<Unit> stmtIt = units.snapshotIterator();
+
+            while (stmtIt.hasNext()) {
+                Stmt u = (Stmt) stmtIt.next();
+                if (u instanceof IfStmt) {
+                    Value v = ((IfStmt) u).getCondition();
+                    if (v instanceof NeExpr) {
+                        NeExpr ne = (NeExpr) v;
+                        if ((ne.getOp1().getType() instanceof RefType) && (ne.getOp2() instanceof IntConstant)) {
+                            ne.setOp2(NullConstant.v());
+                        }
+                        if ((ne.getOp2().getType() instanceof RefType) && (ne.getOp1() instanceof IntConstant)) {
+                            ne.setOp1(NullConstant.v());
+                        }
+                    } else if (v instanceof EqExpr) {
+                        EqExpr ne = (EqExpr) v;
+                        if ((ne.getOp1().getType() instanceof RefType) && (ne.getOp2() instanceof IntConstant)) {
+                            ne.setOp2(NullConstant.v());
+                        }
+                        if ((ne.getOp2().getType() instanceof RefType) && (ne.getOp1() instanceof IntConstant)) {
+                            ne.setOp1(NullConstant.v());
+                        }
+                    }
+                } else if (u instanceof AssignStmt) {
+                    AssignStmt as = (AssignStmt) u;
+                    if ((as.getLeftOp().getType() instanceof RefType) && (as.getRightOp() instanceof IntConstant)) {
+                        IntConstant intConstant = (IntConstant) as.getRightOp();
+                        if (intConstant.value == 0) {
+                            as.setRightOp(NullConstant.v());
+                        } else {
+                            throw new RuntimeException();
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    static BodyTransformer jb_ulp = LocalPacker.v();
+    static BodyTransformer jb_lns = LocalNameStandardizer.v();
+    static BodyTransformer jb_cp = CopyPropagator.v();
+    static BodyTransformer jb_dae = DeadAssignmentEliminator.v();
+    static BodyTransformer jb_cp_ule = UnusedLocalEliminator.v();
+    static BodyTransformer jb_lp = LocalPacker.v();
+    static BodyTransformer jb_ne = NopEliminator.v();
+    static BodyTransformer jb_uce = UnreachableCodeEliminator.v();
+
+    @Override
+    public void visitEnd() {
+
+        // PackManager.v().getPack("jb").apply(body);
+
+        if (method.getName().equals("parseName")) {
+            System.out.println("");
+        }
+
+        for (BodyTransformer t : new BodyTransformer[] { jb_ne, jb_dex_goto, jb_tt, jb_ls, jb_a, jb_ule, jb_tr,
+                // new TypeA(),
+                jb_dex_jump, jb_ulp, jb_lns, jb_cp, jb_dae, jb_cp_ule, jb_lp, jb_ne }) {
+            t.transform(body);
+        }
+
         // PackManager.v().getPack("jop").apply(body);
         BafBody bd = Baf.v().newBody(body);
         PackManager.v().getPack("bop").apply(bd);
@@ -351,12 +476,12 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     public void visitFieldStmt(int opcode, int fromOrToReg, Field field) {
         switch (opcode) {
         case OP_SPUT:
-            units.add(ji.newAssignStmt(ji.newStaticFieldRef(s.makeFieldRef(new SootClass(x(field.getOwner())),
+            units.add(ji.newAssignStmt(ji.newStaticFieldRef(s.makeFieldRef(s.getSootClass(x(field.getOwner())),
                     field.getName(), toSootType(field.getType()), true)), safeGetLocal(fromOrToReg)));
             break;
         case OP_SGET:
-            units.add(ji.newAssignStmt(safeGetLocal(fromOrToReg), ji.newStaticFieldRef(s.makeFieldRef(new SootClass(
-                    x(field.getOwner())), field.getName(), toSootType(field.getType()), true))));
+            units.add(ji.newAssignStmt(safeGetLocal(fromOrToReg), ji.newStaticFieldRef(s.makeFieldRef(
+                    s.getSootClass(x(field.getOwner())), field.getName(), toSootType(field.getType()), true))));
             break;
         }
     }
@@ -480,9 +605,7 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
     @Override
     public void visitLabel(Label label) {
-        if (_label2Unit.containsKey(label)) {
-            units.add(label2Unit(label));
-        }
+        units.add(label2Unit(label));
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -503,7 +626,7 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     @Override
     public void visitMethodStmt(int opcode, int[] args, Method method) {
         Local _owner;
-        List as = new ArrayList(args.length);
+
         int start = 0;
         if (opcode == OP_INVOKE_STATIC) {
             _owner = null;
@@ -511,41 +634,44 @@ public class SootCodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             start++;
             _owner = safeGetLocal(args[0]);
         }
-        for (int i = start; i < args.length; i++) {
-            as.add(safeGetLocal(args[i]));
-        }
-        List methodRefType = new ArrayList();
-        for (String s : method.getType().getParameterTypes()) {
-            methodRefType.add(SootUtil.toSootType(s));
+        String methodType_str[] = method.getType().getParameterTypes();
+        List methodParameterTypes = new ArrayList(methodType_str.length);
+        List methodParameter = new ArrayList(methodType_str.length);
+        for (int i = 0; i < methodType_str.length; i++) {
+            methodParameter.add(safeGetLocal(args[start++]));
+            methodParameterTypes.add(SootUtil.toSootType(methodType_str[i]));
+            if (methodType_str[i].equals("D") || methodType_str[i].equals("J")) {
+                start++;
+            }
         }
         SootMethodRef methodRef = Scene.v().makeMethodRef(RefType.v(x(method.getOwner())).getSootClass(),
-                method.getName(), methodRefType, SootUtil.toSootType(method.getType().getReturnType()),
+                method.getName(), methodParameterTypes, SootUtil.toSootType(method.getType().getReturnType()),
                 opcode == OP_INVOKE_STATIC);
         Value value;
         switch (opcode) {
         case OP_INVOKE_VIRTUAL:
-            value = new JVirtualInvokeExpr(_owner, methodRef, as);
+            value = new JVirtualInvokeExpr(_owner, methodRef, methodParameter);
             break;
         case OP_INVOKE_SUPER:
-            value = new JSpecialInvokeExpr(_owner, methodRef, as);
+            value = new JSpecialInvokeExpr(_owner, methodRef, methodParameter);
             break;
         case OP_INVOKE_DIRECT:
-            value = new JSpecialInvokeExpr(_owner, methodRef, as);
+            value = new JSpecialInvokeExpr(_owner, methodRef, methodParameter);
             break;
         case OP_INVOKE_STATIC:
-            value = new JStaticInvokeExpr(methodRef, as);
+            value = new JStaticInvokeExpr(methodRef, methodParameter);
             break;
         case OP_INVOKE_INTERFACE:
-            value = new JInterfaceInvokeExpr(_owner, methodRef, as);
+            value = new JInterfaceInvokeExpr(_owner, methodRef, methodParameter);
             break;
         default:
             throw new RuntimeException();
         }
-        // if (method.getType().getReturnType().equals("V")) {
-        // units.add(ji.newInvokeStmt(value));
-        // } else {
-        units.add(ji.newAssignStmt(safeGetLocal(Integer.MAX_VALUE), value));
-        // }
+//        if (method.getType().getReturnType().equals("V")) {
+//            units.add(ji.newInvokeStmt(value));
+//        } else {
+            units.add(ji.newAssignStmt(safeGetLocal(Integer.MAX_VALUE), value));
+//        }
     }
 
     @Override
