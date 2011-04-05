@@ -508,6 +508,14 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             dcv.visitLdcInsn(OP_CONST_STRING, dex.getString(((arg3 << 16) & 0xFFFF) | (arg2 & 0xFFFF)), arg1);
         }
             break;
+        case OP_MOVE_OBJECT_16:
+        case OP_MOVE_16:
+        case OP_MOVE_WIDE_16:
+            dcv.visitInInsn(opcode, arg2, arg3);
+            break;
+        case OP_GOTO_32:
+            dcv.visitJumpInsn(opcode, this.labels.get(offset + ((arg3 << 16) | (arg2 & 0xFFFF)) * 2));
+            break;
         default:
             throw new DexException(String.format("Not support Opcode :[0x%04x] = %s", opcode, DexOpcodeDump.dump(opcode)));
         }

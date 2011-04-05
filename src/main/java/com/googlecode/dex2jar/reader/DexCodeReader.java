@@ -216,7 +216,15 @@ public class DexCodeReader implements DexOpcodes {
                     break;
                 }
                 case 3: {
-                    in.skip(5);
+                    switch (opcode) {
+                    case OP_GOTO_32:
+                        in.skip(1);
+                        int b = in.readIntx();
+                        order(currentOffset + b * 2);
+                        break;
+                    default:
+                        in.skip(5);
+                    }
                     break;
                 }
                 case 0:// OP_NOP

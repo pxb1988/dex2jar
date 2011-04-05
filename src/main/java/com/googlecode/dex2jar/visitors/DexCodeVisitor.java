@@ -175,9 +175,11 @@ public interface DexCodeVisitor {
      * 		case OP_FLOAT_TO_LONG:
      * 
      * 		case OP_MOVE_OBJECT_FROM16:
+     *      case OP_MOVE_OBJECT_16:
      * 		case OP_MOVE_FROM16:
      * 		case OP_MOVE_WIDE_FROM16:
-     * 
+     *      case OP_MOVE_16:
+     *      case OP_MOVE_WIDE_16:
      * 		case OP_ARRAY_LENGTH:
      * </pre>
      * 
@@ -257,6 +259,7 @@ public interface DexCodeVisitor {
      * <pre>
      * case OP_GOTO:
      * case OP_GOTO_16:
+     * case OP_GOTO_32:
      * </pre>
      * 
      * @param opcode

@@ -636,7 +636,10 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             stack(1);
         }
             break;
+        case OP_MOVE_16:
+        case OP_MOVE_WIDE_16:
         case OP_MOVE_OBJECT:
+        case OP_MOVE_OBJECT_16:
         case OP_MOVE_OBJECT_FROM16:
         case OP_MOVE:
         case OP_MOVE_WIDE:
@@ -646,18 +649,21 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             int store = 0;
             switch (opcode) {
             case OP_MOVE_OBJECT:
+            case OP_MOVE_OBJECT_16:
             case OP_MOVE_OBJECT_FROM16: {
                 load = ALOAD;
                 store = ASTORE;
             }
                 break;
             case OP_MOVE:
+            case OP_MOVE_16:
             case OP_MOVE_FROM16: {
                 load = ILOAD;
                 store = ISTORE;
             }
                 break;
             case OP_MOVE_WIDE:
+            case OP_MOVE_WIDE_16:
             case OP_MOVE_WIDE_FROM16: {
                 load = LLOAD;
                 store = LSTORE;
@@ -854,7 +860,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         checkResult();
         switch (opcode) {
         case OP_GOTO:
-        case OP_GOTO_16: {
+        case OP_GOTO_16:
+        case OP_GOTO_32: {
+            if(label==null){
+                System.out.println("");
+            }
             mv.visitJumpInsn(GOTO, label);
         }
             break;
