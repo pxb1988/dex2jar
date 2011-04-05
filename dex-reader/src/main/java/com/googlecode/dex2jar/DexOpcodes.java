@@ -72,19 +72,9 @@ public abstract interface DexOpcodes {
     public static final int OP_IF_LEZ = 61;
 
     public static final int OP_AGET = 68;
-    public static final int OP_AGET_WIDE = 69;
-    public static final int OP_AGET_OBJECT = 70;
-    public static final int OP_AGET_BOOLEAN = 71;
-    public static final int OP_AGET_BYTE = 72;
-    public static final int OP_AGET_CHAR = 73;
-    public static final int OP_AGET_SHORT = 74;
+
     public static final int OP_APUT = 75;
-    public static final int OP_APUT_WIDE = 76;
-    public static final int OP_APUT_OBJECT = 77;
-    public static final int OP_APUT_BOOLEAN = 78;
-    public static final int OP_APUT_BYTE = 79;
-    public static final int OP_APUT_CHAR = 80;
-    public static final int OP_APUT_SHORT = 81;
+
     public static final int OP_IGET = 82;
 
     public static final int OP_IPUT = 89;
