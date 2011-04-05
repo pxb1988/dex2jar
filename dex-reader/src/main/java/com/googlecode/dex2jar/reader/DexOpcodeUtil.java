@@ -40,8 +40,6 @@ import static com.googlecode.dex2jar.reader.OpcodeFormat.F35c;
 import static com.googlecode.dex2jar.reader.OpcodeFormat.F3rc;
 import static com.googlecode.dex2jar.reader.OpcodeFormat.F51l;
 
-import org.objectweb.asm.Opcodes;
-
 import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
 
@@ -51,887 +49,480 @@ import com.googlecode.dex2jar.DexOpcodes;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-class DexOpcodeUtil implements DexOpcodes, Opcodes, DexInternalOpcode {
+class DexOpcodeUtil implements DexOpcodes, DexInternalOpcode {
     public static int format(int opcode) {
         switch (opcode) {
-        case OP_NOP:
-            return F10x;
-        case OP_MOVE:
-            return F12x;
-        case OP_MOVE_FROM16:
-            return F22x;
-        case OP_MOVE_16:
-            return F32x;
-        case OP_MOVE_WIDE:
-            return F12x;
-        case OP_MOVE_WIDE_FROM16:
-            return F22x;
-        case OP_MOVE_WIDE_16:
-            return F32x;
-        case OP_MOVE_OBJECT:
-            return F12x;
-        case OP_MOVE_OBJECT_FROM16:
-            return F22x;
-        case OP_MOVE_OBJECT_16:
-            return F32x;
-        case OP_MOVE_RESULT:
-            return F11x;
-        case OP_MOVE_RESULT_WIDE:
-            return F11x;
-        case OP_MOVE_RESULT_OBJECT:
-            return F11x;
-        case OP_MOVE_EXCEPTION:
-            return F11x;
-        case OP_RETURN_VOID:
-            return F10x;
-        case OP_RETURN:
-            return F11x;
-        case OP_RETURN_WIDE:
-            return F11x;
-        case OP_RETURN_OBJECT:
-            return F11x;
-        case OP_CONST_4:
-            return F11n;
-        case OP_CONST_16:
-            return F21s;
-        case OP_CONST:
-            return F31i;
-        case OP_CONST_HIGH16:
-            return F21h;
-        case OP_CONST_WIDE_16:
-            return F21s;
-        case OP_CONST_WIDE_32:
-            return F31i;
-        case OP_CONST_WIDE:
-            return F51l;
-        case OP_CONST_WIDE_HIGH16:
-            return F21h;
-        case OP_CONST_STRING:
-            return F21c;
-        case OP_CONST_STRING_JUMBO:
-            return F31c;
-        case OP_CONST_CLASS:
-            return F21c;
-        case OP_MONITOR_ENTER:
-            return F11x;
-        case OP_MONITOR_EXIT:
-            return F11x;
-        case OP_CHECK_CAST:
-            return F21c;
-        case OP_INSTANCE_OF:
-            return F22c;
-        case OP_ARRAY_LENGTH:
-            return F12x;
-        case OP_NEW_INSTANCE:
-            return F21c;
-        case OP_NEW_ARRAY:
-            return F22c;
-        case OP_FILLED_NEW_ARRAY:
-            return F35c;
-        case OP_FILLED_NEW_ARRAY_RANGE:
-            return F3rc;
-        case OP_FILL_ARRAY_DATA:
-            return F31t;
-        case OP_THROW:
-            return F11x;
         case OP_GOTO:
             return F10t;
-        case OP_GOTO_16:
-            return F20t;
-        case OP_GOTO_32:
-            return F30t;
-        case OP_PACKED_SWITCH:
-            return F31t;
-        case OP_SPARSE_SWITCH:
-            return F31t;
-        case OP_CMPL_FLOAT:
-            return F23x;
-        case OP_CMPG_FLOAT:
-            return F23x;
-        case OP_CMPL_DOUBLE:
-            return F23x;
-        case OP_CMPG_DOUBLE:
-            return F23x;
-        case OP_CMP_LONG:
-            return F23x;
-        case OP_IF_EQ:
-            return F22t;
-        case OP_IF_NE:
-            return F22t;
-        case OP_IF_LT:
-            return F22t;
-        case OP_IF_GE:
-            return F22t;
-        case OP_IF_GT:
-            return F22t;
-        case OP_IF_LE:
-            return F22t;
-        case OP_IF_EQZ:
-            return F21t;
-        case OP_IF_NEZ:
-            return F21t;
-        case OP_IF_LTZ:
-            return F21t;
-        case OP_IF_GEZ:
-            return F21t;
-        case OP_IF_GTZ:
-            return F21t;
-        case OP_IF_LEZ:
-            return F21t;
-        case OP_AGET:
-            return F23x;
-        case OP_AGET_WIDE:
-            return F23x;
-        case OP_AGET_OBJECT:
-            return F23x;
-        case OP_AGET_BOOLEAN:
-            return F23x;
-        case OP_AGET_BYTE:
-            return F23x;
-        case OP_AGET_CHAR:
-            return F23x;
-        case OP_AGET_SHORT:
-            return F23x;
-        case OP_APUT:
-            return F23x;
-        case OP_APUT_WIDE:
-            return F23x;
-        case OP_APUT_OBJECT:
-            return F23x;
-        case OP_APUT_BOOLEAN:
-            return F23x;
-        case OP_APUT_BYTE:
-            return F23x;
-        case OP_APUT_CHAR:
-            return F23x;
-        case OP_APUT_SHORT:
-            return F23x;
-        case OP_IGET:
-            return F22c;
-        case OP_IGET_WIDE:
-            return F22c;
-        case OP_IGET_OBJECT:
-            return F22c;
-        case OP_IGET_BOOLEAN:
-            return F22c;
-        case OP_IGET_BYTE:
-            return F22c;
-        case OP_IGET_CHAR:
-            return F22c;
-        case OP_IGET_SHORT:
-            return F22c;
-        case OP_IPUT:
-            return F22c;
-        case OP_IPUT_WIDE:
-            return F22c;
-        case OP_IPUT_OBJECT:
-            return F22c;
-        case OP_IPUT_BOOLEAN:
-            return F22c;
-        case OP_IPUT_BYTE:
-            return F22c;
-        case OP_IPUT_CHAR:
-            return F22c;
-        case OP_IPUT_SHORT:
-            return F22c;
-        case OP_SGET:
-            return F21c;
-        case OP_SGET_WIDE:
-            return F21c;
-        case OP_SGET_OBJECT:
-            return F21c;
-        case OP_SGET_BOOLEAN:
-            return F21c;
-        case OP_SGET_BYTE:
-            return F21c;
-        case OP_SGET_CHAR:
-            return F21c;
-        case OP_SGET_SHORT:
-            return F21c;
-        case OP_SPUT:
-            return F21c;
-        case OP_SPUT_WIDE:
-            return F21c;
-        case OP_SPUT_OBJECT:
-            return F21c;
-        case OP_SPUT_BOOLEAN:
-            return F21c;
-        case OP_SPUT_BYTE:
-            return F21c;
-        case OP_SPUT_CHAR:
-            return F21c;
-        case OP_SPUT_SHORT:
-            return F21c;
-        case OP_INVOKE_VIRTUAL:
-            return F35c;
-        case OP_INVOKE_SUPER:
-            return F35c;
-        case OP_INVOKE_DIRECT:
-            return F35c;
-        case OP_INVOKE_STATIC:
-            return F35c;
-        case OP_INVOKE_INTERFACE:
-            return F35c;
-        case OP_INVOKE_VIRTUAL_RANGE:
-            return F3rc;
-        case OP_INVOKE_SUPER_RANGE:
-            return F3rc;
-        case OP_INVOKE_DIRECT_RANGE:
-            return F3rc;
-        case OP_INVOKE_STATIC_RANGE:
-            return F3rc;
-        case OP_INVOKE_INTERFACE_RANGE:
-            return F3rc;
+        case OP_NOP:
+        case OP_RETURN_VOID:
+            return F10x;
+        case OP_CONST_4:
+            return F11n;
+        case OP_MOVE_RESULT:
+        case OP_MOVE_RESULT_WIDE:
+        case OP_MOVE_RESULT_OBJECT:
+        case OP_MOVE_EXCEPTION:
+        case OP_RETURN:
+        case OP_RETURN_WIDE:
+        case OP_RETURN_OBJECT:
+        case OP_MONITOR_ENTER:
+        case OP_MONITOR_EXIT:
+        case OP_THROW:
+            return F11x;
+        case OP_MOVE:
+        case OP_MOVE_WIDE:
+        case OP_MOVE_OBJECT:
+        case OP_ARRAY_LENGTH:
         case OP_NEG_INT:
-            return F12x;
         case OP_NOT_INT:
-            return F12x;
         case OP_NEG_LONG:
-            return F12x;
         case OP_NOT_LONG:
-            return F12x;
         case OP_NEG_FLOAT:
-            return F12x;
         case OP_NEG_DOUBLE:
-            return F12x;
         case OP_INT_TO_LONG:
-            return F12x;
         case OP_INT_TO_FLOAT:
-            return F12x;
         case OP_INT_TO_DOUBLE:
-            return F12x;
         case OP_LONG_TO_INT:
-            return F12x;
         case OP_LONG_TO_FLOAT:
-            return F12x;
         case OP_LONG_TO_DOUBLE:
-            return F12x;
         case OP_FLOAT_TO_INT:
-            return F12x;
         case OP_FLOAT_TO_LONG:
-            return F12x;
         case OP_FLOAT_TO_DOUBLE:
-            return F12x;
         case OP_DOUBLE_TO_INT:
-            return F12x;
         case OP_DOUBLE_TO_LONG:
-            return F12x;
         case OP_DOUBLE_TO_FLOAT:
-            return F12x;
         case OP_INT_TO_BYTE:
-            return F12x;
         case OP_INT_TO_CHAR:
-            return F12x;
         case OP_INT_TO_SHORT:
-            return F12x;
-        case OP_ADD_INT:
-            return F23x;
-        case OP_SUB_INT:
-            return F23x;
-        case OP_MUL_INT:
-            return F23x;
-        case OP_DIV_INT:
-            return F23x;
-        case OP_REM_INT:
-            return F23x;
-        case OP_AND_INT:
-            return F23x;
-        case OP_OR_INT:
-            return F23x;
-        case OP_XOR_INT:
-            return F23x;
-        case OP_SHL_INT:
-            return F23x;
-        case OP_SHR_INT:
-            return F23x;
-        case OP_USHR_INT:
-            return F23x;
-        case OP_ADD_LONG:
-            return F23x;
-        case OP_SUB_LONG:
-            return F23x;
-        case OP_MUL_LONG:
-            return F23x;
-        case OP_DIV_LONG:
-            return F23x;
-        case OP_REM_LONG:
-            return F23x;
-        case OP_AND_LONG:
-            return F23x;
-        case OP_OR_LONG:
-            return F23x;
-        case OP_XOR_LONG:
-            return F23x;
-        case OP_SHL_LONG:
-            return F23x;
-        case OP_SHR_LONG:
-            return F23x;
-        case OP_USHR_LONG:
-            return F23x;
-        case OP_ADD_FLOAT:
-            return F23x;
-        case OP_SUB_FLOAT:
-            return F23x;
-        case OP_MUL_FLOAT:
-            return F23x;
-        case OP_DIV_FLOAT:
-            return F23x;
-        case OP_REM_FLOAT:
-            return F23x;
-        case OP_ADD_DOUBLE:
-            return F23x;
-        case OP_SUB_DOUBLE:
-            return F23x;
-        case OP_MUL_DOUBLE:
-            return F23x;
-        case OP_DIV_DOUBLE:
-            return F23x;
-        case OP_REM_DOUBLE:
-            return F23x;
         case OP_ADD_INT_2ADDR:
-            return F12x;
         case OP_SUB_INT_2ADDR:
-            return F12x;
         case OP_MUL_INT_2ADDR:
-            return F12x;
         case OP_DIV_INT_2ADDR:
-            return F12x;
         case OP_REM_INT_2ADDR:
-            return F12x;
         case OP_AND_INT_2ADDR:
-            return F12x;
         case OP_OR_INT_2ADDR:
-            return F12x;
         case OP_XOR_INT_2ADDR:
-            return F12x;
         case OP_SHL_INT_2ADDR:
-            return F12x;
         case OP_SHR_INT_2ADDR:
-            return F12x;
         case OP_USHR_INT_2ADDR:
-            return F12x;
         case OP_ADD_LONG_2ADDR:
-            return F12x;
         case OP_SUB_LONG_2ADDR:
-            return F12x;
         case OP_MUL_LONG_2ADDR:
-            return F12x;
         case OP_DIV_LONG_2ADDR:
-            return F12x;
         case OP_REM_LONG_2ADDR:
-            return F12x;
         case OP_AND_LONG_2ADDR:
-            return F12x;
         case OP_OR_LONG_2ADDR:
-            return F12x;
         case OP_XOR_LONG_2ADDR:
-            return F12x;
         case OP_SHL_LONG_2ADDR:
-            return F12x;
         case OP_SHR_LONG_2ADDR:
-            return F12x;
         case OP_USHR_LONG_2ADDR:
-            return F12x;
         case OP_ADD_FLOAT_2ADDR:
-            return F12x;
         case OP_SUB_FLOAT_2ADDR:
-            return F12x;
         case OP_MUL_FLOAT_2ADDR:
-            return F12x;
         case OP_DIV_FLOAT_2ADDR:
-            return F12x;
         case OP_REM_FLOAT_2ADDR:
-            return F12x;
         case OP_ADD_DOUBLE_2ADDR:
-            return F12x;
         case OP_SUB_DOUBLE_2ADDR:
-            return F12x;
         case OP_MUL_DOUBLE_2ADDR:
-            return F12x;
         case OP_DIV_DOUBLE_2ADDR:
-            return F12x;
         case OP_REM_DOUBLE_2ADDR:
             return F12x;
-        case OP_ADD_INT_LIT16:
-            return F22s;
-        case OP_RSUB_INT:
-            return F22s;
-        case OP_MUL_INT_LIT16:
-            return F22s;
-        case OP_DIV_INT_LIT16:
-            return F22s;
-        case OP_REM_INT_LIT16:
-            return F22s;
-        case OP_AND_INT_LIT16:
-            return F22s;
-        case OP_OR_INT_LIT16:
-            return F22s;
-        case OP_XOR_INT_LIT16:
-            return F22s;
+        case OP_GOTO_16:
+            return F20t;
+        case OP_CONST_STRING:
+        case OP_CONST_CLASS:
+        case OP_CHECK_CAST:
+        case OP_NEW_INSTANCE:
+        case OP_SGET:
+        case OP_SGET_WIDE:
+        case OP_SGET_OBJECT:
+        case OP_SGET_BOOLEAN:
+        case OP_SGET_BYTE:
+        case OP_SGET_CHAR:
+        case OP_SGET_SHORT:
+        case OP_SPUT:
+        case OP_SPUT_WIDE:
+        case OP_SPUT_OBJECT:
+        case OP_SPUT_BOOLEAN:
+        case OP_SPUT_BYTE:
+        case OP_SPUT_CHAR:
+        case OP_SPUT_SHORT:
+            return F21c;
+        case OP_CONST_HIGH16:
+        case OP_CONST_WIDE_HIGH16:
+            return F21h;
+        case OP_CONST_16:
+        case OP_CONST_WIDE_16:
+            return F21s;
+        case OP_IF_EQZ:
+        case OP_IF_NEZ:
+        case OP_IF_LTZ:
+        case OP_IF_GEZ:
+        case OP_IF_GTZ:
+        case OP_IF_LEZ:
+            return F21t;
         case OP_ADD_INT_LIT8:
-            return F22b;
         case OP_RSUB_INT_LIT8:
-            return F22b;
         case OP_MUL_INT_LIT8:
-            return F22b;
         case OP_DIV_INT_LIT8:
-            return F22b;
         case OP_REM_INT_LIT8:
-            return F22b;
         case OP_AND_INT_LIT8:
-            return F22b;
         case OP_OR_INT_LIT8:
-            return F22b;
         case OP_XOR_INT_LIT8:
-            return F22b;
         case OP_SHL_INT_LIT8:
-            return F22b;
         case OP_SHR_INT_LIT8:
-            return F22b;
         case OP_USHR_INT_LIT8:
             return F22b;
+        case OP_INSTANCE_OF:
+        case OP_NEW_ARRAY:
+        case OP_IGET:
+        case OP_IGET_WIDE:
+        case OP_IGET_OBJECT:
+        case OP_IGET_BOOLEAN:
+        case OP_IGET_BYTE:
+        case OP_IGET_CHAR:
+        case OP_IGET_SHORT:
+        case OP_IPUT:
+        case OP_IPUT_WIDE:
+        case OP_IPUT_OBJECT:
+        case OP_IPUT_BOOLEAN:
+        case OP_IPUT_BYTE:
+        case OP_IPUT_CHAR:
+        case OP_IPUT_SHORT:
+            return F22c;
+        case OP_ADD_INT_LIT16:
+        case OP_RSUB_INT:
+        case OP_MUL_INT_LIT16:
+        case OP_DIV_INT_LIT16:
+        case OP_REM_INT_LIT16:
+        case OP_AND_INT_LIT16:
+        case OP_OR_INT_LIT16:
+        case OP_XOR_INT_LIT16:
+            return F22s;
+        case OP_IF_EQ:
+        case OP_IF_NE:
+        case OP_IF_LT:
+        case OP_IF_GE:
+        case OP_IF_GT:
+        case OP_IF_LE:
+            return F22t;
+        case OP_MOVE_FROM16:
+        case OP_MOVE_WIDE_FROM16:
+        case OP_MOVE_OBJECT_FROM16:
+            return F22x;
+        case OP_CMPL_FLOAT:
+        case OP_CMPG_FLOAT:
+        case OP_CMPL_DOUBLE:
+        case OP_CMPG_DOUBLE:
+        case OP_CMP_LONG:
+        case OP_AGET:
+        case OP_AGET_WIDE:
+        case OP_AGET_OBJECT:
+        case OP_AGET_BOOLEAN:
+        case OP_AGET_BYTE:
+        case OP_AGET_CHAR:
+        case OP_AGET_SHORT:
+        case OP_APUT:
+        case OP_APUT_WIDE:
+        case OP_APUT_OBJECT:
+        case OP_APUT_BOOLEAN:
+        case OP_APUT_BYTE:
+        case OP_APUT_CHAR:
+        case OP_APUT_SHORT:
+        case OP_ADD_INT:
+        case OP_SUB_INT:
+        case OP_MUL_INT:
+        case OP_DIV_INT:
+        case OP_REM_INT:
+        case OP_AND_INT:
+        case OP_OR_INT:
+        case OP_XOR_INT:
+        case OP_SHL_INT:
+        case OP_SHR_INT:
+        case OP_USHR_INT:
+        case OP_ADD_LONG:
+        case OP_SUB_LONG:
+        case OP_MUL_LONG:
+        case OP_DIV_LONG:
+        case OP_REM_LONG:
+        case OP_AND_LONG:
+        case OP_OR_LONG:
+        case OP_XOR_LONG:
+        case OP_SHL_LONG:
+        case OP_SHR_LONG:
+        case OP_USHR_LONG:
+        case OP_ADD_FLOAT:
+        case OP_SUB_FLOAT:
+        case OP_MUL_FLOAT:
+        case OP_DIV_FLOAT:
+        case OP_REM_FLOAT:
+        case OP_ADD_DOUBLE:
+        case OP_SUB_DOUBLE:
+        case OP_MUL_DOUBLE:
+        case OP_DIV_DOUBLE:
+        case OP_REM_DOUBLE:
+            return F23x;
+        case OP_GOTO_32:
+            return F30t;
+        case OP_CONST_STRING_JUMBO:
+            return F31c;
+        case OP_CONST:
+        case OP_CONST_WIDE_32:
+            return F31i;
+        case OP_FILL_ARRAY_DATA:
+        case OP_PACKED_SWITCH:
+        case OP_SPARSE_SWITCH:
+            return F31t;
+        case OP_MOVE_16:
+        case OP_MOVE_WIDE_16:
+        case OP_MOVE_OBJECT_16:
+            return F32x;
+        case OP_FILLED_NEW_ARRAY:
+        case OP_INVOKE_VIRTUAL:
+        case OP_INVOKE_SUPER:
+        case OP_INVOKE_DIRECT:
+        case OP_INVOKE_STATIC:
+        case OP_INVOKE_INTERFACE:
+            return F35c;
+        case OP_FILLED_NEW_ARRAY_RANGE:
+        case OP_INVOKE_VIRTUAL_RANGE:
+        case OP_INVOKE_SUPER_RANGE:
+        case OP_INVOKE_DIRECT_RANGE:
+        case OP_INVOKE_STATIC_RANGE:
+        case OP_INVOKE_INTERFACE_RANGE:
+            return F3rc;
+        case OP_CONST_WIDE:
+            return F51l;
         }
         throw new RuntimeException("opcode length for " + opcode + " not found!");
     }
 
     public static int length(int opcode) {
         switch (opcode) {
-        case OP_NOP:
+        // case OP: //length
+        case OP_NOP: // 1
+        case OP_MOVE: // 1
+        case OP_MOVE_WIDE: // 1
+        case OP_MOVE_OBJECT: // 1
+        case OP_MOVE_RESULT: // 1
+        case OP_MOVE_RESULT_WIDE: // 1
+        case OP_MOVE_RESULT_OBJECT: // 1
+        case OP_MOVE_EXCEPTION: // 1
+        case OP_RETURN_VOID: // 1
+        case OP_RETURN: // 1
+        case OP_RETURN_WIDE: // 1
+        case OP_RETURN_OBJECT: // 1
+        case OP_CONST_4: // 1
+        case OP_MONITOR_ENTER: // 1
+        case OP_MONITOR_EXIT: // 1
+        case OP_ARRAY_LENGTH: // 1
+        case OP_THROW: // 1
+        case OP_GOTO: // 1
+        case OP_NEG_INT: // 1
+        case OP_NOT_INT: // 1
+        case OP_NEG_LONG: // 1
+        case OP_NOT_LONG: // 1
+        case OP_NEG_FLOAT: // 1
+        case OP_NEG_DOUBLE: // 1
+        case OP_INT_TO_LONG: // 1
+        case OP_INT_TO_FLOAT: // 1
+        case OP_INT_TO_DOUBLE: // 1
+        case OP_LONG_TO_INT: // 1
+        case OP_LONG_TO_FLOAT: // 1
+        case OP_LONG_TO_DOUBLE: // 1
+        case OP_FLOAT_TO_INT: // 1
+        case OP_FLOAT_TO_LONG: // 1
+        case OP_FLOAT_TO_DOUBLE: // 1
+        case OP_DOUBLE_TO_INT: // 1
+        case OP_DOUBLE_TO_LONG: // 1
+        case OP_DOUBLE_TO_FLOAT: // 1
+        case OP_INT_TO_BYTE: // 1
+        case OP_INT_TO_CHAR: // 1
+        case OP_INT_TO_SHORT: // 1
+        case OP_ADD_INT_2ADDR: // 1
+        case OP_SUB_INT_2ADDR: // 1
+        case OP_MUL_INT_2ADDR: // 1
+        case OP_DIV_INT_2ADDR: // 1
+        case OP_REM_INT_2ADDR: // 1
+        case OP_AND_INT_2ADDR: // 1
+        case OP_OR_INT_2ADDR: // 1
+        case OP_XOR_INT_2ADDR: // 1
+        case OP_SHL_INT_2ADDR: // 1
+        case OP_SHR_INT_2ADDR: // 1
+        case OP_USHR_INT_2ADDR: // 1
+        case OP_ADD_LONG_2ADDR: // 1
+        case OP_SUB_LONG_2ADDR: // 1
+        case OP_MUL_LONG_2ADDR: // 1
+        case OP_DIV_LONG_2ADDR: // 1
+        case OP_REM_LONG_2ADDR: // 1
+        case OP_AND_LONG_2ADDR: // 1
+        case OP_OR_LONG_2ADDR: // 1
+        case OP_XOR_LONG_2ADDR: // 1
+        case OP_SHL_LONG_2ADDR: // 1
+        case OP_SHR_LONG_2ADDR: // 1
+        case OP_USHR_LONG_2ADDR: // 1
+        case OP_ADD_FLOAT_2ADDR: // 1
+        case OP_SUB_FLOAT_2ADDR: // 1
+        case OP_MUL_FLOAT_2ADDR: // 1
+        case OP_DIV_FLOAT_2ADDR: // 1
+        case OP_REM_FLOAT_2ADDR: // 1
+        case OP_ADD_DOUBLE_2ADDR: // 1
+        case OP_SUB_DOUBLE_2ADDR: // 1
+        case OP_MUL_DOUBLE_2ADDR: // 1
+        case OP_DIV_DOUBLE_2ADDR: // 1
+        case OP_REM_DOUBLE_2ADDR: // 1
             return 1;
-        case OP_MOVE:
-            return 1;
-        case OP_MOVE_FROM16:
+        case OP_MOVE_FROM16: // 2
+        case OP_MOVE_WIDE_FROM16: // 2
+        case OP_MOVE_OBJECT_FROM16: // 2
+        case OP_CONST_16: // 2
+        case OP_CONST_HIGH16: // 2
+        case OP_CONST_WIDE_16: // 2
+        case OP_CONST_WIDE_HIGH16: // 2
+        case OP_CONST_STRING: // 2
+        case OP_CONST_CLASS: // 2
+        case OP_CHECK_CAST: // 2
+        case OP_INSTANCE_OF: // 2
+        case OP_NEW_INSTANCE: // 2
+        case OP_NEW_ARRAY: // 2
+        case OP_GOTO_16: // 2
+        case OP_CMPL_FLOAT: // 2
+        case OP_CMPG_FLOAT: // 2
+        case OP_CMPL_DOUBLE: // 2
+        case OP_CMPG_DOUBLE: // 2
+        case OP_CMP_LONG: // 2
+        case OP_IF_EQ: // 2
+        case OP_IF_NE: // 2
+        case OP_IF_LT: // 2
+        case OP_IF_GE: // 2
+        case OP_IF_GT: // 2
+        case OP_IF_LE: // 2
+        case OP_IF_EQZ: // 2
+        case OP_IF_NEZ: // 2
+        case OP_IF_LTZ: // 2
+        case OP_IF_GEZ: // 2
+        case OP_IF_GTZ: // 2
+        case OP_IF_LEZ: // 2
+        case OP_AGET: // 2
+        case OP_AGET_WIDE: // 2
+        case OP_AGET_OBJECT: // 2
+        case OP_AGET_BOOLEAN: // 2
+        case OP_AGET_BYTE: // 2
+        case OP_AGET_CHAR: // 2
+        case OP_AGET_SHORT: // 2
+        case OP_APUT: // 2
+        case OP_APUT_WIDE: // 2
+        case OP_APUT_OBJECT: // 2
+        case OP_APUT_BOOLEAN: // 2
+        case OP_APUT_BYTE: // 2
+        case OP_APUT_CHAR: // 2
+        case OP_APUT_SHORT: // 2
+        case OP_IGET: // 2
+        case OP_IGET_WIDE: // 2
+        case OP_IGET_OBJECT: // 2
+        case OP_IGET_BOOLEAN: // 2
+        case OP_IGET_BYTE: // 2
+        case OP_IGET_CHAR: // 2
+        case OP_IGET_SHORT: // 2
+        case OP_IPUT: // 2
+        case OP_IPUT_WIDE: // 2
+        case OP_IPUT_OBJECT: // 2
+        case OP_IPUT_BOOLEAN: // 2
+        case OP_IPUT_BYTE: // 2
+        case OP_IPUT_CHAR: // 2
+        case OP_IPUT_SHORT: // 2
+        case OP_SGET: // 2
+        case OP_SGET_WIDE: // 2
+        case OP_SGET_OBJECT: // 2
+        case OP_SGET_BOOLEAN: // 2
+        case OP_SGET_BYTE: // 2
+        case OP_SGET_CHAR: // 2
+        case OP_SGET_SHORT: // 2
+        case OP_SPUT: // 2
+        case OP_SPUT_WIDE: // 2
+        case OP_SPUT_OBJECT: // 2
+        case OP_SPUT_BOOLEAN: // 2
+        case OP_SPUT_BYTE: // 2
+        case OP_SPUT_CHAR: // 2
+        case OP_SPUT_SHORT: // 2
+        case OP_ADD_INT: // 2
+        case OP_SUB_INT: // 2
+        case OP_MUL_INT: // 2
+        case OP_DIV_INT: // 2
+        case OP_REM_INT: // 2
+        case OP_AND_INT: // 2
+        case OP_OR_INT: // 2
+        case OP_XOR_INT: // 2
+        case OP_SHL_INT: // 2
+        case OP_SHR_INT: // 2
+        case OP_USHR_INT: // 2
+        case OP_ADD_LONG: // 2
+        case OP_SUB_LONG: // 2
+        case OP_MUL_LONG: // 2
+        case OP_DIV_LONG: // 2
+        case OP_REM_LONG: // 2
+        case OP_AND_LONG: // 2
+        case OP_OR_LONG: // 2
+        case OP_XOR_LONG: // 2
+        case OP_SHL_LONG: // 2
+        case OP_SHR_LONG: // 2
+        case OP_USHR_LONG: // 2
+        case OP_ADD_FLOAT: // 2
+        case OP_SUB_FLOAT: // 2
+        case OP_MUL_FLOAT: // 2
+        case OP_DIV_FLOAT: // 2
+        case OP_REM_FLOAT: // 2
+        case OP_ADD_DOUBLE: // 2
+        case OP_SUB_DOUBLE: // 2
+        case OP_MUL_DOUBLE: // 2
+        case OP_DIV_DOUBLE: // 2
+        case OP_REM_DOUBLE: // 2
+        case OP_ADD_INT_LIT16: // 2
+        case OP_RSUB_INT: // 2
+        case OP_MUL_INT_LIT16: // 2
+        case OP_DIV_INT_LIT16: // 2
+        case OP_REM_INT_LIT16: // 2
+        case OP_AND_INT_LIT16: // 2
+        case OP_OR_INT_LIT16: // 2
+        case OP_XOR_INT_LIT16: // 2
+        case OP_ADD_INT_LIT8: // 2
+        case OP_RSUB_INT_LIT8: // 2
+        case OP_MUL_INT_LIT8: // 2
+        case OP_DIV_INT_LIT8: // 2
+        case OP_REM_INT_LIT8: // 2
+        case OP_AND_INT_LIT8: // 2
+        case OP_OR_INT_LIT8: // 2
+        case OP_XOR_INT_LIT8: // 2
+        case OP_SHL_INT_LIT8: // 2
+        case OP_SHR_INT_LIT8: // 2
+        case OP_USHR_INT_LIT8: // 2
             return 2;
-        case OP_MOVE_16:
+        case OP_MOVE_16: // 3
+        case OP_MOVE_WIDE_16: // 3
+        case OP_MOVE_OBJECT_16: // 3
+        case OP_CONST: // 3
+        case OP_CONST_WIDE_32: // 3
+        case OP_CONST_STRING_JUMBO: // 3
+        case OP_FILLED_NEW_ARRAY: // 3
+        case OP_FILLED_NEW_ARRAY_RANGE: // 3
+        case OP_FILL_ARRAY_DATA: // 3
+        case OP_GOTO_32: // 3
+        case OP_PACKED_SWITCH: // 3
+        case OP_SPARSE_SWITCH: // 3
+        case OP_INVOKE_VIRTUAL: // 3
+        case OP_INVOKE_SUPER: // 3
+        case OP_INVOKE_DIRECT: // 3
+        case OP_INVOKE_STATIC: // 3
+        case OP_INVOKE_INTERFACE: // 3
+        case OP_INVOKE_VIRTUAL_RANGE: // 3
+        case OP_INVOKE_SUPER_RANGE: // 3
+        case OP_INVOKE_DIRECT_RANGE: // 3
+        case OP_INVOKE_STATIC_RANGE: // 3
+        case OP_INVOKE_INTERFACE_RANGE: // 3
             return 3;
-        case OP_MOVE_WIDE:
-            return 1;
-        case OP_MOVE_WIDE_FROM16:
-            return 2;
-        case OP_MOVE_WIDE_16:
-            return 3;
-        case OP_MOVE_OBJECT:
-            return 1;
-        case OP_MOVE_OBJECT_FROM16:
-            return 2;
-        case OP_MOVE_OBJECT_16:
-            return 3;
-        case OP_MOVE_RESULT:
-            return 1;
-        case OP_MOVE_RESULT_WIDE:
-            return 1;
-        case OP_MOVE_RESULT_OBJECT:
-            return 1;
-        case OP_MOVE_EXCEPTION:
-            return 1;
-        case OP_RETURN_VOID:
-            return 1;
-        case OP_RETURN:
-            return 1;
-        case OP_RETURN_WIDE:
-            return 1;
-        case OP_RETURN_OBJECT:
-            return 1;
-        case OP_CONST_4:
-            return 1;
-        case OP_CONST_16:
-            return 2;
-        case OP_CONST:
-            return 3;
-        case OP_CONST_HIGH16:
-            return 2;
-        case OP_CONST_WIDE_16:
-            return 2;
-        case OP_CONST_WIDE_32:
-            return 3;
-        case OP_CONST_WIDE:
+        case OP_CONST_WIDE: // 5
             return 5;
-        case OP_CONST_WIDE_HIGH16:
-            return 2;
-        case OP_CONST_STRING:
-            return 2;
-        case OP_CONST_STRING_JUMBO:
-            return 3;
-        case OP_CONST_CLASS:
-            return 2;
-        case OP_MONITOR_ENTER:
-            return 1;
-        case OP_MONITOR_EXIT:
-            return 1;
-        case OP_CHECK_CAST:
-            return 2;
-        case OP_INSTANCE_OF:
-            return 2;
-        case OP_ARRAY_LENGTH:
-            return 1;
-        case OP_NEW_INSTANCE:
-            return 2;
-        case OP_NEW_ARRAY:
-            return 2;
-        case OP_FILLED_NEW_ARRAY:
-            return 3;
-        case OP_FILLED_NEW_ARRAY_RANGE:
-            return 3;
-        case OP_FILL_ARRAY_DATA:
-            return 3;
-        case OP_THROW:
-            return 1;
-        case OP_GOTO:
-            return 1;
-        case OP_GOTO_16:
-            return 2;
-        case OP_GOTO_32:
-            return 3;
-        case OP_PACKED_SWITCH:
-            return 3;
-        case OP_SPARSE_SWITCH:
-            return 3;
-        case OP_CMPL_FLOAT:
-            return 2;
-        case OP_CMPG_FLOAT:
-            return 2;
-        case OP_CMPL_DOUBLE:
-            return 2;
-        case OP_CMPG_DOUBLE:
-            return 2;
-        case OP_CMP_LONG:
-            return 2;
-        case OP_IF_EQ:
-            return 2;
-        case OP_IF_NE:
-            return 2;
-        case OP_IF_LT:
-            return 2;
-        case OP_IF_GE:
-            return 2;
-        case OP_IF_GT:
-            return 2;
-        case OP_IF_LE:
-            return 2;
-        case OP_IF_EQZ:
-            return 2;
-        case OP_IF_NEZ:
-            return 2;
-        case OP_IF_LTZ:
-            return 2;
-        case OP_IF_GEZ:
-            return 2;
-        case OP_IF_GTZ:
-            return 2;
-        case OP_IF_LEZ:
-            return 2;
-        case OP_AGET:
-            return 2;
-        case OP_AGET_WIDE:
-            return 2;
-        case OP_AGET_OBJECT:
-            return 2;
-        case OP_AGET_BOOLEAN:
-            return 2;
-        case OP_AGET_BYTE:
-            return 2;
-        case OP_AGET_CHAR:
-            return 2;
-        case OP_AGET_SHORT:
-            return 2;
-        case OP_APUT:
-            return 2;
-        case OP_APUT_WIDE:
-            return 2;
-        case OP_APUT_OBJECT:
-            return 2;
-        case OP_APUT_BOOLEAN:
-            return 2;
-        case OP_APUT_BYTE:
-            return 2;
-        case OP_APUT_CHAR:
-            return 2;
-        case OP_APUT_SHORT:
-            return 2;
-        case OP_IGET:
-            return 2;
-        case OP_IGET_WIDE:
-            return 2;
-        case OP_IGET_OBJECT:
-            return 2;
-        case OP_IGET_BOOLEAN:
-            return 2;
-        case OP_IGET_BYTE:
-            return 2;
-        case OP_IGET_CHAR:
-            return 2;
-        case OP_IGET_SHORT:
-            return 2;
-        case OP_IPUT:
-            return 2;
-        case OP_IPUT_WIDE:
-            return 2;
-        case OP_IPUT_OBJECT:
-            return 2;
-        case OP_IPUT_BOOLEAN:
-            return 2;
-        case OP_IPUT_BYTE:
-            return 2;
-        case OP_IPUT_CHAR:
-            return 2;
-        case OP_IPUT_SHORT:
-            return 2;
-        case OP_SGET:
-            return 2;
-        case OP_SGET_WIDE:
-            return 2;
-        case OP_SGET_OBJECT:
-            return 2;
-        case OP_SGET_BOOLEAN:
-            return 2;
-        case OP_SGET_BYTE:
-            return 2;
-        case OP_SGET_CHAR:
-            return 2;
-        case OP_SGET_SHORT:
-            return 2;
-        case OP_SPUT:
-            return 2;
-        case OP_SPUT_WIDE:
-            return 2;
-        case OP_SPUT_OBJECT:
-            return 2;
-        case OP_SPUT_BOOLEAN:
-            return 2;
-        case OP_SPUT_BYTE:
-            return 2;
-        case OP_SPUT_CHAR:
-            return 2;
-        case OP_SPUT_SHORT:
-            return 2;
-        case OP_INVOKE_VIRTUAL:
-            return 3;
-        case OP_INVOKE_SUPER:
-            return 3;
-        case OP_INVOKE_DIRECT:
-            return 3;
-        case OP_INVOKE_STATIC:
-            return 3;
-        case OP_INVOKE_INTERFACE:
-            return 3;
-        case OP_INVOKE_VIRTUAL_RANGE:
-            return 3;
-        case OP_INVOKE_SUPER_RANGE:
-            return 3;
-        case OP_INVOKE_DIRECT_RANGE:
-            return 3;
-        case OP_INVOKE_STATIC_RANGE:
-            return 3;
-        case OP_INVOKE_INTERFACE_RANGE:
-            return 3;
-        case OP_NEG_INT:
-            return 1;
-        case OP_NOT_INT:
-            return 1;
-        case OP_NEG_LONG:
-            return 1;
-        case OP_NOT_LONG:
-            return 1;
-        case OP_NEG_FLOAT:
-            return 1;
-        case OP_NEG_DOUBLE:
-            return 1;
-        case OP_INT_TO_LONG:
-            return 1;
-        case OP_INT_TO_FLOAT:
-            return 1;
-        case OP_INT_TO_DOUBLE:
-            return 1;
-        case OP_LONG_TO_INT:
-            return 1;
-        case OP_LONG_TO_FLOAT:
-            return 1;
-        case OP_LONG_TO_DOUBLE:
-            return 1;
-        case OP_FLOAT_TO_INT:
-            return 1;
-        case OP_FLOAT_TO_LONG:
-            return 1;
-        case OP_FLOAT_TO_DOUBLE:
-            return 1;
-        case OP_DOUBLE_TO_INT:
-            return 1;
-        case OP_DOUBLE_TO_LONG:
-            return 1;
-        case OP_DOUBLE_TO_FLOAT:
-            return 1;
-        case OP_INT_TO_BYTE:
-            return 1;
-        case OP_INT_TO_CHAR:
-            return 1;
-        case OP_INT_TO_SHORT:
-            return 1;
-        case OP_ADD_INT:
-            return 2;
-        case OP_SUB_INT:
-            return 2;
-        case OP_MUL_INT:
-            return 2;
-        case OP_DIV_INT:
-            return 2;
-        case OP_REM_INT:
-            return 2;
-        case OP_AND_INT:
-            return 2;
-        case OP_OR_INT:
-            return 2;
-        case OP_XOR_INT:
-            return 2;
-        case OP_SHL_INT:
-            return 2;
-        case OP_SHR_INT:
-            return 2;
-        case OP_USHR_INT:
-            return 2;
-        case OP_ADD_LONG:
-            return 2;
-        case OP_SUB_LONG:
-            return 2;
-        case OP_MUL_LONG:
-            return 2;
-        case OP_DIV_LONG:
-            return 2;
-        case OP_REM_LONG:
-            return 2;
-        case OP_AND_LONG:
-            return 2;
-        case OP_OR_LONG:
-            return 2;
-        case OP_XOR_LONG:
-            return 2;
-        case OP_SHL_LONG:
-            return 2;
-        case OP_SHR_LONG:
-            return 2;
-        case OP_USHR_LONG:
-            return 2;
-        case OP_ADD_FLOAT:
-            return 2;
-        case OP_SUB_FLOAT:
-            return 2;
-        case OP_MUL_FLOAT:
-            return 2;
-        case OP_DIV_FLOAT:
-            return 2;
-        case OP_REM_FLOAT:
-            return 2;
-        case OP_ADD_DOUBLE:
-            return 2;
-        case OP_SUB_DOUBLE:
-            return 2;
-        case OP_MUL_DOUBLE:
-            return 2;
-        case OP_DIV_DOUBLE:
-            return 2;
-        case OP_REM_DOUBLE:
-            return 2;
-        case OP_ADD_INT_2ADDR:
-            return 1;
-        case OP_SUB_INT_2ADDR:
-            return 1;
-        case OP_MUL_INT_2ADDR:
-            return 1;
-        case OP_DIV_INT_2ADDR:
-            return 1;
-        case OP_REM_INT_2ADDR:
-            return 1;
-        case OP_AND_INT_2ADDR:
-            return 1;
-        case OP_OR_INT_2ADDR:
-            return 1;
-        case OP_XOR_INT_2ADDR:
-            return 1;
-        case OP_SHL_INT_2ADDR:
-            return 1;
-        case OP_SHR_INT_2ADDR:
-            return 1;
-        case OP_USHR_INT_2ADDR:
-            return 1;
-        case OP_ADD_LONG_2ADDR:
-            return 1;
-        case OP_SUB_LONG_2ADDR:
-            return 1;
-        case OP_MUL_LONG_2ADDR:
-            return 1;
-        case OP_DIV_LONG_2ADDR:
-            return 1;
-        case OP_REM_LONG_2ADDR:
-            return 1;
-        case OP_AND_LONG_2ADDR:
-            return 1;
-        case OP_OR_LONG_2ADDR:
-            return 1;
-        case OP_XOR_LONG_2ADDR:
-            return 1;
-        case OP_SHL_LONG_2ADDR:
-            return 1;
-        case OP_SHR_LONG_2ADDR:
-            return 1;
-        case OP_USHR_LONG_2ADDR:
-            return 1;
-        case OP_ADD_FLOAT_2ADDR:
-            return 1;
-        case OP_SUB_FLOAT_2ADDR:
-            return 1;
-        case OP_MUL_FLOAT_2ADDR:
-            return 1;
-        case OP_DIV_FLOAT_2ADDR:
-            return 1;
-        case OP_REM_FLOAT_2ADDR:
-            return 1;
-        case OP_ADD_DOUBLE_2ADDR:
-            return 1;
-        case OP_SUB_DOUBLE_2ADDR:
-            return 1;
-        case OP_MUL_DOUBLE_2ADDR:
-            return 1;
-        case OP_DIV_DOUBLE_2ADDR:
-            return 1;
-        case OP_REM_DOUBLE_2ADDR:
-            return 1;
-        case OP_ADD_INT_LIT16:
-            return 2;
-        case OP_RSUB_INT:
-            return 2;
-        case OP_MUL_INT_LIT16:
-            return 2;
-        case OP_DIV_INT_LIT16:
-            return 2;
-        case OP_REM_INT_LIT16:
-            return 2;
-        case OP_AND_INT_LIT16:
-            return 2;
-        case OP_OR_INT_LIT16:
-            return 2;
-        case OP_XOR_INT_LIT16:
-            return 2;
-        case OP_ADD_INT_LIT8:
-            return 2;
-        case OP_RSUB_INT_LIT8:
-            return 2;
-        case OP_MUL_INT_LIT8:
-            return 2;
-        case OP_DIV_INT_LIT8:
-            return 2;
-        case OP_REM_INT_LIT8:
-            return 2;
-        case OP_AND_INT_LIT8:
-            return 2;
-        case OP_OR_INT_LIT8:
-            return 2;
-        case OP_XOR_INT_LIT8:
-            return 2;
-        case OP_SHL_INT_LIT8:
-            return 2;
-        case OP_SHR_INT_LIT8:
-            return 2;
-        case OP_USHR_INT_LIT8:
-            return 2;
         }
         throw new RuntimeException("opcode length for 0x" + Integer.toHexString(opcode) + DexOpcodeDump.dump(opcode)
                 + " not found!");
