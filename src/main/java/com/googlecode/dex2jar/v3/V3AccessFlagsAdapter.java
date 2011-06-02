@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
@@ -37,6 +38,14 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  */
 public class V3AccessFlagsAdapter implements DexFileVisitor {
     private Map<String, Integer> map = new HashMap<String, Integer>();
+    private Map<String, String> innerNameMap = new HashMap<String, String>();
+
+    /**
+     * @return the innerNameMap
+     */
+    public Map<String, String> getInnerNameMap() {
+        return innerNameMap;
+    }
 
     public Map<String, Integer> getAccessFlagsMap() {
         return map;
@@ -81,6 +90,8 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
                         for (Item it : ann.items) {
                             if ("accessFlags".equals(it.name)) {
                                 map.put(className, (Integer) it.value);
+                            } else if ("name".equals(it.name)) {
+                                innerNameMap.put(className, (String) it.value);
                             }
                         }
                     }

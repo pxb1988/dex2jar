@@ -29,7 +29,6 @@ import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
-
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
@@ -170,7 +169,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_NEG_FLOAT:
 
         case OP_ARRAY_LENGTH:
-            //
+        //
         {
             int to = arg1 & 0xf;
             int from = (arg1 >> 4) & 0xf;
@@ -195,7 +194,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_RETURN_WIDE:
         case OP_MONITOR_ENTER:
         case OP_MONITOR_EXIT:
-            //
+        //
         {
             dcv.visitVarInsn(opcode, arg1);
         }
@@ -504,8 +503,9 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             }
             dcv.visitFilledNewArrayIns(OP_FILLED_NEW_ARRAY, dex.getType(arg2 & 0xFFFF), args);
         }
+            break;
         case OP_CONST_STRING_JUMBO: {
-            dcv.visitLdcInsn(OP_CONST_STRING, dex.getString(((arg3 << 16) & 0xFFFF) | (arg2 & 0xFFFF)), arg1);
+            dcv.visitLdcInsn(OP_CONST_STRING, dex.getString(((arg3 & 0xFFFF) << 16) | (arg2 & 0xFFFF)), arg1);
         }
             break;
         case OP_MOVE_OBJECT_16:

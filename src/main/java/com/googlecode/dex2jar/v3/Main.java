@@ -89,7 +89,7 @@ public class Main {
                 doFile(dex, gen);
             } catch (Exception e) {
                 containsError = true;
-                niceExceptionMessage(log,new DexException(e, "while process file: [%s]", dex), 0);
+                niceExceptionMessage(log, new DexException(e, "while process file: [%s]", dex), 0);
             }
         }
         log.info("Done.");
@@ -102,7 +102,7 @@ public class Main {
         DexFileReader reader = new DexFileReader(data);
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
         reader.accept(afa);
-        reader.accept(new V3(afa.getAccessFlagsMap(), new ClassVisitorFactory() {
+        reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), new ClassVisitorFactory() {
             public ClassVisitor create(final String name) {
                 return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
                     /*

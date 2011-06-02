@@ -23,6 +23,7 @@ import java.util.Map;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
@@ -40,7 +41,8 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 public class V3ClassAdapter implements DexClassVisitor {
 
     protected int access_flags;
-    protected Map<String, Integer> accessFlagsMap;
+    protected Map<String, Integer> innerAccessFlagsMap;
+    protected Map<String, String> innerNameMap;
     protected List<Annotation> anns = new ArrayList<Annotation>();
     protected boolean build = false;
     protected String className;
@@ -50,15 +52,18 @@ public class V3ClassAdapter implements DexClassVisitor {
     protected String superClass;
 
     /**
+     * @param innerNameMap
      * @param cv
      * @param access_flags
      * @param className
      * @param superClass
      * @param interfaceNames
      */
-    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, ClassVisitor cv, int access_flags, String className, String superClass, String[] interfaceNames) {
+    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap, ClassVisitor cv, int access_flags, String className,
+            String superClass, String[] interfaceNames) {
         super();
-        this.accessFlagsMap = accessFlagsMap;
+        this.innerAccessFlagsMap = accessFlagsMap;
+        this.innerNameMap = innerNameMap;
         this.cv = new TypeNameAdapter(cv);
         this.access_flags = access_flags;
         this.className = className;
@@ -87,7 +92,7 @@ public class V3ClassAdapter implements DexClassVisitor {
             }
 
             if (isInnerClass) {
-                Integer i = accessFlagsMap.get(className);
+                Integer i = innerAccessFlagsMap.get(className);
                 if (i != null) {
                     access_flags = i;
                 }
@@ -106,8 +111,15 @@ public class V3ClassAdapter implements DexClassVisitor {
                         if (i.name.equals("value")) {
                             for (Item j : ((Annotation) i.value).items) {
                                 String name = j.value.toString();
-                                Integer access = accessFlagsMap.get(name);
-                                String innerName = name.substring(className.length(), name.length() - 1);
+                                Integer access = innerAccessFlagsMap.get(name);
+                                String innerName = innerNameMap.get(name);
+                                if (innerName == null) {
+                                    if (className.length() > name.length() - 1) {
+                                        innerName = "x";
+                                    } else {
+                                        innerName = name.substring(className.length(), name.length() - 1);
+                                    }
+                                }
                                 cv.visitInnerClass(name, className, innerName, access == null ? 0 : access);
                             }
                         }
@@ -117,7 +129,14 @@ public class V3ClassAdapter implements DexClassVisitor {
                     for (Item i : ann.items) {
                         if (i.name.equals("value")) {
                             String outerName = i.value.toString();
-                            String innerName = className.substring(outerName.length(), className.length() - 1);
+                            String innerName = innerNameMap.get(className);
+                            if (innerName == null) {
+                                if (outerName.length() > className.length() - 1) {
+                                    innerName = "x";
+                                } else {
+                                    innerName = className.substring(outerName.length(), className.length() - 1);
+                                }
+                            }
                             int accessInInnerClassAttr = access_flags & (~Opcodes.ACC_SUPER);// inner class attr has no
                                                                                              // acc_super
                             cv.visitInnerClass(className, outerName, innerName, accessInInnerClassAttr);
@@ -127,6 +146,24 @@ public class V3ClassAdapter implements DexClassVisitor {
                 } else if (ann.type.equals("Ldalvik/annotation/InnerClass;")) {
                     continue;
                 } else if (ann.type.equals("Ldalvik/annotation/EnclosingMethod;")) {
+                    for (Item it : ann.items) {
+                        if ("value".equals(it.name)) {
+                            Method m = (Method) it.value;
+                            cv.visitOuterClass(Type.getType(m.getOwner()).getInternalName(), m.getName(), m.getType().getDesc());
+
+                            String outerName = m.getOwner();
+                            String innerName = innerNameMap.get(className);
+                            if (innerName == null) {
+                                if (outerName.length() > className.length() - 1) {
+                                } else {
+                                    innerName = className.substring(outerName.length(), className.length() - 1);
+                                }
+                            }
+                            int accessInInnerClassAttr = access_flags & (~Opcodes.ACC_SUPER);// inner class attr has no
+                                                                                             // acc_super
+                            cv.visitInnerClass(className, outerName, innerName, accessInInnerClassAttr);
+                        }
+                    }
                     continue;
                 }
                 AnnotationVisitor av = cv.visitAnnotation(ann.type, ann.visible);
