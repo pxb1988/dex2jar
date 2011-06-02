@@ -92,12 +92,14 @@ public class V3ClassAdapter implements DexClassVisitor {
                     access_flags = i;
                 }
             }
-
+            int accessInClass = access_flags;
             if ((access_flags & Opcodes.ACC_INTERFACE) == 0) { // issue 55
-                access_flags |= Opcodes.ACC_SUPER;// 解决生成的class文件使用dx重新转换时使用的指令与原始指令不同的问题
+                accessInClass |= Opcodes.ACC_SUPER;// 解决生成的class文件使用dx重新转换时使用的指令与原始指令不同的问题
             }
 
-            cv.visit(Opcodes.V1_6, access_flags, className, signature, superClass, interfaceNames);
+            accessInClass &= ~Opcodes.ACC_STATIC; // access in class has no acc_static
+
+            cv.visit(Opcodes.V1_6, accessInClass, className, signature, superClass, interfaceNames);
             for (Annotation ann : anns) {
                 if (ann.type.equals("Ldalvik/annotation/MemberClasses;")) {
                     for (Item i : ann.items) {
@@ -116,7 +118,9 @@ public class V3ClassAdapter implements DexClassVisitor {
                         if (i.name.equals("value")) {
                             String outerName = i.value.toString();
                             String innerName = className.substring(outerName.length(), className.length() - 1);
-                            cv.visitInnerClass(className, outerName, innerName, access_flags);
+                            int accessInInnerClassAttr = access_flags & (~Opcodes.ACC_SUPER);// inner class attr has no
+                                                                                             // acc_super
+                            cv.visitInnerClass(className, outerName, innerName, accessInInnerClassAttr);
                         }
                     }
                     continue;
