@@ -23,17 +23,15 @@ import java.util.Map;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Annotation;
+import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.asm.TypeNameAdapter;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -87,9 +85,18 @@ public class V3ClassAdapter implements DexClassVisitor {
                     }
                 }
             }
-            if ((access_flags & Opcodes.ACC_INTERFACE) == 0) { //issue 55
+
+            if (isInnerClass) {
+                Integer i = accessFlagsMap.get(className);
+                if (i != null) {
+                    access_flags = i;
+                }
+            }
+
+            if ((access_flags & Opcodes.ACC_INTERFACE) == 0) { // issue 55
                 access_flags |= Opcodes.ACC_SUPER;// 解决生成的class文件使用dx重新转换时使用的指令与原始指令不同的问题
             }
+
             cv.visit(Opcodes.V1_6, access_flags, className, signature, superClass, interfaceNames);
             for (Annotation ann : anns) {
                 if (ann.type.equals("Ldalvik/annotation/MemberClasses;")) {
@@ -98,9 +105,7 @@ public class V3ClassAdapter implements DexClassVisitor {
                             for (Item j : ((Annotation) i.value).items) {
                                 String name = j.value.toString();
                                 Integer access = accessFlagsMap.get(name);
-                                int d = name.lastIndexOf('$');
-                                String innerName = name.substring(d + 1, name.length() - 1);
-                                // TODO 设置默认内部类修饰符
+                                String innerName = name.substring(className.length(), name.length() - 1);
                                 cv.visitInnerClass(name, className, innerName, access == null ? 0 : access);
                             }
                         }
@@ -109,10 +114,9 @@ public class V3ClassAdapter implements DexClassVisitor {
                 } else if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
                     for (Item i : ann.items) {
                         if (i.name.equals("value")) {
-                            Type t = (Type) i.value;
-                            int d = className.lastIndexOf('$');
-                            String innerName = className.substring(d + 1, className.length() - 1);
-                            cv.visitInnerClass(className, t.toString(), innerName, access_flags);
+                            String outerName = i.value.toString();
+                            String innerName = className.substring(outerName.length(), className.length() - 1);
+                            cv.visitInnerClass(className, outerName, innerName, access_flags);
                         }
                     }
                     continue;
@@ -132,7 +136,12 @@ public class V3ClassAdapter implements DexClassVisitor {
         }
     }
 
+    boolean isInnerClass = false;
+
     public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+        if (!isInnerClass) {
+            isInnerClass = "Ldalvik/annotation/InnerClass;".equals(name);
+        }
         Annotation ann = new Annotation(name, visitable);
         anns.add(ann);
         return new V3AnnAdapter(ann);

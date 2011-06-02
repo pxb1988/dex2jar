@@ -19,14 +19,24 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * 
  */
 public abstract class TestUtils {
-
     public static File dex(File file, File distFile) throws Exception {
+        return dex(new File[] { file }, distFile);
+    }
+
+    public static File dex(File[] files, File distFile) throws Exception {
+        return dex(Arrays.asList(files), distFile);
+    }
+
+    public static File dex(List<File> files, File distFile) throws Exception {
         String dxJar = "src/test/resources/dx.jar";
         File dxFile = new File(dxJar);
         if (!dxFile.exists()) {
@@ -38,13 +48,16 @@ public abstract class TestUtils {
 
         if (distFile == null)
             distFile = File.createTempFile("dex", ".dex");
-
-        String[] args = new String[] { "--dex", "--no-strict", "--output=" + distFile.getCanonicalPath(), file.getCanonicalPath() };
-        m.invoke(null, new Object[] { args });
+        List<String> args = new ArrayList<String>();
+        args.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + distFile.getCanonicalPath()));
+        for (File f : files) {
+            args.add(f.getCanonicalPath());
+        }
+        m.invoke(null, new Object[] { args.toArray(new String[0]) });
         return distFile;
     }
 
-    public static File dex(File file) throws Exception {
-        return dex(file, null);
+    public static File dex(File[] files) throws Exception {
+        return dex(files, null);
     }
 }

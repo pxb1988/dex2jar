@@ -46,6 +46,56 @@ public class Annotation {
     public String type;
     public boolean visible;
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append('@').append(type);
+        if (items.size() > 0) {
+            sb.append('(');
+            boolean first = true;
+            for (Item it : items) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(',');
+                }
+
+                if ("value".equals(it.name) && items.size() == 1) {
+                    // not print value=
+                } else {
+                    sb.append(it.name).append('=');
+                }
+                if (it.value instanceof Annotation) {
+                    Annotation a = (Annotation) it.value;
+                    if (a.type == null) {// array
+                        sb.append('{');
+                        boolean first2 = true;
+                        for (Item it2 : a.items) {
+                            if (first2) {
+                                first2 = false;
+                            } else {
+                                sb.append(',');
+                            }
+                            sb.append(it2.value);
+                        }
+                        sb.append('}');
+                    } else {
+                        sb.append(it.value);
+                    }
+                } else {
+                    sb.append(it.value);
+                }
+            }
+            sb.append(')');
+        }
+        return sb.toString();
+    }
+
     /**
      * @param type
      * @param visitable

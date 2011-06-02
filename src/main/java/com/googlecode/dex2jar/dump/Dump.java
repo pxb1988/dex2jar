@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -28,15 +30,19 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ProxyOutputStream;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.reader.DexFileReader;
+import com.googlecode.dex2jar.v3.V3AnnAdapter;
 import com.googlecode.dex2jar.visitors.DexClassAdapter;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
+import com.googlecode.dex2jar.visitors.DexFieldAdaptor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodAdapter;
@@ -220,8 +226,19 @@ public class Dump implements DexFileVisitor {
 
             int method_count = 0;
 
+            protected List<Annotation> anns = new ArrayList<Annotation>();
+
             @Override
             public void visitEnd() {
+                if (anns.size() > 0) {
+                    out.println();
+                    out.println("Annotations for Class :");
+                    for (Annotation ann : anns) {
+                        out.println(ann.toString());
+                    }
+                    out.println("==");
+                    out.println();
+                }
                 out.flush();
                 out.close();
                 out = null;
@@ -238,7 +255,57 @@ public class Dump implements DexFileVisitor {
                 }
                 out.println(';');
 
-                return dcv.visitField(field, value);
+                DexFieldVisitor dfv = dcv.visitField(field, value);
+                if (dfv == null) {
+                    return null;
+                }
+                return new DexFieldAdaptor(dfv) {
+                    protected List<Annotation> anns = new ArrayList<Annotation>();
+
+                    /*
+                     * (non-Javadoc)
+                     * 
+                     * @see com.googlecode.dex2jar.visitors.DexFieldAdaptor#visitAnnotation(java.lang.String, boolean)
+                     */
+                    @Override
+                    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+                        Annotation ann = new Annotation(name, visitable);
+                        anns.add(ann);
+                        return new V3AnnAdapter(ann);
+                    }
+
+                    /*
+                     * (non-Javadoc)
+                     * 
+                     * @see com.googlecode.dex2jar.visitors.DexFieldAdaptor#visitEnd()
+                     */
+                    @Override
+                    public void visitEnd() {
+                        if (anns.size() > 0) {
+                            out.println();
+                            out.println("Annotations for Field :");
+                            for (Annotation ann : anns) {
+                                out.println(ann.toString());
+                            }
+                            out.println("==");
+                            out.println();
+                        }
+                        super.visitEnd();
+                    }
+
+                };
+            }
+
+            /*
+             * (non-Javadoc)
+             * 
+             * @see com.googlecode.dex2jar.visitors.DexClassAdapter#visitAnnotation(java.lang.String, boolean)
+             */
+            @Override
+            public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+                Annotation ann = new Annotation(name, visitable);
+                anns.add(ann);
+                return new V3AnnAdapter(ann);
             }
 
             public DexMethodVisitor visitMethod(final Method method) {
@@ -262,12 +329,46 @@ public class Dump implements DexFileVisitor {
                     return null;
                 }
                 return new DexMethodAdapter(dmv) {
+                    protected List<Annotation> anns = new ArrayList<Annotation>();
+
                     public DexCodeVisitor visitCode() {
                         DexCodeVisitor dcv = mv.visitCode();
                         if (dcv == null)
                             return null;
                         return new DumpDexCodeAdapter(dcv, method, out);
                     }
+
+                    /*
+                     * (non-Javadoc)
+                     * 
+                     * @see com.googlecode.dex2jar.visitors.DexMethodAdapter#visitAnnotation(java.lang.String, boolean)
+                     */
+                    @Override
+                    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+                        Annotation ann = new Annotation(name, visitable);
+                        anns.add(ann);
+                        return new V3AnnAdapter(ann);
+                    }
+
+                    /*
+                     * (non-Javadoc)
+                     * 
+                     * @see com.googlecode.dex2jar.visitors.DexMethodAdapter#visitEnd()
+                     */
+                    @Override
+                    public void visitEnd() {
+                        if (anns.size() > 0) {
+                            out.println();
+                            out.println("Annotations for Method :");
+                            for (Annotation ann : anns) {
+                                out.println(ann.toString());
+                            }
+                            out.println("==");
+                            out.println();
+                        }
+                        super.visitEnd();
+                    }
+
                 };
             }
         };

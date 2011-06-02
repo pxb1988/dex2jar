@@ -16,15 +16,20 @@
 package com.googlecode.dex2jar.test;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.dump.Dump;
 import com.googlecode.dex2jar.v3.Main;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -36,11 +41,24 @@ public class ResTest {
     @Test
     public void test() throws Exception {
         File dir = new File("target/test-classes/res");
+        Map<String, List<File>> m = new HashMap();
         for (File f : FileUtils.listFiles(dir, new String[] { "class" }, false)) {
-            log.info("Testing res file {}", f);
-            String name = f.getName();
-            name = name.substring(0, name.length() - ".class".length());
-            File dex = TestUtils.dex(f, new File(dir, name + ".dex"));
+            String name = FilenameUtils.getBaseName(f.getName());
+
+            int i = name.indexOf('$');
+            String z = i > 0 ? name.substring(0, i) : name;
+            List<File> files = m.get(z);
+            if (files == null) {
+                files = new ArrayList<File>();
+                m.put(z, files);
+            }
+            files.add(f);
+        }
+
+        for (Entry<String, List<File>> e : m.entrySet()) {
+            String name = e.getKey();
+            log.info("Testing res file {}", name);
+            File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
             Main.doFile(dex);
             Dump.doFile(dex);
         }

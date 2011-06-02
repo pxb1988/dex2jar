@@ -13,12 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.test.i55;
+package res;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- *
+ * @author Panxiaobo [pxb1988 at gmail.com]
+ * 
  */
-public class AClass {
+public class I56 {
+    static class AStaticInnerClass {
+    }
 
+    class AInnerClass {
+    }
+
+    interface AInterface {
+    }
+
+    static interface AStaticInterface {
+    }
 }

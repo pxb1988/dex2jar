@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.test.i55;
+package res.i55;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
