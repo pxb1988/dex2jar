@@ -20,4 +20,14 @@ public class NewMutiArrayExpr extends Value {
             this.sizes[i] = new ValueBox(sizes[i]);
         }
     }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("new ").append(baseType);
+        for (int i = 0; i < dimension; i++) {
+            sb.append('[').append(sizes[i]).append(']');
+        }
+        return sb.toString();
+    }
+
 }

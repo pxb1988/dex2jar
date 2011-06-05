@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import pxb.xjimple.ValueBox;
+
 public abstract class Stmt {
     public static enum ST {
         ASSIGN, GOTO, IDENTITY, IF, LOOKUP_SWITCH, NOP, TABLE_SWITCH, LABEL, RETURN, RETURN_VOID, LOCK, UNLOCK, THROW
@@ -16,6 +18,8 @@ public abstract class Stmt {
     public final Stmt getNext() {
         return next;
     }
+
+    public ValueBox[] _ls_frame;
 
     public final Stmt getPre() {
         return pre;

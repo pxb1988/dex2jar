@@ -28,4 +28,19 @@ public class MethodExpr extends Value {
         }
     }
 
+    public String toString() {
+        StringBuilder sb = new StringBuilder().append(object == null ? methodOwnerType.getClassName() : object)
+                .append(this.methodName).append('(');
+        boolean first = true;
+        for (ValueBox arg : args) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(',');
+            }
+            sb.append(arg);
+        }
+        sb.append(')');
+        return sb.toString();
+    }
 }

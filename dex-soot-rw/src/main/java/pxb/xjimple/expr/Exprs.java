@@ -62,7 +62,7 @@ public final class Exprs {
 
     public static MethodExpr nInterfaceMethod(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
             Type returnType) {
-        return new MethodExpr(VT.INTERFACE_METHOD, obj, args, owner, name, argmentTypes, returnType);
+        return new MethodExpr(VT.INTERFACE_INVOKE, obj, args, owner, name, argmentTypes, returnType);
     }
 
     public static BinopExpr nLe(Value a, Value b) {
@@ -135,7 +135,7 @@ public final class Exprs {
 
     public static MethodExpr nSpecialMethod(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
             Type returnType) {
-        return new MethodExpr(VT.SPECIAL_METHOD, obj, args, owner, name, argmentTypes, returnType);
+        return new MethodExpr(VT.SPECIAL_INVOKE, obj, args, owner, name, argmentTypes, returnType);
     }
 
     public static FieldExpr nStaticField(Type ownerType, String fieldName, Type fieldType) {
@@ -143,7 +143,7 @@ public final class Exprs {
     }
 
     public static MethodExpr nStaticMethod(Value[] args, Type owner, String name, Type[] argmentTypes, Type returnType) {
-        return new MethodExpr(VT.STATIC_METHOD, null, args, owner, name, argmentTypes, returnType);
+        return new MethodExpr(VT.STATIC_INVOKE, null, args, owner, name, argmentTypes, returnType);
     }
 
     public static BinopExpr nSub(Value a, Value b) {
@@ -156,7 +156,7 @@ public final class Exprs {
 
     public static MethodExpr nVirtualMethod(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
             Type returnType) {
-        return new MethodExpr(VT.VIRTUAL_METHOD, obj, args, owner, name, argmentTypes, returnType);
+        return new MethodExpr(VT.VIRTUAL_INVOKE, obj, args, owner, name, argmentTypes, returnType);
     }
 
     public static BinopExpr nXor(Value a, Value b) {

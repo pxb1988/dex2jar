@@ -19,4 +19,18 @@ public class UnopStmt extends Stmt {
         return new UnopStmt(st, op.value);
     }
 
+    public String toString() {
+        switch (super.st) {
+        case LOCK:
+            return "lock " + op;
+        case UNLOCK:
+            return "unlock " + op;
+        case THROW:
+            return "throw " + op;
+        case RETURN:
+            return "return " + op;
+        }
+        return super.toString();
+    }
+
 }

@@ -5,12 +5,18 @@ import org.objectweb.asm.Type;
 public class Constant extends Value {
     public static Object Null = new Object();
 
+    public static Type STRING = Type.getType(String.class);
+
     public static Constant n(Type type, Object value) {
         return new Constant(type, value);
     }
 
     public static Constant nByte(byte i) {
         return new Constant(Type.BYTE_TYPE, i);
+    }
+
+    public static Constant nString(String i) {
+        return new Constant(STRING, i);
     }
 
     public static Constant nChar(char i) {
