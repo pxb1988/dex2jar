@@ -30,16 +30,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.Annotation.Item;
+import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.optimize.B;
 import com.googlecode.dex2jar.optimize.C;
+import com.googlecode.dex2jar.optimize.GotoEndTransformer;
 import com.googlecode.dex2jar.optimize.LdcOptimizeAdapter;
+import com.googlecode.dex2jar.optimize.LocalSpliteTransformer;
 import com.googlecode.dex2jar.optimize.MethodTransformer;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -159,13 +160,13 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 
         try {
             if (methodNode.instructions.size() > 2) {
-                List<? extends MethodTransformer> trs = Arrays.asList(new B(), new C(method));
+                List<? extends MethodTransformer> trs = Arrays.asList(new LocalSpliteTransformer(), new GotoEndTransformer(), new B(), new C(method));
                 for (MethodTransformer tr : trs) {
                     // TraceMethodVisitor tmv = new TraceMethodVisitor();
                     // methodNode.instructions.accept(tmv);
-                    // StringBuilder sb=new StringBuilder();
-                    // int i=0;
-                    // for(Object o:tmv.text){
+                    // StringBuilder sb = new StringBuilder();
+                    // int i = 0;
+                    // for (Object o : tmv.text) {
                     // sb.append(i++).append(o);
                     // }
                     // System.out.println(sb);
