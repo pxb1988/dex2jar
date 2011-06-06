@@ -161,7 +161,7 @@ public class V3ClassAdapter implements DexClassVisitor {
                             }
                             int accessInInnerClassAttr = access_flags & (~Opcodes.ACC_SUPER);// inner class attr has no
                                                                                              // acc_super
-                            cv.visitInnerClass(className, outerName, innerName, accessInInnerClassAttr);
+                            cv.visitInnerClass(className, null, null, accessInInnerClassAttr);
                         }
                     }
                     continue;

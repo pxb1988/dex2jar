@@ -23,6 +23,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -83,7 +84,7 @@ public class Main {
 
         for (String file : args) {
             File dex = new File(file);
-            final File gen = new File(file + ".dex2jar.jar");
+            final File gen = new File(FilenameUtils.getBaseName(file) + "_dex2jar.jar");
             log.info("dex2jar {} -> {}", dex, gen);
             try {
                 doFile(dex, gen);
@@ -131,7 +132,7 @@ public class Main {
     }
 
     public static void doFile(File srcDex) throws IOException {
-        doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dex2jar.jar"));
+        doFile(srcDex, new File(srcDex.getParentFile(), FilenameUtils.getBaseName(srcDex.getName()) + "_dex2jar.jar"));
     }
 
     public static void doFile(File srcDex, File destJar) throws IOException {

@@ -170,7 +170,7 @@ public class TypeNameAdapter extends ClassAdapter {
     }
 
     public static String x(String s) {
-        return Type.getType(s).getInternalName();
+        return s != null ? Type.getType(s).getInternalName() : null;
     }
 
     /*
