@@ -16,18 +16,36 @@
 package com.googlecode.dex2jar.test;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
+
+import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.util.CheckClassAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * 
  */
 public abstract class TestUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(TestUtils.class);
+
     public static File dex(File file, File distFile) throws Exception {
         return dex(new File[] { file }, distFile);
     }
@@ -59,5 +77,24 @@ public abstract class TestUtils {
 
     public static File dex(File[] files) throws Exception {
         return dex(files, null);
+    }
+
+    public static void checkZipFile(File zip) throws ZipException, IOException {
+        ZipFile zipFile = new ZipFile(zip);
+        for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
+            ZipEntry entry = e.nextElement();
+            if (entry.getName().endsWith(".class")) {
+                log.info("check file:{}", entry.getName());
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                InputStream is = zipFile.getInputStream(entry);
+                try {
+                    CheckClassAdapter.verify(new ClassReader(IOUtils.toByteArray(is)), false, pw);
+                } finally {
+                    IOUtils.closeQuietly(is);
+                }
+                Assert.assertTrue(sw.toString(), sw.toString().length() == 0);
+            }
+        }
     }
 }

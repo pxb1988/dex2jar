@@ -19,12 +19,12 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.v3.Main;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -36,9 +36,12 @@ public class V3Test {
     @Test
     public void test() throws IOException {
         File file = new File("target/test-classes/dexes");
-        for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
+        for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip", "apk" }, false)) {
             log.info("dex2jar file {}", f);
-            Main.doFile(f);
+            File distFile = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dex2jar.jar");
+            Main.doFile(f, distFile);
+            log.info("dex2jar ok, start checking...");
+            TestUtils.checkZipFile(distFile);
         }
     }
 }

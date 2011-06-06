@@ -147,11 +147,13 @@ public class LocalSpliteTransformer implements MethodTransformer, Opcodes {
     private void merge(InsnList il, AbstractInsnNode node, Map<Integer, ValueBox> tmp, Map<Integer, ValueBox>[] frames, Set<LabelNode> exs) {
         int index = il.indexOf(node);
         int opcode = node.getOpcode();
-        if (opcode == GOTO) {
-            merge(il, frames, tmp, index, ((JumpInsnNode) node).label);
-        } else if (opcode >= 153 && opcode <= 166) {// jmp
-            merge(il, frames, tmp, index, node.getNext());
-            merge(il, frames, tmp, index, ((JumpInsnNode) node).label);
+        if (node.getType() == AbstractInsnNode.JUMP_INSN) {
+            if (opcode == GOTO) {
+                merge(il, frames, tmp, index, ((JumpInsnNode) node).label);
+            } else {
+                merge(il, frames, tmp, index, node.getNext());
+                merge(il, frames, tmp, index, ((JumpInsnNode) node).label);
+            }
         } else if (opcode == LOOKUPSWITCH) {
             LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) node;
             merge(il, frames, tmp, index, lsin.dflt);

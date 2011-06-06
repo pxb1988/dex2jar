@@ -26,6 +26,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.util.TraceMethodVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,7 @@ import com.googlecode.dex2jar.optimize.GotoEndTransformer;
 import com.googlecode.dex2jar.optimize.LdcOptimizeAdapter;
 import com.googlecode.dex2jar.optimize.LocalSpliteTransformer;
 import com.googlecode.dex2jar.optimize.MethodTransformer;
+import com.googlecode.dex2jar.optimize.TypeDetectTransformer;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
@@ -160,16 +162,17 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 
         try {
             if (methodNode.instructions.size() > 2) {
-                List<? extends MethodTransformer> trs = Arrays.asList(new LocalSpliteTransformer(), new GotoEndTransformer(), new B(), new C(method));
+                List<? extends MethodTransformer> trs = Arrays.asList(new LocalSpliteTransformer(), new GotoEndTransformer(), new B(),
+                        new TypeDetectTransformer(this.method.getOwner()));
                 for (MethodTransformer tr : trs) {
-                    // TraceMethodVisitor tmv = new TraceMethodVisitor();
-                    // methodNode.instructions.accept(tmv);
-                    // StringBuilder sb = new StringBuilder();
-                    // int i = 0;
-                    // for (Object o : tmv.text) {
-                    // sb.append(i++).append(o);
-                    // }
-                    // System.out.println(sb);
+//                    TraceMethodVisitor tmv = new TraceMethodVisitor();
+//                    methodNode.instructions.accept(tmv);
+//                    StringBuilder sb = new StringBuilder();
+//                    int i = 0;
+//                    for (Object o : tmv.text) {
+//                        sb.append(i++).append(o);
+//                    }
+//                    System.out.println(sb);
                     tr.transform(methodNode);
                 }
             }
