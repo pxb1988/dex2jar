@@ -62,7 +62,6 @@ public class ResTest {
             File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
             Main.doFile(dex, distFile);
             Dump.doFile(dex);
-            log.info("dex2jar & dump ok, start checking...");
             TestUtils.checkZipFile(distFile);
         }
         log.info("Done.");

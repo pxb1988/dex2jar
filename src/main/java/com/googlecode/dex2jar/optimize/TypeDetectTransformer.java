@@ -15,10 +15,12 @@
  */
 package com.googlecode.dex2jar.optimize;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
@@ -113,12 +115,15 @@ public class TypeDetectTransformer implements MethodTransformer, Opcodes {
             index++;
         }
         frames[0] = init;
-        AbstractInsnNode[] nodes = il.toArray();
-        vbs = new ValueBox[nodes.length];
-        Set<LabelNode>[] exs = new Set[nodes.length];
+        int ilSize = il.size();
+        vbs = new ValueBox[ilSize];
+        Set<LabelNode>[] exs = new Set[ilSize];
+
+        Map<Integer, String> exceptions = new HashMap();
 
         for (Iterator it = method.tryCatchBlocks.iterator(); it.hasNext();) {
             TryCatchBlockNode tcbn = (TryCatchBlockNode) it.next();
+            exceptions.put(il.indexOf(tcbn.handler), tcbn.type == null ? "Ljava/lang/Throwable;" : tcbn.type);
             for (AbstractInsnNode p = tcbn.start.getNext(); p != null && p != tcbn.end; p = p.getNext()) {
                 int i = il.indexOf(p);
                 Set<LabelNode> set = exs[i];
@@ -133,18 +138,34 @@ public class TypeDetectTransformer implements MethodTransformer, Opcodes {
         index = Short.MAX_VALUE;
 
         Type ret = Type.getReturnType(method.desc);
-        Map<Integer, ValueBox> tmp = new HashMap();
-        Stack<ValueBox> afterStack = new Stack();
-        for (int i = 0; i < nodes.length; i++) {
+        final Map<Integer, ValueBox> tmp = new HashMap();
+        final Stack<ValueBox> afterStack = new Stack();
+        boolean[] visited = new boolean[ilSize];
+        Stack<AbstractInsnNode> queue = new Stack();
+        queue.add(il.getFirst());
+        while (!queue.isEmpty()) {
+            AbstractInsnNode node = queue.pop();
+            int i = il.indexOf(node);
+            if (visited[i]) {
+                continue;
+            } else {
+                visited[i] = true;
+            }
             if (frames[i] == null) {
                 frames[i] = new HashMap();
             }
             if (stacks[i] == null) {
                 stacks[i] = new Stack();
             }
-            AbstractInsnNode node = nodes[i];
+
             Map<Integer, ValueBox> frame = frames[i];
             Stack<ValueBox> stack = stacks[i];
+
+            String type = exceptions.get(i);
+            if (type != null) {
+                stack.push(new ValueBox(new Value(Type.getType(type), true)));
+            }
+
             tmp.clear();
             afterStack.clear();
             tmp.putAll(frame);
@@ -156,13 +177,58 @@ public class TypeDetectTransformer implements MethodTransformer, Opcodes {
                     InsnNode nNode = new InsnNode(nop);
                     il.set(node, nNode);
                     node = nNode;
-                    nodes[i] = nNode;
                 }
             }
 
             exec(node, tmp, afterStack, ret);
 
-            merge(node, tmp, afterStack, exs[i]);
+            int opcode = node.getOpcode();
+            if (node.getType() == AbstractInsnNode.JUMP_INSN) {
+                if (opcode == GOTO) {
+                    queue.push(((JumpInsnNode) node).label);
+                    merge(tmp, afterStack, i, ((JumpInsnNode) node).label, true);
+                } else {
+                    queue.push(((JumpInsnNode) node).label);
+                    queue.push(node.getNext());
+                    merge(tmp, afterStack, i, node.getNext(), true);
+                    merge(tmp, afterStack, i, ((JumpInsnNode) node).label, true);
+                }
+            } else if (opcode == LOOKUPSWITCH) {
+                LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) node;
+
+                merge(tmp, afterStack, i, lsin.dflt, true);
+                for (Iterator it = lsin.labels.iterator(); it.hasNext();) {
+                    LabelNode ln = (LabelNode) it.next();
+                    queue.push(ln);
+                    merge(tmp, afterStack, i, ln, true);
+                }
+                queue.push(lsin.dflt);
+            } else if (opcode == TABLESWITCH) {
+                TableSwitchInsnNode tsin = (TableSwitchInsnNode) node;
+
+                merge(tmp, afterStack, i, tsin.dflt, true);
+                for (Iterator it = tsin.labels.iterator(); it.hasNext();) {
+                    LabelNode ln = (LabelNode) it.next();
+                    queue.push(ln);
+                    merge(tmp, afterStack, i, ln, true);
+                }
+                queue.push(tsin.dflt);
+            } else if (Util.isEnd(node)) {
+                //
+            } else {
+                if (exs[i] != null) {
+                    for (LabelNode ln : exs[i]) {
+                        queue.push(ln);
+                        merge(tmp, afterStack, i, ln, false);
+                    }
+                }
+                AbstractInsnNode node2 = node.getNext();
+                if (node2 != null) {
+                    queue.push(node2);
+                    merge(tmp, afterStack, i, node2, true);
+                }
+
+            }
 
         }
 
@@ -186,8 +252,12 @@ public class TypeDetectTransformer implements MethodTransformer, Opcodes {
             ValueBox vb = vbs[i];
             if (vb != null) {
                 Type type = vb.value.type;
+                if (type == null) {
+                    continue;
+                }
                 AbstractInsnNode node = il.get(i);
                 if (Util.isRead(node) || Util.isWrite(node)) {
+
                     int nop = type.getOpcode(Util.isWrite(node) ? ISTORE : ILOAD);
                     if (nop != node.getOpcode()) {
                         VarInsnNode node2 = new VarInsnNode(nop, reMap.get(Util.var(node)));
@@ -721,56 +791,12 @@ public class TypeDetectTransformer implements MethodTransformer, Opcodes {
 
     /**
      * @param il
-     * @param node
-     * @param tmp
-     * @param afterStack
-     * @param frames
-     * @param exs
-     */
-    private void merge(AbstractInsnNode node, Map<Integer, ValueBox> tmp, Stack<ValueBox> afterStack, Set<LabelNode> exs) {
-        int index = il.indexOf(node);
-        int opcode = node.getOpcode();
-        if (node.getType() == AbstractInsnNode.JUMP_INSN) {
-            if (opcode == GOTO) {
-                merge(tmp, afterStack, index, ((JumpInsnNode) node).label);
-            } else {
-                merge(tmp, afterStack, index, node.getNext());
-                merge(tmp, afterStack, index, ((JumpInsnNode) node).label);
-            }
-        } else if (opcode == LOOKUPSWITCH) {
-            LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) node;
-            merge(tmp, afterStack, index, lsin.dflt);
-            for (Iterator it = lsin.labels.iterator(); it.hasNext();) {
-                LabelNode ln = (LabelNode) it.next();
-                merge(tmp, afterStack, index, ln);
-            }
-        } else if (opcode == TABLESWITCH) {
-            TableSwitchInsnNode tsin = (TableSwitchInsnNode) node;
-            merge(tmp, afterStack, index, tsin.dflt);
-            for (Iterator it = tsin.labels.iterator(); it.hasNext();) {
-                LabelNode ln = (LabelNode) it.next();
-                merge(tmp, afterStack, index, ln);
-            }
-        } else if (Util.isEnd(node)) {
-            //
-        } else {
-            merge(tmp, afterStack, index, node.getNext());
-            if (exs != null) {
-                for (LabelNode ln : exs) {
-                    merge(tmp, afterStack, index, ln);
-                }
-            }
-        }
-    }
-
-    /**
-     * @param il
      * @param frames
      * @param tmp
      * @param index
      * @param indexOf
      */
-    private void merge(Map<Integer, ValueBox> tmp, Stack<ValueBox> afterStack, int index, AbstractInsnNode dist) {
+    private void merge(Map<Integer, ValueBox> tmp, Stack<ValueBox> afterStack, int index, AbstractInsnNode dist, boolean mergeStack) {
         if (dist == null) {
             return;
         }
@@ -801,29 +827,29 @@ public class TypeDetectTransformer implements MethodTransformer, Opcodes {
                 }
             }
         }
-
-        Stack<ValueBox> distStack = stacks[distIndex];
-        if (distStack == null) {
-            distStack = new Stack();
-            distStack.addAll(afterStack);
-            stacks[distIndex] = distStack;
-        } else {
-            for (int i = 0; i < distStack.size(); i++) {
-                ValueBox a = afterStack.get(i);
-                ValueBox b = distStack.get(i);
-                if (b == null) {
-                    distFrame.put(i, a);
-                } else if (a.value != b.value) {
-                    if (a.value.noTouch) {
-                        b.value = a.value;
-                    } else if (b.value.noTouch) {
-                        a.value = b.value;
-                    } else {
-                        a.value = b.value;
+        if (mergeStack) {
+            Stack<ValueBox> distStack = stacks[distIndex];
+            if (distStack == null) {
+                distStack = new Stack();
+                distStack.addAll(afterStack);
+                stacks[distIndex] = distStack;
+            } else {
+                for (int i = 0; i < distStack.size(); i++) {
+                    ValueBox a = afterStack.get(i);
+                    ValueBox b = distStack.get(i);
+                    if (b == null) {
+                        distFrame.put(i, a);
+                    } else if (a.value != b.value) {
+                        if (a.value.noTouch) {
+                            b.value = a.value;
+                        } else if (b.value.noTouch) {
+                            a.value = b.value;
+                        } else {
+                            a.value = b.value;
+                        }
                     }
                 }
             }
         }
-
     }
 }

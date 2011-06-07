@@ -30,7 +30,6 @@ import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
-
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
@@ -222,7 +221,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         case OP_IGET_BYTE:
         case OP_IGET_CHAR:
         case OP_IGET_SHORT:
-            //
+        //
         {
             mv.visitVarInsn(ALOAD, map(ownerReg));
             mv.visitFieldInsn(GETFIELD, field.getOwner(), field.getName(), field.getType());
@@ -862,9 +861,6 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         case OP_GOTO:
         case OP_GOTO_16:
         case OP_GOTO_32: {
-            if(label==null){
-                System.out.println("");
-            }
             mv.visitJumpInsn(GOTO, label);
         }
             break;
@@ -1176,7 +1172,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         case OP_MOVE_RESULT_OBJECT:// move-result-object
         case OP_MOVE_RESULT:
         case OP_MOVE_RESULT_WIDE:
-            //
+        //
         {
             mv.visitVarInsn(ILOAD, map(TEMP_REG));
             mv.visitVarInsn(ISTORE, map(reg));
@@ -1207,7 +1203,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
             break;
         case OP_RETURN_WIDE:
-            //
+        //
         {
             mv.visitVarInsn(LLOAD, map(reg));
             mv.visitInsn(LRETURN);

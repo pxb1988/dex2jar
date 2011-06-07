@@ -40,7 +40,6 @@ public class V3Test {
             log.info("dex2jar file {}", f);
             File distFile = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dex2jar.jar");
             Main.doFile(f, distFile);
-            log.info("dex2jar ok, start checking...");
             TestUtils.checkZipFile(distFile);
         }
     }

@@ -87,6 +87,7 @@ public class Util implements Opcodes {
         case LRETURN:
         case FRETURN:
         case DRETURN:
+        case ARETURN:
             return true;
         }
         return false;

@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -85,9 +86,9 @@ public class LocalSpliteTransformer implements MethodTransformer, Opcodes {
             index++;
         }
         frames[0] = init;
-        AbstractInsnNode[] nodes = il.toArray();
-        ValueBox[] vbs = new ValueBox[nodes.length];
-        Set<LabelNode>[] exs = new Set[nodes.length];
+        final int ilSize = il.size();
+        ValueBox[] vbs = new ValueBox[ilSize];
+        Set<LabelNode>[] exs = new Set[ilSize];
 
         for (Iterator it = method.tryCatchBlocks.iterator(); it.hasNext();) {
             TryCatchBlockNode tcbn = (TryCatchBlockNode) it.next();
@@ -104,80 +105,91 @@ public class LocalSpliteTransformer implements MethodTransformer, Opcodes {
 
         index = Short.MAX_VALUE;
 
+        final Stack<AbstractInsnNode> nextInsn = new Stack();
+        nextInsn.push(il.getFirst());
+        boolean[] visited = new boolean[ilSize];
+
         Map<Integer, ValueBox> tmp = new HashMap();
-        for (int i = 0; i < nodes.length; i++) {
+        while (!nextInsn.isEmpty()) {
+            AbstractInsnNode node = nextInsn.pop();
+            int i = il.indexOf(node);
+
+            if (visited[i]) {
+                continue;
+            } else {
+                visited[i] = true;
+            }
+
             if (frames[i] == null) {
                 frames[i] = new HashMap();
             }
-            AbstractInsnNode node = nodes[i];
 
+            Map<Integer, ValueBox> frame = frames[i];
+            tmp.clear();
+            tmp.putAll(frame);
             if (Util.isWrite(node)) {
-                Map<Integer, ValueBox> frame = frames[i];
-                tmp.clear();
-                tmp.putAll(frame);
                 ValueBox vb = new ValueBox(new Local(index++, false));
                 vbs[i] = vb;
                 tmp.put(Util.var(node), vb);
-                merge(il, node, tmp, frames, exs[i]);
+
             } else if (Util.isRead(node)) {
                 vbs[i] = frames[i].get(Util.var(node));
-                merge(il, node, null, frames, exs[i]);
+            }
+            int opcode = node.getOpcode();
+            if (node.getType() == AbstractInsnNode.JUMP_INSN) {
+                if (opcode == GOTO) {
+                    merge(il, frames, tmp, i, ((JumpInsnNode) node).label);
+                    nextInsn.push(((JumpInsnNode) node).label);
+                } else {
+                    merge(il, frames, tmp, i, node.getNext());
+                    merge(il, frames, tmp, i, ((JumpInsnNode) node).label);
+                    nextInsn.push(((JumpInsnNode) node).label);
+                    nextInsn.push(node.getNext());
+                }
+            } else if (opcode == LOOKUPSWITCH) {
+                LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) node;
+                merge(il, frames, tmp, i, lsin.dflt);
+                for (Iterator it = lsin.labels.iterator(); it.hasNext();) {
+                    LabelNode ln = (LabelNode) it.next();
+                    merge(il, frames, tmp, i, ln);
+                    nextInsn.push(ln);
+                }
+                nextInsn.push(lsin.dflt);
+            } else if (opcode == TABLESWITCH) {
+                TableSwitchInsnNode tsin = (TableSwitchInsnNode) node;
+                merge(il, frames, tmp, i, tsin.dflt);
+                for (Iterator it = tsin.labels.iterator(); it.hasNext();) {
+                    LabelNode ln = (LabelNode) it.next();
+                    merge(il, frames, tmp, i, ln);
+                    nextInsn.push(ln);
+                }
+                nextInsn.push(tsin.dflt);
+            } else if (Util.isEnd(node)) {
+                //
             } else {
-                merge(il, node, null, frames, exs[i]);
+
+                if (exs[i] != null) {
+                    for (LabelNode ln : exs[i]) {
+                        merge(il, frames, tmp, i, ln);
+                        nextInsn.push(ln);
+                    }
+                }
+                AbstractInsnNode node2 = node.getNext();
+                if (node2 != null) {
+                    merge(il, frames, tmp, i, node2);
+                    nextInsn.push(node2);
+                }
             }
         }
 
-        for (int i = 0; i < nodes.length; i++) {
-            AbstractInsnNode node = nodes[i];
+        for (int i = 0; i < ilSize; i++) {
             ValueBox vb = vbs[i];
             if (vb != null) {
+                AbstractInsnNode node = il.get(i);
                 Util.var(node, vbs[i].local.index);
             }
         }
 
-    }
-
-    /**
-     * @param il
-     * @param node
-     * @param tmp
-     * @param frames
-     * @param exs
-     */
-    private void merge(InsnList il, AbstractInsnNode node, Map<Integer, ValueBox> tmp, Map<Integer, ValueBox>[] frames, Set<LabelNode> exs) {
-        int index = il.indexOf(node);
-        int opcode = node.getOpcode();
-        if (node.getType() == AbstractInsnNode.JUMP_INSN) {
-            if (opcode == GOTO) {
-                merge(il, frames, tmp, index, ((JumpInsnNode) node).label);
-            } else {
-                merge(il, frames, tmp, index, node.getNext());
-                merge(il, frames, tmp, index, ((JumpInsnNode) node).label);
-            }
-        } else if (opcode == LOOKUPSWITCH) {
-            LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) node;
-            merge(il, frames, tmp, index, lsin.dflt);
-            for (Iterator it = lsin.labels.iterator(); it.hasNext();) {
-                LabelNode ln = (LabelNode) it.next();
-                merge(il, frames, tmp, index, ln);
-            }
-        } else if (opcode == TABLESWITCH) {
-            TableSwitchInsnNode tsin = (TableSwitchInsnNode) node;
-            merge(il, frames, tmp, index, tsin.dflt);
-            for (Iterator it = tsin.labels.iterator(); it.hasNext();) {
-                LabelNode ln = (LabelNode) it.next();
-                merge(il, frames, tmp, index, ln);
-            }
-        } else if (Util.isEnd(node)) {
-            //
-        } else {
-            merge(il, frames, tmp, index, node.getNext());
-            if (exs != null) {
-                for (LabelNode ln : exs) {
-                    merge(il, frames, tmp, index, ln);
-                }
-            }
-        }
     }
 
     /**
