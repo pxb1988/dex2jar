@@ -19,9 +19,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
@@ -40,6 +41,8 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
     private Map<String, Integer> map = new HashMap<String, Integer>();
     private Map<String, String> innerNameMap = new HashMap<String, String>();
 
+    private Map<String, Set<String>> extraMember = new HashMap();
+
     /**
      * @return the innerNameMap
      */
@@ -49,6 +52,10 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
 
     public Map<String, Integer> getAccessFlagsMap() {
         return map;
+    }
+
+    public Map<String, Set<String>> getExtraMember() {
+        return extraMember;
     }
 
     /*
@@ -85,6 +92,23 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
 
             @Override
             public void visitEnd() {
+                String enclosingClass = null;
+                for (Annotation ann : anns) {
+                    if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
+                        for (Item i : ann.items) {
+                            if (i.name.equals("value")) {
+                                enclosingClass = i.value.toString();
+                            }
+                        }
+                    } else if (ann.type.equals("Ldalvik/annotation/EnclosingMethod;")) {
+                        for (Item i : ann.items) {
+                            if ("value".equals(i.name)) {
+                                Method m = (Method) i.value;
+                                enclosingClass = m.getOwner();
+                            }
+                        }
+                    }
+                }
                 for (Annotation ann : anns) {
                     if ("Ldalvik/annotation/InnerClass;".equals(ann.type)) {
                         for (Item it : ann.items) {
@@ -92,6 +116,14 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
                                 map.put(className, (Integer) it.value);
                             } else if ("name".equals(it.name)) {
                                 innerNameMap.put(className, (String) it.value);
+                                if (it.value == null) {
+                                    Set<String> set = extraMember.get(enclosingClass);
+                                    if (set == null) {
+                                        set = new TreeSet();
+                                        extraMember.put(enclosingClass, set);
+                                    }
+                                    set.add(className);
+                                }
                             }
                         }
                     }

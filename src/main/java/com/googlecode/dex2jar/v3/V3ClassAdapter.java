@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -43,6 +44,7 @@ public class V3ClassAdapter implements DexClassVisitor {
     protected int access_flags;
     protected Map<String, Integer> innerAccessFlagsMap;
     protected Map<String, String> innerNameMap;
+    Map<String, Set<String>> extraMemberClass;
     protected List<Annotation> anns = new ArrayList<Annotation>();
     protected boolean build = false;
     protected String className;
@@ -53,17 +55,19 @@ public class V3ClassAdapter implements DexClassVisitor {
 
     /**
      * @param innerNameMap
+     * @param extraMemberClass
      * @param cv
      * @param access_flags
      * @param className
      * @param superClass
      * @param interfaceNames
      */
-    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap, ClassVisitor cv, int access_flags, String className,
-            String superClass, String[] interfaceNames) {
+    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap, Map<String, Set<String>> extraMemberClass, ClassVisitor cv,
+            int access_flags, String className, String superClass, String[] interfaceNames) {
         super();
         this.innerAccessFlagsMap = accessFlagsMap;
         this.innerNameMap = innerNameMap;
+        this.extraMemberClass = extraMemberClass;
         this.cv = new TypeNameAdapter(cv);
         this.access_flags = access_flags;
         this.className = className;
@@ -74,6 +78,7 @@ public class V3ClassAdapter implements DexClassVisitor {
     protected void build() {
         if (!build) {
             String signature = null;
+            String enclosingClass = null;
             for (Iterator<Annotation> it = anns.iterator(); it.hasNext();) {
                 Annotation ann = it.next();
                 if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
@@ -86,6 +91,20 @@ public class V3ClassAdapter implements DexClassVisitor {
                                 sb.append(i.value.toString());
                             }
                             signature = sb.toString();
+                        }
+                    }
+                } else if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
+                    it.remove();
+                    for (Item i : ann.items) {
+                        if (i.name.equals("value")) {
+                            enclosingClass = i.value.toString();
+                        }
+                    }
+                } else if (ann.type.equals("Ldalvik/annotation/EnclosingMethod;")) {
+                    for (Item i : ann.items) {
+                        if ("value".equals(i.name)) {
+                            Method m = (Method) i.value;
+                            enclosingClass = m.getOwner();
                         }
                     }
                 }
@@ -105,6 +124,15 @@ public class V3ClassAdapter implements DexClassVisitor {
             accessInClass &= ~Opcodes.ACC_STATIC; // access in class has no acc_static
 
             cv.visit(Opcodes.V1_6, accessInClass, className, signature, superClass, interfaceNames);
+
+            Set<String> extraMember = extraMemberClass.get(className);
+
+            if (extraMember != null) {
+                for (String innerName : extraMember) {
+                    cv.visitInnerClass(innerName, null, null, 0);
+                }
+            }
+
             for (Annotation ann : anns) {
                 if (ann.type.equals("Ldalvik/annotation/MemberClasses;")) {
                     for (Item i : ann.items) {
@@ -113,55 +141,34 @@ public class V3ClassAdapter implements DexClassVisitor {
                                 String name = j.value.toString();
                                 Integer access = innerAccessFlagsMap.get(name);
                                 String innerName = innerNameMap.get(name);
-                                if (innerName == null) {
-                                    if (className.length() > name.length() - 1) {
-                                        innerName = "x";
-                                    } else {
-                                        innerName = name.substring(className.length(), name.length() - 1);
-                                    }
-                                }
                                 cv.visitInnerClass(name, className, innerName, access == null ? 0 : access);
                             }
                         }
                     }
                     continue;
-                } else if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
+                } else if (ann.type.equals("Ldalvik/annotation/InnerClass;")) {
+                    String name = null;
                     for (Item i : ann.items) {
-                        if (i.name.equals("value")) {
-                            String outerName = i.value.toString();
-                            String innerName = innerNameMap.get(className);
-                            if (innerName == null) {
-                                if (outerName.length() > className.length() - 1) {
-                                    innerName = "x";
-                                } else {
-                                    innerName = className.substring(outerName.length(), className.length() - 1);
-                                }
-                            }
-                            int accessInInnerClassAttr = access_flags & (~Opcodes.ACC_SUPER);// inner class attr has no
-                                                                                             // acc_super
-                            cv.visitInnerClass(className, outerName, innerName, accessInInnerClassAttr);
+                        if (i.name.equals("name")) {
+                            name = (String) i.value;
                         }
                     }
-                    continue;
-                } else if (ann.type.equals("Ldalvik/annotation/InnerClass;")) {
+                    int accessInInnerClassAttr = access_flags & (~Opcodes.ACC_SUPER);// inner class attr has no
+                                                                                     // acc_super
+
+                    if (name == null) {
+                        cv.visitOuterClass(enclosingClass, null, null);
+                        cv.visitInnerClass(className, null, null, accessInInnerClassAttr);
+                    } else {
+                        cv.visitInnerClass(className, enclosingClass, name, accessInInnerClassAttr);
+                    }
+
                     continue;
                 } else if (ann.type.equals("Ldalvik/annotation/EnclosingMethod;")) {
                     for (Item it : ann.items) {
                         if ("value".equals(it.name)) {
                             Method m = (Method) it.value;
                             cv.visitOuterClass(Type.getType(m.getOwner()).getInternalName(), m.getName(), m.getType().getDesc());
-
-                            String outerName = m.getOwner();
-                            String innerName = innerNameMap.get(className);
-                            if (innerName == null) {
-                                if (outerName.length() > className.length() - 1) {
-                                } else {
-                                    innerName = className.substring(outerName.length(), className.length() - 1);
-                                }
-                            }
-                            int accessInInnerClassAttr = access_flags & (~Opcodes.ACC_SUPER);// inner class attr has no
-                                                                                             // acc_super
-                            cv.visitInnerClass(className, null, null, accessInInnerClassAttr);
                         }
                     }
                     continue;

@@ -16,6 +16,7 @@
 package res;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Panxiaobo [pxb1988 at gmail.com]
@@ -36,6 +37,9 @@ public class I56 {
         };
 
     }
+
+    List a = new ArrayList() {
+    };
 
     static interface AStaticInterface {
     }

@@ -15,12 +15,10 @@
  */
 package com.googlecode.dex2jar.optimize;
 
-import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
@@ -287,12 +285,12 @@ public class TypeDetectTransformer implements MethodTransformer, Opcodes {
                         ldc.cst = null;
                         break;
                     case Type.FLOAT:
-                        ldc.cst = new Float(Float.intBitsToFloat((Integer) ldc.cst));
+                        ldc.cst = new Float(Float.intBitsToFloat(((Number) ldc.cst).intValue()));
                         break;
                     case Type.LONG:
                         break;
                     case Type.DOUBLE:
-                        ldc.cst = new Double(Double.longBitsToDouble((Long) ldc.cst));
+                        ldc.cst = new Double(Double.longBitsToDouble(((Number) ldc.cst).longValue()));
                         break;
                     }
                 }
