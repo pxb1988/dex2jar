@@ -12,7 +12,9 @@ public class JimpleMethod {
 
     public String name;
     public List<Type> args = new ArrayList<Type>();
-    public List<Local> locals=new ArrayList<Local>();
+    public List<Local> locals = new ArrayList<Local>();
     public Type ret;
     public int access;
+
+    public List<Trap> traps = new ArrayList<Trap>();
 }

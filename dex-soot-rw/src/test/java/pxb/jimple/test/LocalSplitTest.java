@@ -1,16 +1,30 @@
 package pxb.jimple.test;
 
+import static pxb.xjimple.Constant.n;
+import static pxb.xjimple.Constant.nInt;
+import static pxb.xjimple.Constant.nNull;
+import static pxb.xjimple.Constant.nString;
+import static pxb.xjimple.expr.Exprs.nExceptionRef;
+import static pxb.xjimple.expr.Exprs.nGt;
+import static pxb.xjimple.expr.Exprs.nInvokeVirtual;
+import static pxb.xjimple.expr.Exprs.nLocal;
+import static pxb.xjimple.stmt.Stmts.nAssign;
+import static pxb.xjimple.stmt.Stmts.nGoto;
+import static pxb.xjimple.stmt.Stmts.nIf;
+import static pxb.xjimple.stmt.Stmts.nLabel;
+import static pxb.xjimple.stmt.Stmts.nReturn;
+
 import org.junit.Assert;
 import org.junit.Test;
+import org.objectweb.asm.Type;
 
-import pxb.xjimple.Constant;
 import pxb.xjimple.JimpleMethod;
 import pxb.xjimple.Local;
-import pxb.xjimple.expr.Exprs;
+import pxb.xjimple.Trap;
+import pxb.xjimple.Value;
 import pxb.xjimple.stmt.AssignStmt;
 import pxb.xjimple.stmt.LabelStmt;
 import pxb.xjimple.stmt.StmtList;
-import pxb.xjimple.stmt.Stmts;
 import pxb.xjimple.stmt.UnopStmt;
 import pxb.xjimple.ts.LocalSpliter;
 
@@ -20,21 +34,22 @@ public class LocalSplitTest {
 
         JimpleMethod jm = new JimpleMethod();
 
-        Local b = Exprs.nLocal("a", null);
+        Local b = nLocal("a", null);
 
         StmtList list = jm.stmts;
         jm.locals.add(b);
-        AssignStmt st1 = Stmts.nAssign(b, Constant.nString("123"));
+
+        AssignStmt st1 = nAssign(b, nString("123"));
         list.add(st1);
-        AssignStmt st2 = Stmts.nAssign(b, Constant.n(null, null));
+        AssignStmt st2 = nAssign(b, n(null, null));
         list.add(st2);
-        UnopStmt st3 = Stmts.nReturn(b);
+        UnopStmt st3 = nReturn(b);
         list.add(st3);
 
         new LocalSpliter().split(jm);
 
         Assert.assertTrue(jm.locals.size() == 2);
-        // Assert.assertEquals(Constant.STRING, ((Local) st1.left.value).type);
+        // Assert.assertEquals(STRING, ((Local) st1.left.value).type);
         // Assert.assertEquals(Type.INT_TYPE, ((Local) st2.left.value).type);
         Assert.assertEquals(st2.left.value, st3.op.value);
     }
@@ -44,23 +59,59 @@ public class LocalSplitTest {
 
         JimpleMethod jm = new JimpleMethod();
 
-        Local b = Exprs.nLocal("a", null);
+        Local b = nLocal("a", null);
 
         StmtList list = jm.stmts;
         jm.locals.add(b);
 
-        LabelStmt L1 = Stmts.nLabel();
-        LabelStmt L2 = Stmts.nLabel();
-        list.add(Stmts.nIf(Exprs.nGt(Constant.nInt(100), Constant.nInt(0)), L1));
-        list.add(Stmts.nAssign(b, Constant.nString("123")));
-        list.add(Stmts.nGoto(L2));
+        LabelStmt L1 = nLabel();
+        LabelStmt L2 = nLabel();
+        list.add(nIf(nGt(nInt(100), nInt(0)), L1));
+        list.add(nAssign(b, nString("123")));
+        list.add(nGoto(L2));
         list.add(L1);
-        list.add(Stmts.nAssign(b, Constant.n(null, null)));
+        list.add(nAssign(b, n(null, null)));
         list.add(L2);
 
-        UnopStmt st3 = Stmts.nReturn(b);
-        list.add(st3);
+        list.add(nReturn(b));
 
         new LocalSpliter().split(jm);
+
+        Assert.assertTrue(jm.locals.size() == 1);
+    }
+
+    @Test
+    public void test3() {
+        Type exType = Type.getType("Ljava/lang/Exception;");
+        JimpleMethod jm = new JimpleMethod();
+
+        LabelStmt L1 = nLabel();
+        LabelStmt L2 = nLabel();
+        LabelStmt L3 = nLabel();
+        LabelStmt L4 = nLabel();
+        jm.traps.add(new Trap(L1, L2, L3, exType));
+
+        Local b = nLocal("a", null);
+        Local ex = nLocal("ex", exType);
+        StmtList list = jm.stmts;
+        jm.locals.add(b);
+        jm.locals.add(ex);
+
+        list.add(L1);
+        list.add(nAssign(b, nString("123")));
+        // list.add(nThrow(nInvokeNew(nNull, new Type[0], exType)));
+        list.add(L2);
+        list.add(nGoto(L4));
+        list.add(L3);
+        list.add(nAssign(ex, nExceptionRef(exType)));
+        list.add(nAssign(ex,
+                nInvokeVirtual(ex, new Value[0], exType, "toString", new Type[0], Type.getType(String.class))));
+        list.add(nAssign(b, nNull()));
+        list.add(L4);
+        list.add(nReturn(b));
+
+        new LocalSpliter().split(jm);
+
+        Assert.assertTrue(jm.locals.size() == 3);
     }
 }

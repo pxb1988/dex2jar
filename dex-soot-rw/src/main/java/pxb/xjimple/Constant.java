@@ -69,6 +69,22 @@ public class Constant extends Value {
     public String toString() {
         if (Null == value)
             return "null";
+        if (value == null) {
+            return "NULL";
+        }
+        if (value instanceof Number) {
+            if (value instanceof Float) {
+                return value.toString() + "F";
+            }
+            if (value instanceof Long) {
+                return value.toString() + "L";
+            }
+            return value.toString();
+        }
+        if (value instanceof String) {
+            return "\"" + value + "\"";
+        }
+
         return "" + value;
     }
 }

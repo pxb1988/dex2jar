@@ -1,9 +1,11 @@
 package pxb.xjimple.ts;
 
 import java.util.List;
+import java.util.Stack;
 
 import pxb.xjimple.JimpleMethod;
 import pxb.xjimple.Local;
+import pxb.xjimple.Trap;
 import pxb.xjimple.Value.VT;
 import pxb.xjimple.ValueBox;
 import pxb.xjimple.expr.ArrayExpr;
@@ -12,7 +14,7 @@ import pxb.xjimple.expr.CastExpr;
 import pxb.xjimple.expr.Exprs;
 import pxb.xjimple.expr.FieldExpr;
 import pxb.xjimple.expr.InstanceOfExpr;
-import pxb.xjimple.expr.MethodExpr;
+import pxb.xjimple.expr.InvokeExpr;
 import pxb.xjimple.expr.NewArrayExpr;
 import pxb.xjimple.expr.NewMutiArrayExpr;
 import pxb.xjimple.expr.UnopExpr;
@@ -35,25 +37,72 @@ public class LocalSpliter {
 
         StmtList list = jm.stmts;
         jm.locals.clear();
+        List<Local> locals = jm.locals;
         int localId = 0;
+
+        for (Trap t : jm.traps) {
+            for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
+                s._ls_traps.add(t.handler);
+            }
+        }
 
         ValueBox[] tmp = new ValueBox[orgLocalSize];
 
+        Stack<Stmt> toVisitStack = new Stack<Stmt>();
+
+        toVisitStack.push(list.getFirst());
+
         // execute
         // merge to all branches
-        for (Stmt st : list) {
-            if (st._ls_frame == null) {
-                st._ls_frame = new ValueBox[orgLocalSize];
+        while (!toVisitStack.isEmpty()) {
+            Stmt currentStmt = toVisitStack.pop();
+            if (currentStmt == null || currentStmt._ls_visited) {
+                continue;
+            } else {
+                currentStmt._ls_visited = true;
+            }
+            if (currentStmt._ls_frame == null) {
+                currentStmt._ls_frame = new ValueBox[orgLocalSize];
             }
 
-            exec(st);
+            // System.out.println(currentStmt);
 
-            switch (st.st) {
+            ValueBox[] currentFrame = currentStmt._ls_frame;
+            switch (currentStmt.st) {
+            case GOTO:
+                mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target, locals);
+                toVisitStack.push(((JumpStmt) currentStmt).target);
+                break;
+            case IF:
+                mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target, locals);
+                mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
+
+                toVisitStack.push(((JumpStmt) currentStmt).target);
+                toVisitStack.push(currentStmt.getNext());
+                break;
+            case TABLE_SWITCH:
+                TableSwitchStmt tss = (TableSwitchStmt) currentStmt;
+                for (Stmt target : tss.targets) {
+                    mergeFrame2Stmt(currentFrame, target, locals);
+                    toVisitStack.push(target);
+                }
+                mergeFrame2Stmt(currentFrame, tss.defaultTarget, locals);
+                toVisitStack.push(tss.defaultTarget);
+                break;
+            case LOOKUP_SWITCH:
+                LookupSwitchStmt lss = (LookupSwitchStmt) currentStmt;
+                for (Stmt target : lss.targets) {
+                    mergeFrame2Stmt(currentFrame, target, locals);
+                    toVisitStack.push(target);
+                }
+                mergeFrame2Stmt(currentFrame, lss.defaultTarget, locals);
+                toVisitStack.push(lss.defaultTarget);
+                break;
             case ASSIGN:
-                AssignStmt assignStmt = (AssignStmt) st;
+                AssignStmt assignStmt = (AssignStmt) currentStmt;
                 switch (assignStmt.left.value.vt) {
                 case LOCAL:
-                    System.arraycopy(st._ls_frame, 0, tmp, 0, tmp.length);
+                    System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
                     Local local = (Local) assignStmt.left.value;
                     int reg = local._ls_index;
                     Local nLocal = Exprs.nLocal("a_" + localId++, null);
@@ -62,25 +111,38 @@ public class LocalSpliter {
                     ValueBox nvb = new ValueBox(nLocal);
                     assignStmt.left = nvb;
                     tmp[reg] = nvb;
-                    mergeFrame2Branches(st, tmp, jm.locals);
+                    currentFrame = tmp;
+                    mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
                 }
+                toVisitStack.push(currentStmt.getNext());
                 break;
-            case GOTO:
             case IDENTITY:
             case NOP:
-            case IF:
             case LABEL:
             case LOCK:
-            case LOOKUP_SWITCH:
+            case UNLOCK:
+                // merge to next next
+                mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
+                toVisitStack.push(currentStmt.getNext());
+                break;
+            case THROW:
             case RETURN:
             case RETURN_VOID:
-            case TABLE_SWITCH:
-            case THROW:
-            case UNLOCK:
-                mergeFrame2Branches(st, st._ls_frame, jm.locals);
                 break;
             }
+
+            for (Stmt t : currentStmt._ls_traps) {
+                if (!t._ls_visited) {
+                    mergeFrame2Stmt(currentFrame, t, locals);
+                    toVisitStack.push(t);
+                }
+            }
         }
+
+        for (Stmt t : list) {
+            exec(t);
+        }
+
     }
 
     private void exec(Stmt st) {
@@ -185,11 +247,12 @@ public class LocalSpliter {
             execValue(be.op1, frame);
             execValue(be.op2, frame);
             break;
-        case STATIC_INVOKE:
-        case SPECIAL_INVOKE:
-        case VIRTUAL_INVOKE:
-        case INTERFACE_INVOKE:
-            MethodExpr methodExpr = (MethodExpr) vb.value;
+        case INVOKE_STATIC:
+        case INVOKE_SPECIAL:
+        case INVOKE_VIRTUAL:
+        case INVOKE_INTERFACE:
+        case INVOKE_NEW:
+            InvokeExpr methodExpr = (InvokeExpr) vb.value;
             if (null != methodExpr.object) {
                 execValue(methodExpr.object, frame);
             }
@@ -198,7 +261,6 @@ public class LocalSpliter {
             }
             break;
         case EXCEPTION_REF:
-        case NEW:
         case THIS_REF:
         case PARAMETER_REF:
         case CONSTANT:
@@ -206,46 +268,10 @@ public class LocalSpliter {
         }
     }
 
-    private void mergeFrame2Branches(Stmt currentStmt, ValueBox[] currentFrame, List<Local> locals) {
-        switch (currentStmt.st) {
-        case GOTO:
-            mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target, locals);
-            break;
-        case IF:
-            mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target, locals);
-            mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
-            break;
-        case TABLE_SWITCH:
-            TableSwitchStmt tss = (TableSwitchStmt) currentStmt;
-            for (Stmt target : tss.targets) {
-                mergeFrame2Stmt(currentFrame, target, locals);
-            }
-            mergeFrame2Stmt(currentFrame, tss.defaultTarget, locals);
-            break;
-        case LOOKUP_SWITCH:
-            LookupSwitchStmt lss = (LookupSwitchStmt) currentStmt;
-            for (Stmt target : lss.targets) {
-                mergeFrame2Stmt(currentFrame, target, locals);
-            }
-            mergeFrame2Stmt(currentFrame, lss.defaultTarget, locals);
-            break;
-        case IDENTITY:
-        case NOP:
-        case ASSIGN:
-        case LABEL:
-        case LOCK:
-        case UNLOCK:
-            // merge to next next
-            mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
-            break;
-        case THROW:
-        case RETURN:
-        case RETURN_VOID:
-            break;
-        }
-    }
-
     private void mergeFrame2Stmt(ValueBox[] currentFrame, Stmt distStmt, List<Local> locals) {
+        if (distStmt == null) {
+            return;
+        }
         if (distStmt._ls_frame == null) {
             distStmt._ls_frame = new ValueBox[currentFrame.length];
             System.arraycopy(currentFrame, 0, distStmt._ls_frame, 0, currentFrame.length);

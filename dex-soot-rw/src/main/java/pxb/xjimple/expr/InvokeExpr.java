@@ -5,7 +5,7 @@ import org.objectweb.asm.Type;
 import pxb.xjimple.Value;
 import pxb.xjimple.ValueBox;
 
-public class MethodExpr extends Value {
+public class InvokeExpr extends Value {
 
     public Type[] argmentTypes;
     public ValueBox args[];
@@ -14,23 +14,26 @@ public class MethodExpr extends Value {
     public Type methodReturnType;
     public ValueBox object;
 
-    public MethodExpr(VT type, Value object, Value[] args, Type ownerType, String methodName, Type[] argmentTypes,
-            Type returnType) {
+    public InvokeExpr(VT type, ValueBox object, ValueBox[] args, Type ownerType, String methodName,
+            Type[] argmentTypes, Type returnType) {
         super(type);
-        this.object = new ValueBox(object);
+        this.object = object;
         this.methodReturnType = returnType;
         this.methodName = methodName;
         this.methodOwnerType = ownerType;
         this.argmentTypes = argmentTypes;
-        this.args = new ValueBox[args.length];
-        for (int i = 0; i < args.length; i++) {
-            this.args[i] = new ValueBox(args[i]);
-        }
+        this.args = args;
+
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder().append(object == null ? methodOwnerType.getClassName() : object)
-                .append(this.methodName).append('(');
+        StringBuilder sb = new StringBuilder();
+        if (super.vt == VT.INVOKE_NEW) {
+            sb.append("new ").append(methodOwnerType.getClassName()).append('(');
+        } else {
+            sb.append(object == null ? methodOwnerType.getClassName() : object).append('.').append(this.methodName)
+                    .append('(');
+        }
         boolean first = true;
         for (ValueBox arg : args) {
             if (first) {

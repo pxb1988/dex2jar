@@ -1,8 +1,8 @@
 package pxb.xjimple.stmt;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import pxb.xjimple.ValueBox;
 
@@ -20,6 +20,8 @@ public abstract class Stmt {
     }
 
     public ValueBox[] _ls_frame;
+    public boolean _ls_visited;
+    public Set<Stmt> _ls_traps = new HashSet<Stmt>();
 
     public final Stmt getPre() {
         return pre;
@@ -32,9 +34,5 @@ public abstract class Stmt {
     }
 
     public abstract Stmt clone(Map<LabelStmt, LabelStmt> map);
-
-    /* ========= */
-    public List<Stmt> _gPreds = Collections.emptyList();
-    public List<Stmt> _gSuccs = Collections.emptyList();
 
 }

@@ -5,8 +5,20 @@ import org.objectweb.asm.Type;
 import pxb.xjimple.Local;
 import pxb.xjimple.Value;
 import pxb.xjimple.Value.VT;
+import pxb.xjimple.ValueBox;
 
 public final class Exprs {
+
+    private static ValueBox[] box(Value[] v) {
+        if (v == null) {
+            return new ValueBox[0];
+        }
+        ValueBox vb[] = new ValueBox[v.length];
+        for (int i = 0; i < v.length; i++) {
+            vb[i] = new ValueBox(v[i]);
+        }
+        return vb;
+    }
 
     public static BinopExpr nAdd(Value a, Value b) {
         return new BinopExpr(VT.ADD, a, b);
@@ -44,6 +56,10 @@ public final class Exprs {
         return new BinopExpr(VT.EQ, a, b);
     }
 
+    public static TypeRefExpr nExceptionRef(Type type) {
+        return new TypeRefExpr(VT.EXCEPTION_REF, type, -1);
+    }
+
     public static FieldExpr nField(Value object, Type ownerType, String fieldName, Type fieldType) {
         return new FieldExpr(object, ownerType, fieldName, fieldType);
     }
@@ -60,9 +76,27 @@ public final class Exprs {
         return new InstanceOfExpr(value, type);
     }
 
-    public static MethodExpr nInterfaceMethod(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
+    public static InvokeExpr nInvokeInterface(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
             Type returnType) {
-        return new MethodExpr(VT.INTERFACE_INVOKE, obj, args, owner, name, argmentTypes, returnType);
+        return new InvokeExpr(VT.INVOKE_INTERFACE, new ValueBox(obj), box(args), owner, name, argmentTypes, returnType);
+    }
+
+    public static InvokeExpr nInvokeNew(Value[] args, Type[] argmentTypes, Type owner) {
+        return new InvokeExpr(VT.INVOKE_NEW, null, box(args), owner, "<init>", argmentTypes, owner);
+    }
+
+    public static InvokeExpr nInvokeSpecial(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
+            Type returnType) {
+        return new InvokeExpr(VT.INVOKE_SPECIAL, new ValueBox(obj), box(args), owner, name, argmentTypes, returnType);
+    }
+
+    public static InvokeExpr nInvokeStatic(Value[] args, Type owner, String name, Type[] argmentTypes, Type returnType) {
+        return new InvokeExpr(VT.INVOKE_STATIC, null, box(args), owner, name, argmentTypes, returnType);
+    }
+
+    public static InvokeExpr nInvokeVirtual(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
+            Type returnType) {
+        return new InvokeExpr(VT.INVOKE_VIRTUAL, new ValueBox(obj), box(args), owner, name, argmentTypes, returnType);
     }
 
     public static BinopExpr nLe(Value a, Value b) {
@@ -75,18 +109,6 @@ public final class Exprs {
 
     public static Local nLocal(String name, Type type) {
         return new Local(name, type);
-    }
-
-    public static TypeRefExpr nThisRef(Type type) {
-        return new TypeRefExpr(VT.THIS_REF, type, -1);
-    }
-
-    public static TypeRefExpr nExceptionRef(Type type) {
-        return new TypeRefExpr(VT.EXCEPTION_REF, type, -1);
-    }
-
-    public static TypeRefExpr nParameterRef(Type type, int index) {
-        return new TypeRefExpr(VT.PARAMETER_REF, type, index);
     }
 
     public static BinopExpr nLt(Value a, Value b) {
@@ -105,9 +127,9 @@ public final class Exprs {
         return new UnopExpr(VT.NEG, array);
     }
 
-    public static NewExpr nNew(Type type) {
-        return new NewExpr(type);
-    }
+    // public static NewExpr nNew(Type type) {
+    // return new NewExpr(type);
+    // }
 
     public static NewArrayExpr nNewArray(Type type, Value size) {
         return new NewArrayExpr(type, size);
@@ -119,6 +141,10 @@ public final class Exprs {
 
     public static BinopExpr nOr(Value a, Value b) {
         return new BinopExpr(VT.OR, a, b);
+    }
+
+    public static TypeRefExpr nParameterRef(Type type, int index) {
+        return new TypeRefExpr(VT.PARAMETER_REF, type, index);
     }
 
     public static BinopExpr nRem(Value a, Value b) {
@@ -133,30 +159,20 @@ public final class Exprs {
         return new BinopExpr(VT.SHR, a, b);
     }
 
-    public static MethodExpr nSpecialMethod(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
-            Type returnType) {
-        return new MethodExpr(VT.SPECIAL_INVOKE, obj, args, owner, name, argmentTypes, returnType);
-    }
-
     public static FieldExpr nStaticField(Type ownerType, String fieldName, Type fieldType) {
         return new FieldExpr(null, ownerType, fieldName, fieldType);
-    }
-
-    public static MethodExpr nStaticMethod(Value[] args, Type owner, String name, Type[] argmentTypes, Type returnType) {
-        return new MethodExpr(VT.STATIC_INVOKE, null, args, owner, name, argmentTypes, returnType);
     }
 
     public static BinopExpr nSub(Value a, Value b) {
         return new BinopExpr(VT.SUB, a, b);
     }
 
-    public static BinopExpr nUshr(Value a, Value b) {
-        return new BinopExpr(VT.USHR, a, b);
+    public static TypeRefExpr nThisRef(Type type) {
+        return new TypeRefExpr(VT.THIS_REF, type, -1);
     }
 
-    public static MethodExpr nVirtualMethod(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
-            Type returnType) {
-        return new MethodExpr(VT.VIRTUAL_INVOKE, obj, args, owner, name, argmentTypes, returnType);
+    public static BinopExpr nUshr(Value a, Value b) {
+        return new BinopExpr(VT.USHR, a, b);
     }
 
     public static BinopExpr nXor(Value a, Value b) {
