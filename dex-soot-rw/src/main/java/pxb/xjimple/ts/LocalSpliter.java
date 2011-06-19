@@ -1,5 +1,6 @@
 package pxb.xjimple.ts;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
@@ -26,9 +27,9 @@ import pxb.xjimple.stmt.StmtList;
 import pxb.xjimple.stmt.TableSwitchStmt;
 import pxb.xjimple.stmt.UnopStmt;
 
-public class LocalSpliter {
+public class LocalSpliter implements Transformer {
 
-    public void split(JimpleMethod jm) {
+    public void transform(JimpleMethod jm) {
         int orgLocalSize = jm.locals.size();
         for (int i = 0; i < orgLocalSize; i++) {
             Local local = jm.locals.get(i);
@@ -102,17 +103,29 @@ public class LocalSpliter {
                 AssignStmt assignStmt = (AssignStmt) currentStmt;
                 switch (assignStmt.left.value.vt) {
                 case LOCAL:
+
                     System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
                     Local local = (Local) assignStmt.left.value;
                     int reg = local._ls_index;
-                    Local nLocal = Exprs.nLocal("a_" + localId++, null);
-                    nLocal._ls_index = reg;
-                    jm.locals.add(nLocal);
-                    ValueBox nvb = new ValueBox(nLocal);
-                    assignStmt.left = nvb;
-                    tmp[reg] = nvb;
+                    Stmt next = currentStmt.getNext();
+                    ValueBox vb;
+                    if (next != null && next._ls_frame != null && next._ls_frame[reg] != null) {
+                        vb = next._ls_frame[reg];
+                        ((Local) vb.value)._ls_write_count++;
+                        tmp[reg] = vb;
+                    } else {
+                        Local nLocal = Exprs.nLocal("a_" + localId++, null);
+                        nLocal._ls_index = reg;
+                        nLocal._ls_write_count = 1;
+                        jm.locals.add(nLocal);
+                        vb = new ValueBox(nLocal);
+                        nLocal._ls_vb = vb;
+
+                    }
+                    tmp[reg] = vb;
                     currentFrame = tmp;
                     mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
+                    assignStmt.left = ((Local) vb.value)._ls_vb;
                 }
                 toVisitStack.push(currentStmt.getNext());
                 break;
@@ -139,10 +152,26 @@ public class LocalSpliter {
             }
         }
 
-        for (Stmt t : list) {
-            exec(t);
+        for (Iterator<Stmt> it = list.iterator(); it.hasNext();) {
+            Stmt st = it.next();
+            if (st._ls_frame == null) {// dead code
+                it.remove();
+                continue;
+            }
+            exec(st);
+            switch (st.st) {
+            case ASSIGN:
+                AssignStmt as = (AssignStmt) st;
+                switch (as.left.value.vt) {
+                case LOCAL:
+                    as.left = ((Local) as.left.value)._ls_vb;
+                }
+            }
+            // clean
+            st._ls_frame = null;
+            st._ls_traps = null;
+            st._ls_visited = false;
         }
-
     }
 
     private void exec(Stmt st) {
@@ -151,9 +180,9 @@ public class LocalSpliter {
         case ASSIGN:
             AssignStmt assignStmt = (AssignStmt) st;
             if (assignStmt.left.value.vt != VT.LOCAL) {
-                execValue(assignStmt.left, frame);
+                assignStmt.left = execValue(assignStmt.left, frame);
             }
-            execValue(assignStmt.right, frame);
+            assignStmt.right = execValue(assignStmt.right, frame);
             break;
         case GOTO:
         case NOP:
@@ -164,47 +193,47 @@ public class LocalSpliter {
         case IDENTITY:
             break;
         case IF:
-            execValue(((JumpStmt) st).condition, frame);
+            ((JumpStmt) st).condition = execValue(((JumpStmt) st).condition, frame);
             break;
         case LOOKUP_SWITCH:
-            execValue(((LookupSwitchStmt) st).key, frame);
+            ((LookupSwitchStmt) st).key = execValue(((LookupSwitchStmt) st).key, frame);
             break;
         case TABLE_SWITCH:
-            execValue(((TableSwitchStmt) st).key, frame);
+            ((TableSwitchStmt) st).key = execValue(((TableSwitchStmt) st).key, frame);
             break;
         case LOCK:
         case THROW:
         case UNLOCK:
         case RETURN:
-            execValue(((UnopStmt) st).op, frame);
+            ((UnopStmt) st).op = execValue(((UnopStmt) st).op, frame);
             break;
         }
     }
 
-    private void execValue(ValueBox vb, ValueBox[] frame) {
+    private ValueBox execValue(ValueBox vb, ValueBox[] frame) {
         switch (vb.value.vt) {
         case LOCAL:
-            vb.value = frame[((Local) vb.value)._ls_index].value;
-            break;
-
+            Local local = (Local) frame[((Local) vb.value)._ls_index].value;
+            local._ls_read_count++;
+            return ((Local) frame[((Local) vb.value)._ls_index].value)._ls_vb;
         case CAST:
             CastExpr ce = (CastExpr) vb.value;
-            execValue(ce.op, frame);
+            ce.op = execValue(ce.op, frame);
             break;
         case FIELD:
             FieldExpr fe = (FieldExpr) vb.value;
             if (null != fe.object) {
-                execValue(fe.object, frame);
+                fe.object = execValue(fe.object, frame);
             }
             break;
         case INSTANCEOF:
             InstanceOfExpr ioe = (InstanceOfExpr) vb.value;
-            execValue(ioe.op, frame);
+            ioe.op = execValue(ioe.op, frame);
             break;
         case LENGTH:
         case NEG:
             UnopExpr ue = (UnopExpr) vb.value;
-            execValue(ue.op, frame);
+            ue.op = execValue(ue.op, frame);
             break;
 
         case NEW_ARRAY:
@@ -214,14 +243,14 @@ public class LocalSpliter {
             break;
         case NEW_MUTI_ARRAY:
             NewMutiArrayExpr nmae = (NewMutiArrayExpr) vb.value;
-            for (ValueBox size : nmae.sizes) {
-                execValue(size, frame);
+            for (int i = 0; i < nmae.sizes.length; i++) {
+                nmae.sizes[i] = execValue(nmae.sizes[i], frame);
             }
             break;
         case ARRAY:
             ArrayExpr ae = (ArrayExpr) vb.value;
-            execValue(ae.base, frame);
-            execValue(ae.index, frame);
+            ae.base = execValue(ae.base, frame);
+            ae.index = execValue(ae.index, frame);
             break;
         case CMP:
         case CMPG:
@@ -244,8 +273,8 @@ public class LocalSpliter {
         case LT:
         case NE:
             BinopExpr be = (BinopExpr) vb.value;
-            execValue(be.op1, frame);
-            execValue(be.op2, frame);
+            be.op1 = execValue(be.op1, frame);
+            be.op2 = execValue(be.op2, frame);
             break;
         case INVOKE_STATIC:
         case INVOKE_SPECIAL:
@@ -254,10 +283,10 @@ public class LocalSpliter {
         case INVOKE_NEW:
             InvokeExpr methodExpr = (InvokeExpr) vb.value;
             if (null != methodExpr.object) {
-                execValue(methodExpr.object, frame);
+                methodExpr.object = execValue(methodExpr.object, frame);
             }
-            for (ValueBox arg : methodExpr.args) {
-                execValue(arg, frame);
+            for (int i = 0; i < methodExpr.args.length; i++) {
+                methodExpr.args[i] = execValue(methodExpr.args[i], frame);
             }
             break;
         case EXCEPTION_REF:
@@ -266,6 +295,7 @@ public class LocalSpliter {
         case CONSTANT:
             break;
         }
+        return vb;
     }
 
     private void mergeFrame2Stmt(ValueBox[] currentFrame, Stmt distStmt, List<Local> locals) {
@@ -283,9 +313,13 @@ public class LocalSpliter {
                     ValueBox bi = b[i];
                     if (ai != bi) {
                         if (ai.value != bi.value) {
-                            locals.remove(bi.value);
+                            locals.remove(ai.value);
                         }
-                        bi.value = ai.value;
+                        Local la = (Local) ai.value;
+                        Local lb = (Local) bi.value;
+                        lb._ls_write_count += la._ls_write_count;
+                        ai.value = bi.value;
+                        la._ls_vb = lb._ls_vb;
                     }
                 }
             }

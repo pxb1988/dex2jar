@@ -46,7 +46,7 @@ public class LocalSplitTest {
         UnopStmt st3 = nReturn(b);
         list.add(st3);
 
-        new LocalSpliter().split(jm);
+        new LocalSpliter().transform(jm);
 
         Assert.assertTrue(jm.locals.size() == 2);
         // Assert.assertEquals(STRING, ((Local) st1.left.value).type);
@@ -75,7 +75,7 @@ public class LocalSplitTest {
 
         list.add(nReturn(b));
 
-        new LocalSpliter().split(jm);
+        new LocalSpliter().transform(jm);
 
         Assert.assertTrue(jm.locals.size() == 1);
     }
@@ -110,7 +110,7 @@ public class LocalSplitTest {
         list.add(L4);
         list.add(nReturn(b));
 
-        new LocalSpliter().split(jm);
+        new LocalSpliter().transform(jm);
 
         Assert.assertTrue(jm.locals.size() == 3);
     }
