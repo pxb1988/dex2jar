@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package res;
+package com.googlecode.dex2jar.visitors;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
- * 
+ * @version $Id$
  */
-public class PopRes {
+public interface DexFieldVisitor extends DexAnnotationAble {
 
-    long aaa() {
-        return 0;
-    }
-
-    void bbb() {
-        aaa();
-    }
+    void visitEnd();
 }

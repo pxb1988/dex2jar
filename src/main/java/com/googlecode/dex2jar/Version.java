@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package res;
+package com.googlecode.dex2jar;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
+ * 版本号
  * 
+ * @author Panxiaobo [pxb1988@gmail.com]
+ * @version $Id$
  */
-public class PopRes {
+public final class Version {
 
-    long aaa() {
-        return 0;
-    }
+    private static String version;
 
-    void bbb() {
-        aaa();
+    public static String getVersionString() {
+        if (version == null) {
+            version = Version.class.getPackage().getImplementationVersion();
+        }
+        return version;
     }
 }

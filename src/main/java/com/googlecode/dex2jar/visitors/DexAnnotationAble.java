@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package res;
+package com.googlecode.dex2jar.visitors;
+
+import org.objectweb.asm.AnnotationVisitor;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
+ * 用于访问注解
  * 
+ * @author Panxiaobo [pxb1988@gmail.com]
+ * @version $Id$
  */
-public class PopRes {
-
-    long aaa() {
-        return 0;
-    }
-
-    void bbb() {
-        aaa();
-    }
+public interface DexAnnotationAble {
+    /**
+     * 访问注解
+     * 
+     * @param name
+     *            注解名
+     * @param visitable
+     *            是否运行时可见
+     * @return
+     */
+    AnnotationVisitor visitAnnotation(String name, boolean visitable);
 }

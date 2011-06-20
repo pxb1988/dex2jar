@@ -16,16 +16,16 @@
 package res;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
+ * @author Panxiaobo [pxb1988 at gmail.com]
  * 
  */
-public class PopRes {
-
-    long aaa() {
+public class ExceptionRes {
+    public int a() {
+        try {
+            System.out.println("abc");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return 0;
-    }
-
-    void bbb() {
-        aaa();
     }
 }

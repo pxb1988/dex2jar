@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package res;
+package res.i55;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
- * 
+ *
  */
-public class PopRes {
+public abstract class AAbstractClass {
 
-    long aaa() {
-        return 0;
-    }
-
-    void bbb() {
-        aaa();
-    }
 }

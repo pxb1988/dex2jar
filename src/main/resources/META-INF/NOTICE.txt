@@ -1,2 +1,2 @@
-Dex2jar
-Copyright 2009-2010 Panxiaobo
+dex2jar
+Copyright 2009-2011 Panxiaobo

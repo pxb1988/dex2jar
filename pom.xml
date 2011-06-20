@@ -1,11 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>pxb.android</groupId>
+	<groupId>com.googlecode</groupId>
 	<artifactId>dex2jar</artifactId>
-	<name>Dex2jar</name>
-	<version>0.0.7.8-SNAPSHOT</version>
-	<description>A tool convert Android's .dex format to Java's .class format</description>
+	<name>dex2jar</name>
+	<version>0.0.7.11-SNAPSHOT</version>
+	<description>A tool for converting Android's .dex format to Java's .class format</description>
+	<url>http://code.google.como/p/dex2jar/</url>
 	<dependencies>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -74,7 +75,7 @@
 							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 						<manifestEntries>
-							<Main-Class>pxb.android.dex2jar.v3.Main</Main-Class>
+							<Main-Class>com.googlecode.dex2jar.v3.Main</Main-Class>
 							<Implementation-Build>${maven.build.timestamp}</Implementation-Build>
 						</manifestEntries>
 					</archive>
@@ -83,6 +84,24 @@
 						<exclude>*.sh</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<appendAssemblyId>false</appendAssemblyId>
+					<descriptors>
+						<descriptor>src/main/assemble/package.xml</descriptor>
+					</descriptors>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

@@ -15,17 +15,32 @@
  */
 package res;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
+ * @author Panxiaobo [pxb1988 at gmail.com]
  * 
  */
-public class PopRes {
-
-    long aaa() {
-        return 0;
+public class I56 {
+    static class AStaticInnerClass {
     }
 
-    void bbb() {
-        aaa();
+    class AInnerClass {
+    }
+
+    interface AInterface {
+    }
+
+    void aaa() {
+        new ArrayList() {
+        };
+
+    }
+
+    List a = new ArrayList() {
+    };
+
+    static interface AStaticInterface {
     }
 }

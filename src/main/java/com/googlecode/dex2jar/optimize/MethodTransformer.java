@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package res;
+package com.googlecode.dex2jar.optimize;
+
+import org.objectweb.asm.tree.MethodNode;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
- * 
+ * @version $Id$
  */
-public class ChineseRes {
-    public void 你() {
-        System.out.println("你好");
-    }
+public interface MethodTransformer {
+    void transform(MethodNode method);
 }

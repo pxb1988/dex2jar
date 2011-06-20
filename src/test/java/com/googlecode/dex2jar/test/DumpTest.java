@@ -13,19 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package res;
+package com.googlecode.dex2jar.test;
+
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.googlecode.dex2jar.dump.Dump;
+
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * 
  */
-public class PopRes {
+public class DumpTest {
+    static final Logger log = LoggerFactory.getLogger(DumpTest.class);
 
-    long aaa() {
-        return 0;
-    }
-
-    void bbb() {
-        aaa();
+    @Test
+    public void test() throws IOException {
+        File file = new File("target/test-classes/dexes");
+        for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
+            log.info("dump file {}", f);
+            Dump.doFile(f);
+        }
     }
 }
