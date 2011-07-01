@@ -75,13 +75,11 @@ public class LocalSpliter implements Transformer {
             ValueBox[] currentFrame = currentStmt._ls_frame;
             switch (currentStmt.st) {
             case GOTO:
-                mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target,
-                        locals);
+                mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target, locals);
                 toVisitStack.push(((JumpStmt) currentStmt).target);
                 break;
             case IF:
-                mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target,
-                        locals);
+                mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target, locals);
                 mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
 
                 toVisitStack.push(((JumpStmt) currentStmt).target);
@@ -115,8 +113,7 @@ public class LocalSpliter implements Transformer {
                     int reg = local._ls_index;
                     Stmt next = currentStmt.getNext();
                     ValueBox vb;
-                    if (next != null && next._ls_frame != null
-                            && next._ls_frame[reg] != null) {
+                    if (next != null && next._ls_frame != null && next._ls_frame[reg] != null) {
                         vb = next._ls_frame[reg];
                         ((Local) vb.value)._ls_write_count++;
                         tmp[reg] = vb;
@@ -182,7 +179,7 @@ public class LocalSpliter implements Transformer {
         }
     }
 
-    private void exec(Stmt st) {
+    static private void exec(Stmt st) {
         ValueBox[] frame = st._ls_frame;
         switch (st.st) {
         case ASSIGN:
@@ -201,16 +198,13 @@ public class LocalSpliter implements Transformer {
         case IDENTITY:
             break;
         case IF:
-            ((JumpStmt) st).condition = execValue(((JumpStmt) st).condition,
-                    frame);
+            ((JumpStmt) st).condition = execValue(((JumpStmt) st).condition, frame);
             break;
         case LOOKUP_SWITCH:
-            ((LookupSwitchStmt) st).key = execValue(
-                    ((LookupSwitchStmt) st).key, frame);
+            ((LookupSwitchStmt) st).key = execValue(((LookupSwitchStmt) st).key, frame);
             break;
         case TABLE_SWITCH:
-            ((TableSwitchStmt) st).key = execValue(((TableSwitchStmt) st).key,
-                    frame);
+            ((TableSwitchStmt) st).key = execValue(((TableSwitchStmt) st).key, frame);
             break;
         case LOCK:
         case THROW:
@@ -221,7 +215,7 @@ public class LocalSpliter implements Transformer {
         }
     }
 
-    private ValueBox execValue(ValueBox vb, ValueBox[] frame) {
+    static private ValueBox execValue(ValueBox vb, ValueBox[] frame) {
         switch (vb.value.vt) {
         case LOCAL:
             Local local = (Local) frame[((Local) vb.value)._ls_index].value;
@@ -309,15 +303,13 @@ public class LocalSpliter implements Transformer {
         return vb;
     }
 
-    private void mergeFrame2Stmt(ValueBox[] currentFrame, Stmt distStmt,
-            List<Local> locals) {
+    static private void mergeFrame2Stmt(ValueBox[] currentFrame, Stmt distStmt, List<Local> locals) {
         if (distStmt == null) {
             return;
         }
         if (distStmt._ls_frame == null) {
             distStmt._ls_frame = new ValueBox[currentFrame.length];
-            System.arraycopy(currentFrame, 0, distStmt._ls_frame, 0,
-                    currentFrame.length);
+            System.arraycopy(currentFrame, 0, distStmt._ls_frame, 0, currentFrame.length);
         } else {
             ValueBox[] b = distStmt._ls_frame;
             for (int i = 0; i < currentFrame.length; i++) {
