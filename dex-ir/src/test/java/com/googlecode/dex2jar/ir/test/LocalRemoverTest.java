@@ -209,7 +209,7 @@ public class LocalRemoverTest {
         list.add(L3);
         list.add(nAssign(ex, nExceptionRef(exType)));
         list.add(nAssign(ex,
-                nInvokeVirtual(ex, new Value[0], exType, "toString", new Type[0], Type.getType(String.class))));
+                nInvokeVirtual(new Value[] { ex }, exType, "toString", new Type[0], Type.getType(String.class))));
         list.add(nAssign(b, nNull()));
         list.add(L4);
         list.add(nReturn(b));

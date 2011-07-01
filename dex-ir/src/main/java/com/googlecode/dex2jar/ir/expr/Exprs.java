@@ -61,7 +61,7 @@ public final class Exprs {
     }
 
     public static FieldExpr nField(Value object, Type ownerType, String fieldName, Type fieldType) {
-        return new FieldExpr(object, ownerType, fieldName, fieldType);
+        return new FieldExpr(new ValueBox(object), ownerType, fieldName, fieldType);
     }
 
     public static BinopExpr nGe(Value a, Value b) {
@@ -76,27 +76,29 @@ public final class Exprs {
         return new InstanceOfExpr(value, type);
     }
 
-    public static InvokeExpr nInvokeInterface(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
+    public static InvokeExpr nInvokeInterface(Value[] regs, Type owner, String name, Type[] argmentTypes,
             Type returnType) {
-        return new InvokeExpr(VT.INVOKE_INTERFACE, new ValueBox(obj), box(args), owner, name, argmentTypes, returnType);
+        return new InvokeExpr(VT.INVOKE_INTERFACE, box(regs), owner, name, argmentTypes, returnType);
     }
 
-    public static InvokeExpr nInvokeNew(Value[] args, Type[] argmentTypes, Type owner) {
-        return new InvokeExpr(VT.INVOKE_NEW, null, box(args), owner, "<init>", argmentTypes, owner);
+    public static InvokeExpr nInvokeNew(ValueBox[] regs, Type[] argmentTypes, Type owner) {
+        return new InvokeExpr(VT.INVOKE_NEW, regs, owner, "<init>", argmentTypes, owner);
     }
 
-    public static InvokeExpr nInvokeSpecial(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
-            Type returnType) {
-        return new InvokeExpr(VT.INVOKE_SPECIAL, new ValueBox(obj), box(args), owner, name, argmentTypes, returnType);
+    public static InvokeExpr nInvokeNew(Value[] regs, Type[] argmentTypes, Type owner) {
+        return new InvokeExpr(VT.INVOKE_NEW, box(regs), owner, "<init>", argmentTypes, owner);
     }
 
-    public static InvokeExpr nInvokeStatic(Value[] args, Type owner, String name, Type[] argmentTypes, Type returnType) {
-        return new InvokeExpr(VT.INVOKE_STATIC, null, box(args), owner, name, argmentTypes, returnType);
+    public static InvokeExpr nInvokeSpecial(Value[] regs, Type owner, String name, Type[] argmentTypes, Type returnType) {
+        return new InvokeExpr(VT.INVOKE_SPECIAL, box(regs), owner, name, argmentTypes, returnType);
     }
 
-    public static InvokeExpr nInvokeVirtual(Value obj, Value[] args, Type owner, String name, Type[] argmentTypes,
-            Type returnType) {
-        return new InvokeExpr(VT.INVOKE_VIRTUAL, new ValueBox(obj), box(args), owner, name, argmentTypes, returnType);
+    public static InvokeExpr nInvokeStatic(Value[] regs, Type owner, String name, Type[] argmentTypes, Type returnType) {
+        return new InvokeExpr(VT.INVOKE_STATIC, box(regs), owner, name, argmentTypes, returnType);
+    }
+
+    public static InvokeExpr nInvokeVirtual(Value[] regs, Type owner, String name, Type[] argmentTypes, Type returnType) {
+        return new InvokeExpr(VT.INVOKE_VIRTUAL, box(regs), owner, name, argmentTypes, returnType);
     }
 
     public static BinopExpr nLe(Value a, Value b) {
@@ -123,8 +125,12 @@ public final class Exprs {
         return new BinopExpr(VT.NE, a, b);
     }
 
-    public static UnopExpr nNEG(Value array) {
+    public static UnopExpr nNeg(Value array) {
         return new UnopExpr(VT.NEG, array);
+    }
+
+    public static UnopExpr nNot(Value array) {
+        return new UnopExpr(VT.NOT, array);
     }
 
     // public static NewExpr nNew(Type type) {

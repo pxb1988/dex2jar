@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.optimize.c;
+package res.i55;
 
-import org.objectweb.asm.tree.analysis.Interpreter;
+/**
+ * @author Panxiaobo [pxb1988@gmail.com]
+ *
+ */
+public abstract class AAbstractClass {
 
-public class CAnalyzer extends Analyzer {
-
-    public CAnalyzer(Interpreter interpreter) {
-        super(interpreter);
-    }
-
-    @Override
-    protected org.objectweb.asm.tree.analysis.Frame newFrame(int nLocals, int nStack) {
-        return new CFrame(nLocals, nStack);
-    }
-
-    @Override
-    protected org.objectweb.asm.tree.analysis.Frame newFrame(org.objectweb.asm.tree.analysis.Frame src) {
-        return new CFrame((CFrame) src);
-    }
 }

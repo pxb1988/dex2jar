@@ -3,10 +3,15 @@ package com.googlecode.dex2jar.ir.stmt;
 import org.objectweb.asm.Label;
 
 import com.googlecode.dex2jar.ir.Value;
+import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 public final class Stmts {
 
+    public static AssignStmt nAssign(ValueBox left, ValueBox right) {
+        return new AssignStmt(ST.ASSIGN, left, right);
+    }
+    
     public static AssignStmt nAssign(Value left, Value right) {
         return new AssignStmt(ST.ASSIGN, left, right);
     }

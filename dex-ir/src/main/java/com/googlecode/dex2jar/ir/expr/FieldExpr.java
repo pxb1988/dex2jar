@@ -5,7 +5,6 @@ import org.objectweb.asm.Type;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.ValueBox;
 
-
 public class FieldExpr extends Value {
 
     public String fieldName;
@@ -13,9 +12,9 @@ public class FieldExpr extends Value {
     public Type fieldOwnerType;
     public ValueBox object;
 
-    public FieldExpr(Value object, Type ownerType, String fieldName, Type fieldType) {
+    public FieldExpr(ValueBox object, Type ownerType, String fieldName, Type fieldType) {
         super(VT.FIELD);
-        this.object = new ValueBox(object);
+        this.object = object;
         this.fieldType = fieldType;
         this.fieldName = fieldName;
         this.fieldOwnerType = ownerType;

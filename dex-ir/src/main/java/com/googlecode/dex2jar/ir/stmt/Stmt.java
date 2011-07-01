@@ -8,24 +8,19 @@ import com.googlecode.dex2jar.ir.ValueBox;
 
 public abstract class Stmt {
     public static enum ST {
-        ASSIGN, GOTO, IDENTITY, IF, LOOKUP_SWITCH, NOP, TABLE_SWITCH, LABEL, RETURN, RETURN_VOID, LOCK, UNLOCK, THROW
+        ASSIGN, GOTO, IDENTITY, IF, LABEL, LOCK, LOOKUP_SWITCH, NOP, RETURN, RETURN_VOID, TABLE_SWITCH, THROW, UNLOCK
     }
 
-    /* default */Stmt next;
-    /* default */Stmt pre;
-    /* default */StmtList list;
-
-    public final Stmt getNext() {
-        return next;
-    }
-
+    public Set<Stmt> _cfg_froms;
+    public Set<Stmt> _cfg_tos;
     public ValueBox[] _ls_frame;
-    public boolean _ls_visited;
     public Set<Stmt> _ls_traps = new HashSet<Stmt>();
+    public boolean _ls_visited;
 
-    public final Stmt getPre() {
-        return pre;
-    }
+    /* default */StmtList list;
+    /* default */Stmt next;
+
+    /* default */Stmt pre;
 
     public final ST st;
 
@@ -34,5 +29,13 @@ public abstract class Stmt {
     }
 
     public abstract Stmt clone(Map<LabelStmt, LabelStmt> map);
+
+    public final Stmt getNext() {
+        return next;
+    }
+
+    public final Stmt getPre() {
+        return pre;
+    }
 
 }

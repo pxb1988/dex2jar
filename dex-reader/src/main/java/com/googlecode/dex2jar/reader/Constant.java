@@ -22,7 +22,6 @@ import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.DexException;
 
-
 /**
  * 读取静态常量
  * 
@@ -83,7 +82,7 @@ public class Constant {
             return Double.longBitsToDouble(readFloatBits(in, b));
 
         case VALUE_NULL:
-            return Type.VOID_TYPE;// TODO Type.VOID_TYPE for null
+            return null;
 
         case VALUE_BOOLEAN: {
             return new Boolean(((b >> 5) & 0x3) != 0);

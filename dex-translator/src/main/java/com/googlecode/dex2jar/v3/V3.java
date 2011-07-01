@@ -16,14 +16,13 @@
 package com.googlecode.dex2jar.v3;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.objectweb.asm.ClassVisitor;
 
-import com.googlecode.dex2jar.ClassVisitorFactory;
 import com.googlecode.dex2jar.asm.TypeNameAdapter;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -32,13 +31,18 @@ import com.googlecode.dex2jar.visitors.DexFileVisitor;
 public class V3 implements DexFileVisitor {
     protected ClassVisitorFactory cvf;
     protected Map<String, Integer> accessFlagsMap;
+    protected Map<String, String> innerNameMap;
+    protected Map<String, Set<String>> extraMemberClass;
 
     /**
-     * @param accessFlagsMap
+     * @param innerAccessFlagsMap
      * @param classVisitorFactory
      */
-    public V3(Map<String, Integer> accessFlagsMap, ClassVisitorFactory classVisitorFactory) {
-        this.accessFlagsMap = accessFlagsMap;
+    public V3(Map<String, Integer> innerAccessFlagsMap, Map<String, String> innerNameMap, Map<String, Set<String>> extraMemberClass,
+            ClassVisitorFactory classVisitorFactory) {
+        this.accessFlagsMap = innerAccessFlagsMap;
+        this.innerNameMap = innerNameMap;
+        this.extraMemberClass = extraMemberClass;
         this.cvf = classVisitorFactory;
     }
 
@@ -52,7 +56,7 @@ public class V3 implements DexFileVisitor {
         final ClassVisitor cv = cvf.create(TypeNameAdapter.x(className));
         if (cv == null)
             return null;
-        return new V3ClassAdapter(accessFlagsMap, cv, access_flags, className, superClass, interfaceNames);
+        return new V3ClassAdapter(accessFlagsMap, innerNameMap, this.extraMemberClass, cv, access_flags, className, superClass, interfaceNames);
     }
 
     /*

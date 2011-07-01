@@ -16,7 +16,6 @@
 package com.googlecode.dex2jar.v3;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,20 +25,20 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.util.TraceMethodVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.Annotation.Item;
-import com.googlecode.dex2jar.optimize.B;
-import com.googlecode.dex2jar.optimize.C;
-import com.googlecode.dex2jar.optimize.LdcOptimizeAdapter;
-import com.googlecode.dex2jar.optimize.MethodTransformer;
+import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.asm.LdcOptimizeAdapter;
+import com.googlecode.dex2jar.ir.ts.LocalRemover;
+import com.googlecode.dex2jar.ir.ts.LocalSpliter;
+import com.googlecode.dex2jar.ir.ts.Transformer;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -144,7 +143,23 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitCode()
      */
     public DexCodeVisitor visitCode() {
-        return new V3CodeAdapter(methodNode);
+        return new V3CodeAdapter(method) {
+
+            @Override
+            public void visitEnd() {
+                super.visitEnd();
+                if (irMethod == null || irMethod.name == null || irMethod.name.equals("init")) {
+                    irMethod.toString();
+                }
+                if (irMethod.stmts.getSize() > 1) {
+                    for (Transformer ts : new Transformer[] { new LocalSpliter(), new LocalRemover() }) {
+                        ts.transform(irMethod);
+                    }
+                }
+                // convert irMethod to methodNode;
+            }
+
+        };
     }
 
     /*
@@ -156,26 +171,6 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     public void visitEnd() {
         build();
         MethodNode methodNode = this.methodNode;
-
-        try {
-            if (methodNode.instructions.size() > 2) {
-                List<? extends MethodTransformer> trs = Arrays.asList(new B(), new C(method));
-                for (MethodTransformer tr : trs) {
-                    // TraceMethodVisitor tmv = new TraceMethodVisitor();
-                    // methodNode.instructions.accept(tmv);
-                    // StringBuilder sb=new StringBuilder();
-                    // int i=0;
-                    // for(Object o:tmv.text){
-                    // sb.append(i++).append(o);
-                    // }
-                    // System.out.println(sb);
-                    tr.transform(methodNode);
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error transform method:" + this.method, e);
-        }
-
         MethodVisitor mv = cv.visitMethod(methodNode.access, methodNode.name, methodNode.desc, methodNode.signature,
                 (String[]) methodNode.exceptions.toArray(new String[methodNode.exceptions.size()]));
         if (mv != null) {
@@ -185,6 +180,17 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
                 throw new RuntimeException("Error visit method:" + this.method, e);
             }
         }
+    }
+
+    void dump(MethodNode methodNode) {
+        TraceMethodVisitor tmv = new TraceMethodVisitor();
+        methodNode.instructions.accept(tmv);
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (Object o : tmv.text) {
+            sb.append(i++).append(o);
+        }
+        System.out.println(sb);
     }
 
     /*

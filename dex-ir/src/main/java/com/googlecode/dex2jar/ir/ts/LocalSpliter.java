@@ -54,8 +54,8 @@ public class LocalSpliter implements Transformer {
 
         toVisitStack.push(list.getFirst());
 
-        List<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
-        jm._ls_visit_order = _ls_visit_order;
+        ArrayList<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
+
         // execute
         // merge to all branches
         while (!toVisitStack.isEmpty()) {
@@ -105,8 +105,7 @@ public class LocalSpliter implements Transformer {
                 break;
             case ASSIGN:
                 AssignStmt assignStmt = (AssignStmt) currentStmt;
-                switch (assignStmt.left.value.vt) {
-                case LOCAL:
+                if (assignStmt.left.value.vt == VT.LOCAL) {
 
                     System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
                     Local local = (Local) assignStmt.left.value;
@@ -130,7 +129,8 @@ public class LocalSpliter implements Transformer {
                     currentFrame = tmp;
                     mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
                     assignStmt.left = ((Local) vb.value)._ls_vb;
-                    break;
+                } else {
+                    mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
                 }
                 toVisitStack.push(currentStmt.getNext());
                 break;
@@ -167,16 +167,24 @@ public class LocalSpliter implements Transformer {
             switch (st.st) {
             case ASSIGN:
                 AssignStmt as = (AssignStmt) st;
-                switch (as.left.value.vt) {
-                case LOCAL:
+                if (as.left.value.vt == VT.LOCAL) {
                     as.left = ((Local) as.left.value)._ls_vb;
                 }
+                if (as.right.value.vt == VT.INVOKE_SPECIAL) {
+                    InvokeExpr ie = (InvokeExpr) as.right.value;
+                    if (ie.methodName.equals("<init>")) {
+                        jm._ls_inits.add(as);
+                    }
+                }
+                break;
             }
             // clean
             st._ls_frame = null;
             st._ls_traps = null;
             st._ls_visited = false;
         }
+
+        jm._ls_visit_order = _ls_visit_order;
     }
 
     static private void exec(Stmt st) {
@@ -237,6 +245,7 @@ public class LocalSpliter implements Transformer {
             break;
         case LENGTH:
         case NEG:
+        case NOT:
             UnopExpr ue = (UnopExpr) vb.value;
             ue.op = execValue(ue.op, frame);
             break;
@@ -287,9 +296,6 @@ public class LocalSpliter implements Transformer {
         case INVOKE_INTERFACE:
         case INVOKE_NEW:
             InvokeExpr methodExpr = (InvokeExpr) vb.value;
-            if (null != methodExpr.object) {
-                methodExpr.object = execValue(methodExpr.object, frame);
-            }
             for (int i = 0; i < methodExpr.args.length; i++) {
                 methodExpr.args[i] = execValue(methodExpr.args[i], frame);
             }
@@ -317,14 +323,18 @@ public class LocalSpliter implements Transformer {
                 if (ai != null) {
                     ValueBox bi = b[i];
                     if (ai != bi) {
-                        if (ai.value != bi.value) {
-                            locals.remove(ai.value);
+                        if (bi == null) {
+                            b[i] = ai;
+                        } else {
+                            if (ai.value != bi.value) {
+                                locals.remove(ai.value);
+                            }
+                            Local la = (Local) ai.value;
+                            Local lb = (Local) bi.value;
+                            lb._ls_write_count += la._ls_write_count;
+                            ai.value = bi.value;
+                            la._ls_vb = lb._ls_vb;
                         }
-                        Local la = (Local) ai.value;
-                        Local lb = (Local) bi.value;
-                        lb._ls_write_count += la._ls_write_count;
-                        ai.value = bi.value;
-                        la._ls_vb = lb._ls_vb;
                     }
                 }
             }

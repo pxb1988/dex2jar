@@ -1,9 +1,13 @@
 package com.googlecode.dex2jar.ir.ts;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
+import org.objectweb.asm.Type;
+
+import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.JimpleMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Value;
@@ -12,6 +16,7 @@ import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.ArrayExpr;
 import com.googlecode.dex2jar.ir.expr.BinopExpr;
 import com.googlecode.dex2jar.ir.expr.CastExpr;
+import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
 import com.googlecode.dex2jar.ir.expr.InstanceOfExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
@@ -23,16 +28,22 @@ import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 
 public class LocalRemover implements Transformer {
 
+    public static Type NEW_TYPE = Type.getType("Lc.g.d.i.LocalRemover.NEW;");
+
     @Override
     public void transform(JimpleMethod je) {
         StmtList list = je.stmts;
-        for (Stmt st : je._ls_visit_order) {
-            if (!list.contains(st)) {
+        List<Stmt> orderList = je._ls_visit_order;
+
+        for (int p = 0; p < orderList.size(); p++) {
+            Stmt st = orderList.get(p);
+            if (st == null || !list.contains(st)) {
                 continue;
             }
             switch (st.st) {
@@ -40,6 +51,27 @@ public class LocalRemover implements Transformer {
                 AssignStmt as = (AssignStmt) st;
                 if (as.left.value.vt == VT.LOCAL) {
                     Local aLeft = (Local) as.left.value;
+                    if (as.right.value.vt == VT.CONSTANT) {// remove new
+                        Constant c = (Constant) as.right.value;
+                        if (NEW_TYPE.equals(c.type)) {
+                            list.remove(st);
+                            for (Iterator<AssignStmt> it = je._ls_inits.iterator(); it.hasNext();) {
+                                AssignStmt stmt = it.next();
+                                InvokeExpr ie = (InvokeExpr) stmt.right.value;
+                                if (ie.args[0].value == aLeft) {
+                                    it.remove();
+                                    ValueBox[] vb = new ValueBox[ie.args.length - 1];
+                                    System.arraycopy(ie.args, 1, vb, 0, vb.length);
+                                    AssignStmt nas = Stmts.nAssign(as.left,
+                                            new ValueBox(Exprs.nInvokeNew(vb, ie.argmentTypes, ie.methodOwnerType)));
+                                    list.replace(stmt, nas);
+                                    aLeft._ls_read_count--;
+                                    orderList.set(orderList.indexOf(stmt), nas);
+                                }
+                            }
+                        }
+                        continue;
+                    }
                     if (aLeft._ls_write_count == 1) {
                         switch (as.right.value.vt) {
                         case LOCAL: {
@@ -48,26 +80,32 @@ public class LocalRemover implements Transformer {
                             je.locals.remove(aLeft);
                             aLeft._ls_vb.value = b;
                             list.remove(st);
+                            orderList.set(p, null);
                             continue;
                         }
                         case CONSTANT: {
                             as.left.value = as.right.value;
                             je.locals.remove(aLeft);
                             list.remove(st);
+                            orderList.set(p, null);
                             continue;
                         }
                         }
                     }
+
                 }
             }
         }
+
+        je._ls_inits = null;
 
         List<ValueBox> vbs = new ArrayList<ValueBox>(20);
 
         Stack<ValueBox> tmp = new Stack<ValueBox>();
 
-        for (Stmt st : je._ls_visit_order) {
-            if (!list.contains(st)) {
+        for (int p = 0; p < orderList.size(); p++) {
+            Stmt st = orderList.get(p);
+            if (st == null || !list.contains(st)) {
                 continue;
             }
 
@@ -260,15 +298,13 @@ public class LocalRemover implements Transformer {
         case INVOKE_NEW:
         case INVOKE_STATIC:
             InvokeExpr ie = (InvokeExpr) toReplace;
-            if (ie.object != null) {
-                stack.add(ie.object);
-            }
             for (ValueBox vb : ie.args) {
                 stack.add(vb);
             }
             break;
         case LENGTH:
         case NEG:
+        case NOT:
             UnopExpr ue = (UnopExpr) toReplace;
             stack.add(ue.op);
             break;

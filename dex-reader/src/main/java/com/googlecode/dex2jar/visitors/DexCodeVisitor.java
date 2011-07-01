@@ -58,7 +58,7 @@ public interface DexCodeVisitor {
      * @param bB
      * @param cC
      */
-    void visitBinopLitXStmt(int opcode, int aA, int bB, int cC);
+    void visitBinopLitXStmt(int opcode, int distReg, int srcReg, int content);
 
     /**
      * <pre>

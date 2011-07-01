@@ -32,7 +32,6 @@ import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.LocalSpliter;
 
-
 public class LocalSplitTest {
 
     @Test
@@ -109,7 +108,7 @@ public class LocalSplitTest {
         list.add(L3);
         list.add(nAssign(ex, nExceptionRef(exType)));
         list.add(nAssign(ex,
-                nInvokeVirtual(ex, new Value[0], exType, "toString", new Type[0], Type.getType(String.class))));
+                nInvokeVirtual(new Value[] { ex }, exType, "toString", new Type[0], Type.getType(String.class))));
         list.add(nAssign(b, nNull()));
         list.add(L4);
         list.add(nReturn(b));
@@ -122,7 +121,6 @@ public class LocalSplitTest {
     @Test
     public void test4() {
         JimpleMethod jm = new JimpleMethod();
-
 
         Local array = nLocal("array", null);
         Local index = nLocal("index", null);

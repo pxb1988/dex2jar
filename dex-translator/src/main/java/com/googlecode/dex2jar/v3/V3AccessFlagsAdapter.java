@@ -15,12 +15,23 @@
  */
 package com.googlecode.dex2jar.v3;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
+import org.objectweb.asm.AnnotationVisitor;
+
+import com.googlecode.dex2jar.Annotation;
+import com.googlecode.dex2jar.Annotation.Item;
+import com.googlecode.dex2jar.Field;
+import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
+import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
-
+import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -28,9 +39,23 @@ import com.googlecode.dex2jar.visitors.DexFileVisitor;
  */
 public class V3AccessFlagsAdapter implements DexFileVisitor {
     private Map<String, Integer> map = new HashMap<String, Integer>();
+    private Map<String, String> innerNameMap = new HashMap<String, String>();
+
+    private Map<String, Set<String>> extraMember = new HashMap();
+
+    /**
+     * @return the innerNameMap
+     */
+    public Map<String, String> getInnerNameMap() {
+        return innerNameMap;
+    }
 
     public Map<String, Integer> getAccessFlagsMap() {
         return map;
+    }
+
+    public Map<String, Set<String>> getExtraMember() {
+        return extraMember;
     }
 
     /*
@@ -39,9 +64,72 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
-    public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames) {
-        map.put(className, access_flags);
-        return null;
+    public DexClassVisitor visit(int access_flags, final String className, String superClass, String... interfaceNames) {
+
+        return new DexClassVisitor() {
+            protected List<Annotation> anns = new ArrayList<Annotation>();
+
+            @Override
+            public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+                Annotation ann = new Annotation(name, visitable);
+                anns.add(ann);
+                return new V3AnnAdapter(ann);
+            }
+
+            @Override
+            public void visitSource(String file) {
+            }
+
+            @Override
+            public DexMethodVisitor visitMethod(Method method) {
+                return null;
+            }
+
+            @Override
+            public DexFieldVisitor visitField(Field field, Object value) {
+                return null;
+            }
+
+            @Override
+            public void visitEnd() {
+                String enclosingClass = null;
+                for (Annotation ann : anns) {
+                    if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
+                        for (Item i : ann.items) {
+                            if (i.name.equals("value")) {
+                                enclosingClass = i.value.toString();
+                            }
+                        }
+                    } else if (ann.type.equals("Ldalvik/annotation/EnclosingMethod;")) {
+                        for (Item i : ann.items) {
+                            if ("value".equals(i.name)) {
+                                Method m = (Method) i.value;
+                                enclosingClass = m.getOwner();
+                            }
+                        }
+                    }
+                }
+                for (Annotation ann : anns) {
+                    if ("Ldalvik/annotation/InnerClass;".equals(ann.type)) {
+                        for (Item it : ann.items) {
+                            if ("accessFlags".equals(it.name)) {
+                                map.put(className, (Integer) it.value);
+                            } else if ("name".equals(it.name)) {
+                                innerNameMap.put(className, (String) it.value);
+                                if (it.value == null) {
+                                    Set<String> set = extraMember.get(enclosingClass);
+                                    if (set == null) {
+                                        set = new TreeSet();
+                                        extraMember.put(enclosingClass, set);
+                                    }
+                                    set.add(className);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
     }
 
     /*

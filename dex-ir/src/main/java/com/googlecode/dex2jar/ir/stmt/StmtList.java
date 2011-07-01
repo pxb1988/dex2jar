@@ -167,4 +167,21 @@ public class StmtList implements Iterable<Stmt> {
         return sb.toString();
     }
 
+    public void replace(AssignStmt stmt, AssignStmt nas) {
+        if (stmt.list == this) {
+            nas.list = this;
+            nas.next = stmt.next;
+            nas.pre = stmt.pre;
+            if (stmt.next != null) {
+                stmt.next.pre = nas;
+            }
+            if (stmt.pre != null) {
+                stmt.pre.next = nas;
+            }
+            stmt.next = null;
+            stmt.pre = null;
+            stmt.list = null;
+        }
+    }
+
 }
