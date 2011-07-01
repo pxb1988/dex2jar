@@ -10,9 +10,9 @@ import pxb.xjimple.stmt.LabelStmt;
 import pxb.xjimple.stmt.StmtList;
 import pxb.xjimple.stmt.Stmts;
 
-public class ATest {
+public class StmtListTest {
     @Test
-    public void test() {
+    public void toStringTest() {
 
         StmtList list = new StmtList();
         Local a = Exprs.nLocal("this", Type.getType("Ljava/lang/String;"));
@@ -28,6 +28,6 @@ public class ATest {
         list.add(Stmts.nIf(Exprs.nGt(b, Constant.nInt(0)), L1));
         list.add(Stmts.nAssign(c, Exprs.nCast(d, Type.LONG_TYPE)));
         list.add(L1);
-        System.out.println(list);
+        list.toString();
     }
 }

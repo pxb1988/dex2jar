@@ -13,4 +13,8 @@ public class ReturnVoidStmt extends Stmt {
         return new ReturnVoidStmt();
     }
 
+    @Override
+    public String toString() {
+        return "return";
+    }
 }

@@ -53,6 +53,10 @@ public class StmtList implements Iterable<Stmt> {
         insertLast(stmt);
     }
 
+    public boolean contains(Stmt stmt) {
+        return stmt.list == this;
+    }
+
     public Stmt getFirst() {
         return first;
     }

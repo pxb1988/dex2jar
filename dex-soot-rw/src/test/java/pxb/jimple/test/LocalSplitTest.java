@@ -4,15 +4,19 @@ import static pxb.xjimple.Constant.n;
 import static pxb.xjimple.Constant.nInt;
 import static pxb.xjimple.Constant.nNull;
 import static pxb.xjimple.Constant.nString;
+import static pxb.xjimple.expr.Exprs.nAdd;
+import static pxb.xjimple.expr.Exprs.nArray;
 import static pxb.xjimple.expr.Exprs.nExceptionRef;
 import static pxb.xjimple.expr.Exprs.nGt;
 import static pxb.xjimple.expr.Exprs.nInvokeVirtual;
 import static pxb.xjimple.expr.Exprs.nLocal;
+import static pxb.xjimple.expr.Exprs.nNewArray;
 import static pxb.xjimple.stmt.Stmts.nAssign;
 import static pxb.xjimple.stmt.Stmts.nGoto;
 import static pxb.xjimple.stmt.Stmts.nIf;
 import static pxb.xjimple.stmt.Stmts.nLabel;
 import static pxb.xjimple.stmt.Stmts.nReturn;
+import static pxb.xjimple.stmt.Stmts.nReturnVoid;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,6 +33,7 @@ import pxb.xjimple.stmt.UnopStmt;
 import pxb.xjimple.ts.LocalSpliter;
 
 public class LocalSplitTest {
+
     @Test
     public void test() {
 
@@ -49,8 +54,6 @@ public class LocalSplitTest {
         new LocalSpliter().transform(jm);
 
         Assert.assertTrue(jm.locals.size() == 2);
-        // Assert.assertEquals(STRING, ((Local) st1.left.value).type);
-        // Assert.assertEquals(Type.INT_TYPE, ((Local) st2.left.value).type);
         Assert.assertEquals(st2.left.value, st3.op.value);
     }
 
@@ -109,6 +112,30 @@ public class LocalSplitTest {
         list.add(nAssign(b, nNull()));
         list.add(L4);
         list.add(nReturn(b));
+
+        new LocalSpliter().transform(jm);
+
+        Assert.assertTrue(jm.locals.size() == 3);
+    }
+
+    @Test
+    public void test4() {
+        JimpleMethod jm = new JimpleMethod();
+
+
+        Local array = nLocal("array", null);
+        Local index = nLocal("index", null);
+        Local value = nLocal("value", null);
+        StmtList list = jm.stmts;
+        jm.locals.add(array);
+        jm.locals.add(index);
+        jm.locals.add(value);
+
+        list.add(nAssign(array, nNewArray(Type.INT_TYPE, nInt(5))));
+        list.add(nAssign(index, nAdd(nInt(1999), nInt(3))));
+        list.add(nAssign(value, nAdd(index, nInt(4))));
+        list.add(nAssign(nArray(array, index), value));
+        list.add(nReturnVoid());
 
         new LocalSpliter().transform(jm);
 

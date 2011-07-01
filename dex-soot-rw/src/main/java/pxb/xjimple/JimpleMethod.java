@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.objectweb.asm.Type;
 
+import pxb.xjimple.stmt.Stmt;
 import pxb.xjimple.stmt.StmtList;
 
 public class JimpleMethod {
@@ -15,6 +16,8 @@ public class JimpleMethod {
     public List<Local> locals = new ArrayList<Local>();
     public Type ret;
     public int access;
+
+    public List<Stmt> _ls_visit_order;
 
     public List<Trap> traps = new ArrayList<Trap>();
 }

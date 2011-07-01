@@ -131,8 +131,8 @@ public final class Exprs {
     // return new NewExpr(type);
     // }
 
-    public static NewArrayExpr nNewArray(Type type, Value size) {
-        return new NewArrayExpr(type, size);
+    public static NewArrayExpr nNewArray(Type elementType, Value size) {
+        return new NewArrayExpr(elementType, size);
     }
 
     public static NewMutiArrayExpr nNewMutiArray(Type base, int dim, Value[] sizes) {

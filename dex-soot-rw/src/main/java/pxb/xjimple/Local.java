@@ -1,8 +1,5 @@
 package pxb.xjimple;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.objectweb.asm.Type;
 
 public class Local extends Value {
