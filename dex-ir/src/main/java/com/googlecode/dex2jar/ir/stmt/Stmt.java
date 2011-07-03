@@ -21,6 +21,7 @@ public abstract class Stmt {
     /* default */Stmt next;
 
     /* default */Stmt pre;
+    /* default */int id;
 
     public final ST st;
     public final ET et;

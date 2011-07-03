@@ -7,10 +7,7 @@ import java.util.Set;
 
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
-public class StmtList implements Iterable<Stmt> {
-
-    public List<AssignStmt> _ls_inits = new ArrayList<AssignStmt>();
-    public List<Stmt> _ls_visit_order;
+public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
 
     private static class StmtListIterator implements Iterator<Stmt> {
         private Stmt current, next;
@@ -50,14 +47,22 @@ public class StmtList implements Iterable<Stmt> {
             }
         }
     }
+    public Set<Stmt> _cfg_tais;
+    public List<AssignStmt> _ls_inits = new ArrayList<AssignStmt>();
+    public List<Stmt> _ls_visit_order;
 
     private Stmt first, last;
 
+    private int index = 0;
     private int size = 0;
-    public Set<Stmt> _cfg_tais;
 
     public void add(Stmt stmt) {
         insertLast(stmt);
+    }
+
+    @Override
+    public int compare(Stmt o1, Stmt o2) {
+        return o1.id - o2.id;
     }
 
     public boolean contains(Stmt stmt) {
@@ -76,8 +81,14 @@ public class StmtList implements Iterable<Stmt> {
         return size;
     }
 
+    private void indexIt(Stmt stmt) {
+        stmt.id = this.index;
+        this.index++;
+    }
+
     public void insertAftre(Stmt position, Stmt stmt) {
         if (position.list == this && stmt.list == null) {
+            indexIt(stmt);
             stmt.list = this;
             size++;
             if (position.next == null) {
@@ -92,6 +103,7 @@ public class StmtList implements Iterable<Stmt> {
 
     public void insertBefore(Stmt position, Stmt stmt) {
         if (position.list == this && stmt.list == null) {
+            indexIt(stmt);
             stmt.list = this;
             size++;
             if (position.pre == null) {
@@ -106,6 +118,7 @@ public class StmtList implements Iterable<Stmt> {
 
     public void insertFirst(Stmt stmt) {
         if (stmt.list == null) {
+            indexIt(stmt);
             stmt.list = this;
             size++;
             if (first == null) {// empty
@@ -122,6 +135,7 @@ public class StmtList implements Iterable<Stmt> {
 
     public void insertLast(Stmt stmt) {
         if (stmt.list == null) {
+            indexIt(stmt);
             stmt.list = this;
             size++;
             if (first == null) {// empty
@@ -139,7 +153,7 @@ public class StmtList implements Iterable<Stmt> {
     @Override
     public Iterator<Stmt> iterator() {
         return new StmtListIterator(this, first);
-    }
+    };
 
     public void remove(Stmt stmt) {
         if (stmt.list == this) {
@@ -158,24 +172,11 @@ public class StmtList implements Iterable<Stmt> {
             stmt.pre = null;
             stmt.next = null;
         }
-    };
-
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.size == 0) {
-            sb.append("[Empty]");
-        }
-        for (Stmt s : this) {
-            if (s.st == ST.LABEL) {
-                sb.append("\n");
-            }
-            sb.append(s).append("\n");
-        }
-        return sb.toString();
     }
 
     public void replace(AssignStmt stmt, AssignStmt nas) {
         if (stmt.list == this) {
+            indexIt(nas);
             nas.list = this;
             nas.next = stmt.next;
             nas.pre = stmt.pre;
@@ -189,6 +190,20 @@ public class StmtList implements Iterable<Stmt> {
             stmt.pre = null;
             stmt.list = null;
         }
+    }
+
+    public String toString() {
+        if (this.size == 0) {
+            return "[Empty]";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Stmt s : this) {
+            if (s.st == ST.LABEL) {
+                sb.append("\n");
+            }
+            sb.append(s).append("\n");
+        }
+        return sb.toString();
     }
 
 }

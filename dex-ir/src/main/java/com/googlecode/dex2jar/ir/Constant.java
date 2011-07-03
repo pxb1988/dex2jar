@@ -3,6 +3,7 @@ package com.googlecode.dex2jar.ir;
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.ir.Value.E0Expr;
+import com.googlecode.dex2jar.ir.ts.LocalRemover;
 
 public class Constant extends E0Expr {
     public static Object Null = new Object();
@@ -86,8 +87,11 @@ public class Constant extends E0Expr {
         if (value instanceof String) {
             return "\"" + value + "\"";
         }
-        if (value instanceof Type) {
-            return ToStringUtil.toShortClassName((Type) value)+".class";
+        if (type.equals(Type.getType(Class.class))) {
+            return ToStringUtil.toShortClassName((Type) value) + ".class";
+        }
+        if (type == LocalRemover.NEW_TYPE) {
+            return "A place holder for [NEW " + ToStringUtil.toShortClassName((Type) value) + "], will remove after LR";
         }
         return "" + value;
     }

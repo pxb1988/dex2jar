@@ -1,9 +1,9 @@
 package com.googlecode.dex2jar.ir.ts;
 
 import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
@@ -24,12 +24,12 @@ public class Cfg {
 
         for (Stmt st : jm.stmts) {
             if (st._cfg_froms == null) {
-                st._cfg_froms = new HashSet<Stmt>(5);
+                st._cfg_froms = new TreeSet<Stmt>(jm.stmts);
             } else {
                 st._cfg_froms.clear();
             }
             if (st._cfg_tos == null) {
-                st._cfg_tos = new HashSet<Stmt>(5);
+                st._cfg_tos = new TreeSet<Stmt>(jm.stmts);
             } else {
                 st._cfg_tos.clear();
             }
@@ -40,7 +40,7 @@ public class Cfg {
                 link(s, t.handler);
             }
         }
-        Set<Stmt> tails = new HashSet<Stmt>();
+        Set<Stmt> tails = new TreeSet<Stmt>(jm.stmts);
 
         for (Stmt st : jm.stmts) {
             switch (st.st) {
