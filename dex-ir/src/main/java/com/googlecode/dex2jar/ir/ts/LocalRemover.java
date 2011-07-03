@@ -32,12 +32,12 @@ import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 
 public class LocalRemover implements Transformer {
 
-    public static Type NEW_TYPE = Type.getType("Lc.g.d.i.LocalRemover.NEW;");
+    public static Type NEW_TYPE = Type.getType("Lc.g.d.i.t.LocalRemover$NEW;");
 
     @Override
     public void transform(JimpleMethod je) {
         StmtList list = je.stmts;
-        List<Stmt> orderList = je._ls_visit_order;
+        List<Stmt> orderList = list._ls_visit_order;
 
         for (int p = 0; p < orderList.size(); p++) {
             Stmt st = orderList.get(p);
@@ -54,7 +54,7 @@ public class LocalRemover implements Transformer {
                         Constant c = (Constant) as.op2.value;
                         if (NEW_TYPE.equals(c.type)) {
                             list.remove(st);
-                            for (Iterator<AssignStmt> it = je._ls_inits.iterator(); it.hasNext();) {
+                            for (Iterator<AssignStmt> it = list._ls_inits.iterator(); it.hasNext();) {
                                 AssignStmt stmt = it.next();
                                 InvokeExpr ie = (InvokeExpr) stmt.op2.value;
                                 if (ie.ops[0].value == aLeft) {
@@ -96,7 +96,7 @@ public class LocalRemover implements Transformer {
             }
         }
 
-        je._ls_inits = null;
+        list._ls_inits = null;
 
         List<ValueBox> vbs = new ArrayList<ValueBox>(20);
 

@@ -1,10 +1,16 @@
 package com.googlecode.dex2jar.ir.stmt;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 public class StmtList implements Iterable<Stmt> {
+
+    public List<AssignStmt> _ls_inits = new ArrayList<AssignStmt>();
+    public List<Stmt> _ls_visit_order;
 
     private static class StmtListIterator implements Iterator<Stmt> {
         private Stmt current, next;
@@ -48,6 +54,7 @@ public class StmtList implements Iterable<Stmt> {
     private Stmt first, last;
 
     private int size = 0;
+    public Set<Stmt> _cfg_tais;
 
     public void add(Stmt stmt) {
         insertLast(stmt);

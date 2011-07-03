@@ -1,6 +1,5 @@
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import com.googlecode.dex2jar.ir.ET;
@@ -13,9 +12,10 @@ public abstract class Stmt {
 
     public Set<Stmt> _cfg_froms;
     public Set<Stmt> _cfg_tos;
-    public ValueBox[] _ls_frame;
-    public Set<Stmt> _ls_traps = new HashSet<Stmt>();
-    public boolean _ls_visited;
+    public ValueBox[] _ls_forward_frame;
+    public ValueBox[] _ls_backward_frame;
+
+    public boolean _cfg_visited;
 
     /* default */StmtList list;
     /* default */Stmt next;

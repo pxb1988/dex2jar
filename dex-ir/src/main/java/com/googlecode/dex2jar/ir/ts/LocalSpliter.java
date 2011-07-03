@@ -1,332 +1,287 @@
 package com.googlecode.dex2jar.ir.ts;
 
+import static com.googlecode.dex2jar.ir.Constant.nInt;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 import com.googlecode.dex2jar.ir.JimpleMethod;
 import com.googlecode.dex2jar.ir.Local;
-import com.googlecode.dex2jar.ir.Trap;
+import com.googlecode.dex2jar.ir.Value;
+import com.googlecode.dex2jar.ir.Value.E1Expr;
+import com.googlecode.dex2jar.ir.Value.E2Expr;
+import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
-import com.googlecode.dex2jar.ir.expr.ArrayExpr;
-import com.googlecode.dex2jar.ir.expr.BinopExpr;
 import com.googlecode.dex2jar.ir.expr.Exprs;
-import com.googlecode.dex2jar.ir.expr.FieldExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
-import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
-import com.googlecode.dex2jar.ir.expr.TypeExpr;
-import com.googlecode.dex2jar.ir.expr.UnopExpr;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
-import com.googlecode.dex2jar.ir.stmt.JumpStmt;
-import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.EnStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
-import com.googlecode.dex2jar.ir.stmt.UnopStmt;
+import com.googlecode.dex2jar.ir.ts.Cfg.StmtVisitor;
 
 public class LocalSpliter implements Transformer {
 
-    public void transform(JimpleMethod jm) {
-        int orgLocalSize = jm.locals.size();
+    public void transform(final JimpleMethod jm) {
+        final int orgLocalSize = jm.locals.size();
+        final StmtList list = jm.stmts;
         for (int i = 0; i < orgLocalSize; i++) {
             Local local = jm.locals.get(i);
             local._ls_index = i;
         }
-
-        StmtList list = jm.stmts;
         jm.locals.clear();
-        List<Local> locals = jm.locals;
-        int localId = 0;
+        final List<Local> locals = jm.locals;
 
-        for (Trap t : jm.traps) {
-            for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
-                s._ls_traps.add(t.handler);
-            }
-        }
+        final Value NEED = nInt(1);
 
-        ValueBox[] tmp = new ValueBox[orgLocalSize];
+        Cfg.createCFG(jm);
 
-        Stack<Stmt> toVisitStack = new Stack<Stmt>();
+        Cfg.Backward(jm, new StmtVisitor() {
 
-        toVisitStack.push(list.getFirst());
-
-        ArrayList<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
-
-        // execute
-        // merge to all branches
-        while (!toVisitStack.isEmpty()) {
-            Stmt currentStmt = toVisitStack.pop();
-            if (currentStmt == null || currentStmt._ls_visited) {
-                continue;
-            } else {
-                currentStmt._ls_visited = true;
-            }
-            if (currentStmt._ls_frame == null) {
-                currentStmt._ls_frame = new ValueBox[orgLocalSize];
-            }
-            _ls_visit_order.add(currentStmt);
-
-            // System.out.println(currentStmt);
-
-            ValueBox[] currentFrame = currentStmt._ls_frame;
-            switch (currentStmt.st) {
-            case GOTO:
-                mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target, locals);
-                toVisitStack.push(((JumpStmt) currentStmt).target);
-                break;
-            case IF:
-                mergeFrame2Stmt(currentFrame, ((JumpStmt) currentStmt).target, locals);
-                mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
-
-                toVisitStack.push(((JumpStmt) currentStmt).target);
-                toVisitStack.push(currentStmt.getNext());
-                break;
-            case TABLE_SWITCH:
-                TableSwitchStmt tss = (TableSwitchStmt) currentStmt;
-                for (Stmt target : tss.targets) {
-                    mergeFrame2Stmt(currentFrame, target, locals);
-                    toVisitStack.push(target);
+            @Override
+            public void merge(Object frame, Stmt dist) {
+                ValueBox[] currnetFrame = (ValueBox[]) frame;
+                if (dist._ls_backward_frame == null) {
+                    dist._ls_backward_frame = new ValueBox[orgLocalSize];
+                    System.arraycopy(currnetFrame, 0, dist._ls_backward_frame, 0, currnetFrame.length);
+                } else {
+                    ValueBox[] distFrame = (ValueBox[]) dist._ls_backward_frame;
+                    for (int i = 0; i < currnetFrame.length; i++) {
+                        if (currnetFrame[i].value != null) {
+                            distFrame[i].value = currnetFrame[i].value;
+                        }
+                    }
                 }
-                mergeFrame2Stmt(currentFrame, tss.defaultTarget, locals);
-                toVisitStack.push(tss.defaultTarget);
-                break;
-            case LOOKUP_SWITCH:
-                LookupSwitchStmt lss = (LookupSwitchStmt) currentStmt;
-                for (Stmt target : lss.targets) {
-                    mergeFrame2Stmt(currentFrame, target, locals);
-                    toVisitStack.push(target);
-                }
-                mergeFrame2Stmt(currentFrame, lss.defaultTarget, locals);
-                toVisitStack.push(lss.defaultTarget);
-                break;
-            case ASSIGN:
-            case IDENTITY:
-                AssignStmt assignStmt = (AssignStmt) currentStmt;
-                if (assignStmt.op1.value.vt == VT.LOCAL) {
+            }
 
-                    System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
-                    Local local = (Local) assignStmt.op1.value;
-                    int reg = local._ls_index;
-                    Stmt next = currentStmt.getNext();
-                    ValueBox vb;
-                    if (next != null && next._ls_frame != null && next._ls_frame[reg] != null) {
-                        vb = next._ls_frame[reg];
-                        ((Local) vb.value)._ls_write_count++;
-                        tmp[reg] = vb;
+            void doLocalRef(ValueBox vb, ValueBox[] frame) {
+                if (vb == null)
+                    return;
+                Value v = vb.value;
+                switch (v.et) {
+                case E0:
+                    if (v.vt == VT.LOCAL) {
+                        frame[((Local) v)._ls_index] = new ValueBox(NEED);
+                    }
+                    break;
+                case E1:
+                    E1Expr e1 = (E1Expr) v;
+                    doLocalRef(e1.op, frame);
+                    break;
+                case E2:
+                    E2Expr e2 = (E2Expr) v;
+                    doLocalRef(e2.op1, frame);
+                    doLocalRef(e2.op2, frame);
+                    break;
+                case En:
+                    EnExpr en = (EnExpr) v;
+                    for (int i = 0; i < en.ops.length; i++) {
+                        doLocalRef(en.ops[i], frame);
+                    }
+                    break;
+                }
+            }
+
+            @Override
+            public Object exec(Stmt stmt) {
+                ValueBox[] tmp = new ValueBox[orgLocalSize];
+                if (stmt._ls_backward_frame != null) {
+                    System.arraycopy(stmt._ls_backward_frame, 0, tmp, 0, tmp.length);
+                } else {
+                    for (int i = 0; i < tmp.length; i++) {
+                        tmp[i] = new ValueBox(null);
+                    }
+                }
+
+                switch (stmt.et) {
+                case E0:
+                    break;
+                case E1:
+                    E1Stmt e1 = (E1Stmt) stmt;
+                    doLocalRef(e1.op, tmp);
+                    break;
+                case E2:
+                    E2Stmt e2 = (E2Stmt) stmt;
+                    if (e2.op1.value.vt == VT.LOCAL) {
+                        doLocalRef(e2.op2, tmp);
+                        tmp[((Local) e2.op1.value)._ls_index] = new ValueBox(null);
                     } else {
+                        doLocalRef(e2.op1, tmp);
+                        doLocalRef(e2.op2, tmp);
+                    }
+                    break;
+                case En:
+                    EnStmt en = (EnStmt) stmt;
+                    for (int i = 0; i < en.ops.length; i++) {
+                        doLocalRef(en.ops[i], tmp);
+                    }
+                    break;
+                }
+                return tmp;
+            }
+        });
+
+        final ArrayList<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
+
+        Cfg.Forward(jm, new StmtVisitor() {
+
+            ValueBox[] tmp = new ValueBox[orgLocalSize];
+            int localId = 0;
+
+            @Override
+            public void merge(Object frame, Stmt distStmt) {
+                ValueBox[] currentFrame = (ValueBox[]) frame;
+                if (distStmt == null) {
+                    return;
+                }
+                if (distStmt._ls_forward_frame == null) {
+                    distStmt._ls_forward_frame = new ValueBox[currentFrame.length];
+                    System.arraycopy(currentFrame, 0, distStmt._ls_forward_frame, 0, currentFrame.length);
+                } else {
+                    ValueBox[] b = (ValueBox[]) distStmt._ls_forward_frame;
+                    ValueBox[] backwardFrame = distStmt._ls_backward_frame;
+                    for (int i = 0; i < currentFrame.length; i++) {
+                        if (backwardFrame[i].value == null) {
+                            continue;
+                        }
+                        ValueBox ai = currentFrame[i];
+                        if (ai != null) {
+                            ValueBox bi = b[i];
+                            if (ai != bi) {
+                                if (bi == null) {
+                                    b[i] = ai;
+                                } else {
+                                    if (ai.value != bi.value) {
+                                        locals.remove(ai.value);
+                                    }
+                                    Local la = (Local) ai.value;
+                                    Local lb = (Local) bi.value;
+                                    ai.value = bi.value;
+                                    la._ls_vb = lb._ls_vb;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public Object exec(Stmt stmt) {
+                _ls_visit_order.add(stmt);
+                ValueBox[] currentFrame = (ValueBox[]) stmt._ls_forward_frame;
+                if (currentFrame == null) {
+                    stmt._ls_forward_frame = currentFrame = new ValueBox[orgLocalSize];
+                }
+
+                switch (stmt.st) {
+                case ASSIGN:
+                case IDENTITY:
+                    E2Stmt assignStmt = (E2Stmt) stmt;
+                    if (assignStmt.op1.value.vt == VT.LOCAL) {
+                        System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
+                        Local local = (Local) assignStmt.op1.value;
+                        int reg = local._ls_index;
                         Local nLocal = Exprs.nLocal("a_" + localId++, null);
                         nLocal._ls_index = reg;
-                        nLocal._ls_write_count = 1;
-                        jm.locals.add(nLocal);
-                        vb = new ValueBox(nLocal);
+                        locals.add(nLocal);
+                        ValueBox vb = new ValueBox(nLocal);
                         nLocal._ls_vb = vb;
-
+                        assignStmt.op1 = vb;
+                        tmp[reg] = vb;
+                        currentFrame = tmp;
                     }
-                    tmp[reg] = vb;
-                    currentFrame = tmp;
-                    mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
-                    assignStmt.op1 = ((Local) vb.value)._ls_vb;
-                } else {
-                    mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
                 }
-                toVisitStack.push(currentStmt.getNext());
-                break;
-            case NOP:
-            case LABEL:
-            case LOCK:
-            case UNLOCK:
-                // merge to next next
-                mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
-                toVisitStack.push(currentStmt.getNext());
-                break;
-            case THROW:
-            case RETURN:
-            case RETURN_VOID:
-                break;
+                return currentFrame;
             }
+        });
 
-            for (Stmt t : currentStmt._ls_traps) {
-                if (!t._ls_visited) {
-                    mergeFrame2Stmt(currentFrame, t, locals);
-                    toVisitStack.push(t);
-                }
-            }
-        }
-
+        // reassign valuebox
         for (Iterator<Stmt> it = list.iterator(); it.hasNext();) {
             Stmt st = it.next();
-            if (st._ls_frame == null) {// dead code
+            if (st._ls_forward_frame == null) {// dead code
                 it.remove();
                 continue;
             }
-            exec(st);
-            switch (st.st) {
-            case ASSIGN:
-            case IDENTITY:
-                AssignStmt as = (AssignStmt) st;
-                if (as.op1.value.vt == VT.LOCAL) {
-                    as.op1 = ((Local) as.op1.value)._ls_vb;
-                }
-                if (as.op2.value.vt == VT.INVOKE_SPECIAL) {
-                    InvokeExpr ie = (InvokeExpr) as.op2.value;
-                    if (ie.methodName.equals("<init>")) {
-                        jm._ls_inits.add(as);
-                    }
-                }
+            ValueBox[] currentFrame = st._ls_forward_frame;
+            switch (st.et) {
+            case E0:
                 break;
+            case E1:
+                E1Stmt e1 = (E1Stmt) st;
+                e1.op = exec(e1.op, currentFrame);
+                break;
+            case E2:
+                E2Stmt e2 = (E2Stmt) st;
+                switch (e2.st) {
+                case ASSIGN:
+                case IDENTITY:
+                    if (e2.op1.value.vt == VT.LOCAL) {
+                        Local local = (Local) e2.op1.value;
+                        local._ls_write_count++;
+                        e2.op1 = local._ls_vb;
+                        if (e2.op2.value.vt == VT.INVOKE_SPECIAL) {
+                            InvokeExpr ie = (InvokeExpr) e2.op2.value;
+                            if (ie.methodName.equals("<init>")) {
+                                list._ls_inits.add((AssignStmt) e2);
+                            }
+                        }
+                    } else {
+                        e2.op1 = exec(e2.op1, currentFrame);
+                    }
+                    break;
+                default:
+                    e2.op1 = exec(e2.op1, currentFrame);
+                    break;
+                }
+                e2.op2 = exec(e2.op2, currentFrame);
+                break;
+            case En:
+                EnStmt en = (EnStmt) st;
+                for (int i = 0; i < en.ops.length; i++) {
+                    en.ops[i] = exec(en.ops[i], currentFrame);
+                }
             }
             // clean
-            st._ls_frame = null;
-            st._ls_traps = null;
-            st._ls_visited = false;
+            st._ls_forward_frame = null;
+            st._ls_backward_frame = null;
         }
 
-        jm._ls_visit_order = _ls_visit_order;
+        jm.stmts._ls_visit_order = _ls_visit_order;
     }
 
-    static private void exec(Stmt st) {
-        ValueBox[] frame = st._ls_frame;
-        switch (st.st) {
-        case ASSIGN:
-        case IDENTITY:
-            AssignStmt assignStmt = (AssignStmt) st;
-            if (assignStmt.op1.value.vt != VT.LOCAL) {
-                assignStmt.op1 = execValue(assignStmt.op1, frame);
-            }
-            assignStmt.op2 = execValue(assignStmt.op2, frame);
-            break;
-        case GOTO:
-        case NOP:
-        case LABEL:
-        case RETURN_VOID:
-            break;
-        case IF:
-            ((JumpStmt) st).op = execValue(((JumpStmt) st).op, frame);
-            break;
-        case LOOKUP_SWITCH:
-            ((LookupSwitchStmt) st).op = execValue(((LookupSwitchStmt) st).op, frame);
-            break;
-        case TABLE_SWITCH:
-            ((TableSwitchStmt) st).op = execValue(((TableSwitchStmt) st).op, frame);
-            break;
-        case LOCK:
-        case THROW:
-        case UNLOCK:
-        case RETURN:
-            ((UnopStmt) st).op = execValue(((UnopStmt) st).op, frame);
-            break;
-        }
-    }
-
-    static private ValueBox execValue(ValueBox vb, ValueBox[] frame) {
-        switch (vb.value.vt) {
-        case LOCAL:
-            Local local = (Local) frame[((Local) vb.value)._ls_index].value;
-            local._ls_read_count++;
-            return ((Local) frame[((Local) vb.value)._ls_index].value)._ls_vb;
-        case FIELD:
-            FieldExpr fe = (FieldExpr) vb.value;
-            if (null != fe.op) {
-                fe.op = execValue(fe.op, frame);
+    static ValueBox exec(ValueBox vb, ValueBox[] currentFrame) {
+        if (vb == null)
+            return null;
+        Value v = vb.value;
+        switch (v.et) {
+        case E0:
+            if (v.vt == VT.LOCAL) {
+                Local local = (Local) currentFrame[((Local) v)._ls_index].value;
+                local._ls_read_count++;
+                vb = local._ls_vb;
             }
             break;
-        case INSTANCEOF:
-        case NEW_ARRAY:
-        case CAST:
-            TypeExpr ioe = (TypeExpr) vb.value;
-            ioe.op = execValue(ioe.op, frame);
+        case E1:
+            E1Expr e1 = (E1Expr) v;
+            e1.op = exec(e1.op, currentFrame);
             break;
-        case LENGTH:
-        case NEG:
-        case NOT:
-            UnopExpr ue = (UnopExpr) vb.value;
-            ue.op = execValue(ue.op, frame);
+        case E2:
+            E2Expr e2 = (E2Expr) v;
+            e2.op1 = exec(e2.op1, currentFrame);
+            e2.op2 = exec(e2.op2, currentFrame);
             break;
-        case NEW_MUTI_ARRAY:
-            NewMutiArrayExpr nmae = (NewMutiArrayExpr) vb.value;
-            for (int i = 0; i < nmae.ops.length; i++) {
-                nmae.ops[i] = execValue(nmae.ops[i], frame);
+        case En:
+            EnExpr en = (EnExpr) v;
+            for (int i = 0; i < en.ops.length; i++) {
+                en.ops[i] = exec(en.ops[i], currentFrame);
             }
-            break;
-        case ARRAY:
-            ArrayExpr ae = (ArrayExpr) vb.value;
-            ae.op1 = execValue(ae.op1, frame);
-            ae.op2 = execValue(ae.op2, frame);
-            break;
-        case CMP:
-        case CMPG:
-        case CMPL:
-        case ADD:
-        case MUL:
-        case AND:
-        case DIV:
-        case OR:
-        case REM:
-        case USHR:
-        case XOR:
-        case SUB:
-        case SHL:
-        case SHR:
-        case EQ:
-        case GE:
-        case GT:
-        case LE:
-        case LT:
-        case NE:
-            BinopExpr be = (BinopExpr) vb.value;
-            be.op1 = execValue(be.op1, frame);
-            be.op2 = execValue(be.op2, frame);
-            break;
-        case INVOKE_STATIC:
-        case INVOKE_SPECIAL:
-        case INVOKE_VIRTUAL:
-        case INVOKE_INTERFACE:
-        case INVOKE_NEW:
-            InvokeExpr methodExpr = (InvokeExpr) vb.value;
-            for (int i = 0; i < methodExpr.ops.length; i++) {
-                methodExpr.ops[i] = execValue(methodExpr.ops[i], frame);
-            }
-            break;
-        case EXCEPTION_REF:
-        case THIS_REF:
-        case PARAMETER_REF:
-        case CONSTANT:
             break;
         }
         return vb;
     }
 
-    static private void mergeFrame2Stmt(ValueBox[] currentFrame, Stmt distStmt, List<Local> locals) {
-        if (distStmt == null) {
-            return;
-        }
-        if (distStmt._ls_frame == null) {
-            distStmt._ls_frame = new ValueBox[currentFrame.length];
-            System.arraycopy(currentFrame, 0, distStmt._ls_frame, 0, currentFrame.length);
-        } else {
-            ValueBox[] b = distStmt._ls_frame;
-            for (int i = 0; i < currentFrame.length; i++) {
-                ValueBox ai = currentFrame[i];
-                if (ai != null) {
-                    ValueBox bi = b[i];
-                    if (ai != bi) {
-                        if (bi == null) {
-                            b[i] = ai;
-                        } else {
-                            if (ai.value != bi.value) {
-                                locals.remove(ai.value);
-                            }
-                            Local la = (Local) ai.value;
-                            Local lb = (Local) bi.value;
-                            lb._ls_write_count += la._ls_write_count;
-                            ai.value = bi.value;
-                            la._ls_vb = lb._ls_vb;
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
