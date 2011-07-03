@@ -23,7 +23,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 
-import com.googlecode.dex2jar.ir.JimpleMethod;
+import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
@@ -38,7 +38,7 @@ public class LocalSplitTest {
     @Test
     public void test() {
 
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
 
         Local b = nLocal("a", null);
 
@@ -61,7 +61,7 @@ public class LocalSplitTest {
     @Test
     public void test2() {
 
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
 
         Local b = nLocal("a", null);
 
@@ -87,7 +87,7 @@ public class LocalSplitTest {
     @Test
     public void test3() {
         Type exType = Type.getType("Ljava/lang/Exception;");
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
 
         LabelStmt L1 = nLabel();
         LabelStmt L2 = nLabel();
@@ -103,7 +103,7 @@ public class LocalSplitTest {
 
         list.add(L1);
         list.add(nAssign(b, nString("123")));
-        // list.add(nThrow(nInvokeNew(nNull, new Type[0], exType)));
+        list.add(nAssign(ex, nString("test ex")));
         list.add(L2);
         list.add(nGoto(L4));
         list.add(L3);
@@ -121,7 +121,7 @@ public class LocalSplitTest {
 
     @Test
     public void test4() {
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
 
         Local array = nLocal("array", null);
         Local index = nLocal("index", null);

@@ -86,7 +86,9 @@ public class Constant extends E0Expr {
         if (value instanceof String) {
             return "\"" + value + "\"";
         }
-
+        if (value instanceof Type) {
+            return ToStringUtil.toShortClassName((Type) value)+".class";
+        }
         return "" + value;
     }
 }

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.googlecode.dex2jar.ir.JimpleMethod;
+import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.E1Expr;
@@ -26,7 +26,7 @@ import com.googlecode.dex2jar.ir.ts.Cfg.StmtVisitor;
 
 public class LocalSpliter implements Transformer {
 
-    public void transform(final JimpleMethod jm) {
+    public void transform(final IrMethod jm) {
         final int orgLocalSize = jm.locals.size();
         final StmtList list = jm.stmts;
         for (int i = 0; i < orgLocalSize; i++) {

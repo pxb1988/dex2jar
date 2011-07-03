@@ -148,9 +148,6 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
             @Override
             public void visitEnd() {
                 super.visitEnd();
-                if (irMethod == null || irMethod.name == null || irMethod.name.equals("init")) {
-                    irMethod.toString();
-                }
                 if (irMethod.stmts.getSize() > 1) {
                     for (Transformer ts : new Transformer[] { new LocalSpliter(), new LocalRemover() }) {
                         ts.transform(irMethod);

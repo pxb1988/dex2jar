@@ -79,7 +79,7 @@ import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.ir.Constant;
-import com.googlecode.dex2jar.ir.JimpleMethod;
+import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
@@ -103,7 +103,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         return ls;
     }
 
-    protected JimpleMethod irMethod;
+    protected IrMethod irMethod;
 
     private StmtList list;
 
@@ -119,7 +119,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
      */
     public V3CodeAdapter(Method method) {
         super();
-        JimpleMethod irMethod = new JimpleMethod();
+        IrMethod irMethod = new IrMethod();
         irMethod.access = method.getAccessFlags();
         irMethod.args = Type.getArgumentTypes(method.getType().getDesc());
         irMethod.ret = Type.getType(method.getType().getReturnType());

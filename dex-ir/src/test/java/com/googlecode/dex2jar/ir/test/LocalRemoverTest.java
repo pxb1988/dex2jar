@@ -23,7 +23,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 
-import com.googlecode.dex2jar.ir.JimpleMethod;
+import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
@@ -37,7 +37,7 @@ import com.googlecode.dex2jar.ir.ts.LocalSpliter;
 public class LocalRemoverTest {
     @Test
     public void t1() {
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
         StmtList list = jm.stmts;
         {
             Local a = nLocal("a", null);
@@ -60,7 +60,7 @@ public class LocalRemoverTest {
 
     @Test
     public void t2() {
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
         StmtList list = jm.stmts;
         {
             Local a = nLocal("a", null);
@@ -84,7 +84,7 @@ public class LocalRemoverTest {
 
     @Test
     public void t3() {
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
         StmtList list = jm.stmts;
         {
             Local a = nLocal("a", null);
@@ -114,7 +114,7 @@ public class LocalRemoverTest {
 
     @Test
     public void t4() {
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
         StmtList list = jm.stmts;
         {
             Local a = nLocal("a", null);
@@ -139,7 +139,7 @@ public class LocalRemoverTest {
     @Test
     public void t5() {
 
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
 
         Local b = nLocal("a", null);
 
@@ -162,7 +162,7 @@ public class LocalRemoverTest {
     @Test
     public void t6() {
 
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
 
         Local b = nLocal("a", null);
 
@@ -188,7 +188,7 @@ public class LocalRemoverTest {
     @Test
     public void t7() {
         Type exType = Type.getType("Ljava/lang/Exception;");
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
 
         LabelStmt L1 = nLabel();
         LabelStmt L2 = nLabel();
@@ -204,6 +204,7 @@ public class LocalRemoverTest {
 
         list.add(L1);
         list.add(nAssign(b, nString("123")));
+        list.add(nAssign(ex, nInt(5)));
         // list.add(nThrow(nInvokeNew(nNull, new Type[0], exType)));
         list.add(L2);
         list.add(nGoto(L4));
@@ -222,7 +223,7 @@ public class LocalRemoverTest {
 
     @Test
     public void t8() {
-        JimpleMethod jm = new JimpleMethod();
+        IrMethod jm = new IrMethod();
 
         Local array = nLocal("array", null);
         Local index = nLocal("index", null);

@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
 
-import com.googlecode.dex2jar.ir.JimpleMethod;
+import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
@@ -20,7 +20,7 @@ public class Cfg {
         to._cfg_froms.add(from);
     }
 
-    public static void createCFG(JimpleMethod jm) {
+    public static void createCFG(IrMethod jm) {
 
         for (Stmt st : jm.stmts) {
             if (st._cfg_froms == null) {
@@ -85,7 +85,7 @@ public class Cfg {
         void merge(Object frame, Stmt dist);
     }
 
-    public static void Forward(JimpleMethod jm, StmtVisitor sv) {
+    public static void Forward(IrMethod jm, StmtVisitor sv) {
 
         // clean
         for (Stmt st : jm.stmts) {
@@ -113,7 +113,7 @@ public class Cfg {
         }
     }
 
-    public static void Backward(JimpleMethod jm, StmtVisitor sv) {
+    public static void Backward(IrMethod jm, StmtVisitor sv) {
 
         // clean
         for (Stmt st : jm.stmts) {

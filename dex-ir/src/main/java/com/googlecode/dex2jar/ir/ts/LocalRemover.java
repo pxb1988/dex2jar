@@ -8,7 +8,7 @@ import java.util.Stack;
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.ir.Constant;
-import com.googlecode.dex2jar.ir.JimpleMethod;
+import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.VT;
@@ -35,7 +35,7 @@ public class LocalRemover implements Transformer {
     public static Type NEW_TYPE = Type.getType("Lc.g.d.i.t.LocalRemover$NEW;");
 
     @Override
-    public void transform(JimpleMethod je) {
+    public void transform(IrMethod je) {
         StmtList list = je.stmts;
         List<Stmt> orderList = list._ls_visit_order;
 

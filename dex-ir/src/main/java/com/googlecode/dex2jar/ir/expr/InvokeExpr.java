@@ -3,6 +3,7 @@ package com.googlecode.dex2jar.ir.expr;
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.ir.Value.EnExpr;
+import com.googlecode.dex2jar.ir.ToStringUtil;
 import com.googlecode.dex2jar.ir.ValueBox;
 
 public class InvokeExpr extends EnExpr {
@@ -24,10 +25,10 @@ public class InvokeExpr extends EnExpr {
         StringBuilder sb = new StringBuilder();
         int i = 0;
         if (super.vt == VT.INVOKE_NEW) {
-            sb.append("new ").append(methodOwnerType.getClassName()).append('(');
+            sb.append("new ").append(ToStringUtil.toShortClassName(methodOwnerType)).append('(');
         } else {
-            sb.append(super.vt == VT.INVOKE_STATIC ? methodOwnerType.getClassName() : ops[i]).append('.')
-                    .append(this.methodName).append('(');
+            sb.append(super.vt == VT.INVOKE_STATIC ? ToStringUtil.toShortClassName(methodOwnerType) : ops[i])
+                    .append('.').append(this.methodName).append('(');
             i++;
         }
         boolean first = true;
