@@ -2,7 +2,9 @@ package com.googlecode.dex2jar.ir;
 
 import org.objectweb.asm.Type;
 
-public class Local extends Value {
+import com.googlecode.dex2jar.ir.Value.E0Expr;
+
+public class Local extends E0Expr {
     public Type type;
     public String name;
 

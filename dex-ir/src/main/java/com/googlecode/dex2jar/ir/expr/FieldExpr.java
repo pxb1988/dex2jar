@@ -2,26 +2,25 @@ package com.googlecode.dex2jar.ir.expr;
 
 import org.objectweb.asm.Type;
 
-import com.googlecode.dex2jar.ir.Value;
+import com.googlecode.dex2jar.ir.Value.E1Expr;
 import com.googlecode.dex2jar.ir.ValueBox;
 
-public class FieldExpr extends Value {
+public class FieldExpr extends E1Expr {
 
     public String fieldName;
     public Type fieldType;
     public Type fieldOwnerType;
-    public ValueBox object;
+    public ValueBox op;
 
     public FieldExpr(ValueBox object, Type ownerType, String fieldName, Type fieldType) {
-        super(VT.FIELD);
-        this.object = object;
+        super(VT.FIELD,object);
         this.fieldType = fieldType;
         this.fieldName = fieldName;
         this.fieldOwnerType = ownerType;
     }
 
     public String toString() {
-        return (object == null ? fieldOwnerType.getClassName() : object) + "." + fieldName;
+        return (op == null ? fieldOwnerType.getClassName() : op) + "." + fieldName;
     }
 
 }

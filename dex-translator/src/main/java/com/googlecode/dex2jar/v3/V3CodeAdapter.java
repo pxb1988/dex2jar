@@ -59,6 +59,7 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nUshr;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nXor;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLabel;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLock;
@@ -137,14 +138,14 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             int i = 0;
             if ((irMethod.access & ACC_STATIC) == 0) {
                 Local _this = nLocal("this", this.irMethod.owner);
-                list.add(nAssign(_this, nThisRef(this.irMethod.owner)));
+                list.add(nIdentity(_this, nThisRef(this.irMethod.owner)));
                 locals[args[i]] = _this;
                 i++;
             }
             int j = 0;
             for (; i < args.length; i++, j++) {
                 Local _arg = nLocal("arg_" + args[i], this.irMethod.args[j]);
-                list.add(nAssign(_arg, nParameterRef(this.irMethod.args[j], j)));
+                list.add(nIdentity(_arg, nParameterRef(this.irMethod.args[j], j)));
                 locals[args[i]] = _arg;
             }
         }
@@ -480,13 +481,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
     @Override
     public void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels) {
-        Value vs[] = new Value[cases.length];
         LabelStmt[] lss = new LabelStmt[cases.length];
         for (int i = 0; i < cases.length; i++) {
-            vs[i] = nInt(cases[i]);
             lss[i] = toLabelStmt(labels[i]);
         }
-        list.add(nLookupSwitch(locals[aA], vs, lss, toLabelStmt(label)));
+        list.add(nLookupSwitch(locals[aA], cases, lss, toLabelStmt(label)));
     }
 
     @Override
@@ -540,7 +539,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             list.add(nAssign(locals[toReg], locals[tmp_reg]));
             break;
         case OP_MOVE_EXCEPTION:
-            list.add(nAssign(locals[toReg], nExceptionRef(Type.getType(Throwable.class))));
+            list.add(nIdentity(locals[toReg], nExceptionRef(Type.getType(Throwable.class))));
             break;
         }
     }

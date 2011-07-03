@@ -13,6 +13,7 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNewArray;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLabel;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
@@ -207,7 +208,7 @@ public class LocalRemoverTest {
         list.add(L2);
         list.add(nGoto(L4));
         list.add(L3);
-        list.add(nAssign(ex, nExceptionRef(exType)));
+        list.add(nIdentity(ex, nExceptionRef(exType)));
         list.add(nAssign(ex,
                 nInvokeVirtual(new Value[] { ex }, exType, "toString", new Type[0], Type.getType(String.class))));
         list.add(nAssign(b, nNull()));

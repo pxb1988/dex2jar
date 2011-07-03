@@ -12,13 +12,11 @@ import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.ArrayExpr;
 import com.googlecode.dex2jar.ir.expr.BinopExpr;
-import com.googlecode.dex2jar.ir.expr.CastExpr;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
-import com.googlecode.dex2jar.ir.expr.InstanceOfExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
-import com.googlecode.dex2jar.ir.expr.NewArrayExpr;
 import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
+import com.googlecode.dex2jar.ir.expr.TypeExpr;
 import com.googlecode.dex2jar.ir.expr.UnopExpr;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
@@ -104,11 +102,12 @@ public class LocalSpliter implements Transformer {
                 toVisitStack.push(lss.defaultTarget);
                 break;
             case ASSIGN:
+            case IDENTITY:
                 AssignStmt assignStmt = (AssignStmt) currentStmt;
-                if (assignStmt.left.value.vt == VT.LOCAL) {
+                if (assignStmt.op1.value.vt == VT.LOCAL) {
 
                     System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
-                    Local local = (Local) assignStmt.left.value;
+                    Local local = (Local) assignStmt.op1.value;
                     int reg = local._ls_index;
                     Stmt next = currentStmt.getNext();
                     ValueBox vb;
@@ -128,13 +127,12 @@ public class LocalSpliter implements Transformer {
                     tmp[reg] = vb;
                     currentFrame = tmp;
                     mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
-                    assignStmt.left = ((Local) vb.value)._ls_vb;
+                    assignStmt.op1 = ((Local) vb.value)._ls_vb;
                 } else {
                     mergeFrame2Stmt(currentFrame, currentStmt.getNext(), locals);
                 }
                 toVisitStack.push(currentStmt.getNext());
                 break;
-            case IDENTITY:
             case NOP:
             case LABEL:
             case LOCK:
@@ -166,12 +164,13 @@ public class LocalSpliter implements Transformer {
             exec(st);
             switch (st.st) {
             case ASSIGN:
+            case IDENTITY:
                 AssignStmt as = (AssignStmt) st;
-                if (as.left.value.vt == VT.LOCAL) {
-                    as.left = ((Local) as.left.value)._ls_vb;
+                if (as.op1.value.vt == VT.LOCAL) {
+                    as.op1 = ((Local) as.op1.value)._ls_vb;
                 }
-                if (as.right.value.vt == VT.INVOKE_SPECIAL) {
-                    InvokeExpr ie = (InvokeExpr) as.right.value;
+                if (as.op2.value.vt == VT.INVOKE_SPECIAL) {
+                    InvokeExpr ie = (InvokeExpr) as.op2.value;
                     if (ie.methodName.equals("<init>")) {
                         jm._ls_inits.add(as);
                     }
@@ -191,28 +190,26 @@ public class LocalSpliter implements Transformer {
         ValueBox[] frame = st._ls_frame;
         switch (st.st) {
         case ASSIGN:
+        case IDENTITY:
             AssignStmt assignStmt = (AssignStmt) st;
-            if (assignStmt.left.value.vt != VT.LOCAL) {
-                assignStmt.left = execValue(assignStmt.left, frame);
+            if (assignStmt.op1.value.vt != VT.LOCAL) {
+                assignStmt.op1 = execValue(assignStmt.op1, frame);
             }
-            assignStmt.right = execValue(assignStmt.right, frame);
+            assignStmt.op2 = execValue(assignStmt.op2, frame);
             break;
         case GOTO:
         case NOP:
         case LABEL:
-
         case RETURN_VOID:
             break;
-        case IDENTITY:
-            break;
         case IF:
-            ((JumpStmt) st).condition = execValue(((JumpStmt) st).condition, frame);
+            ((JumpStmt) st).op = execValue(((JumpStmt) st).op, frame);
             break;
         case LOOKUP_SWITCH:
-            ((LookupSwitchStmt) st).key = execValue(((LookupSwitchStmt) st).key, frame);
+            ((LookupSwitchStmt) st).op = execValue(((LookupSwitchStmt) st).op, frame);
             break;
         case TABLE_SWITCH:
-            ((TableSwitchStmt) st).key = execValue(((TableSwitchStmt) st).key, frame);
+            ((TableSwitchStmt) st).op = execValue(((TableSwitchStmt) st).op, frame);
             break;
         case LOCK:
         case THROW:
@@ -229,18 +226,16 @@ public class LocalSpliter implements Transformer {
             Local local = (Local) frame[((Local) vb.value)._ls_index].value;
             local._ls_read_count++;
             return ((Local) frame[((Local) vb.value)._ls_index].value)._ls_vb;
-        case CAST:
-            CastExpr ce = (CastExpr) vb.value;
-            ce.op = execValue(ce.op, frame);
-            break;
         case FIELD:
             FieldExpr fe = (FieldExpr) vb.value;
-            if (null != fe.object) {
-                fe.object = execValue(fe.object, frame);
+            if (null != fe.op) {
+                fe.op = execValue(fe.op, frame);
             }
             break;
         case INSTANCEOF:
-            InstanceOfExpr ioe = (InstanceOfExpr) vb.value;
+        case NEW_ARRAY:
+        case CAST:
+            TypeExpr ioe = (TypeExpr) vb.value;
             ioe.op = execValue(ioe.op, frame);
             break;
         case LENGTH:
@@ -249,22 +244,16 @@ public class LocalSpliter implements Transformer {
             UnopExpr ue = (UnopExpr) vb.value;
             ue.op = execValue(ue.op, frame);
             break;
-
-        case NEW_ARRAY:
-            NewArrayExpr nae = (NewArrayExpr) vb.value;
-            execValue(nae.size, frame);
-
-            break;
         case NEW_MUTI_ARRAY:
             NewMutiArrayExpr nmae = (NewMutiArrayExpr) vb.value;
-            for (int i = 0; i < nmae.sizes.length; i++) {
-                nmae.sizes[i] = execValue(nmae.sizes[i], frame);
+            for (int i = 0; i < nmae.ops.length; i++) {
+                nmae.ops[i] = execValue(nmae.ops[i], frame);
             }
             break;
         case ARRAY:
             ArrayExpr ae = (ArrayExpr) vb.value;
-            ae.base = execValue(ae.base, frame);
-            ae.index = execValue(ae.index, frame);
+            ae.op1 = execValue(ae.op1, frame);
+            ae.op2 = execValue(ae.op2, frame);
             break;
         case CMP:
         case CMPG:
@@ -296,8 +285,8 @@ public class LocalSpliter implements Transformer {
         case INVOKE_INTERFACE:
         case INVOKE_NEW:
             InvokeExpr methodExpr = (InvokeExpr) vb.value;
-            for (int i = 0; i < methodExpr.args.length; i++) {
-                methodExpr.args[i] = execValue(methodExpr.args[i], frame);
+            for (int i = 0; i < methodExpr.ops.length; i++) {
+                methodExpr.ops[i] = execValue(methodExpr.ops[i], frame);
             }
             break;
         case EXCEPTION_REF:

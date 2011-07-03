@@ -1,16 +1,11 @@
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E0Stmt;
 
-public class NopStmt extends Stmt {
+public class NopStmt extends E0Stmt {
 
     public NopStmt() {
         super(ST.NOP);
-    }
-
-    @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
-        return new NopStmt();
     }
 
     public String toString() {

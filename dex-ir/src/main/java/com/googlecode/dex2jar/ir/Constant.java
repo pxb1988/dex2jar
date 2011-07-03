@@ -2,7 +2,9 @@ package com.googlecode.dex2jar.ir;
 
 import org.objectweb.asm.Type;
 
-public class Constant extends Value {
+import com.googlecode.dex2jar.ir.Value.E0Expr;
+
+public class Constant extends E0Expr {
     public static Object Null = new Object();
 
     public static Type STRING = Type.getType(String.class);

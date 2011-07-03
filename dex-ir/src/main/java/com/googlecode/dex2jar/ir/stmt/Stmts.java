@@ -1,5 +1,7 @@
 package com.googlecode.dex2jar.ir.stmt;
 
+import static com.googlecode.dex2jar.ir.expr.Exprs.box;
+
 import org.objectweb.asm.Label;
 
 import com.googlecode.dex2jar.ir.Value;
@@ -11,9 +13,9 @@ public final class Stmts {
     public static AssignStmt nAssign(ValueBox left, ValueBox right) {
         return new AssignStmt(ST.ASSIGN, left, right);
     }
-    
+
     public static AssignStmt nAssign(Value left, Value right) {
-        return new AssignStmt(ST.ASSIGN, left, right);
+        return new AssignStmt(ST.ASSIGN, box(left), box(right));
     }
 
     public static JumpStmt nGoto(LabelStmt target) {
@@ -21,25 +23,27 @@ public final class Stmts {
     }
 
     public static AssignStmt nIdentity(Value local, Value identityRef) {
-        return new AssignStmt(ST.IDENTITY, local, identityRef);
+        return new AssignStmt(ST.IDENTITY, box(local), box(identityRef));
     }
 
     public static JumpStmt nIf(Value a, LabelStmt target) {
-        return new JumpStmt(ST.IF, a, target);
+        return new JumpStmt(ST.IF, box(a), target);
     }
+
     public static LabelStmt nLabel() {
         return new LabelStmt(new Label());
     }
+
     public static LabelStmt nLabel(Label label) {
         return new LabelStmt(label);
     }
 
     public static UnopStmt nLock(Value op) {
-        return new UnopStmt(ST.LOCK, op);
+        return new UnopStmt(ST.LOCK, box(op));
     }
 
-    public static LookupSwitchStmt nLookupSwitch(Value key, Value[] lookupValues, LabelStmt[] targets, LabelStmt target) {
-        return new LookupSwitchStmt(key, lookupValues, targets, target);
+    public static LookupSwitchStmt nLookupSwitch(Value key, int[] lookupValues, LabelStmt[] targets, LabelStmt target) {
+        return new LookupSwitchStmt(box(key), lookupValues, targets, target);
     }
 
     public static NopStmt nNop() {
@@ -47,7 +51,7 @@ public final class Stmts {
     }
 
     public static UnopStmt nReturn(Value op) {
-        return new UnopStmt(ST.RETURN, op);
+        return new UnopStmt(ST.RETURN, box(op));
     }
 
     public static ReturnVoidStmt nReturnVoid() {
@@ -60,11 +64,11 @@ public final class Stmts {
     }
 
     public static UnopStmt nThrow(Value op) {
-        return new UnopStmt(ST.THROW, op);
+        return new UnopStmt(ST.THROW, box(op));
     }
 
     public static UnopStmt nUnLock(Value op) {
-        return new UnopStmt(ST.UNLOCK, op);
+        return new UnopStmt(ST.UNLOCK, box(op));
     }
 
     private Stmts() {

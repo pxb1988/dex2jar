@@ -1,16 +1,11 @@
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E0Stmt;
 
-public class ReturnVoidStmt extends Stmt {
+public class ReturnVoidStmt extends E0Stmt {
 
     public ReturnVoidStmt() {
         super(ST.RETURN_VOID);
-    }
-
-    @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
-        return new ReturnVoidStmt();
     }
 
     @Override

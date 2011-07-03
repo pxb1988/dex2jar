@@ -1,17 +1,13 @@
 package com.googlecode.dex2jar.ir.expr;
 
 import com.googlecode.dex2jar.ir.Value;
+import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.ValueBox;
 
-public class BinopExpr extends Value {
-
-    public ValueBox op1;
-    public ValueBox op2;
+public class BinopExpr extends E2Expr {
 
     public BinopExpr(VT type, Value op1, Value op2) {
-        super(type);
-        this.op1 = new ValueBox(op1);
-        this.op2 = new ValueBox(op2);
+        super(type, new ValueBox(op1), new ValueBox(op2));
     }
 
     public String toString() {

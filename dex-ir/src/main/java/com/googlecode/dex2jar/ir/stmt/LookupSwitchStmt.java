@@ -1,50 +1,23 @@
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
-
-import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
-
-public class LookupSwitchStmt extends Stmt {
+public class LookupSwitchStmt extends E1Stmt {
 
     public LabelStmt defaultTarget;
-    public ValueBox key;
-    public Value[] lookupValues;
+    public int[] lookupValues;
     public LabelStmt[] targets;
 
-    public LookupSwitchStmt() {
-        super(ST.LOOKUP_SWITCH);
-    }
-
-    public LookupSwitchStmt(Value key, Value[] lookupValues, LabelStmt[] targets, LabelStmt defaultTarget) {
-        super(ST.LOOKUP_SWITCH);
-        this.key = new ValueBox(key);
+    public LookupSwitchStmt(ValueBox key, int[] lookupValues, LabelStmt[] targets, LabelStmt defaultTarget) {
+        super(ST.LOOKUP_SWITCH, key);
         this.lookupValues = lookupValues;
         this.targets = targets;
         this.defaultTarget = defaultTarget;
     }
 
-    @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
-        LabelStmt[] cloneTargets;
-        Value[] cloneValue;
-        if (targets != null) {
-            cloneValue = new Value[lookupValues.length];
-            cloneTargets = new LabelStmt[targets.length];
-            for (int i = 0; i < targets.length; i++) {
-                cloneTargets[i] = (LabelStmt) targets[i].clone(map);
-                cloneValue[i] = lookupValues[i];
-            }
-        } else {
-            cloneTargets = null;
-            cloneValue = null;
-        }
-        return new LookupSwitchStmt(key.value, cloneValue, cloneTargets, (LabelStmt) defaultTarget.clone(map));
-    }
-
     public String toString() {
-        StringBuilder sb = new StringBuilder("switch(").append(key).append(") {");
+        StringBuilder sb = new StringBuilder("switch(").append(op).append(") {");
 
         for (int i = 0; i < lookupValues.length; i++) {
             sb.append("case ").append(lookupValues[i]).append(": GOTO ").append(targets[i].label).append(";");

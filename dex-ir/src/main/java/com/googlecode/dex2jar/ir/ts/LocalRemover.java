@@ -15,13 +15,11 @@ import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.ArrayExpr;
 import com.googlecode.dex2jar.ir.expr.BinopExpr;
-import com.googlecode.dex2jar.ir.expr.CastExpr;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
-import com.googlecode.dex2jar.ir.expr.InstanceOfExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
-import com.googlecode.dex2jar.ir.expr.NewArrayExpr;
 import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
+import com.googlecode.dex2jar.ir.expr.TypeExpr;
 import com.googlecode.dex2jar.ir.expr.UnopExpr;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
@@ -48,34 +46,35 @@ public class LocalRemover implements Transformer {
             }
             switch (st.st) {
             case ASSIGN:
+            case IDENTITY:
                 AssignStmt as = (AssignStmt) st;
-                if (as.left.value.vt == VT.LOCAL) {
-                    Local aLeft = (Local) as.left.value;
-                    if (as.right.value.vt == VT.CONSTANT) {// remove new
-                        Constant c = (Constant) as.right.value;
+                if (as.op1.value.vt == VT.LOCAL) {
+                    Local aLeft = (Local) as.op1.value;
+                    if (as.op2.value.vt == VT.CONSTANT) {// remove new
+                        Constant c = (Constant) as.op2.value;
                         if (NEW_TYPE.equals(c.type)) {
                             list.remove(st);
                             for (Iterator<AssignStmt> it = je._ls_inits.iterator(); it.hasNext();) {
                                 AssignStmt stmt = it.next();
-                                InvokeExpr ie = (InvokeExpr) stmt.right.value;
-                                if (ie.args[0].value == aLeft) {
+                                InvokeExpr ie = (InvokeExpr) stmt.op2.value;
+                                if (ie.ops[0].value == aLeft) {
                                     it.remove();
-                                    ValueBox[] vb = new ValueBox[ie.args.length - 1];
-                                    System.arraycopy(ie.args, 1, vb, 0, vb.length);
-                                    AssignStmt nas = Stmts.nAssign(as.left,
+                                    ValueBox[] vb = new ValueBox[ie.ops.length - 1];
+                                    System.arraycopy(ie.ops, 1, vb, 0, vb.length);
+                                    AssignStmt nas = Stmts.nAssign(as.op1,
                                             new ValueBox(Exprs.nInvokeNew(vb, ie.argmentTypes, ie.methodOwnerType)));
                                     list.replace(stmt, nas);
                                     aLeft._ls_read_count--;
                                     orderList.set(orderList.indexOf(stmt), nas);
                                 }
                             }
+                            continue;
                         }
-                        continue;
                     }
                     if (aLeft._ls_write_count == 1) {
-                        switch (as.right.value.vt) {
+                        switch (as.op2.value.vt) {
                         case LOCAL: {
-                            Local b = (Local) as.right.value;
+                            Local b = (Local) as.op2.value;
                             b._ls_read_count += aLeft._ls_read_count - 1;
                             je.locals.remove(aLeft);
                             aLeft._ls_vb.value = b;
@@ -84,7 +83,7 @@ public class LocalRemover implements Transformer {
                             continue;
                         }
                         case CONSTANT: {
-                            as.left.value = as.right.value;
+                            as.op1.value = as.op2.value;
                             je.locals.remove(aLeft);
                             list.remove(st);
                             orderList.set(p, null);
@@ -127,7 +126,7 @@ public class LocalRemover implements Transformer {
                 vbs.clear();
                 tmp.clear();
                 AssignStmt as = (AssignStmt) pre;
-                Local preLocal = (Local) as.left.value;
+                Local preLocal = (Local) as.op1.value;
                 execStmt(vbs, st, preLocal);
                 for (ValueBox vb : vbs) {
                     switch (vb.value.vt) {
@@ -142,13 +141,13 @@ public class LocalRemover implements Transformer {
                 while (!tmp.isEmpty()) {
                     ValueBox vb = tmp.pop();
                     if (vb.value == preLocal) {
-                        vb.value = as.right.value;
+                        vb.value = as.op2.value;
                         list.remove(as);
                         je.locals.remove(preLocal);
                         pre = st.getPre();
                         if (pre != null && canRemove(pre)) {
                             as = (AssignStmt) pre;
-                            preLocal = (Local) as.left.value;
+                            preLocal = (Local) as.op1.value;
                         } else {
                             break;
                         }
@@ -163,11 +162,12 @@ public class LocalRemover implements Transformer {
     private static boolean canRemove(Stmt pre) {
         switch (pre.st) {
         case ASSIGN:
+        case IDENTITY:
             AssignStmt as = (AssignStmt) pre;
-            if (as.left.value.vt == VT.LOCAL) {
-                Local aLeft = (Local) as.left.value;
+            if (as.op1.value.vt == VT.LOCAL) {
+                Local aLeft = (Local) as.op1.value;
                 if (aLeft._ls_write_count == 1 && aLeft._ls_read_count == 1) {
-                    switch (as.right.value.vt) {
+                    switch (as.op2.value.vt) {
                     case THIS_REF:
                     case PARAMETER_REF:
                     case EXCEPTION_REF:
@@ -192,23 +192,24 @@ public class LocalRemover implements Transformer {
 
         switch (st.st) {
         case ASSIGN:
+        case IDENTITY:
             AssignStmt as = (AssignStmt) st;
-            if (as.left.value.vt != VT.LOCAL) {
-                execValue(stack, as.left, local);
+            if (as.op1.value.vt != VT.LOCAL) {
+                execValue(stack, as.op1, local);
             }
-            execValue(stack, as.right, local);
+            execValue(stack, as.op2, local);
             break;
         case IF:
             JumpStmt js = (JumpStmt) st;
-            execValue(stack, js.condition, local);
+            execValue(stack, js.op, local);
             break;
         case LOOKUP_SWITCH:
             LookupSwitchStmt lss = (LookupSwitchStmt) st;
-            execValue(stack, lss.key, local);
+            execValue(stack, lss.op, local);
             break;
         case TABLE_SWITCH:
             TableSwitchStmt tss = (TableSwitchStmt) st;
-            execValue(stack, tss.key, local);
+            execValue(stack, tss.op, local);
             break;
         case RETURN:
         case LOCK:
@@ -261,17 +262,17 @@ public class LocalRemover implements Transformer {
         }
         case ARRAY:
             ArrayExpr ae = (ArrayExpr) toReplace;
-            stack.add(ae.base);
-            stack.add(ae.index);
+            stack.add(ae.op1);
+            stack.add(ae.op2);
             break;
         case FIELD:
             FieldExpr fe = (FieldExpr) toReplace;
-            if (fe.object != null) {// not a static field
-                stack.add(fe.object);
+            if (fe.op != null) {// not a static field
+                stack.add(fe.op);
             }
             break;
         case CAST:
-            CastExpr ce = (CastExpr) toReplace;
+            TypeExpr ce = (TypeExpr) toReplace;
             stack.add(ce.op);
             break;
         case CMP:
@@ -288,8 +289,9 @@ public class LocalRemover implements Transformer {
             stack.add(be.op2);
             break;
         }
+        case NEW_ARRAY:
         case INSTANCEOF:
-            InstanceOfExpr iof = (InstanceOfExpr) toReplace;
+            TypeExpr iof = (TypeExpr) toReplace;
             stack.add(iof.op);
             break;
         case INVOKE_INTERFACE:
@@ -298,7 +300,7 @@ public class LocalRemover implements Transformer {
         case INVOKE_NEW:
         case INVOKE_STATIC:
             InvokeExpr ie = (InvokeExpr) toReplace;
-            for (ValueBox vb : ie.args) {
+            for (ValueBox vb : ie.ops) {
                 stack.add(vb);
             }
             break;
@@ -308,13 +310,10 @@ public class LocalRemover implements Transformer {
             UnopExpr ue = (UnopExpr) toReplace;
             stack.add(ue.op);
             break;
-        case NEW_ARRAY:
-            NewArrayExpr nae = (NewArrayExpr) toReplace;
-            stack.add(nae.size);
-            break;
+
         case NEW_MUTI_ARRAY:
             NewMutiArrayExpr nmae = (NewMutiArrayExpr) toReplace;
-            for (ValueBox vb : nmae.sizes) {
+            for (ValueBox vb : nmae.ops) {
                 stack.add(vb);
             }
             break;

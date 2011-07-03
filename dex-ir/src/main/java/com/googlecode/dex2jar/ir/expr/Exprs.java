@@ -9,7 +9,11 @@ import com.googlecode.dex2jar.ir.ValueBox;
 
 public final class Exprs {
 
-    private static ValueBox[] box(Value[] v) {
+    public static ValueBox box(Value value) {
+        return new ValueBox(value);
+    }
+
+    public static ValueBox[] box(Value[] v) {
         if (v == null) {
             return new ValueBox[0];
         }
@@ -32,8 +36,8 @@ public final class Exprs {
         return new ArrayExpr(base, index);
     }
 
-    public static CastExpr nCast(Value obj, Type type) {
-        return new CastExpr(obj, type);
+    public static TypeExpr nCast(Value obj, Type type) {
+        return new TypeExpr(obj, type);
     }
 
     public static BinopExpr nCmp(Value a, Value b) {
@@ -56,8 +60,8 @@ public final class Exprs {
         return new BinopExpr(VT.EQ, a, b);
     }
 
-    public static TypeRefExpr nExceptionRef(Type type) {
-        return new TypeRefExpr(VT.EXCEPTION_REF, type, -1);
+    public static RefExpr nExceptionRef(Type type) {
+        return new RefExpr(VT.EXCEPTION_REF, type, -1);
     }
 
     public static FieldExpr nField(Value object, Type ownerType, String fieldName, Type fieldType) {
@@ -72,8 +76,8 @@ public final class Exprs {
         return new BinopExpr(VT.GT, a, b);
     }
 
-    public static InstanceOfExpr nInstanceOf(Value value, Type type) {
-        return new InstanceOfExpr(value, type);
+    public static TypeExpr nInstanceOf(Value value, Type type) {
+        return new TypeExpr(value, type);
     }
 
     public static InvokeExpr nInvokeInterface(Value[] regs, Type owner, String name, Type[] argmentTypes,
@@ -137,20 +141,20 @@ public final class Exprs {
     // return new NewExpr(type);
     // }
 
-    public static NewArrayExpr nNewArray(Type elementType, Value size) {
-        return new NewArrayExpr(elementType, size);
+    public static TypeExpr nNewArray(Type elementType, Value size) {
+        return new TypeExpr(size, elementType);
     }
 
     public static NewMutiArrayExpr nNewMutiArray(Type base, int dim, Value[] sizes) {
-        return new NewMutiArrayExpr(base, dim, sizes);
+        return new NewMutiArrayExpr(base, dim, box(sizes));
     }
 
     public static BinopExpr nOr(Value a, Value b) {
         return new BinopExpr(VT.OR, a, b);
     }
 
-    public static TypeRefExpr nParameterRef(Type type, int index) {
-        return new TypeRefExpr(VT.PARAMETER_REF, type, index);
+    public static RefExpr nParameterRef(Type type, int index) {
+        return new RefExpr(VT.PARAMETER_REF, type, index);
     }
 
     public static BinopExpr nRem(Value a, Value b) {
@@ -173,8 +177,8 @@ public final class Exprs {
         return new BinopExpr(VT.SUB, a, b);
     }
 
-    public static TypeRefExpr nThisRef(Type type) {
-        return new TypeRefExpr(VT.THIS_REF, type, -1);
+    public static RefExpr nThisRef(Type type) {
+        return new RefExpr(VT.THIS_REF, type, -1);
     }
 
     public static BinopExpr nUshr(Value a, Value b) {

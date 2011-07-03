@@ -2,12 +2,12 @@ package com.googlecode.dex2jar.ir.expr;
 
 import org.objectweb.asm.Type;
 
-import com.googlecode.dex2jar.ir.Value;
+import com.googlecode.dex2jar.ir.Value.E0Expr;
 
 
-public class TypeRefExpr extends Value {
+public class RefExpr extends E0Expr {
 
-    public TypeRefExpr(VT vt, Type refType, int index) {
+    public RefExpr(VT vt, Type refType, int index) {
         super(vt);
         this.parameterIndex = index;
     }

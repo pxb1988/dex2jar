@@ -1,19 +1,11 @@
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
-
-import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
+public class JumpStmt extends E1Stmt {
 
-public class JumpStmt extends Stmt {
-
-    public ValueBox condition;
     public LabelStmt target;
-
-    private JumpStmt(ST type) {
-        super(type);
-    }
 
     /**
      * GOTO
@@ -22,8 +14,7 @@ public class JumpStmt extends Stmt {
      * @param target
      */
     public JumpStmt(ST type, LabelStmt target) {
-        this(type);
-        this.target = target;
+        this(type, null, target);
     }
 
     /**
@@ -33,14 +24,9 @@ public class JumpStmt extends Stmt {
      * @param condition
      * @param target
      */
-    public JumpStmt(ST type, Value condition, LabelStmt target) {
-        this(type, target);
-        this.condition = new ValueBox(condition);
-    }
-
-    @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
-        return new JumpStmt(st, condition.value, (LabelStmt) target.clone(map));
+    public JumpStmt(ST type, ValueBox condition, LabelStmt target) {
+        super(type, condition);
+        this.target = target;
     }
 
     public String toString() {
@@ -48,7 +34,7 @@ public class JumpStmt extends Stmt {
         case GOTO:
             return "GOTO " + target;
         case IF:
-            return "if " + condition + " GOTO " + target;
+            return "if " + op + " GOTO " + target;
         }
         return super.toString();
     }

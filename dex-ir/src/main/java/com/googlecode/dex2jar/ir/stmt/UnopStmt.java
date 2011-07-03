@@ -1,23 +1,12 @@
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
-
-import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
+public class UnopStmt extends E1Stmt {
 
-public class UnopStmt extends Stmt {
-
-    public ValueBox op;
-
-    public UnopStmt(ST type, Value op) {
-        super(type);
-        this.op = new ValueBox(op);
-    }
-
-    @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
-        return new UnopStmt(st, op.value);
+    public UnopStmt(ST type, ValueBox op) {
+        super(type, op);
     }
 
     public String toString() {
