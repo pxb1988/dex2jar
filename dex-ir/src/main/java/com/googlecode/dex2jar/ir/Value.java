@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar.ir;
 
+
 /**
  * Represent a local/constant/expression
  * 
@@ -116,6 +117,8 @@ public abstract class Value {
      * Value Type
      */
     final public VT vt;
+
+    public Object _lt_type;
 
     /**
      * 

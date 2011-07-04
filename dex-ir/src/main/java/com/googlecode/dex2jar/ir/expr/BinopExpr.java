@@ -24,11 +24,12 @@ import com.googlecode.dex2jar.ir.ValueBox;
  * 
  * @see VT#ADD
  * @see VT#AND
- * @see VT#CMPCMPG
+ * @see VT#CMP
+ * @see VT#CMPG
  * @see VT#CMPL
  * @see VT#DIV
  * @see VT#EQ
- * @see VT# GE
+ * @see VT#GE
  * @see VT#GT
  * @see VT#LE
  * @see VT#LT

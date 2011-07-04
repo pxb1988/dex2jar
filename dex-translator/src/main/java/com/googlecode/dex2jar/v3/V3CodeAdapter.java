@@ -84,6 +84,8 @@ import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -341,6 +343,13 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
      */
     public void visitEnd() {
         irMethod.locals.addAll(Arrays.asList(this.locals));
+        this.locals = null;
+        for (Stmt stmt : list) {// clean label.info
+            if (stmt.st == ST.LABEL) {
+                ((LabelStmt) stmt).label.info = null;
+            }
+        }
+
     }
 
     @Override
