@@ -143,10 +143,8 @@ public abstract class TestUtils {
         try {
             buf = AbstractVisitor.class.getDeclaredField("buf");
         } catch (NoSuchFieldException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (SecurityException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         buf.setAccessible(true);

@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2009-2011 Panxiaobo
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.googlecode.dex2jar.ir.stmt;
 
 import java.util.Set;
@@ -5,47 +20,36 @@ import java.util.Set;
 import com.googlecode.dex2jar.ir.ET;
 import com.googlecode.dex2jar.ir.ValueBox;
 
+/**
+ * Represent a statement
+ * 
+ * @see ST
+ * @see ET
+ * 
+ * @author Panxiaobo <pxb1988 at gmail.com>
+ * @version $Id$
+ */
 public abstract class Stmt {
-    public static enum ST {
-        ASSIGN, GOTO, IDENTITY, IF, LABEL, LOCK, LOOKUP_SWITCH, NOP, RETURN, RETURN_VOID, TABLE_SWITCH, THROW, UNLOCK
-    }
 
-    public Set<Stmt> _cfg_froms;
-    public Set<Stmt> _cfg_tos;
-    public ValueBox[] _ls_forward_frame;
-    public ValueBox[] _ls_backward_frame;
-
-    public boolean _cfg_visited;
-
-    /* default */StmtList list;
-    /* default */Stmt next;
-
-    /* default */Stmt pre;
-    /* default */int id;
-
-    public final ST st;
-    public final ET et;
-
-    public Stmt(ST type, ET et) {
-        this.st = type;
-        this.et = et;
-    }
-
-    public final Stmt getNext() {
-        return next;
-    }
-
-    public final Stmt getPre() {
-        return pre;
-    }
-
+    /**
+     * Represent a statement with no argument
+     * 
+     * @see ET#E0
+     */
     public static abstract class E0Stmt extends Stmt {
+
         public E0Stmt(ST type) {
             super(type, ET.E0);
         }
     }
 
+    /**
+     * Represent a statement with 1 argument
+     * 
+     * @see ET#E1
+     */
     public static abstract class E1Stmt extends Stmt {
+
         public ValueBox op;
 
         public E1Stmt(ST type, ValueBox op) {
@@ -54,7 +58,13 @@ public abstract class Stmt {
         }
     }
 
+    /**
+     * Represent a statement with 2 arguments
+     * 
+     * @see ET#E2
+     */
     public static abstract class E2Stmt extends Stmt {
+
         public ValueBox op1;
         public ValueBox op2;
 
@@ -65,7 +75,13 @@ public abstract class Stmt {
         }
     }
 
+    /**
+     * Represent a statement with 3+ arguments
+     * 
+     * @see ET#En
+     */
     public static abstract class EnStmt extends Stmt {
+
         public ValueBox[] ops;
 
         public EnStmt(ST type, ValueBox[] ops) {
@@ -74,4 +90,97 @@ public abstract class Stmt {
         }
     }
 
+    /**
+     * Statement Type
+     * 
+     */
+    public static enum ST {
+
+        ASSIGN, GOTO, IDENTITY, IF, LABEL, LOCK, LOOKUP_SWITCH, //
+        NOP, RETURN, RETURN_VOID, TABLE_SWITCH, THROW, UNLOCK
+    }
+
+    /**
+     * Used in construct of a method CFG, Previous {@link Stmt} nodes
+     */
+    public Set<Stmt> _cfg_froms;
+
+    /**
+     * Used in construct of a method CFG, After {@link Stmt} nodes
+     */
+    public Set<Stmt> _cfg_tos;
+
+    /**
+     * Used in visit the method CFG
+     */
+    public boolean _cfg_visited;
+
+    /**
+     * Used in Local Split, backward frame of the {@link Stmt}
+     */
+    public ValueBox[] _ls_backward_frame;
+    /**
+     * Used in Local Split, forward frame of the {@link Stmt}
+     */
+    public ValueBox[] _ls_forward_frame;
+    /**
+     * The number of argument
+     */
+    public final ET et;
+
+    /**
+     * Used in ordering statements in a {@link TreeSet}, id of the {@link Stmt} in its {@link StmtList}
+     */
+    /* default */
+    int id;
+
+    /**
+     * Owner of the statement
+     */
+    /* default */
+    StmtList list;
+
+    /**
+     * Next statement in {@link StmtList}
+     */
+    /* default */
+    Stmt next;
+    /**
+     * Previous statement in {@link StmtList}
+     */
+    /* default */
+    Stmt pre;
+
+    /**
+     * Statement Type
+     */
+    public final ST st;
+
+    /**
+     * 
+     * @param st
+     *            Statement Type
+     * @param et
+     *            The number of argument
+     */
+    protected Stmt(ST st, ET et) {
+        this.st = st;
+        this.et = et;
+    }
+
+    /**
+     * 
+     * @return Next statement in {@link StmtList}, null if it is the last statement in {@link StmtList}
+     */
+    public final Stmt getNext() {
+        return next;
+    }
+
+    /**
+     * 
+     * @return Previous statement in {@link StmtList}, null if it is the first statement in {@link StmtList}
+     */
+    public final Stmt getPre() {
+        return pre;
+    }
 }

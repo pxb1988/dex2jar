@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2009-2011 Panxiaobo
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.googlecode.dex2jar.ir.ts;
 
 import java.util.ArrayList;
@@ -30,134 +45,15 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 
-public class LocalRemover implements Transformer {
+/**
+ * TODO DOC
+ * 
+ * @author Panxiaobo <pxb1988 at gmail.com>
+ * @version $Id$
+ */
+public class LocalRemove implements Transformer {
 
     public static Type NEW_TYPE = Type.getType("Lc.g.d.i.t.LocalRemover$NEW;");
-
-    @Override
-    public void transform(IrMethod je) {
-        StmtList list = je.stmts;
-        List<Stmt> orderList = list._ls_visit_order;
-
-        for (int p = 0; p < orderList.size(); p++) {
-            Stmt st = orderList.get(p);
-            if (st == null || !list.contains(st)) {
-                continue;
-            }
-            switch (st.st) {
-            case ASSIGN:
-            case IDENTITY:
-                AssignStmt as = (AssignStmt) st;
-                if (as.op1.value.vt == VT.LOCAL) {
-                    Local aLeft = (Local) as.op1.value;
-                    if (as.op2.value.vt == VT.CONSTANT) {// remove new
-                        Constant c = (Constant) as.op2.value;
-                        if (NEW_TYPE.equals(c.type)) {
-                            list.remove(st);
-                            for (Iterator<AssignStmt> it = list._ls_inits.iterator(); it.hasNext();) {
-                                AssignStmt stmt = it.next();
-                                InvokeExpr ie = (InvokeExpr) stmt.op2.value;
-                                if (ie.ops[0].value == aLeft) {
-                                    it.remove();
-                                    ValueBox[] vb = new ValueBox[ie.ops.length - 1];
-                                    System.arraycopy(ie.ops, 1, vb, 0, vb.length);
-                                    AssignStmt nas = Stmts.nAssign(as.op1,
-                                            new ValueBox(Exprs.nInvokeNew(vb, ie.argmentTypes, ie.methodOwnerType)));
-                                    list.replace(stmt, nas);
-                                    aLeft._ls_read_count--;
-                                    orderList.set(orderList.indexOf(stmt), nas);
-                                }
-                            }
-                            continue;
-                        }
-                    }
-                    if (aLeft._ls_write_count == 1) {
-                        switch (as.op2.value.vt) {
-                        case LOCAL: {
-                            Local b = (Local) as.op2.value;
-                            b._ls_read_count += aLeft._ls_read_count - 1;
-                            je.locals.remove(aLeft);
-                            aLeft._ls_vb.value = b;
-                            list.remove(st);
-                            orderList.set(p, null);
-                            continue;
-                        }
-                        case CONSTANT: {
-                            as.op1.value = as.op2.value;
-                            je.locals.remove(aLeft);
-                            list.remove(st);
-                            orderList.set(p, null);
-                            continue;
-                        }
-                        }
-                    }
-
-                }
-            }
-        }
-
-        list._ls_inits = null;
-
-        List<ValueBox> vbs = new ArrayList<ValueBox>(20);
-
-        Stack<ValueBox> tmp = new Stack<ValueBox>();
-
-        for (int p = 0; p < orderList.size(); p++) {
-            Stmt st = orderList.get(p);
-            if (st == null || !list.contains(st)) {
-                continue;
-            }
-
-            switch (st.st) {
-            case RETURN_VOID:
-            case LABEL:
-            case GOTO:
-            case NOP:
-            case IDENTITY:
-                continue;
-            }
-
-            Stmt pre = st.getPre();
-            if (pre == null) {
-                continue;
-            }
-
-            if (canRemove(pre)) {
-                vbs.clear();
-                tmp.clear();
-                AssignStmt as = (AssignStmt) pre;
-                Local preLocal = (Local) as.op1.value;
-                execStmt(vbs, st, preLocal);
-                for (ValueBox vb : vbs) {
-                    switch (vb.value.vt) {
-                    case LOCAL:
-                        tmp.push(vb);
-                        continue;
-                    case CONSTANT:
-                        continue;
-                    }
-                    break;
-                }
-                while (!tmp.isEmpty()) {
-                    ValueBox vb = tmp.pop();
-                    if (vb.value == preLocal) {
-                        vb.value = as.op2.value;
-                        list.remove(as);
-                        je.locals.remove(preLocal);
-                        pre = st.getPre();
-                        if (pre != null && canRemove(pre)) {
-                            as = (AssignStmt) pre;
-                            preLocal = (Local) as.op1.value;
-                        } else {
-                            break;
-                        }
-                    }
-                }
-
-            }
-
-        }
-    }
 
     private static boolean canRemove(Stmt pre) {
         switch (pre.st) {
@@ -321,6 +217,131 @@ public class LocalRemover implements Transformer {
         case PARAMETER_REF:
         case EXCEPTION_REF:
             break;
+        }
+    }
+
+    @Override
+    public void transform(IrMethod je) {
+        StmtList list = je.stmts;
+        List<Stmt> orderList = list._ls_visit_order;
+
+        for (int p = 0; p < orderList.size(); p++) {
+            Stmt st = orderList.get(p);
+            if (st == null || !list.contains(st)) {
+                continue;
+            }
+            switch (st.st) {
+            case ASSIGN:
+            case IDENTITY:
+                AssignStmt as = (AssignStmt) st;
+                if (as.op1.value.vt == VT.LOCAL) {
+                    Local aLeft = (Local) as.op1.value;
+                    if (as.op2.value.vt == VT.CONSTANT) {// remove new
+                        Constant c = (Constant) as.op2.value;
+                        if (NEW_TYPE.equals(c.type)) {
+                            list.remove(st);
+                            for (Iterator<AssignStmt> it = list._ls_inits.iterator(); it.hasNext();) {
+                                AssignStmt stmt = it.next();
+                                InvokeExpr ie = (InvokeExpr) stmt.op2.value;
+                                if (ie.ops[0].value == aLeft) {
+                                    it.remove();
+                                    ValueBox[] vb = new ValueBox[ie.ops.length - 1];
+                                    System.arraycopy(ie.ops, 1, vb, 0, vb.length);
+                                    AssignStmt nas = Stmts.nAssign(as.op1,
+                                            new ValueBox(Exprs.nInvokeNew(vb, ie.argmentTypes, ie.methodOwnerType)));
+                                    list.replace(stmt, nas);
+                                    aLeft._ls_read_count--;
+                                    orderList.set(orderList.indexOf(stmt), nas);
+                                }
+                            }
+                            continue;
+                        }
+                    }
+                    if (aLeft._ls_write_count == 1) {
+                        switch (as.op2.value.vt) {
+                        case LOCAL: {
+                            Local b = (Local) as.op2.value;
+                            b._ls_read_count += aLeft._ls_read_count - 1;
+                            je.locals.remove(aLeft);
+                            aLeft._ls_vb.value = b;
+                            list.remove(st);
+                            orderList.set(p, null);
+                            continue;
+                        }
+                        case CONSTANT: {
+                            as.op1.value = as.op2.value;
+                            je.locals.remove(aLeft);
+                            list.remove(st);
+                            orderList.set(p, null);
+                            continue;
+                        }
+                        }
+                    }
+
+                }
+            }
+        }
+
+        list._ls_inits = null;
+
+        List<ValueBox> vbs = new ArrayList<ValueBox>(20);
+
+        Stack<ValueBox> tmp = new Stack<ValueBox>();
+
+        for (int p = 0; p < orderList.size(); p++) {
+            Stmt st = orderList.get(p);
+            if (st == null || !list.contains(st)) {
+                continue;
+            }
+
+            switch (st.st) {
+            case RETURN_VOID:
+            case LABEL:
+            case GOTO:
+            case NOP:
+            case IDENTITY:
+                continue;
+            }
+
+            Stmt pre = st.getPre();
+            if (pre == null) {
+                continue;
+            }
+
+            if (canRemove(pre)) {
+                vbs.clear();
+                tmp.clear();
+                AssignStmt as = (AssignStmt) pre;
+                Local preLocal = (Local) as.op1.value;
+                execStmt(vbs, st, preLocal);
+                for (ValueBox vb : vbs) {
+                    switch (vb.value.vt) {
+                    case LOCAL:
+                        tmp.push(vb);
+                        continue;
+                    case CONSTANT:
+                        continue;
+                    }
+                    break;
+                }
+                while (!tmp.isEmpty()) {
+                    ValueBox vb = tmp.pop();
+                    if (vb.value == preLocal) {
+                        vb.value = as.op2.value;
+                        list.remove(as);
+                        je.locals.remove(preLocal);
+                        pre = st.getPre();
+                        if (pre != null && canRemove(pre)) {
+                            as = (AssignStmt) pre;
+                            preLocal = (Local) as.op1.value;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+            }
+
         }
     }
 

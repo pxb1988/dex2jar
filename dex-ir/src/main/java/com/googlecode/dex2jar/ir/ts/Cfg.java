@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2009-2011 Panxiaobo
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.googlecode.dex2jar.ir.ts;
 
 import java.util.ArrayDeque;
@@ -13,11 +28,47 @@ import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 
+/**
+ * TODO DOC
+ * 
+ * @author Panxiaobo <pxb1988 at gmail.com>
+ * @version $Id$
+ */
 public class Cfg {
 
-    private static void link(Stmt from, Stmt to) {
-        from._cfg_tos.add(to);
-        to._cfg_froms.add(from);
+    public interface StmtVisitor {
+        Object exec(Stmt stmt);
+
+        void merge(Object frame, Stmt dist);
+    }
+
+    public static void Backward(IrMethod jm, StmtVisitor sv) {
+
+        // clean
+        for (Stmt st : jm.stmts) {
+            st._cfg_visited = false;
+        }
+
+        Queue<Stmt> toVisitQueue = new ArrayDeque<Stmt>();
+
+        toVisitQueue.addAll(jm.stmts._cfg_tais);
+
+        while (!toVisitQueue.isEmpty()) {
+            Stmt currentStmt = toVisitQueue.poll();
+            if (currentStmt == null || currentStmt._cfg_visited) {
+                continue;
+            } else {
+                currentStmt._cfg_visited = true;
+            }
+            toVisitQueue.addAll(currentStmt._cfg_froms);
+
+            Object afterExecFrame = sv.exec(currentStmt);
+
+            for (Stmt dist : currentStmt._cfg_froms) {
+                sv.merge(afterExecFrame, dist);
+            }
+
+        }
     }
 
     public static void createCFG(IrMethod jm) {
@@ -79,12 +130,6 @@ public class Cfg {
         jm.stmts._cfg_tais = tails;
     }
 
-    public interface StmtVisitor {
-        Object exec(Stmt stmt);
-
-        void merge(Object frame, Stmt dist);
-    }
-
     public static void Forward(IrMethod jm, StmtVisitor sv) {
 
         // clean
@@ -113,33 +158,9 @@ public class Cfg {
         }
     }
 
-    public static void Backward(IrMethod jm, StmtVisitor sv) {
-
-        // clean
-        for (Stmt st : jm.stmts) {
-            st._cfg_visited = false;
-        }
-
-        Queue<Stmt> toVisitQueue = new ArrayDeque<Stmt>();
-
-        toVisitQueue.addAll(jm.stmts._cfg_tais);
-
-        while (!toVisitQueue.isEmpty()) {
-            Stmt currentStmt = toVisitQueue.poll();
-            if (currentStmt == null || currentStmt._cfg_visited) {
-                continue;
-            } else {
-                currentStmt._cfg_visited = true;
-            }
-            toVisitQueue.addAll(currentStmt._cfg_froms);
-
-            Object afterExecFrame = sv.exec(currentStmt);
-
-            for (Stmt dist : currentStmt._cfg_froms) {
-                sv.merge(afterExecFrame, dist);
-            }
-
-        }
+    private static void link(Stmt from, Stmt to) {
+        from._cfg_tos.add(to);
+        to._cfg_froms.add(from);
     }
 
 }

@@ -33,8 +33,8 @@ import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.asm.LdcOptimizeAdapter;
-import com.googlecode.dex2jar.ir.ts.LocalRemover;
-import com.googlecode.dex2jar.ir.ts.LocalSpliter;
+import com.googlecode.dex2jar.ir.ts.LocalRemove;
+import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.Transformer;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -149,7 +149,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
             public void visitEnd() {
                 super.visitEnd();
                 if (irMethod.stmts.getSize() > 1) {
-                    for (Transformer ts : new Transformer[] { new LocalSpliter(), new LocalRemover() }) {
+                    for (Transformer ts : new Transformer[] { new LocalSplit(), new LocalRemove() }) {
                         ts.transform(irMethod);
                     }
                 }

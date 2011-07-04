@@ -31,8 +31,8 @@ import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
-import com.googlecode.dex2jar.ir.ts.LocalRemover;
-import com.googlecode.dex2jar.ir.ts.LocalSpliter;
+import com.googlecode.dex2jar.ir.ts.LocalRemove;
+import com.googlecode.dex2jar.ir.ts.LocalSplit;
 
 public class LocalRemoverTest {
     @Test
@@ -52,8 +52,8 @@ public class LocalRemoverTest {
             list.add(nAssign(c, b));
             list.add(nReturn(c));
         }
-        new LocalSpliter().transform(jm);
-        new LocalRemover().transform(jm);
+        new LocalSplit().transform(jm);
+        new LocalRemove().transform(jm);
         Assert.assertEquals("only `return new int[5]` should left.", 1, list.getSize());
         Assert.assertEquals("no local should left", 0, jm.locals.size());
     };
@@ -76,9 +76,9 @@ public class LocalRemoverTest {
             list.add(nAssign(c, b));
             list.add(nReturn(c));
         }
-        new LocalSpliter().transform(jm);
+        new LocalSplit().transform(jm);
         Assert.assertTrue(jm.locals.size() == 3);
-        new LocalRemover().transform(jm);
+        new LocalRemove().transform(jm);
         Assert.assertTrue(jm.locals.size() == 0);
     };
 
@@ -106,9 +106,9 @@ public class LocalRemoverTest {
             list.add(L2);
             list.add(nReturn(c));
         }
-        new LocalSpliter().transform(jm);
+        new LocalSplit().transform(jm);
         Assert.assertTrue(jm.locals.size() == 3);
-        new LocalRemover().transform(jm);
+        new LocalRemove().transform(jm);
         Assert.assertTrue(jm.locals.size() == 1);
     };
 
@@ -130,9 +130,9 @@ public class LocalRemoverTest {
             list.add(nAssign(c, nArray(a, b)));
             list.add(nReturn(c));
         }
-        new LocalSpliter().transform(jm);
+        new LocalSplit().transform(jm);
         Assert.assertTrue(jm.locals.size() == 3);
-        new LocalRemover().transform(jm);
+        new LocalRemove().transform(jm);
         Assert.assertTrue(jm.locals.size() == 0);
     };
 
@@ -153,8 +153,8 @@ public class LocalRemoverTest {
         UnopStmt st3 = nReturn(b);
         list.add(st3);
 
-        new LocalSpliter().transform(jm);
-        new LocalRemover().transform(jm);
+        new LocalSplit().transform(jm);
+        new LocalRemove().transform(jm);
         Assert.assertEquals(0, jm.locals.size());
         Assert.assertEquals(1, list.getSize());
     }
@@ -180,8 +180,8 @@ public class LocalRemoverTest {
 
         list.add(nReturn(b));
 
-        new LocalSpliter().transform(jm);
-        new LocalRemover().transform(jm);
+        new LocalSplit().transform(jm);
+        new LocalRemove().transform(jm);
         Assert.assertEquals(1, jm.locals.size());
     }
 
@@ -216,8 +216,8 @@ public class LocalRemoverTest {
         list.add(L4);
         list.add(nReturn(b));
 
-        new LocalSpliter().transform(jm);
-        new LocalRemover().transform(jm);
+        new LocalSplit().transform(jm);
+        new LocalRemove().transform(jm);
         Assert.assertTrue(jm.locals.size() == 3);
     }
 
@@ -239,8 +239,8 @@ public class LocalRemoverTest {
         list.add(nAssign(nArray(array, index), value));
         list.add(nReturnVoid());
 
-        new LocalSpliter().transform(jm);
-        new LocalRemover().transform(jm);
+        new LocalSplit().transform(jm);
+        new LocalRemove().transform(jm);
         Assert.assertTrue(jm.locals.size() == 2);
     }
 }

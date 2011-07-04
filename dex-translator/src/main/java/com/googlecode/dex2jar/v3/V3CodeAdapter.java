@@ -85,7 +85,7 @@ import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.ts.LocalRemover;
+import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
 /**
@@ -104,11 +104,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     protected IrMethod irMethod;
-
     private StmtList list;
-
     private Local[] locals;
-
     /**
      * 函数调用的返回值保存的寄存器
      */
@@ -293,7 +290,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             list.add(nAssign(locals[saveTo], nCast(locals[saveTo], Type.getType(type))));
             break;
         case OP_NEW_INSTANCE:
-            list.add(nAssign(locals[saveTo], n(LocalRemover.NEW_TYPE, Type.getType(type))));
+            list.add(nAssign(locals[saveTo], n(LocalRemove.NEW_TYPE, Type.getType(type))));
             break;
         }
 

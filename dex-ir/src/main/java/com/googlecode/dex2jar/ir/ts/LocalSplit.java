@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2009-2011 Panxiaobo
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.googlecode.dex2jar.ir.ts;
 
 import static com.googlecode.dex2jar.ir.Constant.nInt;
@@ -24,7 +39,44 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.EnStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.ts.Cfg.StmtVisitor;
 
-public class LocalSpliter implements Transformer {
+/**
+ * TODO DOC
+ * 
+ * @author Panxiaobo <pxb1988 at gmail.com>
+ * @version $Id$
+ */
+public class LocalSplit implements Transformer {
+
+    static ValueBox exec(ValueBox vb, ValueBox[] currentFrame) {
+        if (vb == null)
+            return null;
+        Value v = vb.value;
+        switch (v.et) {
+        case E0:
+            if (v.vt == VT.LOCAL) {
+                Local local = (Local) currentFrame[((Local) v)._ls_index].value;
+                local._ls_read_count++;
+                vb = local._ls_vb;
+            }
+            break;
+        case E1:
+            E1Expr e1 = (E1Expr) v;
+            e1.op = exec(e1.op, currentFrame);
+            break;
+        case E2:
+            E2Expr e2 = (E2Expr) v;
+            e2.op1 = exec(e2.op1, currentFrame);
+            e2.op2 = exec(e2.op2, currentFrame);
+            break;
+        case En:
+            EnExpr en = (EnExpr) v;
+            for (int i = 0; i < en.ops.length; i++) {
+                en.ops[i] = exec(en.ops[i], currentFrame);
+            }
+            break;
+        }
+        return vb;
+    }
 
     public void transform(final IrMethod jm) {
         final int orgLocalSize = jm.locals.size();
@@ -41,22 +93,6 @@ public class LocalSpliter implements Transformer {
         Cfg.createCFG(jm);
 
         Cfg.Backward(jm, new StmtVisitor() {
-
-            @Override
-            public void merge(Object frame, Stmt dist) {
-                ValueBox[] currnetFrame = (ValueBox[]) frame;
-                if (dist._ls_backward_frame == null) {
-                    dist._ls_backward_frame = new ValueBox[orgLocalSize];
-                    System.arraycopy(currnetFrame, 0, dist._ls_backward_frame, 0, currnetFrame.length);
-                } else {
-                    ValueBox[] distFrame = (ValueBox[]) dist._ls_backward_frame;
-                    for (int i = 0; i < currnetFrame.length; i++) {
-                        if (currnetFrame[i].value != null) {
-                            distFrame[i].value = currnetFrame[i].value;
-                        }
-                    }
-                }
-            }
 
             void doLocalRef(ValueBox vb, ValueBox[] frame) {
                 if (vb == null)
@@ -123,14 +159,59 @@ public class LocalSpliter implements Transformer {
                 }
                 return tmp;
             }
+
+            @Override
+            public void merge(Object frame, Stmt dist) {
+                ValueBox[] currnetFrame = (ValueBox[]) frame;
+                if (dist._ls_backward_frame == null) {
+                    dist._ls_backward_frame = new ValueBox[orgLocalSize];
+                    System.arraycopy(currnetFrame, 0, dist._ls_backward_frame, 0, currnetFrame.length);
+                } else {
+                    ValueBox[] distFrame = (ValueBox[]) dist._ls_backward_frame;
+                    for (int i = 0; i < currnetFrame.length; i++) {
+                        if (currnetFrame[i].value != null) {
+                            distFrame[i].value = currnetFrame[i].value;
+                        }
+                    }
+                }
+            }
         });
 
         final ArrayList<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
 
         Cfg.Forward(jm, new StmtVisitor() {
 
-            ValueBox[] tmp = new ValueBox[orgLocalSize];
             int localId = 0;
+            ValueBox[] tmp = new ValueBox[orgLocalSize];
+
+            @Override
+            public Object exec(Stmt stmt) {
+                _ls_visit_order.add(stmt);
+                ValueBox[] currentFrame = (ValueBox[]) stmt._ls_forward_frame;
+                if (currentFrame == null) {
+                    stmt._ls_forward_frame = currentFrame = new ValueBox[orgLocalSize];
+                }
+
+                switch (stmt.st) {
+                case ASSIGN:
+                case IDENTITY:
+                    E2Stmt assignStmt = (E2Stmt) stmt;
+                    if (assignStmt.op1.value.vt == VT.LOCAL) {
+                        System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
+                        Local local = (Local) assignStmt.op1.value;
+                        int reg = local._ls_index;
+                        Local nLocal = Exprs.nLocal("a_" + localId++, null);
+                        nLocal._ls_index = reg;
+                        locals.add(nLocal);
+                        ValueBox vb = new ValueBox(nLocal);
+                        nLocal._ls_vb = vb;
+                        assignStmt.op1 = vb;
+                        tmp[reg] = vb;
+                        currentFrame = tmp;
+                    }
+                }
+                return currentFrame;
+            }
 
             @Override
             public void merge(Object frame, Stmt distStmt) {
@@ -167,35 +248,6 @@ public class LocalSpliter implements Transformer {
                         }
                     }
                 }
-            }
-
-            @Override
-            public Object exec(Stmt stmt) {
-                _ls_visit_order.add(stmt);
-                ValueBox[] currentFrame = (ValueBox[]) stmt._ls_forward_frame;
-                if (currentFrame == null) {
-                    stmt._ls_forward_frame = currentFrame = new ValueBox[orgLocalSize];
-                }
-
-                switch (stmt.st) {
-                case ASSIGN:
-                case IDENTITY:
-                    E2Stmt assignStmt = (E2Stmt) stmt;
-                    if (assignStmt.op1.value.vt == VT.LOCAL) {
-                        System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
-                        Local local = (Local) assignStmt.op1.value;
-                        int reg = local._ls_index;
-                        Local nLocal = Exprs.nLocal("a_" + localId++, null);
-                        nLocal._ls_index = reg;
-                        locals.add(nLocal);
-                        ValueBox vb = new ValueBox(nLocal);
-                        nLocal._ls_vb = vb;
-                        assignStmt.op1 = vb;
-                        tmp[reg] = vb;
-                        currentFrame = tmp;
-                    }
-                }
-                return currentFrame;
             }
         });
 
@@ -251,37 +303,6 @@ public class LocalSpliter implements Transformer {
         }
 
         jm.stmts._ls_visit_order = _ls_visit_order;
-    }
-
-    static ValueBox exec(ValueBox vb, ValueBox[] currentFrame) {
-        if (vb == null)
-            return null;
-        Value v = vb.value;
-        switch (v.et) {
-        case E0:
-            if (v.vt == VT.LOCAL) {
-                Local local = (Local) currentFrame[((Local) v)._ls_index].value;
-                local._ls_read_count++;
-                vb = local._ls_vb;
-            }
-            break;
-        case E1:
-            E1Expr e1 = (E1Expr) v;
-            e1.op = exec(e1.op, currentFrame);
-            break;
-        case E2:
-            E2Expr e2 = (E2Expr) v;
-            e2.op1 = exec(e2.op1, currentFrame);
-            e2.op2 = exec(e2.op2, currentFrame);
-            break;
-        case En:
-            EnExpr en = (EnExpr) v;
-            for (int i = 0; i < en.ops.length; i++) {
-                en.ops[i] = exec(en.ops[i], currentFrame);
-            }
-            break;
-        }
-        return vb;
     }
 
 }

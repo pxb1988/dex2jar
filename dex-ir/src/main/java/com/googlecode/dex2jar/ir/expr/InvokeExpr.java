@@ -1,11 +1,42 @@
+/*
+ * Copyright (c) 2009-2011 Panxiaobo
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.googlecode.dex2jar.ir.expr;
 
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.ir.Value.EnExpr;
+import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ToStringUtil;
 import com.googlecode.dex2jar.ir.ValueBox;
 
+/**
+ * Represent a method invocation expression. To represent a {@link VT#INVOKE_INTERFACE},{@link VT#INVOKE_SPECIAL} or
+ * {@link VT#INVOKE_VIRTUAL} the first element of ops is the owner object,To represent a {@link VT#INVOKE_NEW} or
+ * {@link VT#INVOKE_STATIC} all ops are arguments. The return type of {@link VT#INVOKE_NEW} is {@link #methodOwnerType}
+ * instead of {@link #methodReturnType}/{@link Type#VOID_TYPE}
+ * 
+ * @see VT#INVOKE_INTERFACE
+ * @see VT#INVOKE_NEW
+ * @see VT#INVOKE_SPECIAL
+ * @see VT#INVOKE_STATIC
+ * @see VT#INVOKE_VIRTUAL
+ * 
+ * @author Panxiaobo <pxb1988 at gmail.com>
+ * @version $Id$
+ */
 public class InvokeExpr extends EnExpr {
 
     public Type[] argmentTypes;

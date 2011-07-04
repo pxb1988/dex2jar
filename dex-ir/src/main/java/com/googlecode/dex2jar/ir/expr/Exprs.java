@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2009-2011 Panxiaobo
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.googlecode.dex2jar.ir.expr;
 
 import org.objectweb.asm.Type;
@@ -85,12 +100,12 @@ public final class Exprs {
         return new InvokeExpr(VT.INVOKE_INTERFACE, box(regs), owner, name, argmentTypes, returnType);
     }
 
-    public static InvokeExpr nInvokeNew(ValueBox[] regs, Type[] argmentTypes, Type owner) {
-        return new InvokeExpr(VT.INVOKE_NEW, regs, owner, "<init>", argmentTypes, owner);
-    }
-
     public static InvokeExpr nInvokeNew(Value[] regs, Type[] argmentTypes, Type owner) {
         return new InvokeExpr(VT.INVOKE_NEW, box(regs), owner, "<init>", argmentTypes, owner);
+    }
+
+    public static InvokeExpr nInvokeNew(ValueBox[] regs, Type[] argmentTypes, Type owner) {
+        return new InvokeExpr(VT.INVOKE_NEW, regs, owner, "<init>", argmentTypes, owner);
     }
 
     public static InvokeExpr nInvokeSpecial(Value[] regs, Type owner, String name, Type[] argmentTypes, Type returnType) {
@@ -133,20 +148,20 @@ public final class Exprs {
         return new UnopExpr(VT.NEG, array);
     }
 
-    public static UnopExpr nNot(Value array) {
-        return new UnopExpr(VT.NOT, array);
+    public static TypeExpr nNewArray(Type elementType, Value size) {
+        return new TypeExpr(size, elementType);
     }
 
     // public static NewExpr nNew(Type type) {
     // return new NewExpr(type);
     // }
 
-    public static TypeExpr nNewArray(Type elementType, Value size) {
-        return new TypeExpr(size, elementType);
-    }
-
     public static NewMutiArrayExpr nNewMutiArray(Type base, int dim, Value[] sizes) {
         return new NewMutiArrayExpr(base, dim, box(sizes));
+    }
+
+    public static UnopExpr nNot(Value array) {
+        return new UnopExpr(VT.NOT, array);
     }
 
     public static BinopExpr nOr(Value a, Value b) {

@@ -31,7 +31,7 @@ import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
-import com.googlecode.dex2jar.ir.ts.LocalSpliter;
+import com.googlecode.dex2jar.ir.ts.LocalSplit;
 
 public class LocalSplitTest {
 
@@ -52,7 +52,7 @@ public class LocalSplitTest {
         UnopStmt st3 = nReturn(b);
         list.add(st3);
 
-        new LocalSpliter().transform(jm);
+        new LocalSplit().transform(jm);
 
         Assert.assertTrue(jm.locals.size() == 2);
         Assert.assertEquals(st2.op1.value, st3.op.value);
@@ -79,7 +79,7 @@ public class LocalSplitTest {
 
         list.add(nReturn(b));
 
-        new LocalSpliter().transform(jm);
+        new LocalSplit().transform(jm);
 
         Assert.assertTrue(jm.locals.size() == 1);
     }
@@ -114,9 +114,9 @@ public class LocalSplitTest {
         list.add(L4);
         list.add(nReturn(b));
 
-        new LocalSpliter().transform(jm);
+        new LocalSplit().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 3);
+        Assert.assertTrue(jm.locals.size() == 4);
     }
 
     @Test
@@ -137,7 +137,7 @@ public class LocalSplitTest {
         list.add(nAssign(nArray(array, index), value));
         list.add(nReturnVoid());
 
-        new LocalSpliter().transform(jm);
+        new LocalSplit().transform(jm);
 
         Assert.assertTrue(jm.locals.size() == 3);
     }

@@ -9,6 +9,7 @@
     <groupId>com.googlecode.dex2jar</groupId>
     <artifactId>dex-ir</artifactId>
     <version>1.0</version>
+    <name>Dex Instruction Representation</name>
     <dependencies>
         <dependency>
             <groupId>asm</groupId>
