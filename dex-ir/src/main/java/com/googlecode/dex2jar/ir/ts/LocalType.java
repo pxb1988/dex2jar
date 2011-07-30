@@ -115,13 +115,14 @@ public class LocalType implements Transformer {
                 type(tb, Type.getType("[" + te.type.getDescriptor()));
             }
                 break;
+            case CHECK_CAST:
             case CAST: {
                 TypeExpr te = (TypeExpr) v;
                 exec(te.op.value);
                 type(tb, te.type);
             }
                 break;
-            case INSTANCEOF: {
+            case INSTANCE_OF: {
                 TypeExpr te = (TypeExpr) v;
                 type(exec(te.op.value), Type.getType(Object.class));
                 type(tb, Type.BOOLEAN_TYPE);

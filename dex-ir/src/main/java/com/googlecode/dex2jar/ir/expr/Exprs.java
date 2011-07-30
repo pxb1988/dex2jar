@@ -52,7 +52,11 @@ public final class Exprs {
     }
 
     public static TypeExpr nCast(Value obj, Type type) {
-        return new TypeExpr(obj, type);
+        return new TypeExpr(VT.CAST, obj, type);
+    }
+
+    public static TypeExpr nCheckCast(Value obj, Type type) {
+        return new TypeExpr(VT.CHECK_CAST, obj, type);
     }
 
     public static BinopExpr nCmp(Value a, Value b) {
@@ -92,7 +96,7 @@ public final class Exprs {
     }
 
     public static TypeExpr nInstanceOf(Value value, Type type) {
-        return new TypeExpr(value, type);
+        return new TypeExpr(VT.INSTANCE_OF, value, type);
     }
 
     public static InvokeExpr nInvokeInterface(Value[] regs, Type owner, String name, Type[] argmentTypes,
@@ -149,7 +153,7 @@ public final class Exprs {
     }
 
     public static TypeExpr nNewArray(Type elementType, Value size) {
-        return new TypeExpr(size, elementType);
+        return new TypeExpr(VT.NEW_ARRAY, size, elementType);
     }
 
     // public static NewExpr nNew(Type type) {

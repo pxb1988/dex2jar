@@ -37,7 +37,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.EnStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.ts.Cfg.StmtVisitor;
+import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
 
 /**
  * TODO DOC
@@ -92,9 +92,9 @@ public class LocalSplit implements Transformer {
 
         Cfg.createCFG(jm);
 
-        Cfg.Backward(jm, new StmtVisitor() {
+        Cfg.Backward(jm, new FrameVisitor<ValueBox[]>() {
 
-            void doLocalRef(ValueBox vb, ValueBox[] frame) {
+            private void doLocalRef(ValueBox vb, ValueBox[] frame) {
                 if (vb == null)
                     return;
                 Value v = vb.value;
@@ -123,7 +123,7 @@ public class LocalSplit implements Transformer {
             }
 
             @Override
-            public Object exec(Stmt stmt) {
+            public ValueBox[] exec(Stmt stmt) {
                 ValueBox[] tmp = new ValueBox[orgLocalSize];
                 if (stmt._ls_backward_frame != null) {
                     System.arraycopy(stmt._ls_backward_frame, 0, tmp, 0, tmp.length);
@@ -161,7 +161,7 @@ public class LocalSplit implements Transformer {
             }
 
             @Override
-            public void merge(Object frame, Stmt dist) {
+            public void merge(ValueBox[] frame, Stmt dist) {
                 ValueBox[] currnetFrame = (ValueBox[]) frame;
                 if (dist._ls_backward_frame == null) {
                     dist._ls_backward_frame = new ValueBox[orgLocalSize];
@@ -179,13 +179,13 @@ public class LocalSplit implements Transformer {
 
         final ArrayList<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
 
-        Cfg.Forward(jm, new StmtVisitor() {
+        Cfg.Forward(jm, new FrameVisitor<ValueBox[]>() {
 
             int localId = 0;
             ValueBox[] tmp = new ValueBox[orgLocalSize];
 
             @Override
-            public Object exec(Stmt stmt) {
+            public ValueBox[] exec(Stmt stmt) {
                 _ls_visit_order.add(stmt);
                 ValueBox[] currentFrame = (ValueBox[]) stmt._ls_forward_frame;
                 if (currentFrame == null) {
@@ -214,7 +214,7 @@ public class LocalSplit implements Transformer {
             }
 
             @Override
-            public void merge(Object frame, Stmt distStmt) {
+            public void merge(ValueBox[] frame, Stmt distStmt) {
                 ValueBox[] currentFrame = (ValueBox[]) frame;
                 if (distStmt == null) {
                     return;

@@ -15,7 +15,6 @@
  */
 package com.googlecode.dex2jar.ir;
 
-
 /**
  * Represent a local/constant/expression
  * 
@@ -88,8 +87,8 @@ public abstract class Value {
      */
     public static enum VT {
 
-        ADD("+"), AND("&"), ARRAY, CAST, CMP, CMPG, CMPL, CONSTANT, DIV("/"), EQ("=="), EXCEPTION_REF, FIELD, GE(">="), GT(
-                ">"), INSTANCEOF, //
+        ADD("+"), AND("&"), ARRAY, CAST, CHECK_CAST, CMP, CMPG, CMPL, CONSTANT, DIV("/"), EQ("=="), EXCEPTION_REF, FIELD, GE(
+                ">="), GT(">"), INSTANCE_OF, //
         INVOKE_INTERFACE, INVOKE_NEW, INVOKE_SPECIAL, INVOKE_STATIC, INVOKE_VIRTUAL, //
         LE("<="), LENGTH, LOCAL, LT("<"), MUL("*"), NE("!="), NEG, //
         NEW_ARRAY, NEW_MUTI_ARRAY, NOT, OR("|"), PARAMETER_REF, REM("%"), SHL(">>"), SHR("<<"), SUB("-"), THIS_REF, USHR(

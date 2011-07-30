@@ -36,19 +36,23 @@ import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
  */
 public class Cfg {
 
-    public interface StmtVisitor {
-        Object exec(Stmt stmt);
-
-        void merge(Object frame, Stmt dist);
+    public interface StmtVisitor<T> {
+        T exec(Stmt stmt);
     }
 
-    public static void Backward(IrMethod jm, StmtVisitor sv) {
+    public interface FrameVisitor<T> extends StmtVisitor<T> {
+        void merge(T frame, Stmt dist);
+    }
+
+    public static <T> void Backward(IrMethod jm, StmtVisitor<T> sv) {
 
         // clean
         for (Stmt st : jm.stmts) {
             st._cfg_visited = false;
         }
 
+        boolean isFv = sv instanceof FrameVisitor;
+        FrameVisitor<T> fv = isFv ? ((FrameVisitor<T>) sv) : null;
         Queue<Stmt> toVisitQueue = new ArrayDeque<Stmt>();
 
         toVisitQueue.addAll(jm.stmts._cfg_tais);
@@ -62,10 +66,12 @@ public class Cfg {
             }
             toVisitQueue.addAll(currentStmt._cfg_froms);
 
-            Object afterExecFrame = sv.exec(currentStmt);
+            T afterExecFrame = sv.exec(currentStmt);
 
-            for (Stmt dist : currentStmt._cfg_froms) {
-                sv.merge(afterExecFrame, dist);
+            if (isFv) {
+                for (Stmt dist : currentStmt._cfg_froms) {
+                    fv.merge(afterExecFrame, dist);
+                }
             }
 
         }
@@ -130,7 +136,7 @@ public class Cfg {
         jm.stmts._cfg_tais = tails;
     }
 
-    public static void Forward(IrMethod jm, StmtVisitor sv) {
+    public static <T> void Forward(IrMethod jm, StmtVisitor<T> sv) {
 
         // clean
         for (Stmt st : jm.stmts) {
@@ -138,6 +144,9 @@ public class Cfg {
         }
 
         Queue<Stmt> toVisitQueue = new ArrayDeque<Stmt>();
+        boolean isFv = sv instanceof FrameVisitor;
+        FrameVisitor<T> fv = isFv ? ((FrameVisitor<T>) sv) : null;
+
         toVisitQueue.add(jm.stmts.getFirst());
 
         while (!toVisitQueue.isEmpty()) {
@@ -149,12 +158,12 @@ public class Cfg {
             }
             toVisitQueue.addAll(currentStmt._cfg_tos);
 
-            Object afterExecFrame = sv.exec(currentStmt);
-
-            for (Stmt dist : currentStmt._cfg_tos) {
-                sv.merge(afterExecFrame, dist);
+            T afterExecFrame = sv.exec(currentStmt);
+            if (isFv) {
+                for (Stmt dist : currentStmt._cfg_tos) {
+                    fv.merge(afterExecFrame, dist);
+                }
             }
-
         }
     }
 

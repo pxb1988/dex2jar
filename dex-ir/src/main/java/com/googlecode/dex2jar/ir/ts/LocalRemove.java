@@ -26,16 +26,13 @@ import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Value;
+import com.googlecode.dex2jar.ir.Value.E1Expr;
+import com.googlecode.dex2jar.ir.Value.E2Expr;
+import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
-import com.googlecode.dex2jar.ir.expr.ArrayExpr;
-import com.googlecode.dex2jar.ir.expr.BinopExpr;
 import com.googlecode.dex2jar.ir.expr.Exprs;
-import com.googlecode.dex2jar.ir.expr.FieldExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
-import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
-import com.googlecode.dex2jar.ir.expr.TypeExpr;
-import com.googlecode.dex2jar.ir.expr.UnopExpr;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
@@ -79,147 +76,104 @@ public class LocalRemove implements Transformer {
     }
 
     /**
+     * calculate express execution order of current statement
      * 
-     * @param stack
+     * @param vbs
+     *            valueBox order list
      * @param st
+     *            current statement
      * @param local
+     *            local in left of pre statement
      */
-    static private void execStmt(List<ValueBox> stack, Stmt st, Local local) {
+    static private void execStmt(List<ValueBox> vbs, Stmt st, Local local) {
 
         switch (st.st) {
         case ASSIGN:
         case IDENTITY:
             AssignStmt as = (AssignStmt) st;
             if (as.op1.value.vt != VT.LOCAL) {
-                execValue(stack, as.op1, local);
+                execValue(vbs, as.op1, local);
             }
-            execValue(stack, as.op2, local);
+            execValue(vbs, as.op2, local);
             break;
         case IF:
             JumpStmt js = (JumpStmt) st;
-            execValue(stack, js.op, local);
+            execValue(vbs, js.op, local);
             break;
         case LOOKUP_SWITCH:
             LookupSwitchStmt lss = (LookupSwitchStmt) st;
-            execValue(stack, lss.op, local);
+            execValue(vbs, lss.op, local);
             break;
         case TABLE_SWITCH:
             TableSwitchStmt tss = (TableSwitchStmt) st;
-            execValue(stack, tss.op, local);
+            execValue(vbs, tss.op, local);
             break;
         case RETURN:
         case LOCK:
         case UNLOCK:
         case THROW:
             UnopStmt us = (UnopStmt) st;
-            execValue(stack, us.op, local);
+            execValue(vbs, us.op, local);
             break;
         }
     }
 
-    static private void execValue(List<ValueBox> stack, ValueBox left, Local local) {
-        Value toReplace = left.value;
-        switch (toReplace.vt) {
-        case LOCAL:
-            stack.add(left);
-            break;
-        case CONSTANT:
-            break;
+    static private void execValue(List<ValueBox> vbs, ValueBox valueBox, Local local) {
+        Value toReplace = valueBox.value;
 
-        case AND:
-        case OR:
-        case XOR:
-        case ADD:
-        case MUL:
-        case DIV:
-        case SUB:
-        case REM:
-        case SHL:
-        case USHR:
-        case SHR: {
-            BinopExpr be = (BinopExpr) toReplace;
-            switch (be.vt) {
+        switch (toReplace.et) {
+        case E0:
+            switch (toReplace.vt) {
+            case LOCAL:
+                vbs.add(valueBox);
+                break;
+            }
+            break;
+        case E1:
+            ValueBox op = ((E1Expr) toReplace).op;
+            if (op != null) {// op for static file is null
+                vbs.add(op);
+            }
+            break;
+        case E2:
+            E2Expr e2 = (E2Expr) toReplace;
+            switch (e2.vt) {
             case AND:
             case OR:
             case XOR:
             case ADD:
             case MUL:
-                if (be.op1.value == local) {
-                    ValueBox tmp = be.op1;
-                    be.op1 = be.op2;
-                    be.op2 = tmp;
+                if (e2.op1.value == local && (e2.op1.value.vt == VT.LOCAL || e2.op1.value.vt == VT.CONSTANT)) {
+                    ValueBox tmp = e2.op1;
+                    e2.op1 = e2.op2;
+                    e2.op2 = tmp;
                 }
                 break;
             }
 
-            stack.add(be.op1);
-            stack.add(be.op2);
-            break;
-        }
-        case ARRAY:
-            ArrayExpr ae = (ArrayExpr) toReplace;
-            stack.add(ae.op1);
-            stack.add(ae.op2);
-            break;
-        case FIELD:
-            FieldExpr fe = (FieldExpr) toReplace;
-            if (fe.op != null) {// not a static field
-                stack.add(fe.op);
-            }
-            break;
-        case CAST:
-            TypeExpr ce = (TypeExpr) toReplace;
-            stack.add(ce.op);
-            break;
-        case CMP:
-        case CMPG:
-        case CMPL:
-        case EQ:
-        case GE:
-        case GT:
-        case LE:
-        case LT:
-        case NE: {
-            BinopExpr be = (BinopExpr) toReplace;
-            stack.add(be.op1);
-            stack.add(be.op2);
-            break;
-        }
-        case NEW_ARRAY:
-        case INSTANCEOF:
-            TypeExpr iof = (TypeExpr) toReplace;
-            stack.add(iof.op);
-            break;
-        case INVOKE_INTERFACE:
-        case INVOKE_SPECIAL:
-        case INVOKE_VIRTUAL:
-        case INVOKE_NEW:
-        case INVOKE_STATIC:
-            InvokeExpr ie = (InvokeExpr) toReplace;
-            for (ValueBox vb : ie.ops) {
-                stack.add(vb);
-            }
-            break;
-        case LENGTH:
-        case NEG:
-        case NOT:
-            UnopExpr ue = (UnopExpr) toReplace;
-            stack.add(ue.op);
+            vbs.add(e2.op1);
+            vbs.add(e2.op2);
             break;
 
-        case NEW_MUTI_ARRAY:
-            NewMutiArrayExpr nmae = (NewMutiArrayExpr) toReplace;
-            for (ValueBox vb : nmae.ops) {
-                stack.add(vb);
+        case En:
+            EnExpr ie = (EnExpr) toReplace;
+            for (ValueBox vb : ie.ops) {
+                vbs.add(vb);
             }
-            break;
-        case THIS_REF:
-        case PARAMETER_REF:
-        case EXCEPTION_REF:
             break;
         }
     }
 
+    /**
+     * the statements must be simplest.
+     * 
+     * <pre>
+     * a = b + c; // ok
+     * a = b[0] + c;// may cause exception, must expend to tmp1=b[0];a=tmp1+c;
+     * </pre>
+     * 
+     * @see com.googlecode.dex2jar.ir.ts.Transformer#transform(com.googlecode.dex2jar.ir.IrMethod)
+     */
     @Override
     public void transform(IrMethod je) {
         StmtList list = je.stmts;
@@ -319,8 +273,6 @@ public class LocalRemove implements Transformer {
                     case LOCAL:
                         tmp.push(vb);
                         continue;
-                    case CONSTANT:
-                        continue;
                     }
                     break;
                 }
@@ -339,9 +291,7 @@ public class LocalRemove implements Transformer {
                         }
                     }
                 }
-
             }
-
         }
     }
 

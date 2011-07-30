@@ -26,7 +26,7 @@ import com.googlecode.dex2jar.ir.ValueBox;
  * Represent a method invocation expression. To represent a {@link VT#INVOKE_INTERFACE},{@link VT#INVOKE_SPECIAL} or
  * {@link VT#INVOKE_VIRTUAL} the first element of ops is the owner object,To represent a {@link VT#INVOKE_NEW} or
  * {@link VT#INVOKE_STATIC} all ops are arguments. The return type of {@link VT#INVOKE_NEW} is {@link #methodOwnerType}
- * instead of {@link #methodReturnType}/{@link Type#VOID_TYPE}
+ * instead of {@link #methodReturnType}
  * 
  * @see VT#INVOKE_INTERFACE
  * @see VT#INVOKE_NEW

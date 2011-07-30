@@ -24,6 +24,7 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nAdd;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nAnd;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCast;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nCheckCast;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCmp;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCmpg;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCmpl;
@@ -289,7 +290,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     public void visitClassStmt(int opcode, int saveTo, String type) {
         switch (opcode) {
         case OP_CHECK_CAST:
-            list.add(nAssign(locals[saveTo], nCast(locals[saveTo], Type.getType(type))));
+            list.add(nAssign(locals[saveTo], nCheckCast(locals[saveTo], Type.getType(type))));
             break;
         case OP_NEW_INSTANCE:
             list.add(nAssign(locals[saveTo], n(LocalRemove.NEW_TYPE, Type.getType(type))));

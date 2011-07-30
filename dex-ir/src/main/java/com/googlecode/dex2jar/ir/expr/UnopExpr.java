@@ -21,7 +21,7 @@ import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
 
 /**
- * Represent a Unop expression
+ * Represent a LENGTH,NEG expression
  * 
  * @see VT#LENGTH
  * @see VT#NEG

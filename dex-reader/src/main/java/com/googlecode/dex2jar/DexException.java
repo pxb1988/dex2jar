@@ -64,4 +64,12 @@ public class DexException extends RuntimeException {
         this(String.format(messageFormat, args), cause);
     }
 
+    /**
+     * 
+     * @param messageFormat
+     * @param args
+     */
+    public DexException(String messageFormat, Object... args) {
+        this(String.format(messageFormat, args));
+    }
 }

@@ -26,9 +26,10 @@ import com.googlecode.dex2jar.ir.ValueBox;
 /**
  * Represent a Type expression
  * 
- * @see VT#CAST
- * @see VT#INSTANCEOF
+ * @see VT#CHECK_CAST
+ * @see VT#INSTANCE_OF
  * @see VT#NEW_ARRAY
+ * @see VT#CAST
  * 
  * @author Panxiaobo <pxb1988 at gmail.com>
  * @version $Id$
@@ -37,8 +38,8 @@ public class TypeExpr extends E1Expr {
 
     public Type type;
 
-    public TypeExpr(Value value, Type type) {
-        super(VT.CAST, new ValueBox(value));
+    public TypeExpr(VT vt, Value value, Type type) {
+        super(vt, new ValueBox(value));
         this.type = type;
 
     }
@@ -47,7 +48,7 @@ public class TypeExpr extends E1Expr {
         switch (super.vt) {
         case CAST:
             return "((" + ToStringUtil.toShortClassName(type) + ")" + op + ")";
-        case INSTANCEOF:
+        case INSTANCE_OF:
             return "(" + op + " instanceof " + ToStringUtil.toShortClassName(type) + ")";
         case NEW_ARRAY:
             return "new " + ToStringUtil.toShortClassName(type) + "[" + op + "]";
