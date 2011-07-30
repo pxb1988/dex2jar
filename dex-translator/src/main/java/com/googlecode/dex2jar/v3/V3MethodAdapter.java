@@ -23,6 +23,7 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.util.TraceMethodVisitor;
@@ -87,7 +88,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
                     if (item.name.equals("value")) {
                         Annotation values = (Annotation) item.value;
                         for (Item i : values.items) {
-                            exceptions.add(i.value.toString());
+                            exceptions.add(((Type) i.value).getInternalName());
                         }
                     }
                 }
@@ -138,7 +139,8 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         return new V3AnnAdapter(ann);
     }
 
-    private static Transformer[] tses = new Transformer[] { new LocalSplit(), new LocalRemove(), new LocalType() };
+    private static Transformer[] tses = new Transformer[] { new LocalSplit(), new LocalRemove(), new LocalType(),
+            new LocalCurrect() };
 
     /*
      * (non-Javadoc)

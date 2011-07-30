@@ -57,30 +57,31 @@ public class IrMethod2AsmMethod implements Opcodes {
             public Object exec(Stmt stmt) {
                 switch (stmt.st) {
                 case ASSIGN:
-                case IDENTITY: {
-                    Local local = (Local) ((AssignStmt) stmt).op1.value;
-                    if (local._ls_index == -1) {
-                        Type localType = LocalType.type(local);
-                        if (!Type.VOID_TYPE.equals(localType)) {// skip void type
-                            Value ref = (Value) ((AssignStmt) stmt).op2.value;
-                            switch (ref.vt) {
-                            case THIS_REF:
-                                local._ls_index = 0;
-                                break;
-                            case PARAMETER_REF:
-                                local._ls_index = ids[((RefExpr) ref).parameterIndex];
-                                break;
-                            case EXCEPTION_REF:
-                                local._ls_index = indexHolder[0]++;
-                                break;
-                            default:
-                                local._ls_index = indexHolder[0];
-                                indexHolder[0] += LocalType.type(ref).getSize();
-                                break;
+                case IDENTITY:
+                    if (((AssignStmt) stmt).op1.value.vt == VT.LOCAL) {
+                        Local local = (Local) ((AssignStmt) stmt).op1.value;
+                        if (local._ls_index == -1) {
+                            Type localType = LocalType.type(local);
+                            if (!Type.VOID_TYPE.equals(localType)) {// skip void type
+                                Value ref = (Value) ((AssignStmt) stmt).op2.value;
+                                switch (ref.vt) {
+                                case THIS_REF:
+                                    local._ls_index = 0;
+                                    break;
+                                case PARAMETER_REF:
+                                    local._ls_index = ids[((RefExpr) ref).parameterIndex];
+                                    break;
+                                case EXCEPTION_REF:
+                                    local._ls_index = indexHolder[0]++;
+                                    break;
+                                default:
+                                    local._ls_index = indexHolder[0];
+                                    indexHolder[0] += LocalType.type(ref).getSize();
+                                    break;
+                                }
                             }
                         }
                     }
-                }
                     break;
                 }
                 return null;
@@ -129,12 +130,12 @@ public class IrMethod2AsmMethod implements Opcodes {
                     FieldExpr fe = (FieldExpr) v1;
                     if (fe.op == null) {// static field
                         accept(v2, asm);
-                        asm.visitFieldInsn(PUTSTATIC, fe.fieldOwnerType.getDescriptor(), fe.fieldName,
+                        asm.visitFieldInsn(PUTSTATIC, fe.fieldOwnerType.getInternalName(), fe.fieldName,
                                 fe.fieldType.getDescriptor());
                     } else {// virtual field
                         accept(fe.op.value, asm);
                         accept(v2, asm);
-                        asm.visitFieldInsn(PUTFIELD, fe.fieldOwnerType.getDescriptor(), fe.fieldName,
+                        asm.visitFieldInsn(PUTFIELD, fe.fieldOwnerType.getInternalName(), fe.fieldName,
                                 fe.fieldType.getDescriptor());
                     }
                     break;
@@ -151,7 +152,7 @@ public class IrMethod2AsmMethod implements Opcodes {
             case IDENTITY: {
                 E2Stmt e2 = (E2Stmt) st;
                 if (e2.op2.value.vt == VT.EXCEPTION_REF) {
-                    asm.visitVarInsn(ASTORE, ((RefExpr) e2.op2.value).parameterIndex);
+                    asm.visitVarInsn(ASTORE, ((Local) e2.op1.value)._ls_index);
                 }
             }
                 break;
@@ -309,7 +310,12 @@ public class IrMethod2AsmMethod implements Opcodes {
                 asm.visitVarInsn(LocalType.type(value).getOpcode(ILOAD), ((Local) value)._ls_index);
                 break;
             case CONSTANT:
-                asm.visitLdcInsn(((Constant) value).value);
+                Constant cst = (Constant) value;
+                if (cst.value.equals(Constant.Null)) {
+                    asm.visitInsn(ACONST_NULL);
+                } else {
+                    asm.visitLdcInsn(cst.value);
+                }
                 break;
             }
             break;
@@ -382,7 +388,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         switch (e1.vt) {
         case FIELD:
             FieldExpr fe = (FieldExpr) e1;
-            asm.visitFieldInsn(e1.op == null ? GETSTATIC : GETFIELD, fe.fieldOwnerType.getDescriptor(), fe.fieldName,
+            asm.visitFieldInsn(e1.op == null ? GETSTATIC : GETFIELD, fe.fieldOwnerType.getInternalName(), fe.fieldName,
                     fe.fieldType.getDescriptor());
             break;
         case NEW_ARRAY:

@@ -30,7 +30,6 @@ import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.asm.TypeNameAdapter;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
@@ -62,13 +61,14 @@ public class V3ClassAdapter implements DexClassVisitor {
      * @param superClass
      * @param interfaceNames
      */
-    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap, Map<String, Set<String>> extraMemberClass, ClassVisitor cv,
-            int access_flags, String className, String superClass, String[] interfaceNames) {
+    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap,
+            Map<String, Set<String>> extraMemberClass, ClassVisitor cv, int access_flags, String className,
+            String superClass, String[] interfaceNames) {
         super();
         this.innerAccessFlagsMap = accessFlagsMap;
         this.innerNameMap = innerNameMap;
         this.extraMemberClass = extraMemberClass;
-        this.cv = new TypeNameAdapter(cv);
+        this.cv = cv;
         this.access_flags = access_flags;
         this.className = className;
         this.superClass = superClass;
@@ -124,13 +124,21 @@ public class V3ClassAdapter implements DexClassVisitor {
             // access in class has no acc_static or acc_private
             accessInClass &= ~(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE);
 
-            cv.visit(Opcodes.V1_6, accessInClass, className, signature, superClass, interfaceNames);
+            String[] nInterfaceNames = null;
+            if (interfaceNames != null) {
+                nInterfaceNames = new String[interfaceNames.length];
+                for (int i = 0; i < interfaceNames.length; i++) {
+                    nInterfaceNames[i] = Type.getType(interfaceNames[i]).getInternalName();
+                }
+            }
+            cv.visit(Opcodes.V1_6, accessInClass, Type.getType(className).getInternalName(), signature,
+                    superClass == null ? null : Type.getType(superClass).getInternalName(), nInterfaceNames);
 
             Set<String> extraMember = extraMemberClass.get(className);
 
             if (extraMember != null) {
                 for (String innerName : extraMember) {
-                    cv.visitInnerClass(innerName, null, null, 0);
+                    cv.visitInnerClass(Type.getType(innerName).getInternalName(), null, null, 0);
                 }
             }
 
@@ -142,7 +150,8 @@ public class V3ClassAdapter implements DexClassVisitor {
                                 String name = j.value.toString();
                                 Integer access = innerAccessFlagsMap.get(name);
                                 String innerName = innerNameMap.get(name);
-                                cv.visitInnerClass(name, className, innerName, access == null ? 0 : access);
+                                cv.visitInnerClass(Type.getType(name).getInternalName(), Type.getType(className)
+                                        .getInternalName(), innerName, access == null ? 0 : access);
                             }
                         }
                     }
@@ -158,10 +167,12 @@ public class V3ClassAdapter implements DexClassVisitor {
                                                                                      // acc_super
 
                     if (name == null) {
-                        cv.visitOuterClass(enclosingClass, null, null);
-                        cv.visitInnerClass(className, null, null, accessInInnerClassAttr);
+                        cv.visitOuterClass(Type.getType(enclosingClass).getInternalName(), null, null);
+                        cv.visitInnerClass(Type.getType(className).getInternalName(), null, null,
+                                accessInInnerClassAttr);
                     } else {
-                        cv.visitInnerClass(className, enclosingClass, name, accessInInnerClassAttr);
+                        cv.visitInnerClass(Type.getType(className).getInternalName(), Type.getType(enclosingClass)
+                                .getInternalName(), name, accessInInnerClassAttr);
                     }
 
                     continue;
@@ -169,7 +180,8 @@ public class V3ClassAdapter implements DexClassVisitor {
                     for (Item it : ann.items) {
                         if ("value".equals(it.name)) {
                             Method m = (Method) it.value;
-                            cv.visitOuterClass(Type.getType(m.getOwner()).getInternalName(), m.getName(), m.getType().getDesc());
+                            cv.visitOuterClass(Type.getType(m.getOwner()).getInternalName(), m.getName(), m.getType()
+                                    .getDesc());
                         }
                     }
                     continue;

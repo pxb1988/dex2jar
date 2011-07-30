@@ -219,6 +219,7 @@ public class LocalType implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
+        // type detect
         for (Stmt st : irMethod.stmts) {
             switch (st.et) {
             case E0:
@@ -228,6 +229,9 @@ public class LocalType implements Transformer {
                 E1Stmt s1 = (E1Stmt) st;
                 switch (st.st) {
                 case GOTO:
+                    break;
+                case IF:
+                    type(exec(s1.op.value), Type.BOOLEAN_TYPE);
                     break;
                 case THROW:
                     type(exec(s1.op.value), Type.getType(Throwable.class));
@@ -253,7 +257,6 @@ public class LocalType implements Transformer {
                 break;
             }
         }
-
     }
 
     private void merge(TypeBox tb1, TypeBox tb2) {
