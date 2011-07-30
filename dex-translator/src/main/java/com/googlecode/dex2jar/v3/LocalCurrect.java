@@ -49,6 +49,11 @@ public class LocalCurrect implements Transformer {
             if (value.vt == VT.CONSTANT) {
                 Constant cstExpr = ((Constant) value);
                 Type type = LocalType.type(value);
+                if (type == null) {
+
+                    LocalType.type(value, Type.INT_TYPE);
+                    type = Type.INT_TYPE;
+                }
                 Object cst = cstExpr.value;
                 switch (type.getSort()) {
                 case Type.INT:
@@ -56,6 +61,7 @@ public class LocalCurrect implements Transformer {
                 case Type.CHAR:
                 case Type.SHORT:
                 case Type.LONG:
+                case Type.BOOLEAN:
                     break;
                 case Type.FLOAT:
                     if (cst instanceof Integer) {

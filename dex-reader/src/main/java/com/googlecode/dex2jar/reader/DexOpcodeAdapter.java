@@ -18,9 +18,11 @@ package com.googlecode.dex2jar.reader;
 import java.util.Map;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.DexOpcodes;
+import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
 /**
@@ -525,7 +527,23 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_INVOKE_DIRECT:
         case OP_INVOKE_STATIC:
         case OP_INVOKE_INTERFACE:
-            dcv.visitMethodStmt(opcode, args, dex.getMethod(cCCC));
+            Method m = dex.getMethod(cCCC);
+            int realSize = m.getType().getParameterTypes().length + (opcode == OP_INVOKE_STATIC ? 0 : 1);
+            if (realSize != args.length) {// there are some double or float in args
+                int[] nArgs = new int[realSize];
+                int i = 0;
+                int j = 0;
+                if (opcode != OP_INVOKE_STATIC) {
+                    nArgs[i++] = args[j++];
+                }
+                for (String t : m.getType().getParameterTypes()) {
+                    nArgs[i++] = args[j];
+                    j += Type.getType(t).getSize();
+                }
+                dcv.visitMethodStmt(opcode, nArgs, m);
+            } else {
+                dcv.visitMethodStmt(opcode, args, m);
+            }
             break;
         default:
             throw new RuntimeException("");
@@ -546,7 +564,25 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_INVOKE_DIRECT_RANGE:
         case OP_INVOKE_STATIC_RANGE:
         case OP_INVOKE_INTERFACE_RANGE:
-            dcv.visitMethodStmt(opcode - (OP_INVOKE_VIRTUAL_RANGE - OP_INVOKE_VIRTUAL), args, dex.getMethod(bBBB));
+            int nOpcode = opcode - (OP_INVOKE_VIRTUAL_RANGE - OP_INVOKE_VIRTUAL);
+
+            Method m = dex.getMethod(bBBB);
+            int realSize = m.getType().getParameterTypes().length + (nOpcode == OP_INVOKE_STATIC ? 0 : 1);
+            if (realSize != args.length) {// there are some double or float in args
+                int[] nArgs = new int[realSize];
+                int i = 0;
+                int j = 0;
+                if (nOpcode != OP_INVOKE_STATIC) {
+                    nArgs[i++] = args[j++];
+                }
+                for (String t : m.getType().getParameterTypes()) {
+                    nArgs[i++] = args[j];
+                    j += Type.getType(t).getSize();
+                }
+                dcv.visitMethodStmt(opcode, nArgs, m);
+            } else {
+                dcv.visitMethodStmt(opcode, args, m);
+            }
             break;
         default:
             throw new RuntimeException("");

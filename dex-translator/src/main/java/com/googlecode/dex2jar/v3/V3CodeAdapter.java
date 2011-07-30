@@ -68,6 +68,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nLookupSwitch;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nTableSwitch;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nThrow;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nUnLock;
 
 import java.util.Arrays;
@@ -563,7 +564,15 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
     @Override
     public void visitReturnStmt(int opcode, int reg) {
-        list.add(nReturn(locals[reg]));
+        switch (opcode) {
+        case OP_THROW:
+            list.add(nThrow(locals[reg]));
+            break;
+        case OP_RETURN:
+            list.add(nReturn(locals[reg]));
+            break;
+        }
+
     }
 
     @Override

@@ -196,7 +196,7 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         }
     }
 
-    public void replace(AssignStmt stmt, AssignStmt nas) {
+    public void replace(Stmt stmt, Stmt nas) {
         if (stmt.list == this) {
             indexIt(nas);
             nas.list = this;

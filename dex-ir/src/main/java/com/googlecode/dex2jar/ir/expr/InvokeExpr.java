@@ -54,16 +54,15 @@ public class InvokeExpr extends EnExpr {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        int i = 0;
+
         if (super.vt == VT.INVOKE_NEW) {
             sb.append("new ").append(ToStringUtil.toShortClassName(methodOwnerType)).append('(');
         } else {
-            sb.append(super.vt == VT.INVOKE_STATIC ? ToStringUtil.toShortClassName(methodOwnerType) : ops[i])
+            sb.append(super.vt == VT.INVOKE_STATIC ? ToStringUtil.toShortClassName(methodOwnerType) : ops[0])
                     .append('.').append(this.methodName).append('(');
-            i++;
         }
         boolean first = true;
-        for (; i < ops.length; i++) {
+        for (int i = (vt == VT.INVOKE_STATIC || vt == VT.INVOKE_NEW) ? 0 : 1; i < ops.length; i++) {
             if (first) {
                 first = false;
             } else {

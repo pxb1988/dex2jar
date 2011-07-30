@@ -144,7 +144,13 @@ public class IrMethod2AsmMethod implements Opcodes {
                     accept(ae.op1.value, asm);
                     accept(ae.op2.value, asm);
                     accept(v2, asm);
-                    asm.visitInsn(LocalType.type(ae.op2.value).getOpcode(IASTORE));
+                    Type tp1 = LocalType.type(ae.op1.value);
+                    Type tp2 = LocalType.type(ae);
+                    if (tp1.getSort() == Type.ARRAY) {
+                        asm.visitInsn(tp1.getElementType().getOpcode(IASTORE));
+                    } else {
+                        asm.visitInsn(tp2.getOpcode(IASTORE));
+                    }
                     break;
                 }
             }
@@ -391,12 +397,23 @@ public class IrMethod2AsmMethod implements Opcodes {
             asm.visitFieldInsn(e1.op == null ? GETSTATIC : GETFIELD, fe.fieldOwnerType.getInternalName(), fe.fieldName,
                     fe.fieldType.getDescriptor());
             break;
-        case NEW_ARRAY:
+        case NEW_ARRAY: {
+            TypeExpr te = (TypeExpr) e1;
+            switch (te.type.getSort()) {
+            case Type.ARRAY:
+            case Type.OBJECT:
+                asm.visitTypeInsn(ANEWARRAY, te.type.getInternalName());
+                break;
+            default:
+                asm.visitTypeInsn(NEWARRAY, te.type.getInternalName());
+                break;
+            }
+        }
+            break;
         case CHECK_CAST:
         case INSTANCE_OF: {
             TypeExpr te = (TypeExpr) e1;
-            asm.visitTypeInsn(e1.vt == VT.NEW_ARRAY ? NEWARRAY : e1.vt == VT.CHECK_CAST ? CHECKCAST : INSTANCEOF,
-                    te.type.getInternalName());
+            asm.visitTypeInsn(e1.vt == VT.CHECK_CAST ? CHECKCAST : INSTANCEOF, te.type.getInternalName());
         }
             break;
         case CAST: {

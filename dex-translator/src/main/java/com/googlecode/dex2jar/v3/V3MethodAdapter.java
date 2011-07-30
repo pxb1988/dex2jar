@@ -139,8 +139,8 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         return new V3AnnAdapter(ann);
     }
 
-    private static Transformer[] tses = new Transformer[] { new LocalSplit(), new LocalRemove(), new LocalType(),
-            new LocalCurrect() };
+    private static Transformer[] tses = new Transformer[] { new EndRemover(), new LocalSplit(), new LocalRemove(),
+            new LocalType(), new LocalCurrect() };
 
     /*
      * (non-Javadoc)

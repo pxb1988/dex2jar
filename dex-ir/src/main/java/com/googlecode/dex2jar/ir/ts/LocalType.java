@@ -26,6 +26,7 @@ import com.googlecode.dex2jar.ir.expr.FieldExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.expr.RefExpr;
 import com.googlecode.dex2jar.ir.expr.TypeExpr;
+import com.googlecode.dex2jar.ir.expr.UnopExpr;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
@@ -39,43 +40,53 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 public class LocalType implements Transformer {
 
     static class TypeBox {
-        XType type = new XType();
+        XType xtype = new XType(this);
 
         public String toString() {
-            return "" + type;
+
+            return "" + trimTypeBox(this).xtype;
         }
     }
 
     static class XType {
         Type type;
+        TypeBox tb;
+
+        public XType(TypeBox tb) {
+            this.tb = tb;
+        }
 
         public String toString() {
             return "" + type;
         }
     }
 
-    TypeBox get(Value v) {
+    static TypeBox get(Value v) {
         TypeBox tb = (TypeBox) v._lt_type;
         if (tb == null) {
-            v._lt_type = tb = new TypeBox();
+            tb = new TypeBox();
         }
+        tb = trimTypeBox(tb);
+        v._lt_type = tb;
         return tb;
     }
 
-    void type(TypeBox tb, Type t) {
-        if (tb.type.type == null) {
-            tb.type.type = t;
+    private static void type(TypeBox tb, Type t) {
+        if (tb.xtype.type == null) {
+            tb.xtype.type = t;
+            tb.xtype.tb.xtype.type = t;
             return;
         }
-        if (tb.type.type.equals(t)) {
-            return;
-        }
-        tb.type.type = merge(tb.type.type, t);
+        tb.xtype.type = merge(tb.xtype.type, t);
+        tb.xtype.tb.xtype.type = tb.xtype.type;
+    }
+
+    public static void type(Value v, Type t) {
+        type(get(v), t);
     }
 
     public static Type type(Value v) {
-        TypeBox tb = (TypeBox) (v._lt_type);
-        return tb == null ? null : tb.type.type;
+        return get(v).xtype.type;
     }
 
     public TypeBox exec(Value v) {
@@ -129,13 +140,13 @@ public class LocalType implements Transformer {
             }
                 break;
             case LENGTH: {
-                TypeExpr te = (TypeExpr) v;
-                type(exec(te.op.value), Type.getType(Object.class));
+                UnopExpr te = (UnopExpr) v;
+                exec(te.op.value);
                 type(tb, Type.INT_TYPE);
             }
                 break;
             case NEG: {
-                TypeExpr te = (TypeExpr) v;
+                UnopExpr te = (UnopExpr) v;
                 merge(tb, exec(te.op.value));
             }
                 break;
@@ -146,6 +157,8 @@ public class LocalType implements Transformer {
             TypeBox tb2 = exec(((E2Expr) v).op2.value);
             switch (v.vt) {
             case ARRAY:
+                // TODO associate array expr types
+                type(tb2, Type.INT_TYPE);
                 break;
             case ADD:
             case SUB:
@@ -213,7 +226,7 @@ public class LocalType implements Transformer {
         return tb;
     }
 
-    Type merge(Type t2, Type t1) {
+    public static Type merge(Type t2, Type t1) {
         return t2;
     }
 
@@ -259,17 +272,29 @@ public class LocalType implements Transformer {
         }
     }
 
+    static TypeBox trimTypeBox(TypeBox tb) {
+        while (tb != tb.xtype.tb) {
+            tb = tb.xtype.tb;
+        }
+        return tb;
+    }
+
     private void merge(TypeBox tb1, TypeBox tb2) {
-        if (tb1.type.type == null) {
-            tb1.type = tb2.type;
+        tb1 = trimTypeBox(tb1);
+        tb2 = trimTypeBox(tb2);
+        if (tb1.xtype.type == null) {
+            tb1.xtype.tb = tb2;
+            tb1.xtype = tb2.xtype;
             return;
         }
-        if (tb2.type.type == null) {
-            tb2.type = tb1.type;
+        if (tb2.xtype.type == null) {
+            tb2.xtype.tb = tb1;
+            tb2.xtype = tb1.xtype;
             return;
         }
-        Type nt = merge(tb1.type.type, tb2.type.type);
-        tb1.type = tb2.type;
-        tb2.type.type = nt;
+        Type nt = merge(tb1.xtype.type, tb2.xtype.type);
+        tb1.xtype.tb = tb2;
+        tb1.xtype = tb2.xtype;
+        tb2.xtype.type = nt;
     }
 }

@@ -17,7 +17,6 @@ package com.googlecode.dex2jar.test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
@@ -49,8 +48,8 @@ public class V3Test {
             File file = new File("target/test-classes/dexes");
             for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip", "apk" }, false)) {
                 log.info("dex2jar file {}", f);
-                File distFile = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dex2jar.jar");
-                doData(Main.readClasses(f), distFile);
+                File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dex2jar");
+                doData(Main.readClasses(f), distDir);
             }
         } catch (Exception e) {
             Main.niceExceptionMessage(log, e, 0);
@@ -58,40 +57,35 @@ public class V3Test {
         }
     }
 
-    public static void doData(byte[] data, File destJar) throws IOException {
-        final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(destJar));
+    public static void doData(byte[] data, final File destDir) throws IOException {
 
         DexFileReader reader = new DexFileReader(data);
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
         reader.accept(afa);
-        reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), new ClassVisitorFactory() {
-            public ClassVisitor create(final String name) {
-                return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
-                    /*
-                     * (non-Javadoc)
-                     * 
-                     * @see org.objectweb.asm.ClassWriter#visitEnd()
-                     */
-                    @Override
-                    public void visitEnd() {
-                        super.visitEnd();
-                        try {
-                            byte[] data = this.toByteArray();
-                            log.info("verify {}", name);
-                            TestUtils.verify(new ClassReader(data));
-                            ZipEntry entry = new ZipEntry(name + ".class");
-                            zos.putNextEntry(entry);
-                            zos.write(data);
-                            zos.closeEntry();
-                        } catch (Exception e) {
-                            throw new DexException(e);
-                        }
+        reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(),
+                new ClassVisitorFactory() {
+                    public ClassVisitor create(final String name) {
+                        return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
+                            /*
+                             * (non-Javadoc)
+                             * 
+                             * @see org.objectweb.asm.ClassWriter#visitEnd()
+                             */
+                            @Override
+                            public void visitEnd() {
+                                super.visitEnd();
+                                try {
+                                    byte[] data = this.toByteArray();
+                                    FileUtils.writeByteArrayToFile(new File(destDir, name + ".class"), data);
+                                    log.info("verify {}", name);
+                                    TestUtils.verify(new ClassReader(data));
+                                } catch (Exception e) {
+                                    throw new DexException(e);
+                                }
+                            }
+                        };
                     }
-                };
-            }
-        }));
-        zos.finish();
-        zos.close();
+                }));
     }
 
 }

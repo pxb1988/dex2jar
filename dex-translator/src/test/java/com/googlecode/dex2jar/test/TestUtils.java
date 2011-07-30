@@ -113,9 +113,10 @@ public abstract class TestUtils {
         }
     }
 
-    public static void verify(final ClassReader cr) throws AnalyzerException, IllegalArgumentException, IllegalAccessException {
+    public static void verify(final ClassReader cr) throws AnalyzerException, IllegalArgumentException,
+            IllegalAccessException {
         ClassNode cn = new ClassNode();
-        cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
+        cr.accept(cn, ClassReader.SKIP_DEBUG);
 
         Type syperType = cn.superName == null ? null : Type.getObjectType(cn.superName);
         List methods = cn.methods;
@@ -151,7 +152,8 @@ public abstract class TestUtils {
 
     }
 
-    static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw) throws IllegalArgumentException, IllegalAccessException {
+    static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)
+            throws IllegalArgumentException, IllegalAccessException {
         Frame[] frames = a.getFrames();
         TraceMethodVisitor mv = new TraceMethodVisitor();
         String format = "%05d %-" + (method.maxStack + method.maxLocals + 6) + "s|%s";
