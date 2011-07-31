@@ -122,9 +122,14 @@ public class IrMethod2AsmMethod implements Opcodes {
                 switch (v1.vt) {
                 case LOCAL:
                     accept(v2, asm);
-                    int i = ((Local) v1)._ls_index;
+                    Local local = ((Local) v1);
+                    int i = local._ls_index;
                     if (i >= 0) {// skip void type locals
-                        asm.visitVarInsn(LocalType.type(v1).getOpcode(ISTORE), i);
+                        if (local._ls_read_count == 0) {// no read, just pop it
+                            asm.visitInsn(LocalType.type(v1).getSize() == 2 ? POP2 : POP);
+                        } else {
+                            asm.visitVarInsn(LocalType.type(v1).getOpcode(ISTORE), i);
+                        }
                     }
                     break;
                 case FIELD:
