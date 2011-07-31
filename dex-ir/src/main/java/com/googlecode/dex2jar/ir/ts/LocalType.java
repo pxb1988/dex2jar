@@ -24,6 +24,7 @@ import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
+import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.RefExpr;
 import com.googlecode.dex2jar.ir.expr.TypeExpr;
 import com.googlecode.dex2jar.ir.expr.UnopExpr;
@@ -108,6 +109,9 @@ public class LocalType implements Transformer {
             case PARAMETER_REF:
             case EXCEPTION_REF:
                 type(tb, ((RefExpr) v).type);
+                break;
+            case NEW:
+                type(tb, ((NewExpr) v).type);
                 break;
             }
             break;

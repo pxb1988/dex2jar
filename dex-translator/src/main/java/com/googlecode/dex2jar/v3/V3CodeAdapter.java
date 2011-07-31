@@ -15,7 +15,6 @@
  */
 package com.googlecode.dex2jar.v3;
 
-import static com.googlecode.dex2jar.ir.Constant.n;
 import static com.googlecode.dex2jar.ir.Constant.nClass;
 import static com.googlecode.dex2jar.ir.Constant.nInt;
 import static com.googlecode.dex2jar.ir.Constant.nLong;
@@ -46,6 +45,7 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nLt;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nMul;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNe;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNeg;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNew;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNewArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNot;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nOr;
@@ -89,7 +89,6 @@ import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
 /**
@@ -294,7 +293,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             list.add(nAssign(locals[saveTo], nCheckCast(locals[saveTo], Type.getType(type))));
             break;
         case OP_NEW_INSTANCE:
-            list.add(nAssign(locals[saveTo], n(LocalRemove.NEW_TYPE, Type.getType(type))));
+            list.add(nAssign(locals[saveTo], nNew(Type.getType(type))));
             break;
         }
 

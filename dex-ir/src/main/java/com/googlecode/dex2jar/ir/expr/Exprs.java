@@ -152,6 +152,10 @@ public final class Exprs {
         return new UnopExpr(VT.NEG, array);
     }
 
+    public static NewExpr nNew(Type type) {
+        return new NewExpr(type);
+    }
+
     public static TypeExpr nNewArray(Type elementType, Value size) {
         return new TypeExpr(VT.NEW_ARRAY, size, elementType);
     }

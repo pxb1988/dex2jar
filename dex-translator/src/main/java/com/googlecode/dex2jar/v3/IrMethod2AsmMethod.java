@@ -19,6 +19,7 @@ import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.ArrayExpr;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
+import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
 import com.googlecode.dex2jar.ir.expr.RefExpr;
 import com.googlecode.dex2jar.ir.expr.TypeExpr;
@@ -322,6 +323,9 @@ public class IrMethod2AsmMethod implements Opcodes {
                 } else {
                     asm.visitLdcInsn(cst.value);
                 }
+                break;
+            case NEW:
+                asm.visitTypeInsn(NEW, ((NewExpr) value).type.getInternalName());
                 break;
             }
             break;

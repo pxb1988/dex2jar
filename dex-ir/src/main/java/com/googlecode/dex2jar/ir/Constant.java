@@ -18,7 +18,6 @@ package com.googlecode.dex2jar.ir;
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.ir.Value.E0Expr;
-import com.googlecode.dex2jar.ir.ts.LocalRemove;
 
 /**
  * Represent a constant, number/string/type
@@ -110,9 +109,6 @@ public class Constant extends E0Expr {
         }
         if (type.equals(Type.getType(Class.class))) {
             return ToStringUtil.toShortClassName((Type) value) + ".class";
-        }
-        if (type == LocalRemove.NEW_TYPE) {
-            return "A place holder for [NEW " + ToStringUtil.toShortClassName((Type) value) + "], will remove after LR";
         }
         return "" + value;
     }
