@@ -27,6 +27,7 @@ import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
+import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
@@ -140,5 +141,125 @@ public class LocalSplitTest {
         new LocalSplit().transform(jm);
 
         Assert.assertTrue(jm.locals.size() == 3);
+    }
+
+    @Test
+    public void test5() {
+        Type exType = Type.getType("Ljava/lang/Exception;");
+        IrMethod jm = new IrMethod();
+
+        LabelStmt L1 = nLabel();
+        LabelStmt L2 = nLabel();
+        LabelStmt L3 = nLabel();
+        LabelStmt L4 = nLabel();
+        jm.traps.add(new Trap(L1, L2, L3, exType));
+
+        Local b = nLocal("b", null);
+        Local ex = nLocal("ex", exType);
+        Local c = nLocal("c", exType);
+        Local d = nLocal("d", exType);
+        Local e = nLocal("e", exType);
+        Local cst = nLocal("cst", exType);
+        StmtList list = jm.stmts;
+        jm.locals.add(b);
+        jm.locals.add(ex);
+        jm.locals.add(c);
+        jm.locals.add(d);
+        jm.locals.add(e);
+        jm.locals.add(cst);
+
+        list.add(L1);
+        list.add(nAssign(b, nString("123")));
+        list.add(nAssign(ex, nString("test ex")));
+
+        list.add(nAssign(c, Exprs.nInvokeNew(new Value[0], new Type[0], Type.getType(StringBuilder.class))));
+        list.add(nAssign(d, c));
+        list.add(nAssign(cst, nString("p1")));
+        list.add(nAssign(c, Exprs.nInvokeVirtual(new Value[] { d, cst }, Type.getType(StringBuilder.class), "append",
+                new Type[] { Type.getType(String.class) }, Type.getType(StringBuilder.class))));
+        list.add(nAssign(e, c));
+        list.add(nAssign(cst, nString("p2")));
+        list.add(nAssign(c, Exprs.nInvokeVirtual(new Value[] { e, cst }, Type.getType(StringBuilder.class), "append",
+                new Type[] { Type.getType(String.class) }, Type.getType(StringBuilder.class))));
+        list.add(nAssign(c, Exprs.nInvokeVirtual(new Value[] { c }, Type.getType(StringBuilder.class), "toString",
+                new Type[0], Type.getType(String.class))));
+
+        list.add(L2);
+        list.add(nGoto(L4));
+        list.add(L3);
+        list.add(nIdentity(ex, nExceptionRef(exType)));
+        list.add(nAssign(ex,
+                nInvokeVirtual(new Value[] { ex }, exType, "toString", new Type[0], Type.getType(String.class))));
+        list.add(nAssign(b, nNull()));
+        list.add(L4);
+        list.add(nReturn(b));
+
+        new LocalSplit().transform(jm);
+
+        Assert.assertTrue(jm.locals.size() == 12);
+    }
+
+    @Test
+    public void test6() {
+        Type exType = Type.getType("Ljava/lang/Exception;");
+        IrMethod jm = new IrMethod();
+
+        LabelStmt L1 = nLabel();
+        LabelStmt L2 = nLabel();
+        LabelStmt L3 = nLabel();
+        LabelStmt L4 = nLabel();
+        LabelStmt L5 = nLabel();
+        jm.traps.add(new Trap(L1, L2, L3, exType));
+        jm.traps.add(new Trap(L1, L2, L5, exType));
+
+        Local b = nLocal("b", null);
+        Local ex = nLocal("ex", exType);
+        Local c = nLocal("c", exType);
+        Local d = nLocal("d", exType);
+        Local e = nLocal("e", exType);
+        Local cst = nLocal("cst", exType);
+        StmtList list = jm.stmts;
+        jm.locals.add(b);
+        jm.locals.add(ex);
+        jm.locals.add(c);
+        jm.locals.add(d);
+        jm.locals.add(e);
+        jm.locals.add(cst);
+
+        list.add(L1);
+        list.add(nAssign(b, nString("123")));
+        list.add(nAssign(ex, nString("test ex")));
+
+        list.add(nAssign(c, Exprs.nInvokeNew(new Value[0], new Type[0], Type.getType(StringBuilder.class))));
+        list.add(nAssign(d, c));
+        list.add(nAssign(cst, nString("p1")));
+        list.add(nAssign(c, Exprs.nInvokeVirtual(new Value[] { d, cst }, Type.getType(StringBuilder.class), "append",
+                new Type[] { Type.getType(String.class) }, Type.getType(StringBuilder.class))));
+        list.add(nAssign(e, c));
+        list.add(nAssign(cst, nString("p2")));
+        list.add(nAssign(c, Exprs.nInvokeVirtual(new Value[] { e, cst }, Type.getType(StringBuilder.class), "append",
+                new Type[] { Type.getType(String.class) }, Type.getType(StringBuilder.class))));
+        list.add(nAssign(c, Exprs.nInvokeVirtual(new Value[] { c }, Type.getType(StringBuilder.class), "toString",
+                new Type[0], Type.getType(String.class))));
+
+        list.add(L2);
+        list.add(nGoto(L4));
+        list.add(L3);
+        list.add(nIdentity(ex, nExceptionRef(exType)));
+        list.add(nAssign(ex,
+                nInvokeVirtual(new Value[] { ex }, exType, "toString", new Type[0], Type.getType(String.class))));
+        list.add(nAssign(b, nNull()));
+        list.add(nGoto(L4));
+        list.add(L5);
+        list.add(nIdentity(ex, nExceptionRef(exType)));
+        list.add(nAssign(ex,
+                nInvokeVirtual(new Value[] { ex }, exType, "toString", new Type[0], Type.getType(String.class))));
+        list.add(nAssign(b, nNull()));
+        list.add(L4);
+        list.add(nReturn(b));
+
+        new LocalSplit().transform(jm);
+
+        Assert.assertTrue(jm.locals.size() == 12);
     }
 }

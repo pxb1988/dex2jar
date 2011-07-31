@@ -17,7 +17,6 @@ package com.googlecode.dex2jar.ir.stmt;
 
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 /**
  * Represent a LOOKUP_SWITCH statement
@@ -44,10 +43,11 @@ public class LookupSwitchStmt extends E1Stmt {
         StringBuilder sb = new StringBuilder("switch(").append(op).append(") {");
 
         for (int i = 0; i < lookupValues.length; i++) {
-            sb.append("case ").append(lookupValues[i]).append(": GOTO ").append(targets[i].label).append(";");
+            sb.append("\n case ").append(lookupValues[i]).append(": GOTO ").append(targets[i].getDisplayName())
+                    .append(";");
         }
-        sb.append("default : GOTO ").append(defaultTarget.label).append(";");
-        sb.append("}");
+        sb.append("\n default : GOTO ").append(defaultTarget.getDisplayName()).append(";");
+        sb.append("\n}");
         return sb.toString();
     }
 }

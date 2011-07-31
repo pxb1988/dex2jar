@@ -54,7 +54,7 @@ public class LocalSplit implements Transformer {
         switch (v.et) {
         case E0:
             if (v.vt == VT.LOCAL) {
-                Local local = (Local) currentFrame[((Local) v)._ls_index].value;
+                Local local = (Local) trimLocalVB(currentFrame[((Local) v)._ls_index]).value;
                 local._ls_read_count++;
                 vb = local._ls_vb;
             }
@@ -89,7 +89,7 @@ public class LocalSplit implements Transformer {
         final List<Local> locals = jm.locals;
 
         final Value NEED = nInt(1);
-
+        final Value NotNEED = nInt(0);
         Cfg.createCFG(jm);
 
         Cfg.Backward(jm, new FrameVisitor<ValueBox[]>() {
@@ -129,7 +129,7 @@ public class LocalSplit implements Transformer {
                     System.arraycopy(stmt._ls_backward_frame, 0, tmp, 0, tmp.length);
                 } else {
                     for (int i = 0; i < tmp.length; i++) {
-                        tmp[i] = new ValueBox(null);
+                        tmp[i] = new ValueBox(NotNEED);
                     }
                 }
 
@@ -143,8 +143,8 @@ public class LocalSplit implements Transformer {
                 case E2:
                     E2Stmt e2 = (E2Stmt) stmt;
                     if (e2.op1.value.vt == VT.LOCAL) {
+                        tmp[((Local) e2.op1.value)._ls_index] = new ValueBox(NotNEED);
                         doLocalRef(e2.op2, tmp);
-                        tmp[((Local) e2.op1.value)._ls_index] = new ValueBox(null);
                     } else {
                         doLocalRef(e2.op1, tmp);
                         doLocalRef(e2.op2, tmp);
@@ -161,16 +161,17 @@ public class LocalSplit implements Transformer {
             }
 
             @Override
-            public void merge(ValueBox[] frame, Stmt dist) {
-                ValueBox[] currnetFrame = (ValueBox[]) frame;
+            public void merge(ValueBox[] currnetFrame, Stmt dist) {
                 if (dist._ls_backward_frame == null) {
                     dist._ls_backward_frame = new ValueBox[orgLocalSize];
-                    System.arraycopy(currnetFrame, 0, dist._ls_backward_frame, 0, currnetFrame.length);
+                    for (int i = 0; i < currnetFrame.length; i++) {
+                        dist._ls_backward_frame[i] = new ValueBox(currnetFrame[i].value);
+                    }
                 } else {
                     ValueBox[] distFrame = (ValueBox[]) dist._ls_backward_frame;
                     for (int i = 0; i < currnetFrame.length; i++) {
-                        if (currnetFrame[i].value != null) {
-                            distFrame[i].value = currnetFrame[i].value;
+                        if (currnetFrame[i].value == NEED) {
+                            distFrame[i].value = NEED;
                         }
                     }
                 }
@@ -226,26 +227,25 @@ public class LocalSplit implements Transformer {
                     ValueBox[] b = (ValueBox[]) distStmt._ls_forward_frame;
                     ValueBox[] backwardFrame = distStmt._ls_backward_frame;
                     for (int i = 0; i < currentFrame.length; i++) {
-                        if (backwardFrame[i].value == null) {
+                        if (backwardFrame[i].value == NotNEED) {
                             continue;
                         }
-                        ValueBox ai = currentFrame[i];
-                        if (ai != null) {
-                            ValueBox bi = b[i];
-                            if (ai != bi) {
-                                if (bi == null) {
-                                    b[i] = ai;
-                                } else {
-                                    if (ai.value != bi.value) {
-                                        locals.remove(ai.value);
-                                    }
-                                    Local la = (Local) ai.value;
-                                    Local lb = (Local) bi.value;
-                                    ai.value = bi.value;
-                                    la._ls_vb = lb._ls_vb;
-                                }
-                            }
+                        ValueBox ai = trimLocalVB(currentFrame[i]);
+                        ValueBox bi = trimLocalVB(b[i]);
+                        if (bi == null) {
+                            // b[i] = ai;
+                            continue;
                         }
+                        if (ai == bi) {
+                            continue;
+                        }
+
+                        if (ai.value != bi.value) {
+                            locals.remove(ai.value);
+                        }
+                        Local la = (Local) ai.value;
+                        ai.value = bi.value;
+                        la._ls_vb = bi;
                     }
                 }
             }
@@ -272,9 +272,9 @@ public class LocalSplit implements Transformer {
                 case ASSIGN:
                 case IDENTITY:
                     if (e2.op1.value.vt == VT.LOCAL) {
+                        e2.op1 = trimLocalVB(e2.op1);
                         Local local = (Local) e2.op1.value;
                         local._ls_write_count++;
-                        e2.op1 = local._ls_vb;
                         if (e2.op2.value.vt == VT.INVOKE_SPECIAL) {
                             InvokeExpr ie = (InvokeExpr) e2.op2.value;
                             if (ie.methodName.equals("<init>")) {
@@ -301,8 +301,19 @@ public class LocalSplit implements Transformer {
             st._ls_forward_frame = null;
             st._ls_backward_frame = null;
         }
-
+        // for (Stmt st : jm.stmts) {
+        // System.out.printf("%30s %s\n",
+        // st._ls_backward_frame == null ? Arrays.asList() : Arrays.asList(st._ls_backward_frame), st);
+        // }
         jm.stmts._ls_visit_order = _ls_visit_order;
     }
 
+    static ValueBox trimLocalVB(ValueBox vb) {
+        if (vb == null)
+            return null;
+        while (vb != ((Local) vb.value)._ls_vb) {
+            vb = ((Local) vb.value)._ls_vb;
+        }
+        return vb;
+    }
 }

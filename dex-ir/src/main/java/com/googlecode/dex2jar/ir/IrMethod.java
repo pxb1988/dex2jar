@@ -60,8 +60,7 @@ public class IrMethod {
         if (traps.size() > 0) {
             sb.append("=============\n");
             for (Trap trap : traps) {
-                sb.append(trap.start).append(" - ").append(trap.end).append(" > ").append(trap.handler).append(" // ")
-                        .append(trap.type == null ? null : ToStringUtil.toShortClassName(trap.type)).append("\n");
+                sb.append(trap).append('\n');
             }
         }
         sb.append("}");

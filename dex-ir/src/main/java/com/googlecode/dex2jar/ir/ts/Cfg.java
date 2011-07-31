@@ -15,9 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
-import java.util.ArrayDeque;
-import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeSet;
 
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -53,12 +52,12 @@ public class Cfg {
 
         boolean isFv = sv instanceof FrameVisitor;
         FrameVisitor<T> fv = isFv ? ((FrameVisitor<T>) sv) : null;
-        Queue<Stmt> toVisitQueue = new ArrayDeque<Stmt>();
+        Stack<Stmt> toVisitQueue = new Stack<Stmt>();
 
         toVisitQueue.addAll(jm.stmts._cfg_tais);
 
         while (!toVisitQueue.isEmpty()) {
-            Stmt currentStmt = toVisitQueue.poll();
+            Stmt currentStmt = toVisitQueue.pop();
             if (currentStmt == null || currentStmt._cfg_visited) {
                 continue;
             } else {
@@ -143,14 +142,14 @@ public class Cfg {
             st._cfg_visited = false;
         }
 
-        Queue<Stmt> toVisitQueue = new ArrayDeque<Stmt>();
+        Stack<Stmt> toVisitQueue = new Stack<Stmt>();
         boolean isFv = sv instanceof FrameVisitor;
         FrameVisitor<T> fv = isFv ? ((FrameVisitor<T>) sv) : null;
 
         toVisitQueue.add(jm.stmts.getFirst());
 
         while (!toVisitQueue.isEmpty()) {
-            Stmt currentStmt = toVisitQueue.poll();
+            Stmt currentStmt = toVisitQueue.pop();
             if (currentStmt == null || currentStmt._cfg_visited) {
                 continue;
             } else {
@@ -168,6 +167,9 @@ public class Cfg {
     }
 
     private static void link(Stmt from, Stmt to) {
+        if (to == null) {// last stmt is a LabelStmt
+            return;
+        }
         from._cfg_tos.add(to);
         to._cfg_froms.add(from);
     }

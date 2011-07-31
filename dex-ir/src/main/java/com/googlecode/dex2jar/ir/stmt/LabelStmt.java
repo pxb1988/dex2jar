@@ -18,7 +18,6 @@ package com.googlecode.dex2jar.ir.stmt;
 import org.objectweb.asm.Label;
 
 import com.googlecode.dex2jar.ir.stmt.Stmt.E0Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 /**
  * Represent a Label statement
@@ -31,14 +30,19 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 public class LabelStmt extends E0Stmt {
 
     public Label label;
+    public String displayName;
 
     public LabelStmt(Label label) {
         super(ST.LABEL);
         this.label = label;
     }
 
+    public String getDisplayName() {
+        return displayName == null ? label.toString() : displayName;
+    }
+
     public String toString() {
-        return label + ":";
+        return getDisplayName() + ":";
     }
 
 }

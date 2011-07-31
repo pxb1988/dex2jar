@@ -46,6 +46,7 @@ public class TypeExpr extends E1Expr {
 
     public String toString() {
         switch (super.vt) {
+        case CHECK_CAST:
         case CAST:
             return "((" + ToStringUtil.toShortClassName(type) + ")" + op + ")";
         case INSTANCE_OF:

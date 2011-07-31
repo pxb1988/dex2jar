@@ -41,4 +41,10 @@ public class Trap {
         this.type = type;
     }
 
+    public String toString() {
+        return new StringBuilder().append(start.getDisplayName()).append(" - ").append(end.getDisplayName())
+                .append(" > ").append(handler.getDisplayName()).append(" // ")
+                .append(type == null ? "all" : ToStringUtil.toShortClassName(type)).toString();
+    }
+
 }

@@ -405,7 +405,36 @@ public class IrMethod2AsmMethod implements Opcodes {
                 asm.visitTypeInsn(ANEWARRAY, te.type.getInternalName());
                 break;
             default:
-                asm.visitTypeInsn(NEWARRAY, te.type.getInternalName());
+                int operand;
+                switch (te.type.getSort()) {
+                case Type.BOOLEAN:
+                    operand = T_BOOLEAN;
+                    break;
+                case Type.BYTE:
+                    operand = T_BYTE;
+                    break;
+                case Type.SHORT:
+                    operand = T_SHORT;
+                    break;
+                case Type.CHAR:
+                    operand = T_CHAR;
+                    break;
+                case Type.INT:
+                    operand = T_INT;
+                    break;
+                case Type.FLOAT:
+                    operand = T_FLOAT;
+                    break;
+                case Type.LONG:
+                    operand = T_LONG;
+                    break;
+                case Type.DOUBLE:
+                    operand = T_DOUBLE;
+                    break;
+                default:
+                    operand = -1;
+                }
+                asm.visitIntInsn(NEWARRAY, operand);
                 break;
             }
         }
@@ -436,7 +465,13 @@ public class IrMethod2AsmMethod implements Opcodes {
         Type type = LocalType.type(e2.op2.value);
         switch (e2.vt) {
         case ARRAY:
-            asm.visitInsn(type.getOpcode(IALOAD));
+            Type tp1 = LocalType.type(e2.op1.value);
+            Type tp2 = LocalType.type(e2);
+            if (tp1.getSort() == Type.ARRAY) {
+                asm.visitInsn(tp1.getElementType().getOpcode(IALOAD));
+            } else {
+                asm.visitInsn(tp2.getOpcode(IALOAD));
+            }
             break;
         case ADD:
             asm.visitInsn(type.getOpcode(IADD));

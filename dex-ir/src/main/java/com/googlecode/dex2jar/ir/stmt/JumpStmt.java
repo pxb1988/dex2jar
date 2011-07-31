@@ -17,7 +17,6 @@ package com.googlecode.dex2jar.ir.stmt;
 
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 /**
  * Represent a Jump statement, the op is null if it is a GOTO statement
@@ -57,9 +56,9 @@ public class JumpStmt extends E1Stmt {
     public String toString() {
         switch (st) {
         case GOTO:
-            return "GOTO " + target;
+            return "GOTO " + target.getDisplayName();
         case IF:
-            return "if " + op + " GOTO " + target;
+            return "if " + op + " GOTO " + target.getDisplayName();
         }
         return super.toString();
     }

@@ -154,6 +154,15 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
             public void visitEnd() {
                 super.visitEnd();
                 if (irMethod.stmts.getSize() > 1) {
+//                    {// index LabelStmt for debug
+//                        int labelIndex = 0;
+//                        for (Stmt stmt : irMethod.stmts) {
+//                            if (stmt.st == ST.LABEL) {
+//                                ((LabelStmt) stmt).displayName = "L" + labelIndex++;
+//                            }
+//                        }
+//                    }
+
                     for (Transformer ts : tses) {
                         ts.transform(irMethod);
                     }

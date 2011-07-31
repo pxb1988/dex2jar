@@ -16,6 +16,7 @@
 package com.googlecode.dex2jar.ir.stmt;
 
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.googlecode.dex2jar.ir.ET;
 import com.googlecode.dex2jar.ir.ValueBox;

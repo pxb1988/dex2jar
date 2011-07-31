@@ -18,7 +18,6 @@ package com.googlecode.dex2jar.ir.stmt;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 /**
  * Represent a TABLE_SWITCH statement
@@ -50,10 +49,11 @@ public class TableSwitchStmt extends E1Stmt {
         StringBuilder sb = new StringBuilder("switch(").append(op).append(") {");
 
         for (int i = 0; i < targets.length; i++) {
-            sb.append("case ").append(lowIndex + i).append(": GOTO ").append(targets[i].label).append(";");
+            sb.append("\n case ").append(lowIndex + i).append(": GOTO ").append(targets[i].getDisplayName())
+                    .append(";");
         }
-        sb.append("default : GOTO ").append(defaultTarget.label).append(";");
-        sb.append("}");
+        sb.append("\n default : GOTO ").append(defaultTarget.getDisplayName()).append(";");
+        sb.append("\n}");
         return sb.toString();
     }
 
