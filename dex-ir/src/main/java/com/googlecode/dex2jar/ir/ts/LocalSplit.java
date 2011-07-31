@@ -36,6 +36,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.EnStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
 
@@ -255,8 +256,10 @@ public class LocalSplit implements Transformer {
         for (Iterator<Stmt> it = list.iterator(); it.hasNext();) {
             Stmt st = it.next();
             if (st._ls_forward_frame == null) {// dead code
-                it.remove();
-                continue;
+                if (st.st != ST.LABEL) {// not remove label
+                    it.remove();
+                    continue;
+                }
             }
             ValueBox[] currentFrame = st._ls_forward_frame;
             switch (st.et) {
@@ -301,10 +304,6 @@ public class LocalSplit implements Transformer {
             st._ls_forward_frame = null;
             st._ls_backward_frame = null;
         }
-        // for (Stmt st : jm.stmts) {
-        // System.out.printf("%30s %s\n",
-        // st._ls_backward_frame == null ? Arrays.asList() : Arrays.asList(st._ls_backward_frame), st);
-        // }
         jm.stmts._ls_visit_order = _ls_visit_order;
     }
 

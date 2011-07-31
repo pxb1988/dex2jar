@@ -579,9 +579,9 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
                     nArgs[i++] = args[j];
                     j += Type.getType(t).getSize();
                 }
-                dcv.visitMethodStmt(opcode, nArgs, m);
+                dcv.visitMethodStmt(nOpcode, nArgs, m);
             } else {
-                dcv.visitMethodStmt(opcode, args, m);
+                dcv.visitMethodStmt(nOpcode, args, m);
             }
             break;
         default:

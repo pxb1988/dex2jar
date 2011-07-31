@@ -260,6 +260,6 @@ public class LocalSplitTest {
 
         new LocalSplit().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 12);
+        Assert.assertTrue(jm.locals.size() == 14);
     }
 }

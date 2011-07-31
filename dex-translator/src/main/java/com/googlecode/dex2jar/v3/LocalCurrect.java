@@ -5,11 +5,11 @@ import org.objectweb.asm.Type;
 import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.Value.E1Expr;
 import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
+import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
@@ -20,7 +20,7 @@ public class LocalCurrect implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-        // type correct
+        // 1. search for arrays
         for (Stmt st : irMethod.stmts) {
             switch (st.et) {
             case E0:
@@ -28,18 +28,83 @@ public class LocalCurrect implements Transformer {
                 break;
             case E1:
                 E1Stmt s1 = (E1Stmt) st;
-                currectInExpr(s1.op);
+                currectArrayInExpr(s1.op);
                 break;
             case E2:
                 E2Stmt s2 = (E2Stmt) st;
-                currectInExpr(s2.op1);
-                currectInExpr(s2.op2);
+                if (s2.op1.value.vt == VT.ARRAY) {
+                    E2Expr array = (E2Expr) s2.op1.value;
+                    Type t1 = LocalType.type(array);
+                    Type t2 = LocalType.type(array.op1.value);
+                    if (t2.getSort() == Type.ARRAY) {
+                        Type nT1 = t2.getElementType();
+                        if (!nT1.equals(t1)) {
+                            LocalType.type(array, nT1);
+                        }
+                    }
+                }
+                currectArrayInExpr(s2.op1);
+                currectArrayInExpr(s2.op2);
                 break;
             }
         }
+        // 2. search for constants
+        for (Stmt st : irMethod.stmts) {
+            switch (st.et) {
+            case E0:
+            case En:
+                break;
+            case E1:
+                E1Stmt s1 = (E1Stmt) st;
+                currectCstInExpr(s1.op);
+                break;
+            case E2:
+                E2Stmt s2 = (E2Stmt) st;
+                currectCstInExpr(s2.op1);
+                currectCstInExpr(s2.op2);
+                break;
+            }
+        }
+
     }
 
-    private void currectInExpr(ValueBox vb) {
+    private void currectArrayInExpr(ValueBox vb) {
+        if (vb == null) {
+            return;
+        }
+        Value value = vb.value;
+        switch (value.et) {
+        case E0:
+            break;
+        case E1:
+            currectArrayInExpr(((E1Expr) value).op);
+            break;
+        case E2:
+            E2Expr e2 = (E2Expr) value;
+            if (e2.vt == VT.ARRAY) {
+                Type t1 = LocalType.type(e2);
+                Type t2 = LocalType.type(e2.op1.value);
+                if (t2.getSort() == Type.ARRAY) {
+                    Type nT1 = t2.getElementType();
+                    if (!nT1.equals(t1)) {
+                        LocalType.type(e2, nT1);
+                    }
+                }
+            }
+
+            currectArrayInExpr(e2.op1);
+            currectArrayInExpr(e2.op2);
+            break;
+        case En:
+            EnExpr en = (EnExpr) value;
+            for (ValueBox op : en.ops) {
+                currectArrayInExpr(op);
+            }
+            break;
+        }
+    }
+
+    private void currectCstInExpr(ValueBox vb) {
         if (vb == null) {
             return;
         }
@@ -83,17 +148,28 @@ public class LocalCurrect implements Transformer {
             }
             break;
         case E1:
-            currectInExpr(((E1Expr) value).op);
+            currectCstInExpr(((E1Expr) value).op);
             break;
         case E2:
             E2Expr e2 = (E2Expr) value;
-            currectInExpr(e2.op1);
-            currectInExpr(e2.op2);
+            if (e2.vt == VT.ARRAY) {
+                Type t1 = LocalType.type(e2);
+                Type t2 = LocalType.type(e2.op1.value);
+                if (t2.getSort() == Type.ARRAY) {
+                    Type nT1 = t2.getElementType();
+                    if (!nT1.equals(t1)) {
+                        LocalType.type(e2, t1);
+                    }
+                }
+            }
+
+            currectCstInExpr(e2.op1);
+            currectCstInExpr(e2.op2);
             break;
         case En:
             EnExpr en = (EnExpr) value;
             for (ValueBox op : en.ops) {
-                currectInExpr(op);
+                currectCstInExpr(op);
             }
             break;
         }

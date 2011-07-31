@@ -29,6 +29,6 @@ public class ValueBox {
     }
 
     public String toString() {
-        return value.toString();
+        return value == null ? "[Null ValueBox]" : value.toString();
     }
 }
