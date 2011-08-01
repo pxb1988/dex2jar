@@ -1,0 +1,51 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.googlecode.dex2jar</groupId>
+		<artifactId>dex2jar</artifactId>
+		<version>1.0</version>
+	</parent>
+
+	<groupId>com.googlecode.dex2jar</groupId>
+	<artifactId>dex-dumper</artifactId>
+	<version>1.1</version>
+	<name>Dex Dumper</name>
+	<description>A tool for converting Android's .dex format to Java's .class format</description>
+	<url>http://code.google.como/p/dex2jar/</url>
+	<dependencies>
+		<dependency>
+			<groupId>com.googlecode.dex2jar</groupId>
+			<artifactId>dex-reader</artifactId>
+			<version>1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.5.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.5.6</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.5</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>asm</groupId>
+			<artifactId>asm-debug-all</artifactId>
+			<version>3.2</version>
+		</dependency>
+	</dependencies>
+</project>

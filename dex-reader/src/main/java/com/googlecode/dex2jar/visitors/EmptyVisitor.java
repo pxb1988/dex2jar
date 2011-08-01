@@ -1,0 +1,279 @@
+/*
+ * Copyright (c) 2009-2011 Panxiaobo
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.googlecode.dex2jar.visitors;
+
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Label;
+
+import com.googlecode.dex2jar.Field;
+import com.googlecode.dex2jar.Method;
+
+/**
+ * @author Panxiaobo [pxb1988@gmail.com]
+ * @version $Id$
+ */
+public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor,
+        DexCodeVisitor, AnnotationVisitor {
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
+     * java.lang.String[])
+     */
+    public DexClassVisitor visit(int accessFlags, String className, String superClass, String... interfaceNames) {
+
+        return this;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visitEnd()
+     */
+    public void visitEnd() {
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, boolean)
+     */
+    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+
+        return this;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitField(com.googlecode.dex2jar .Field, java.lang.Object)
+     */
+    public DexFieldVisitor visitField(Field field, Object value) {
+
+        return this;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitMethod(com.googlecode. dex2jar.Method)
+     */
+    public DexMethodVisitor visitMethod(Method method) {
+
+        return this;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitSource(java.lang.String )
+     */
+    public void visitSource(String file) {
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitCode()
+     */
+    public DexCodeVisitor visitCode() {
+
+        return this;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation (int)
+     */
+    public DexAnnotationAble visitParamesterAnnotation(int index) {
+
+        return this;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visit(java.lang.String, java.lang.Object)
+     */
+    public void visit(String name, Object value) {
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitAnnotation(java .lang.String, java.lang.String)
+     */
+    public AnnotationVisitor visitAnnotation(String name, String desc) {
+
+        return this;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitArray(java.lang .String)
+     */
+    public AnnotationVisitor visitArray(String name) {
+
+        return this;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitEnum(java.lang .String, java.lang.String,
+     * java.lang.String)
+     */
+    public void visitEnum(String name, String desc, String value) {
+
+    }
+
+    @Override
+    public void visitArrayStmt(int opAget, int formOrToReg, int arrayReg, int indexReg) {
+
+    }
+
+    @Override
+    public void visitBinopLitXStmt(int opcode, int aA, int bB, int cC) {
+
+    }
+
+    @Override
+    public void visitBinopStmt(int opcode, int toReg, int r1, int r2) {
+
+    }
+
+    @Override
+    public void visitClassStmt(int opcode, int a, int b, String type) {
+
+    }
+
+    @Override
+    public void visitClassStmt(int opCheckCast, int saveTo, String type) {
+
+    }
+
+    @Override
+    public void visitCmpStmt(int opcode, int distReg, int bB, int cC) {
+
+    }
+
+    @Override
+    public void visitConstStmt(int opConst, int toReg, Object value) {
+
+    }
+
+    @Override
+    public void visitFieldStmt(int opcode, int fromOrToReg, Field field) {
+
+    }
+
+    @Override
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field) {
+
+    }
+
+    @Override
+    public void visitFillArrayStmt(int opcode, int aA, int elemWidth, int initLength, Object[] values) {
+
+    }
+
+    @Override
+    public void visitFilledNewArrayStmt(int opcode, int[] args, String type) {
+
+    }
+
+    @Override
+    public void visitJumpStmt(int opcode, int a, int b, Label label) {
+
+    }
+
+    @Override
+    public void visitJumpStmt(int opConst, int reg, Label label) {
+
+    }
+
+    @Override
+    public void visitJumpStmt(int opGoto, Label label) {
+
+    }
+
+    @Override
+    public void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels) {
+
+    }
+
+    @Override
+    public void visitMethodStmt(int opcode, int[] args, Method method) {
+
+    }
+
+    @Override
+    public void visitMonitorStmt(int opcode, int reg) {
+
+    }
+
+    @Override
+    public void visitMoveStmt(int opConst, int toReg) {
+
+    }
+
+    @Override
+    public void visitMoveStmt(int opcode, int toReg, int fromReg) {
+
+    }
+
+    @Override
+    public void visitReturnStmt(int opcode) {
+
+    }
+
+    @Override
+    public void visitReturnStmt(int opConst, int reg) {
+
+    }
+
+    @Override
+    public void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels) {
+
+    }
+
+    @Override
+    public void visitUnopStmt(int opcode, int toReg, int fromReg) {
+
+    }
+
+    @Override
+    public void visitTryCatch(Label start, Label end, Label handler, String type) {
+
+    }
+
+    @Override
+    public void visitArguments(int total, int[] args) {
+
+    }
+
+    @Override
+    public void visitLabel(Label label) {
+
+    }
+
+}

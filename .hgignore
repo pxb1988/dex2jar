@@ -1,9 +1,11 @@
 syntax: glob
 */target/*
+target/*
 */.project
 */.classpath
-*/.settings/*
-*.bak
-.*
-target/*
+*/.*
 
+.*
+*.bak
+*.orig
+*/nb-configuration.xml
