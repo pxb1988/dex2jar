@@ -556,6 +556,15 @@ public class IrMethod2AsmMethod implements Opcodes {
         // int I2C = 146; // -
         // int I2S = 147; // -
 
+        switch (t1.getSort()) {
+        case Type.BOOLEAN:
+        case Type.BYTE:
+        case Type.CHAR:
+        case Type.SHORT:
+            t1 = Type.INT_TYPE;
+            break;
+        }
+
         int opcode;
         switch (t1.getSort() * 10 + t2.getSort()) {
         case 56:
