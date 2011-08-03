@@ -15,11 +15,11 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
-import static com.googlecode.dex2jar.ir.Constant.nInt;
-
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
@@ -79,6 +79,32 @@ public class LocalSplit implements Transformer {
         return vb;
     }
 
+    static class BackwardMarker extends Value {
+        Set<BackwardMarker> parent;
+        boolean used = false;
+
+        BackwardMarker(boolean use) {
+            this();
+            this.used = use;
+        }
+
+        public void use() {
+            if (!used) {
+                used = true;
+                if (parent != null) {
+                    for (BackwardMarker p : parent) {
+                        p.use();
+                    }
+                }
+
+            }
+        }
+
+        protected BackwardMarker() {
+            super(null, null);
+        }
+    }
+
     public void transform(final IrMethod jm) {
         final int orgLocalSize = jm.locals.size();
         final StmtList list = jm.stmts;
@@ -89,20 +115,18 @@ public class LocalSplit implements Transformer {
         jm.locals.clear();
         final List<Local> locals = jm.locals;
 
-        final Value NEED = nInt(1);
-        final Value NotNEED = nInt(0);
         Cfg.createCFG(jm);
 
-        Cfg.Backward(jm, new FrameVisitor<ValueBox[]>() {
+        Cfg.Backward(jm, new FrameVisitor<BackwardMarker[]>() {
 
-            private void doLocalRef(ValueBox vb, ValueBox[] frame) {
+            private void doLocalRef(ValueBox vb, BackwardMarker[] frame) {
                 if (vb == null)
                     return;
                 Value v = vb.value;
                 switch (v.et) {
                 case E0:
                     if (v.vt == VT.LOCAL) {
-                        frame[((Local) v)._ls_index] = new ValueBox(NEED);
+                        frame[((Local) v)._ls_index] = new BackwardMarker(true);
                     }
                     break;
                 case E1:
@@ -124,13 +148,13 @@ public class LocalSplit implements Transformer {
             }
 
             @Override
-            public ValueBox[] exec(Stmt stmt) {
-                ValueBox[] tmp = new ValueBox[orgLocalSize];
+            public BackwardMarker[] exec(Stmt stmt) {
+                BackwardMarker[] tmp = new BackwardMarker[orgLocalSize];
                 if (stmt._ls_backward_frame != null) {
                     System.arraycopy(stmt._ls_backward_frame, 0, tmp, 0, tmp.length);
                 } else {
                     for (int i = 0; i < tmp.length; i++) {
-                        tmp[i] = new ValueBox(NotNEED);
+                        tmp[i] = new BackwardMarker(false);
                     }
                 }
 
@@ -144,7 +168,7 @@ public class LocalSplit implements Transformer {
                 case E2:
                     E2Stmt e2 = (E2Stmt) stmt;
                     if (e2.op1.value.vt == VT.LOCAL) {
-                        tmp[((Local) e2.op1.value)._ls_index] = new ValueBox(NotNEED);
+                        tmp[((Local) e2.op1.value)._ls_index] = new BackwardMarker(false);
                         doLocalRef(e2.op2, tmp);
                     } else {
                         doLocalRef(e2.op1, tmp);
@@ -162,22 +186,56 @@ public class LocalSplit implements Transformer {
             }
 
             @Override
-            public void merge(ValueBox[] currnetFrame, Stmt dist) {
+            public void merge(BackwardMarker[] currnetFrame, Stmt dist) {
                 if (dist._ls_backward_frame == null) {
-                    dist._ls_backward_frame = new ValueBox[orgLocalSize];
-                    for (int i = 0; i < currnetFrame.length; i++) {
-                        dist._ls_backward_frame[i] = new ValueBox(currnetFrame[i].value);
+                    BackwardMarker[] distFrame = new BackwardMarker[orgLocalSize];
+                    dist._ls_backward_frame = distFrame;
+                    if (dist._cfg_tos.size() > 1) {
+                        for (int i = 0; i < orgLocalSize; i++) {
+                            if (currnetFrame[i].used) {
+                                distFrame[i] = currnetFrame[i];
+                            } else {
+                                BackwardMarker bm = new BackwardMarker();
+                                Set<BackwardMarker> parent = currnetFrame[i].parent;
+                                if (parent == null) {
+                                    parent = new HashSet<BackwardMarker>();
+                                    currnetFrame[i].parent = parent;
+                                }
+                                parent.add(bm);
+                                distFrame[i] = bm;
+                            }
+                        }
+                    } else {
+                        // for (int i = 0; i < currnetFrame.length; i++) {
+                        // dist._ls_backward_frame[i] = currnetFrame[i];
+                        // }
+                        System.arraycopy(currnetFrame, 0, dist._ls_backward_frame, 0, orgLocalSize);
                     }
                 } else {
-                    ValueBox[] distFrame = (ValueBox[]) dist._ls_backward_frame;
-                    for (int i = 0; i < currnetFrame.length; i++) {
-                        if (currnetFrame[i].value == NEED) {
-                            distFrame[i].value = NEED;
+                    BackwardMarker[] distFrame = (BackwardMarker[]) dist._ls_backward_frame;
+
+                    for (int i = 0; i < orgLocalSize; i++) {
+                        if (!distFrame[i].used) {
+                            if (currnetFrame[i].used) {
+                                distFrame[i].use();
+                            } else {
+                                Set<BackwardMarker> parent = currnetFrame[i].parent;
+                                if (parent == null) {
+                                    parent = new HashSet<BackwardMarker>();
+                                    currnetFrame[i].parent = parent;
+                                }
+                                parent.add(distFrame[i]);
+                            }
                         }
                     }
                 }
             }
         });
+
+        // for (Stmt stmt : jm.stmts) {
+        // System.out.printf("%30s |%s\n",
+        // stmt._ls_backward_frame == null ? "" : Arrays.asList(stmt._ls_backward_frame), stmt);
+        // }
 
         final ArrayList<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
 
@@ -226,9 +284,9 @@ public class LocalSplit implements Transformer {
                     System.arraycopy(currentFrame, 0, distStmt._ls_forward_frame, 0, currentFrame.length);
                 } else {
                     ValueBox[] b = (ValueBox[]) distStmt._ls_forward_frame;
-                    ValueBox[] backwardFrame = distStmt._ls_backward_frame;
+                    BackwardMarker[] backwardFrame = (BackwardMarker[]) distStmt._ls_backward_frame;
                     for (int i = 0; i < currentFrame.length; i++) {
-                        if (backwardFrame[i].value == NotNEED) {
+                        if (!backwardFrame[i].used) {
                             continue;
                         }
                         ValueBox ai = trimLocalVB(currentFrame[i]);

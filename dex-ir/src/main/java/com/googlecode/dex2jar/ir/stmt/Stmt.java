@@ -119,7 +119,7 @@ public abstract class Stmt {
     /**
      * Used in Local Split, backward frame of the {@link Stmt}
      */
-    public ValueBox[] _ls_backward_frame;
+    public Object _ls_backward_frame;
     /**
      * Used in Local Split, forward frame of the {@link Stmt}
      */
