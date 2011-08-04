@@ -93,6 +93,12 @@ public class Cfg {
 
         for (Trap t : jm.traps) {
             for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
+                switch (s.st) {
+                case LABEL:
+                case RETURN:
+                case RETURN_VOID:
+                    continue;
+                }
                 link(s, t.handler);
             }
         }
@@ -122,6 +128,10 @@ public class Cfg {
                 }
                 break;
             case THROW:
+                if (st._cfg_tos.size() < 1) {
+                    tails.add(st);
+                }
+                break;
             case RETURN:
             case RETURN_VOID:
                 tails.add(st);

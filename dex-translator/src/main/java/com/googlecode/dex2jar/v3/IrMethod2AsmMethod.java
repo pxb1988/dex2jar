@@ -472,9 +472,9 @@ public class IrMethod2AsmMethod implements Opcodes {
         accept(e2.op1.value, asm);
         accept(e2.op2.value, asm);
         Type type = LocalType.type(e2.op2.value);
+        Type tp1 = LocalType.type(e2.op1.value);
         switch (e2.vt) {
         case ARRAY:
-            Type tp1 = LocalType.type(e2.op1.value);
             Type tp2 = LocalType.type(e2);
             if (tp1.getSort() == Type.ARRAY) {
                 asm.visitInsn(tp1.getElementType().getOpcode(IALOAD));
@@ -508,13 +508,13 @@ public class IrMethod2AsmMethod implements Opcodes {
             break;
 
         case SHL:
-            asm.visitInsn(type.getOpcode(ISHL));
+            asm.visitInsn(tp1.getOpcode(ISHL));
             break;
         case SHR:
-            asm.visitInsn(type.getOpcode(ISHR));
+            asm.visitInsn(tp1.getOpcode(ISHR));
             break;
         case USHR:
-            asm.visitInsn(type.getOpcode(IUSHR));
+            asm.visitInsn(tp1.getOpcode(IUSHR));
             break;
         case CMP:
             asm.visitInsn(LCMP);

@@ -2,6 +2,7 @@ package com.googlecode.dex2jar.v3;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
@@ -33,6 +34,27 @@ public class EndRemover implements Transformer {
                     Stmt nst = Stmts.nThrow(((UnopStmt) to).op.value);
                     irMethod.stmts.replace(st, nst);
                     st = nst;
+                }
+                    break;
+                }
+            } else if (st.st == ST.IF) {
+                JumpStmt js = (JumpStmt) st;
+                Stmt to = js.target.getNext();
+                switch (to.st) {
+                case RETURN: {
+                    Stmt nst = Stmts.nReturn(((UnopStmt) to).op.value);
+                    LabelStmt lb = Stmts.nLabel();
+                    irMethod.stmts.add(lb);
+                    irMethod.stmts.add(nst);
+                    js.target = lb;
+                }
+                    break;
+                case RETURN_VOID: {
+                    Stmt nst = Stmts.nReturnVoid();
+                    LabelStmt lb = Stmts.nLabel();
+                    irMethod.stmts.add(lb);
+                    irMethod.stmts.add(nst);
+                    js.target = lb;
                 }
                     break;
                 }

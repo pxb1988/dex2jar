@@ -100,6 +100,10 @@ public class LocalSplit implements Transformer {
             }
         }
 
+        public String toString() {
+            return used ? "1" : "0";
+        }
+
         protected BackwardMarker() {
             super(null, null);
         }
