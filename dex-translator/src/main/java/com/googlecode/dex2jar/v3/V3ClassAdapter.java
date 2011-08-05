@@ -124,6 +124,11 @@ public class V3ClassAdapter implements DexClassVisitor {
             // access in class has no acc_static or acc_private
             accessInClass &= ~(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE);
 
+            if (isInnerClass && (access_flags & Opcodes.ACC_PROTECTED) != 0) {
+                accessInClass &= ~Opcodes.ACC_PROTECTED;
+                accessInClass |= Opcodes.ACC_PUBLIC;
+            }
+
             String[] nInterfaceNames = null;
             if (interfaceNames != null) {
                 nInterfaceNames = new String[interfaceNames.length];

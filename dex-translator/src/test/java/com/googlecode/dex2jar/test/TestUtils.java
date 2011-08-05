@@ -116,7 +116,7 @@ public abstract class TestUtils {
     public static void verify(final ClassReader cr) throws AnalyzerException, IllegalArgumentException,
             IllegalAccessException {
         ClassNode cn = new ClassNode();
-        cr.accept(cn, ClassReader.SKIP_DEBUG);
+        cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
 
         Type syperType = cn.superName == null ? null : Type.getObjectType(cn.superName);
         List methods = cn.methods;
