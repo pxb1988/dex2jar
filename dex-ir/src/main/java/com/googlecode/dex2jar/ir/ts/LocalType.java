@@ -73,6 +73,9 @@ public class LocalType implements Transformer {
     }
 
     public static Type merge(Type t2, Type t1) {
+        if (t1.getSort() == Type.ARRAY) {
+            return t1;
+        }
         return t2;
     }
 

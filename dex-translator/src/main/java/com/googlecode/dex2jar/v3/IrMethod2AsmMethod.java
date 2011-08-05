@@ -545,6 +545,7 @@ public class IrMethod2AsmMethod implements Opcodes {
             break;
         case CMPG:
             asm.visitInsn(type.getSort() == Type.FLOAT ? FCMPG : DCMPG);
+            break;
         case CMPL:
             asm.visitInsn(type.getSort() == Type.FLOAT ? FCMPL : DCMPL);
             break;

@@ -31,6 +31,7 @@ import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.ir.ts.LocalSplit;
@@ -206,7 +207,7 @@ public class LocalRemoverTest {
         list.add(L1);
         list.add(nAssign(b, nString("123")));
         list.add(nAssign(ex, nInt(5)));
-        // list.add(nThrow(nInvokeNew(nNull, new Type[0], exType)));
+        list.add(Stmts.nLock(nInt(0)));
         list.add(L2);
         list.add(nGoto(L4));
         list.add(L3);

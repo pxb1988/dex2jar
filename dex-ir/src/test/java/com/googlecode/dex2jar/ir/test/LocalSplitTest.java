@@ -106,6 +106,8 @@ public class LocalSplitTest {
         list.add(L1);
         list.add(nAssign(b, nString("123")));
         list.add(nAssign(ex, nString("test ex")));
+        list.add(Stmts.nLock(ex));
+        list.add(Stmts.nUnLock(ex));
         list.add(L2);
         list.add(nGoto(L4));
         list.add(L3);

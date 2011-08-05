@@ -93,15 +93,19 @@ public class LocalCurrect implements Transformer {
     private Type detectArray(E2Expr e2) {
         Type t1 = LocalType.type(e2);
         Type t2 = LocalType.type(e2.op1.value);
-        if (t2 == null && e2.op1.value.vt == VT.ARRAY) {
-            Type t3 = detectArray((E2Expr) e2.op1.value);
-            if (t3 != null && t3.getSort() == Type.ARRAY) {
-                Type t4 = Type.getType(t3.getDescriptor().substring(1));
-                LocalType.type(e2, t4);
-                return t4;
+        if (t2 == null) {
+            if (e2.op1.value.vt == VT.ARRAY) {
+                Type t3 = detectArray((E2Expr) e2.op1.value);
+                if (t3 != null) {
+                    if (t3.getSort() == Type.ARRAY) {
+                        Type t4 = Type.getType(t3.getDescriptor().substring(1));
+                        LocalType.type(e2, t4);
+                        return t4;
+                    }
+                }
             }
         }
-        if (t2.getSort() == Type.ARRAY) {
+        if (t2 != null && t2.getSort() == Type.ARRAY) {
             Type nT1 = Type.getType(t2.getDescriptor().substring(1));
             if (!nT1.equals(t1)) {
                 LocalType.type(e2, nT1);
