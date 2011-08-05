@@ -215,9 +215,13 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
             nas.pre = stmt.pre;
             if (stmt.next != null) {
                 stmt.next.pre = nas;
+            } else {
+                this.last = nas;
             }
             if (stmt.pre != null) {
                 stmt.pre.next = nas;
+            } else {
+                this.first = nas;
             }
             stmt.next = null;
             stmt.pre = null;

@@ -35,11 +35,11 @@ public class EndRemover implements Transformer {
                 break;
             case LABEL:
             case NOP:
+            case UNLOCK:
                 break;
             case THROW:
             case IF:
             case LOCK:
-            case UNLOCK:
             case LOOKUP_SWITCH:
             case TABLE_SWITCH:
                 return false;

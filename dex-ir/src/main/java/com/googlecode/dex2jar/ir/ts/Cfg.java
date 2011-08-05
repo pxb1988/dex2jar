@@ -21,10 +21,13 @@ import java.util.TreeSet;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
+import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 
 /**
@@ -76,6 +79,38 @@ public class Cfg {
         }
     }
 
+    private static boolean notThrow(Value s) {
+        switch (s.vt) {
+        case LOCAL:
+        case CONSTANT:
+            return true;
+            // TODO add more
+        }
+        return false;
+    }
+
+    private static boolean notThrow(Stmt s) {
+        switch (s.st) {
+        case LABEL:
+        case RETURN:
+        case RETURN_VOID:
+        case GOTO:
+        case NOP:
+        case IDENTITY:
+            return true;
+        case ASSIGN:
+            E2Stmt e2 = (E2Stmt) s;
+            return notThrow(e2.op1.value) && notThrow(e2.op2.value);
+            // case UNLOCK:
+        case TABLE_SWITCH:
+        case LOOKUP_SWITCH:
+            E1Stmt s1 = (E1Stmt) s;
+            return notThrow(s1.op.value);
+            // TODO add more
+        }
+        return false;
+    }
+
     public static void createCFG(IrMethod jm) {
 
         for (Stmt st : jm.stmts) {
@@ -93,13 +128,9 @@ public class Cfg {
 
         for (Trap t : jm.traps) {
             for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
-                switch (s.st) {
-                case LABEL:
-                case RETURN:
-                case RETURN_VOID:
-                    continue;
+                if (!notThrow(s)) {
+                    link(s, t.handler);
                 }
-                link(s, t.handler);
             }
         }
         Set<Stmt> tails = new TreeSet<Stmt>(jm.stmts);
