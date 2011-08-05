@@ -52,6 +52,11 @@ public class BinopExpr extends E2Expr {
         super(type, new ValueBox(op1), new ValueBox(op2));
     }
 
+    @Override
+    public Value clone() {
+        return new BinopExpr(vt, op1.value.clone(), op2.value.clone());
+    }
+
     public String toString() {
         return "(" + op1 + " " + super.vt + " " + op2 + ")";
     }

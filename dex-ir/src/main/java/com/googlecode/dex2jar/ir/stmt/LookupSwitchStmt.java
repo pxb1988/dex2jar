@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
+import java.util.Map;
+
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
@@ -37,6 +39,19 @@ public class LookupSwitchStmt extends E1Stmt {
         this.lookupValues = lookupValues;
         this.targets = targets;
         this.defaultTarget = defaultTarget;
+    }
+
+    @Override
+    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
+        LabelStmt[] nTargets = new LabelStmt[targets.length];
+        for (int i = 0; i < nTargets.length; i++) {
+            nTargets[i] = cloneLabel(map, targets[i]);
+        }
+        int nLookupValues[] = new int[lookupValues.length];
+        System.arraycopy(lookupValues, 0, nLookupValues, 0, nLookupValues.length);
+
+        return new LookupSwitchStmt(new ValueBox(op.value.clone()), nLookupValues, nTargets, cloneLabel(map,
+                defaultTarget));
     }
 
     public String toString() {

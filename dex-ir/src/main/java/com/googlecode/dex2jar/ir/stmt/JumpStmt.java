@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
+import java.util.Map;
+
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
@@ -51,6 +53,16 @@ public class JumpStmt extends E1Stmt {
     public JumpStmt(ST type, ValueBox condition, LabelStmt target) {
         super(type, condition);
         this.target = target;
+    }
+
+    @Override
+    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
+        LabelStmt nTarget = cloneLabel(map, target);
+        if (op != null) {
+            return new JumpStmt(st, new ValueBox(op.value.clone()), target);
+        } else {
+            return new JumpStmt(st, nTarget);
+        }
     }
 
     public String toString() {

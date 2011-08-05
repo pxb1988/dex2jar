@@ -86,6 +86,14 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         insertLast(stmt);
     }
 
+    public StmtList clone(Map<LabelStmt, LabelStmt> map) {
+        StmtList nList = new StmtList();
+        for (Stmt stmt : this) {
+            nList.add(stmt.clone(map));
+        }
+        return nList;
+    }
+
     @Override
     public int compare(Stmt o1, Stmt o2) {
         return o1.id - o2.id;

@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
+import java.util.Map;
+
 import org.objectweb.asm.Label;
 
 import com.googlecode.dex2jar.ir.stmt.Stmt.E0Stmt;
@@ -29,12 +31,17 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E0Stmt;
  */
 public class LabelStmt extends E0Stmt {
 
-    public Label label;
     public String displayName;
+    public Label label;
 
     public LabelStmt(Label label) {
         super(ST.LABEL);
         this.label = label;
+    }
+
+    @Override
+    public LabelStmt clone(Map<LabelStmt, LabelStmt> map) {
+        return cloneLabel(map, this);
     }
 
     public String getDisplayName() {

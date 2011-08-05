@@ -88,6 +88,11 @@ public class Constant extends E0Expr {
         this.type = type;
     }
 
+    @Override
+    public Value clone() {
+        return new Constant(type, value);
+    }
+
     public String toString() {
         if (Null == value) {
             return "null";

@@ -35,12 +35,12 @@ import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
  */
 public class Cfg {
 
-    public interface StmtVisitor<T> {
-        T exec(Stmt stmt);
-    }
-
     public interface FrameVisitor<T> extends StmtVisitor<T> {
         void merge(T frame, Stmt dist);
+    }
+
+    public interface StmtVisitor<T> {
+        T exec(Stmt stmt);
     }
 
     public static <T> void Backward(IrMethod jm, StmtVisitor<T> sv) {

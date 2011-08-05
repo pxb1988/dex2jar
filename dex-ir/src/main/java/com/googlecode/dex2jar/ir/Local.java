@@ -40,6 +40,11 @@ public class Local extends E0Expr {
         this.name = name;
     }
 
+    @Override
+    public Value clone() {
+        return this;
+    }
+
     public String toString() {
         return name;
     }

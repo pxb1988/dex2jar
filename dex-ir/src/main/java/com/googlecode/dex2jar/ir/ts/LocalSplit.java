@@ -48,6 +48,41 @@ import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
  */
 public class LocalSplit implements Transformer {
 
+    static class BackwardMarker extends Value {
+        Set<BackwardMarker> parent;
+        boolean used = false;
+
+        protected BackwardMarker() {
+            super(null, null);
+        }
+
+        BackwardMarker(boolean use) {
+            this();
+            this.used = use;
+        }
+
+        @Override
+        public Value clone() {
+            return null;
+        }
+
+        public String toString() {
+            return used ? "1" : "0";
+        }
+
+        public void use() {
+            if (!used) {
+                used = true;
+                if (parent != null) {
+                    for (BackwardMarker p : parent) {
+                        p.use();
+                    }
+                }
+
+            }
+        }
+    }
+
     static ValueBox exec(ValueBox vb, ValueBox[] currentFrame) {
         if (vb == null)
             return null;
@@ -79,34 +114,13 @@ public class LocalSplit implements Transformer {
         return vb;
     }
 
-    static class BackwardMarker extends Value {
-        Set<BackwardMarker> parent;
-        boolean used = false;
-
-        BackwardMarker(boolean use) {
-            this();
-            this.used = use;
+    static ValueBox trimLocalVB(ValueBox vb) {
+        if (vb == null)
+            return null;
+        while (vb != ((Local) vb.value)._ls_vb) {
+            vb = ((Local) vb.value)._ls_vb;
         }
-
-        public void use() {
-            if (!used) {
-                used = true;
-                if (parent != null) {
-                    for (BackwardMarker p : parent) {
-                        p.use();
-                    }
-                }
-
-            }
-        }
-
-        public String toString() {
-            return used ? "1" : "0";
-        }
-
-        protected BackwardMarker() {
-            super(null, null);
-        }
+        return vb;
     }
 
     public void transform(final IrMethod jm) {
@@ -367,14 +381,5 @@ public class LocalSplit implements Transformer {
             st._ls_backward_frame = null;
         }
         jm.stmts._ls_visit_order = _ls_visit_order;
-    }
-
-    static ValueBox trimLocalVB(ValueBox vb) {
-        if (vb == null)
-            return null;
-        while (vb != ((Local) vb.value)._ls_vb) {
-            vb = ((Local) vb.value)._ls_vb;
-        }
-        return vb;
     }
 }

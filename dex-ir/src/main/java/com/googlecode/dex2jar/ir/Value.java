@@ -21,7 +21,7 @@ package com.googlecode.dex2jar.ir;
  * @author Panxiaobo <pxb1988 at gmail.com>
  * @version $Id$
  */
-public abstract class Value {
+public abstract class Value implements Cloneable {
 
     /**
      * Represent an expression with no argument
@@ -108,16 +108,16 @@ public abstract class Value {
         }
     }
 
+    public Object _lt_type;
     /**
      * The number of argument
      */
     final public ET et;
+
     /**
      * Value Type
      */
     final public VT vt;
-
-    public Object _lt_type;
 
     /**
      * 
@@ -131,4 +131,6 @@ public abstract class Value {
         this.vt = vt;
         this.et = et;
     }
+
+    public abstract Value clone();
 }

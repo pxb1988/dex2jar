@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir;
 
+import java.util.Map;
+
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
@@ -39,6 +41,10 @@ public class Trap {
         this.end = end;
         this.handler = handler;
         this.type = type;
+    }
+
+    public Trap clone(Map<LabelStmt, LabelStmt> map) {
+        return new Trap(start.clone(map), end.clone(map), handler.clone(map), type);
     }
 
     public String toString() {

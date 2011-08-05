@@ -18,6 +18,7 @@ package com.googlecode.dex2jar.ir.expr;
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.ir.ToStringUtil;
+import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.E1Expr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
@@ -50,6 +51,11 @@ public class FieldExpr extends E1Expr {
         this.fieldType = fieldType;
         this.fieldName = fieldName;
         this.fieldOwnerType = ownerType;
+    }
+
+    @Override
+    public Value clone() {
+        return new FieldExpr(op == null ? null : new ValueBox(op.value.clone()), fieldOwnerType, fieldName, fieldType);
     }
 
     public String toString() {
