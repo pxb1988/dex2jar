@@ -121,15 +121,39 @@ public class IrMethod2AsmMethod implements Opcodes {
                 Value v2 = e2.op2.value;
                 switch (v1.vt) {
                 case LOCAL:
-                    accept(v2, asm);
+
                     Local local = ((Local) v1);
                     int i = local._ls_index;
-                    if (i >= 0) {// skip void type locals
-                        if (local._ls_read_count == 0) {// no read, just pop it
-                            asm.visitInsn(LocalType.type(v1).getSize() == 2 ? POP2 : POP);
-                        } else {
-                            asm.visitVarInsn(LocalType.type(v1).getOpcode(ISTORE), i);
+
+                    boolean skipOrg = false;
+                    if (LocalType.type(v1).equals(Type.INT_TYPE)) {// check for IINC
+                        if (v2.vt == VT.ADD) {
+                            E2Expr e = (E2Expr) v2;
+                            if ((e.op1.value == local && e.op2.value.vt == VT.CONSTANT)
+                                    || (e.op2.value == local && e.op1.value.vt == VT.CONSTANT)) {
+                                int increment = (Integer) ((Constant) (e.op1.value == local ? e.op2.value : e.op1.value)).value;
+                                asm.visitIincInsn(i, increment);
+                                skipOrg = true;
+                            }
+                        } else if (v2.vt == VT.SUB) {
+                            E2Expr e = (E2Expr) v2;
+                            if (e.op1.value == local && e.op2.value.vt == VT.CONSTANT) {
+                                int increment = -(Integer) ((Constant) e.op2.value).value;
+                                asm.visitIincInsn(i, increment);
+                                skipOrg = true;
+                            }
                         }
+                    }
+                    if (!skipOrg) {
+                        accept(v2, asm);
+                        if (i >= 0) {// skip void type locals
+                            if (local._ls_read_count == 0) {// no read, just pop it
+                                asm.visitInsn(LocalType.type(v1).getSize() == 2 ? POP2 : POP);
+                            } else {
+                                asm.visitVarInsn(LocalType.type(v1).getOpcode(ISTORE), i);
+                            }
+                        }
+
                     }
                     break;
                 case FIELD:
@@ -153,7 +177,7 @@ public class IrMethod2AsmMethod implements Opcodes {
                     Type tp1 = LocalType.type(ae.op1.value);
                     Type tp2 = LocalType.type(ae);
                     if (tp1.getSort() == Type.ARRAY) {
-                        asm.visitInsn(tp1.getElementType().getOpcode(IASTORE));
+                        asm.visitInsn(Type.getType(tp1.getDescriptor().substring(1)).getOpcode(IASTORE));
                     } else {
                         asm.visitInsn(tp2.getOpcode(IASTORE));
                     }
@@ -477,7 +501,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         case ARRAY:
             Type tp2 = LocalType.type(e2);
             if (tp1.getSort() == Type.ARRAY) {
-                asm.visitInsn(tp1.getElementType().getOpcode(IALOAD));
+                asm.visitInsn(Type.getType(tp1.getDescriptor().substring(1)).getOpcode(IALOAD));
             } else {
                 asm.visitInsn(tp2.getOpcode(IALOAD));
             }

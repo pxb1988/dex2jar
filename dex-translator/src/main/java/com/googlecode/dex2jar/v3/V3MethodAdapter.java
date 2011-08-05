@@ -34,6 +34,10 @@ import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.asm.LdcOptimizeAdapter;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.LocalType;
@@ -47,18 +51,37 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  * @version $Id$
  */
 public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
-    final protected List<Annotation> anns = new ArrayList<Annotation>();
-    final protected ClassVisitor cv;
-    final protected Method method;
-    final protected List<Annotation>[] paramAnns;
-    final protected MethodNode methodNode = new MethodNode();
+    private static Transformer endremove = new EndRemover();
     private static final Logger log = LoggerFactory.getLogger(V3MethodAdapter.class);
-
+    private static Transformer[] tses = new Transformer[] { new LocalSplit(), new LocalRemove(), new LocalType(),
+            new LocalCurrect() };
     static {
         log.debug("InsnList.check=false");
         // Optimize Tree Analyzer
         InsnList.check = false;
     }
+    /**
+     * index LabelStmt for debug
+     * 
+     * @param list
+     */
+    public static void indexLabelStmt4Debug(StmtList list) {
+        int labelIndex = 0;
+        for (Stmt stmt : list) {
+            if (stmt.st == ST.LABEL) {
+                ((LabelStmt) stmt).displayName = "L" + labelIndex++;
+            }
+        }
+    }
+    final protected List<Annotation> anns = new ArrayList<Annotation>();
+
+    final protected ClassVisitor cv;
+
+    final protected Method method;
+
+    final protected MethodNode methodNode = new MethodNode();
+
+    final protected List<Annotation>[] paramAnns;
 
     /**
      * @param cv
@@ -76,7 +99,6 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         this.paramAnns = paramAnns;
         methodNode.tryCatchBlocks = new ArrayList<Object>();
     }
-
     private void build() {
         List<String> exceptions = new ArrayList<String>();
         String signature = null;
@@ -128,6 +150,17 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         }
     }
 
+    void dump(MethodNode methodNode) {
+        TraceMethodVisitor tmv = new TraceMethodVisitor();
+        methodNode.instructions.accept(tmv);
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (Object o : tmv.text) {
+            sb.append(i++).append(o);
+        }
+        System.out.println(sb);
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -138,9 +171,6 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         anns.add(ann);
         return new V3AnnAdapter(ann);
     }
-
-    private static Transformer[] tses = new Transformer[] { new EndRemover(), new LocalSplit(), new LocalRemove(),
-            new LocalType(), new LocalCurrect() };
 
     /*
      * (non-Javadoc)
@@ -154,14 +184,10 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
             public void visitEnd() {
                 super.visitEnd();
                 if (irMethod.stmts.getSize() > 1) {
-//                    {// index LabelStmt for debug
-//                        int labelIndex = 0;
-//                        for (Stmt stmt : irMethod.stmts) {
-//                            if (stmt.st == ST.LABEL) {
-//                                ((LabelStmt) stmt).displayName = "L" + labelIndex++;
-//                            }
-//                        }
-//                    }
+
+                    endremove.transform(irMethod);
+
+                    // indexLabelStmt4Debug(irMethod.stmts);
 
                     for (Transformer ts : tses) {
                         ts.transform(irMethod);
@@ -169,7 +195,6 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
                 }
                 new IrMethod2AsmMethod().convert(irMethod, methodNode);
             }
-
         };
     }
 
@@ -191,17 +216,6 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
                 throw new RuntimeException("Error visit method:" + this.method, e);
             }
         }
-    }
-
-    void dump(MethodNode methodNode) {
-        TraceMethodVisitor tmv = new TraceMethodVisitor();
-        methodNode.instructions.accept(tmv);
-        StringBuilder sb = new StringBuilder();
-        int i = 0;
-        for (Object o : tmv.text) {
-            sb.append(i++).append(o);
-        }
-        System.out.println(sb);
     }
 
     /*

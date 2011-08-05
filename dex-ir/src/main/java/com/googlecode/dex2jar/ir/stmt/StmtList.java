@@ -16,13 +16,10 @@
 package com.googlecode.dex2jar.ir.stmt;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.objectweb.asm.Label;
 
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
@@ -130,6 +127,7 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
             }
             stmt.next = position.next;
             stmt.pre = position;
+            position.next.pre = stmt;
             position.next = stmt;
 
         }
@@ -145,6 +143,7 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
             }
             stmt.pre = position.pre;
             stmt.next = position;
+            position.pre.next = stmt;
             position.pre = stmt;
 
         }
@@ -227,10 +226,6 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
     }
 
     public String toString() {
-        return toString(new HashMap<Label, Integer>());
-    }
-
-    public String toString(Map<Label, Integer> map) {
         if (this.size == 0) {
             return "[Empty]";
         }
