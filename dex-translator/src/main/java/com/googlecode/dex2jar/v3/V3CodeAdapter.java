@@ -281,7 +281,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             list.add(nAssign(locals[a], nInstanceOf(locals[b], Type.getType(type))));
             break;
         case OP_NEW_ARRAY:
-            list.add(nAssign(locals[a], nNewArray(Type.getType(type).getElementType(), locals[b])));
+            list.add(nAssign(locals[a], nNewArray(Type.getType(type.substring(1)), locals[b])));
             break;
         }
     }

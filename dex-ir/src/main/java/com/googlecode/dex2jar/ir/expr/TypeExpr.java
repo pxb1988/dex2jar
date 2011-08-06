@@ -57,9 +57,17 @@ public class TypeExpr extends E1Expr {
         case INSTANCE_OF:
             return "(" + op + " instanceof " + ToStringUtil.toShortClassName(type) + ")";
         case NEW_ARRAY:
+            if (type.getSort() == Type.ARRAY) {
+                StringBuilder sb = new StringBuilder("new ")
+                        .append(ToStringUtil.toShortClassName(type.getElementType())).append("[").append(op)
+                        .append("]");
+                for (int i = 0; i < type.getDimensions(); i++) {
+                    sb.append("[]");
+                }
+                return sb.toString();
+            }
             return "new " + ToStringUtil.toShortClassName(type) + "[" + op + "]";
         }
         return "UNKNOW";
     }
-
 }
