@@ -1,22 +1,24 @@
 package com.googlecode.dex2jar.v3;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
+import com.googlecode.dex2jar.ir.ts.Cfg;
 import com.googlecode.dex2jar.ir.ts.Transformer;
 
 public class EndRemover implements Transformer {
 
-    boolean isSimple(Stmt stmt) {
+    static boolean isSimple(Stmt stmt) {
         while (stmt != null) {
             switch (stmt.st) {
             case ASSIGN:
@@ -53,12 +55,12 @@ public class EndRemover implements Transformer {
         return true;
     }
 
-    @Override
-    public void transform(IrMethod irMethod) {
+    static void directJump(StmtList list) {
         Map<LabelStmt, LabelStmt> map = new HashMap<LabelStmt, LabelStmt>();
-        StmtList list = irMethod.stmts;
-        for (Stmt st = list.getFirst(); st != null; st = st.getNext()) {
-            if (st.st == ST.GOTO) {
+        for (Stmt st = list.getFirst(); st != null;) {
+
+            switch (st.st) {
+            case GOTO: {
                 JumpStmt js = (JumpStmt) st;
                 if (isSimple(js.target)) {
                     boolean end = false;
@@ -67,7 +69,8 @@ public class EndRemover implements Transformer {
                         case LABEL:
                             break;
                         case GOTO:
-                            list.insertBefore(js, Stmts.nGoto(((JumpStmt) p).target));
+                            LabelStmt target = ((JumpStmt) p).target;
+                            list.insertBefore(js, Stmts.nGoto(target));
                             end = true;
                             break;
                         case RETURN:
@@ -80,14 +83,19 @@ public class EndRemover implements Transformer {
                             break;
                         }
                     }
-                    Stmt tmp = st.getPre();
+                    Stmt tmp = st.getNext();
                     list.remove(st);
-                    st = tmp.getPre();
+                    st = tmp;
+                } else {
+                    st = st.getNext();
                 }
-            } else if (st.st == ST.IF) {
+                break;
+            }
+            case IF: {
                 JumpStmt js = (JumpStmt) st;
                 if (map.containsKey(js.target)) {
-                    js.target = map.get(js.target);
+                    LabelStmt nTarget = map.get(js.target);
+                    js.target = nTarget;
                 } else if (isSimple(js.target)) {
                     LabelStmt nTarget = Stmts.nLabel();
                     map.put(js.target, nTarget);
@@ -98,7 +106,8 @@ public class EndRemover implements Transformer {
                         case LABEL:
                             break;
                         case GOTO:
-                            list.add(Stmts.nGoto(((JumpStmt) p).target));
+                            LabelStmt target = ((JumpStmt) p).target;
+                            list.add(Stmts.nGoto(target));
                             end = true;
                             break;
                         case RETURN:
@@ -112,8 +121,37 @@ public class EndRemover implements Transformer {
                         }
                     }
                     js.target = nTarget;
+
                 }
             }
+                st = st.getNext();
+                break;
+
+            default: {
+                st = st.getNext();
+                break;
+            }
+            }
         }
+    }
+
+    @Override
+    public void transform(IrMethod irMethod) {
+        for (Iterator<Trap> it = irMethod.traps.iterator(); it.hasNext();) {
+            Trap trap = it.next();
+            boolean allNotThrow = true;
+            for (Stmt p = trap.start; p != null && p != trap.end; p = p.getNext()) {
+                allNotThrow = Cfg.notThrow(p);
+                if (!allNotThrow) {
+                    break;
+                }
+            }
+            if (allNotThrow) {
+                it.remove();
+            }
+        }
+
+        StmtList list = irMethod.stmts;
+        directJump(list);
     }
 }

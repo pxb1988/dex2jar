@@ -22,6 +22,9 @@ import java.util.TreeSet;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
+import com.googlecode.dex2jar.ir.Value.E1Expr;
+import com.googlecode.dex2jar.ir.Value.E2Expr;
+import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
@@ -80,16 +83,54 @@ public class Cfg {
     }
 
     private static boolean notThrow(Value s) {
-        switch (s.vt) {
-        case LOCAL:
-        case CONSTANT:
-            return true;
-            // TODO add more
+        switch (s.et) {
+        case E0:
+            switch (s.vt) {
+            case LOCAL:
+            case CONSTANT:
+                return true;
+            }
+            break;
+        case E1:
+            E1Expr e1 = (E1Expr) s;
+            switch (s.vt) {
+            case CAST:
+            case NEG:
+                return notThrow(e1.op.value);
+            }
+            break;
+        case E2:
+            E2Expr e2 = (E2Expr) s;
+            switch (s.vt) {
+            case ADD:
+            case AND:
+            case CMP:
+            case CMPG:
+            case CMPL:
+                // case DIV: div 0
+            case EQ:
+            case GE:
+            case GT:
+            case LE:
+            case LT:
+            case MUL:
+            case NE:
+            case OR:
+            case REM:
+            case SHL:
+            case SHR:
+            case SUB:
+            case USHR:
+            case XOR:
+                return notThrow(e2.op1.value) && notThrow(e2.op2.value);
+            }
+        case En:
         }
+
         return false;
     }
 
-    private static boolean notThrow(Stmt s) {
+    public static boolean notThrow(Stmt s) {
         switch (s.st) {
         case LABEL:
         case RETURN:
@@ -107,6 +148,11 @@ public class Cfg {
             E1Stmt s1 = (E1Stmt) s;
             return notThrow(s1.op.value);
             // TODO add more
+        case IF:
+            return notThrow(((E1Stmt) s).op.value);
+        case LOCK:
+        case UNLOCK:
+            return notThrow(((E1Stmt) s).op.value);
         }
         return false;
     }
@@ -129,7 +175,16 @@ public class Cfg {
         for (Trap t : jm.traps) {
             for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
                 if (!notThrow(s)) {
-                    link(s, t.handler);
+                    // 为什么连接其上一个节点?
+                    // 对一条会抛出异常的语句来说,如果执行失败,handler的frame应该和其父节点相同
+                    // 比方说
+                    // 0
+                    // 1 b=(Boolean)b
+                    // 2 c=@Ex
+                    // 3 c=(string)b
+                    // 0 - 2 > 2
+                    // 如果1语句出错,则或使用0的frame到2去执行
+                    link(s.getPre(), t.handler);
                 }
             }
         }
