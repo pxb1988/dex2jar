@@ -139,19 +139,47 @@ public class EndRemover implements Transformer {
     public void transform(IrMethod irMethod) {
         for (Iterator<Trap> it = irMethod.traps.iterator(); it.hasNext();) {
             Trap trap = it.next();
+
+            LabelStmt start = null;
+
             boolean allNotThrow = true;
-            for (Stmt p = trap.start; p != null && p != trap.end; p = p.getNext()) {
-                allNotThrow = Cfg.notThrow(p);
-                if (!allNotThrow) {
+            for (Stmt p = trap.start.getNext(); p != null && p != trap.end;) {
+                boolean notThrow = Cfg.notThrow(p);
+                if (!notThrow) {
+                    allNotThrow = false;
+                    start = null;
+                    p = p.getNext();
+                    continue;
+                }
+                switch (p.st) {
+                case LABEL:
+                    start = (LabelStmt) p;
+                    p = p.getNext();
                     break;
+                case GOTO:
+                case RETURN:
+                case RETURN_VOID:
+                    if (start != null) {
+                        Stmt tmp = p.getNext();
+                        move(irMethod.stmts, start, p);
+                        p = tmp;
+                    } else {
+                        p = p.getNext();
+                    }
+                    break;
+                default:
+                    p = p.getNext();
                 }
             }
             if (allNotThrow) {
                 it.remove();
             }
-        }
 
-        StmtList list = irMethod.stmts;
-        directJump(list);
+        }
+    }
+
+    private void move(StmtList stmts, LabelStmt start, Stmt p) {
+        stmts.insertBefore(start, Stmts.nGoto(start));
+        stmts.move(start, p, stmts.getLast());
     }
 }

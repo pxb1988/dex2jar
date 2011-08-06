@@ -243,4 +243,27 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         return sb.toString();
     }
 
+    public void move(Stmt start, Stmt end, Stmt dist) {
+        if (start.pre == null) {
+            this.first = end.next;
+        } else {
+            start.pre.next = end.next;
+        }
+        if (end.next == null) {
+            this.last = start.pre;
+        } else {
+            end.next.pre = start.pre;
+        }
+
+        if (dist.next == null) {
+            this.last = end;
+            end.next = null;
+        } else {
+            dist.next.pre = end;
+            end.next = dist.next;
+        }
+        dist.next = start;
+        start.pre = dist;
+    }
+
 }
