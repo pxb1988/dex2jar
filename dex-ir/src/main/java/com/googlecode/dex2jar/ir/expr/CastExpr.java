@@ -15,51 +15,36 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
+import org.objectweb.asm.Type;
+
+import com.googlecode.dex2jar.ir.ToStringUtil;
 import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.E2Expr;
+import com.googlecode.dex2jar.ir.Value.E1Expr;
+import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
 
 /**
- * Represent a Binop expression, value = op1 vt op2
- * 
- * @see VT#ADD
- * @see VT#AND
- * @see VT#LCMP
- * @see VT#FCMPG
- * @see VT#DCMPG
- * @see VT#FCMPL
- * @see VT#DCMPL
- * @see VT#DIV
- * @see VT#EQ
- * @see VT#GE
- * @see VT#GT
- * @see VT#LE
- * @see VT#LT
- * @see VT#MUL
- * @see VT#NE
- * @see VT#OR
- * @see VT#REM
- * @see VT#SHL
- * @see VT#SHR
- * @see VT#SUB
- * @see VT#USHR
- * @see VT#XOR
+ * * @see VT#CAST
  * 
  * @author Panxiaobo <pxb1988 at gmail.com>
  * @version $Id$
  */
-public class BinopExpr extends E2Expr {
+public class CastExpr extends E1Expr {
+    public Type from;
+    public Type to;
 
-    public BinopExpr(VT type, Value op1, Value op2) {
-        super(type, new ValueBox(op1), new ValueBox(op2));
+    public CastExpr(Value value, Type from, Type to) {
+        super(VT.CAST, new ValueBox(value));
+        this.from = from;
+        this.to = to;
     }
 
     @Override
     public Value clone() {
-        return new BinopExpr(vt, op1.value.clone(), op2.value.clone());
+        return new CastExpr(super.op.value, from, to);
     }
 
     public String toString() {
-        return "(" + op1 + " " + super.vt + " " + op2 + ")";
+        return "((" + ToStringUtil.toShortClassName(to) + ")" + op + ")";
     }
 }

@@ -22,6 +22,7 @@ import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.Value.VT;
+import com.googlecode.dex2jar.ir.expr.CastExpr;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.expr.NewExpr;
@@ -151,9 +152,9 @@ public class LocalType implements Transformer {
             }
                 break;
             case CAST: {
-                TypeExpr te = (TypeExpr) v;
-                exec(te.op.value);
-                type(tb, te.type);
+                CastExpr te = (CastExpr) v;
+                type(exec(te.op.value), te.from);
+                type(tb, te.to);
             }
                 break;
             case INSTANCE_OF: {
@@ -200,10 +201,21 @@ public class LocalType implements Transformer {
                 merge(tb, tb1);
                 type(tb2, Type.INT_TYPE);
                 break;
-            case CMP:
-            case CMPG:
-            case CMPL:
+            case LCMP:
                 merge(tb1, tb2);
+                type(tb1, Type.LONG_TYPE);
+                type(tb, Type.INT_TYPE);
+                break;
+            case FCMPG:
+            case FCMPL:
+                merge(tb1, tb2);
+                type(tb1, Type.FLOAT_TYPE);
+                type(tb, Type.INT_TYPE);
+                break;
+            case DCMPG:
+            case DCMPL:
+                merge(tb1, tb2);
+                type(tb1, Type.DOUBLE_TYPE);
                 type(tb, Type.INT_TYPE);
                 break;
             case GE:

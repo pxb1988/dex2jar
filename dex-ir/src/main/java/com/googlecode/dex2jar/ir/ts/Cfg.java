@@ -104,9 +104,11 @@ public class Cfg {
             switch (s.vt) {
             case ADD:
             case AND:
-            case CMP:
-            case CMPG:
-            case CMPL:
+            case LCMP:
+            case FCMPG:
+            case FCMPL:
+            case DCMPG:
+            case DCMPL:
                 // case DIV: div 0
             case EQ:
             case GE:

@@ -24,12 +24,13 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nAnd;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCast;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCheckCast;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nCmp;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nCmpg;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nCmpl;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nDCmpg;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nDCmpl;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nDiv;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nEq;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nExceptionRef;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nFCmpg;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nFCmpl;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nField;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nGe;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nGt;
@@ -38,6 +39,7 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeInterface;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeSpecial;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeStatic;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeVirtual;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nLCmp;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLe;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLength;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
@@ -306,15 +308,19 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         Local b = locals[cC];
         switch (opcode) {
         case OP_CMPL_FLOAT:
+            list.add(nAssign(dist, nFCmpl(a, b)));
+            break;
         case OP_CMPL_DOUBLE:
-            list.add(nAssign(dist, nCmpl(a, b)));
+            list.add(nAssign(dist, nDCmpl(a, b)));
             break;
         case OP_CMPG_FLOAT:
+            list.add(nAssign(dist, nFCmpg(a, b)));
+            break;
         case OP_CMPG_DOUBLE:
-            list.add(nAssign(dist, nCmpg(a, b)));
+            list.add(nAssign(dist, nDCmpg(a, b)));
             break;
         case OP_CMP_LONG:
-            list.add(nAssign(dist, nCmp(a, b)));
+            list.add(nAssign(dist, nLCmp(a, b)));
             break;
         }
     }
@@ -611,32 +617,81 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         case OP_INT_TO_LONG:
         case OP_FLOAT_TO_LONG:
         case OP_DOUBLE_TO_LONG:
-
-            list.add(nAssign(dist, nCast(src, Type.LONG_TYPE)));
-            break;
         case OP_INT_TO_FLOAT:
         case OP_DOUBLE_TO_FLOAT:
         case OP_LONG_TO_FLOAT:
-            list.add(nAssign(dist, nCast(src, Type.FLOAT_TYPE)));
-            break;
         case OP_INT_TO_DOUBLE:
         case OP_FLOAT_TO_DOUBLE:
         case OP_LONG_TO_DOUBLE:
-            list.add(nAssign(dist, nCast(src, Type.DOUBLE_TYPE)));
-            break;
         case OP_LONG_TO_INT:
         case OP_DOUBLE_TO_INT:
         case OP_FLOAT_TO_INT:
-            list.add(nAssign(dist, nCast(src, Type.INT_TYPE)));
-            break;
         case OP_INT_TO_BYTE:
-            list.add(nAssign(dist, nCast(src, Type.BYTE_TYPE)));
-            break;
         case OP_INT_TO_CHAR:
-            list.add(nAssign(dist, nCast(src, Type.CHAR_TYPE)));
-            break;
         case OP_INT_TO_SHORT:
-            list.add(nAssign(dist, nCast(src, Type.SHORT_TYPE)));
+            Type from;
+            switch (opcode) {
+            case OP_INT_TO_LONG:
+            case OP_INT_TO_BYTE:
+            case OP_INT_TO_CHAR:
+            case OP_INT_TO_SHORT:
+            case OP_INT_TO_FLOAT:
+            case OP_INT_TO_DOUBLE:
+                from = Type.INT_TYPE;
+                break;
+            case OP_FLOAT_TO_LONG:
+            case OP_FLOAT_TO_DOUBLE:
+            case OP_FLOAT_TO_INT:
+                from = Type.FLOAT_TYPE;
+                break;
+            case OP_DOUBLE_TO_LONG:
+            case OP_DOUBLE_TO_FLOAT:
+            case OP_DOUBLE_TO_INT:
+                from = Type.DOUBLE_TYPE;
+                break;
+            case OP_LONG_TO_FLOAT:
+            case OP_LONG_TO_DOUBLE:
+            case OP_LONG_TO_INT:
+                from = Type.LONG_TYPE;
+                break;
+            default:
+                throw new RuntimeException();
+            }
+            Type to;
+            switch (opcode) {
+            case OP_INT_TO_LONG:
+            case OP_FLOAT_TO_LONG:
+            case OP_DOUBLE_TO_LONG:
+                to = Type.LONG_TYPE;
+                break;
+            case OP_INT_TO_FLOAT:
+            case OP_DOUBLE_TO_FLOAT:
+            case OP_LONG_TO_FLOAT:
+                to = Type.FLOAT_TYPE;
+                break;
+            case OP_INT_TO_DOUBLE:
+            case OP_FLOAT_TO_DOUBLE:
+            case OP_LONG_TO_DOUBLE:
+                to = Type.DOUBLE_TYPE;
+                break;
+            case OP_LONG_TO_INT:
+            case OP_DOUBLE_TO_INT:
+            case OP_FLOAT_TO_INT:
+                to = Type.INT_TYPE;
+                break;
+            case OP_INT_TO_BYTE:
+                to = Type.BYTE_TYPE;
+                break;
+            case OP_INT_TO_CHAR:
+                to = Type.CHAR_TYPE;
+                break;
+            case OP_INT_TO_SHORT:
+                to = Type.SHORT_TYPE;
+                break;
+            default:
+                throw new RuntimeException();
+            }
+            list.add(nAssign(dist, nCast(src, from, to)));
             break;
 
         }

@@ -51,24 +51,20 @@ public final class Exprs {
         return new ArrayExpr(base, index);
     }
 
-    public static TypeExpr nCast(Value obj, Type type) {
-        return new TypeExpr(VT.CAST, obj, type);
+    public static CastExpr nCast(Value obj, Type from, Type to) {
+        return new CastExpr(obj, from, to);
     }
 
     public static TypeExpr nCheckCast(Value obj, Type type) {
         return new TypeExpr(VT.CHECK_CAST, obj, type);
     }
 
-    public static BinopExpr nCmp(Value a, Value b) {
-        return new BinopExpr(VT.CMP, a, b);
+    public static BinopExpr nDCmpg(Value a, Value b) {
+        return new BinopExpr(VT.DCMPG, a, b);
     }
 
-    public static BinopExpr nCmpg(Value a, Value b) {
-        return new BinopExpr(VT.CMPG, a, b);
-    }
-
-    public static BinopExpr nCmpl(Value a, Value b) {
-        return new BinopExpr(VT.CMPL, a, b);
+    public static BinopExpr nDCmpl(Value a, Value b) {
+        return new BinopExpr(VT.DCMPL, a, b);
     }
 
     public static BinopExpr nDiv(Value a, Value b) {
@@ -81,6 +77,14 @@ public final class Exprs {
 
     public static RefExpr nExceptionRef(Type type) {
         return new RefExpr(VT.EXCEPTION_REF, type, -1);
+    }
+
+    public static BinopExpr nFCmpg(Value a, Value b) {
+        return new BinopExpr(VT.FCMPG, a, b);
+    }
+
+    public static BinopExpr nFCmpl(Value a, Value b) {
+        return new BinopExpr(VT.FCMPL, a, b);
     }
 
     public static FieldExpr nField(Value object, Type ownerType, String fieldName, Type fieldType) {
@@ -122,6 +126,10 @@ public final class Exprs {
 
     public static InvokeExpr nInvokeVirtual(Value[] regs, Type owner, String name, Type[] argmentTypes, Type returnType) {
         return new InvokeExpr(VT.INVOKE_VIRTUAL, box(regs), owner, name, argmentTypes, returnType);
+    }
+
+    public static BinopExpr nLCmp(Value a, Value b) {
+        return new BinopExpr(VT.LCMP, a, b);
     }
 
     public static BinopExpr nLe(Value a, Value b) {

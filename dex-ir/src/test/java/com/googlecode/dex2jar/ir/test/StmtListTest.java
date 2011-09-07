@@ -26,7 +26,7 @@ public class StmtListTest {
         list.add(Stmts.nIdentity(c, Exprs.nParameterRef(Type.LONG_TYPE, 1)));
         list.add(Stmts.nIdentity(d, Exprs.nParameterRef(Type.FLOAT_TYPE, 2)));
         list.add(Stmts.nIf(Exprs.nGt(b, Constant.nInt(0)), L1));
-        list.add(Stmts.nAssign(c, Exprs.nCast(d, Type.LONG_TYPE)));
+        list.add(Stmts.nAssign(c, Exprs.nCast(d, Type.FLOAT_TYPE, Type.LONG_TYPE)));
         list.add(L1);
         list.toString();
     }

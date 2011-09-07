@@ -17,6 +17,7 @@ import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.ArrayExpr;
+import com.googlecode.dex2jar.ir.expr.CastExpr;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.expr.NewExpr;
@@ -479,8 +480,8 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
             break;
         case CAST: {
-            TypeExpr te = (TypeExpr) e1;
-            cast2(LocalType.type(e1.op.value), te.type, asm);
+            CastExpr te = (CastExpr) e1;
+            cast2(LocalType.type(e1.op.value), te.to, asm);
         }
             break;
         case LENGTH:
@@ -540,14 +541,20 @@ public class IrMethod2AsmMethod implements Opcodes {
         case USHR:
             asm.visitInsn(tp1.getOpcode(IUSHR));
             break;
-        case CMP:
+        case LCMP:
             asm.visitInsn(LCMP);
             break;
-        case CMPG:
-            asm.visitInsn(type.getSort() == Type.FLOAT ? FCMPG : DCMPG);
+        case FCMPG:
+            asm.visitInsn(FCMPG);
             break;
-        case CMPL:
-            asm.visitInsn(type.getSort() == Type.FLOAT ? FCMPL : DCMPL);
+        case DCMPG:
+            asm.visitInsn(DCMPG);
+            break;
+        case FCMPL:
+            asm.visitInsn(FCMPL);
+            break;
+        case DCMPL:
+            asm.visitInsn(DCMPL);
             break;
         }
     }

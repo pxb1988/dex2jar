@@ -87,7 +87,7 @@ public abstract class Value implements Cloneable {
      */
     public static enum VT {
 
-        ADD("+"), AND("&"), ARRAY, CAST, CHECK_CAST, CMP, CMPG, CMPL, CONSTANT, DIV("/"), EQ("=="), EXCEPTION_REF, FIELD, GE(
+        ADD("+"), AND("&"), ARRAY, CAST, CHECK_CAST, LCMP, FCMPG, FCMPL, DCMPG, DCMPL, CONSTANT, DIV("/"), EQ("=="), EXCEPTION_REF, FIELD, GE(
                 ">="), GT(">"), INSTANCE_OF, //
         INVOKE_INTERFACE, INVOKE_NEW, INVOKE_SPECIAL, INVOKE_STATIC, INVOKE_VIRTUAL, //
         LE("<="), LENGTH, LOCAL, LT("<"), MUL("*"), NE("!="), NEG, //
