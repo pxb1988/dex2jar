@@ -20,6 +20,7 @@ import org.objectweb.asm.AnnotationVisitor;
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 
 
@@ -99,6 +100,9 @@ public class DexAnnotationReader {
                 }
                 av.visitEnd();
             }
+        } else if (o instanceof Field) {
+            Field f = (Field) o;
+            dav.visitEnum(name, f.getType(), f.getName());
         } else {
             dav.visit(name, o);
         }
