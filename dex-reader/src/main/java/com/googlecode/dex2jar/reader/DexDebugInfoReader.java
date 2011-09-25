@@ -104,9 +104,13 @@ public class DexDebugInfoReader {
             int szParams = (int) in.readUnsignedLeb128();
             int offset = szParams == this.args.length ? 0 : 1;
             for (int i = 0; i < szParams; i++) {
-                int string_offset = (int) (in.readUnsignedLeb128() - 1);
-                String psName = dex.getString(string_offset);
-                this.variableList[this.args[i + offset]].name = psName;
+                int string_offset = (int) in.readUnsignedLeb128() - 1;
+                if (string_offset < 0) {// NO_INDEX
+                    this.variableList[this.args[i + offset]] = null;// remove the variable
+                } else {
+                    String psName = dex.getString(string_offset);
+                    this.variableList[this.args[i + offset]].name = psName;
+                }
             }
         }
         int pcOffset = 0;
