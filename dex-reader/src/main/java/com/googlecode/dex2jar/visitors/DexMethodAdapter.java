@@ -15,7 +15,6 @@
  */
 package com.googlecode.dex2jar.visitors;
 
-import org.objectweb.asm.AnnotationVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -37,7 +36,7 @@ public class DexMethodAdapter implements DexMethodVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationAble#visitAnnotation(java.lang.String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+    public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         return mv.visitAnnotation(name, visible);
     }
 

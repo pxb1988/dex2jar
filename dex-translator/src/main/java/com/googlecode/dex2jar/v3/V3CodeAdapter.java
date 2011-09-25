@@ -64,7 +64,6 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nLabel;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLock;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLookupSwitch;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
@@ -79,6 +78,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
@@ -99,10 +99,10 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  */
 public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
-    private static LabelStmt toLabelStmt(Label label) {
+    private static LabelStmt toLabelStmt(DexLabel label) {
         LabelStmt ls = (LabelStmt) label.info;
         if (ls == null) {
-            ls = nLabel(label);
+            ls = new LabelStmt(new Label());
             label.info = ls;
         }
         return ls;
@@ -351,11 +351,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     public void visitEnd() {
         irMethod.locals.addAll(Arrays.asList(this.locals));
         this.locals = null;
-        for (Stmt stmt : list) {// clean label.info
-            if (stmt.st == ST.LABEL) {
-                ((LabelStmt) stmt).label.info = null;
-            }
-        }
+        // for (Stmt stmt : list) {// clean label.info
+        // if (stmt.st == ST.LABEL) {
+        // ((LabelStmt) stmt).label.info = null;
+        // }
+        // }
 
     }
 
@@ -428,7 +428,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitJumpStmt(int opcode, int r1, int r2, Label label) {
+    public void visitJumpStmt(int opcode, int r1, int r2, DexLabel label) {
         Local a = locals[r1];
         Local b = locals[r2];
         LabelStmt ls = toLabelStmt(label);
@@ -455,7 +455,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitJumpStmt(int opcode, int reg, Label label) {
+    public void visitJumpStmt(int opcode, int reg, DexLabel label) {
         Local a = locals[reg];
         Value b = nInt(0);
         LabelStmt ls = toLabelStmt(label);
@@ -482,18 +482,17 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitJumpStmt(int opcode, Label label) {
-
+    public void visitJumpStmt(int opcode, DexLabel label) {
         list.add(nGoto(toLabelStmt(label)));
     }
 
     @Override
-    public void visitLabel(Label label) {
+    public void visitLabel(DexLabel label) {
         list.add(toLabelStmt(label));
     }
 
     @Override
-    public void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels) {
+    public void visitLookupSwitchStmt(int opcode, int aA, DexLabel label, int[] cases, DexLabel[] labels) {
         LabelStmt[] lss = new LabelStmt[cases.length];
         for (int i = 0; i < cases.length; i++) {
             lss[i] = toLabelStmt(labels[i]);
@@ -581,7 +580,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels) {
+    public void visitTableSwitchStmt(int opcode, int aA, DexLabel label, int first_case, int last_case,
+            DexLabel[] labels) {
         LabelStmt[] lss = new LabelStmt[labels.length];
         for (int i = 0; i < labels.length; i++) {
             lss[i] = toLabelStmt(labels[i]);
@@ -591,7 +591,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitTryCatch(Label start, Label end, Label handler, String type) {
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
         irMethod.traps.add(new Trap(toLabelStmt(start), toLabelStmt(end), toLabelStmt(handler), type == null ? null
                 : Type.getType(type)));
     }
@@ -698,12 +698,12 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitLineNumber(int line, Label label) {
+    public void visitLineNumber(int line, DexLabel label) {
         // TODO
     }
 
     @Override
-    public void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg) {
+    public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
         // TODO
     }
 }

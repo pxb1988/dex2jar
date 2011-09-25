@@ -15,11 +15,8 @@
  */
 package com.googlecode.dex2jar.visitors;
 
-import org.objectweb.asm.AnnotationVisitor;
-
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -41,7 +38,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+    public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         return dcv.visitAnnotation(name, visible);
     }
 

@@ -17,10 +17,8 @@ package com.googlecode.dex2jar.reader;
 
 import java.util.Map;
 
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Type;
-
 import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -33,27 +31,27 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     private DexCodeVisitor dcv;
     private Dex dex;
 
-    private Map<Integer, Label> labels;
+    private Map<Integer, DexLabel> labels;
     private int offset;
 
     /**
      * @param dex
      * @param labels
      */
-    public DexOpcodeAdapter(Dex dex, Map<Integer, Label> labels, DexCodeVisitor dcv) {
+    public DexOpcodeAdapter(Dex dex, Map<Integer, DexLabel> labels, DexCodeVisitor dcv) {
         super();
         this.dex = dex;
         this.labels = labels;
         this.dcv = dcv;
     }
 
-    private Label getLabel(int offset) {
+    private DexLabel getLabel(int offset) {
         return labels.get(this.offset + offset);
     }
 
     public void offset(int currentOffset) {
         this.offset = currentOffset;
-        Label label = getLabel(0);
+        DexLabel label = getLabel(0);
         if (label != null) {
             dcv.visitLabel(label);
         }
@@ -64,7 +62,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     }
 
     public void visitLookupSwitchStmt(int opcode, int aA, int defaultOffset, int[] cases, int[] iLabel) {
-        Label[] labels = new Label[iLabel.length];
+        DexLabel[] labels = new DexLabel[iLabel.length];
         for (int i = 0; i < iLabel.length; i++) {
             labels[i] = getLabel(iLabel[i]);
         }
@@ -72,7 +70,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     }
 
     public void visitTableSwitchStmt(int opcode, int aA, int defaultOffset, int first_case, int last_case, int[] iLabel) {
-        Label[] labels = new Label[iLabel.length];
+        DexLabel[] labels = new DexLabel[iLabel.length];
         for (int i = 0; i < iLabel.length; i++) {
             labels[i] = getLabel(iLabel[i]);
         }
@@ -538,7 +536,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
                 }
                 for (String t : m.getType().getParameterTypes()) {
                     nArgs[i++] = args[j];
-                    j += Type.getType(t).getSize();
+                    j += "J".equals(t) || "D".equals(t) ? 2 : 1;
                 }
                 dcv.visitMethodStmt(opcode, nArgs, m);
             } else {
@@ -577,7 +575,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
                 }
                 for (String t : m.getType().getParameterTypes()) {
                     nArgs[i++] = args[j];
-                    j += Type.getType(t).getSize();
+                    j += "J".equals(t) || "D".equals(t) ? 2 : 1;
                 }
                 dcv.visitMethodStmt(nOpcode, nArgs, m);
             } else {

@@ -24,8 +24,9 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 
 import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Annotation.Item;
+import com.googlecode.dex2jar.Field;
+import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 
 
@@ -78,7 +79,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+    public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         Annotation ann = new Annotation(name, visible);
         anns.add(ann);
         return new V3AnnAdapter(ann);

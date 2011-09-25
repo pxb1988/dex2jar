@@ -15,8 +15,6 @@
  */
 package com.googlecode.dex2jar.reader;
 
-import org.objectweb.asm.Type;
-
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Dex;
@@ -45,6 +43,14 @@ public class Constant {
     private static final int VALUE_ANNOTATION = 29;
     private static final int VALUE_NULL = 30;
     private static final int VALUE_BOOLEAN = 31;
+
+    public static class DexType {
+        DexType(String desc) {
+            this.desc = desc;
+        }
+
+        public String desc;
+    }
 
     /**
      * 读取静态常量
@@ -90,8 +96,7 @@ public class Constant {
         }
         case VALUE_TYPE: {
             int type_id = (int) readIntBits(in, b);
-            return Type.getType(dex.getType(type_id));
-
+            return new DexType(dex.getType(type_id));
         }
         case VALUE_ENUM: {
             return dex.getField((int) readIntBits(in, b));

@@ -43,6 +43,7 @@ import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.LocalType;
 import com.googlecode.dex2jar.ir.ts.Transformer;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
+import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 
@@ -60,6 +61,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         // Optimize Tree Analyzer
         InsnList.check = false;
     }
+
     /**
      * index LabelStmt for debug
      * 
@@ -73,6 +75,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
             }
         }
     }
+
     final protected List<Annotation> anns = new ArrayList<Annotation>();
 
     final protected ClassVisitor cv;
@@ -99,6 +102,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         this.paramAnns = paramAnns;
         methodNode.tryCatchBlocks = new ArrayList<Object>();
     }
+
     private void build() {
         List<String> exceptions = new ArrayList<String>();
         String signature = null;
@@ -166,7 +170,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+    public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         Annotation ann = new Annotation(name, visible);
         anns.add(ann);
         return new V3AnnAdapter(ann);
@@ -226,7 +230,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     public DexAnnotationAble visitParameterAnnotation(int index) {
         final List<Annotation> panns = paramAnns[index];
         return new DexAnnotationAble() {
-            public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+            public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
                 Annotation ann = new Annotation(name, visible);
                 panns.add(ann);
                 return new V3AnnAdapter(ann);

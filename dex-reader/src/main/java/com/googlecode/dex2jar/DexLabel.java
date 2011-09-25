@@ -13,24 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.visitors;
-
+package com.googlecode.dex2jar;
 
 /**
- * 用于访问注解
+ * a light weight version of org.objectweb.asm.Label
  * 
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author Pan
+ * 
  */
-public interface DexAnnotationAble {
-    /**
-     * 访问注解
-     * 
-     * @param name
-     *            注解名
-     * @param visible
-     *            是否运行时可见
-     * @return
-     */
-    DexAnnotationVisitor visitAnnotation(String name, boolean visible);
+public class DexLabel {
+    public Object info;
 }

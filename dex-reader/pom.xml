@@ -10,7 +10,7 @@
 
 	<groupId>com.googlecode.dex2jar</groupId>
 	<artifactId>dex-reader</artifactId>
-	<version>1.1</version>
+	<version>1.2</version>
 	<name>Dex Reader</name>
 	<description>A tool for converting Android's .dex format to Java's .class format</description>
 	<url>http://code.google.como/p/dex2jar/</url>
@@ -37,12 +37,6 @@
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.0</version>
-		</dependency>
-		<dependency>
-			<groupId>asm</groupId>
-			<artifactId>asm-debug-all</artifactId>
-			<version>3.2</version>
-			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

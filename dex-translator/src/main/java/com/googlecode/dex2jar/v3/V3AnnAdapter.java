@@ -18,18 +18,19 @@ package com.googlecode.dex2jar.v3;
 import java.util.List;
 
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Annotation;
+import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.Annotation.Item;
-
+import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class V3AnnAdapter implements AnnotationVisitor {
+public class V3AnnAdapter implements DexAnnotationVisitor {
 
     protected Annotation ann;
 
@@ -88,7 +89,7 @@ public class V3AnnAdapter implements AnnotationVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitAnnotation(java .lang.String, java.lang.String)
      */
-    public AnnotationVisitor visitAnnotation(String name, String desc) {
+    public DexAnnotationVisitor visitAnnotation(String name, String desc) {
         Annotation ann = new Annotation(desc, true);
         this.ann.items.add(new Item(name, ann));
         return new V3AnnAdapter(ann);
@@ -99,7 +100,7 @@ public class V3AnnAdapter implements AnnotationVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitArray(java.lang .String)
      */
-    public AnnotationVisitor visitArray(String name) {
+    public DexAnnotationVisitor visitArray(String name) {
         Annotation ann = new Annotation(null, true);
         this.ann.items.add(new Item(name, ann));
         return new V3AnnAdapter(ann);
@@ -120,6 +121,12 @@ public class V3AnnAdapter implements AnnotationVisitor {
      * java.lang.String)
      */
     public void visitEnum(String name, String desc, String value) {
+        ann.items.add(new Item(name, new Field(null, value, desc)));
+    }
+
+    @Override
+    public void visitType(String name, String type) {
+        this.visit(name, Type.getType(type));
     }
 
 }

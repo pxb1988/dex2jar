@@ -15,15 +15,11 @@
  */
 package com.googlecode.dex2jar.reader;
 
-import java.util.HashMap;
-
-import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Dex;
-import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
 /**

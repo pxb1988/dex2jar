@@ -30,6 +30,7 @@ import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
@@ -204,7 +205,7 @@ public class V3ClassAdapter implements DexClassVisitor {
 
     boolean isInnerClass = false;
 
-    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+    public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (!isInnerClass) {
             isInnerClass = "Ldalvik/annotation/InnerClass;".equals(name);
         }

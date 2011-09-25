@@ -43,8 +43,6 @@ import static com.googlecode.dex2jar.reader.OpcodeFormat.F51l;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +51,7 @@ import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.reader.DexDebugInfoReader.LocalVariable;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -66,7 +65,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 public class DexCodeReader implements DexOpcodes {
 
     private static final Logger log = LoggerFactory.getLogger(DexCodeReader.class);
-
+    private static int ACC_STATIC = 0x0008;
     /**
      * dex文件
      */
@@ -78,7 +77,7 @@ public class DexCodeReader implements DexOpcodes {
     /**
      * 标签映射,指令位置->指令编号
      */
-    Map<Integer, Label> labels = new HashMap<Integer, Label>();
+    Map<Integer, DexLabel> labels = new HashMap<Integer, DexLabel>();
 
     /**
      * 方法的描述
@@ -281,7 +280,7 @@ public class DexCodeReader implements DexOpcodes {
             int args_index;
             int i = total_registers_size - in_register_size;
             String[] parameterTypes = method.getType().getParameterTypes();
-            if ((method.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
+            if ((method.getAccessFlags() & ACC_STATIC) == 0) {
                 args = new int[parameterTypes.length + 1];
                 localVariables[i] = new LocalVariable(i, 0, -1, "this", method.getOwner(), null);
                 args[0] = i++;
@@ -317,11 +316,7 @@ public class DexCodeReader implements DexOpcodes {
         if (debug_off != 0) {
             in.pushMove(debug_off);
             try {
-                int thisReg = -1;
-                if ((method.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
-                    thisReg = total_registers_size - in_register_size;
-                }
-                new DexDebugInfoReader(in, dex, instruction_size, this, localVariables,args).accept(dcv);
+                new DexDebugInfoReader(in, dex, instruction_size, this, localVariables, args).accept(dcv);
             } finally {
                 in.pop();
             }
@@ -627,7 +622,7 @@ public class DexCodeReader implements DexOpcodes {
      */
     void order(int offset) {
         if (!labels.containsKey(offset)) {
-            labels.put(offset, new Label());
+            labels.put(offset, new DexLabel());
         }
     }
 }

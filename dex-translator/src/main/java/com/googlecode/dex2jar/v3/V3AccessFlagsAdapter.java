@@ -22,12 +22,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.objectweb.asm.AnnotationVisitor;
-
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
@@ -70,7 +69,7 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
             protected List<Annotation> anns = new ArrayList<Annotation>();
 
             @Override
-            public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+            public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
                 Annotation ann = new Annotation(name, visible);
                 anns.add(ann);
                 return new V3AnnAdapter(ann);

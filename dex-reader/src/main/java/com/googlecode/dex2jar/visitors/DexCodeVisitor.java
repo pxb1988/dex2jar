@@ -15,9 +15,8 @@
  */
 package com.googlecode.dex2jar.visitors;
 
-import org.objectweb.asm.Label;
-
 import com.googlecode.dex2jar.Field;
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
 
 /**
@@ -213,7 +212,7 @@ public interface DexCodeVisitor {
      * @param b
      * @param label
      */
-    void visitJumpStmt(int opcode, int a, int b, Label label);
+    void visitJumpStmt(int opcode, int a, int b, DexLabel label);
 
     /**
      * <pre>
@@ -229,7 +228,7 @@ public interface DexCodeVisitor {
      * @param reg
      * @param label
      */
-    void visitJumpStmt(int opcode, int reg, Label label);
+    void visitJumpStmt(int opcode, int reg, DexLabel label);
 
     /**
      * OP_GOTO
@@ -237,9 +236,9 @@ public interface DexCodeVisitor {
      * @param opcode
      * @param label
      */
-    void visitJumpStmt(int opcode, Label label);
+    void visitJumpStmt(int opcode, DexLabel label);
 
-    void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels);
+    void visitLookupSwitchStmt(int opcode, int aA, DexLabel label, int[] cases, DexLabel[] labels);
 
     /**
      * <pre>
@@ -311,7 +310,7 @@ public interface DexCodeVisitor {
      */
     void visitReturnStmt(int opcode, int reg);
 
-    void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels);
+    void visitTableSwitchStmt(int opcode, int aA, DexLabel label, int first_case, int last_case, DexLabel[] labels);
 
     /**
      * <pre>
@@ -345,15 +344,15 @@ public interface DexCodeVisitor {
      */
     void visitUnopStmt(int opcode, int toReg, int fromReg);
 
-    void visitTryCatch(Label start, Label end, Label handler, String type);
+    void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type);
 
     void visitArguments(int total, int[] args);
 
     void visitEnd();
 
-    void visitLabel(Label label);
+    void visitLabel(DexLabel label);
 
-    void visitLineNumber(int line, Label label);
+    void visitLineNumber(int line, DexLabel label);
 
-    void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg);
+    void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg);
 }

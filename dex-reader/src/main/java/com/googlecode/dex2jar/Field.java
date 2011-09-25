@@ -48,6 +48,12 @@ public class Field {
         name = dex.getString(name_idx);
     }
 
+    public Field(String owner, String name, String type) {
+        this.owner = owner;
+        this.type = type;
+        this.name = name;
+    }
+
     /**
      * @see #access_flags
      * @return the access_flags
