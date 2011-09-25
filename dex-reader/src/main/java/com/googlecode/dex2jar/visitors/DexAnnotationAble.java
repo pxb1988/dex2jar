@@ -29,9 +29,9 @@ public interface DexAnnotationAble {
      * 
      * @param name
      *            注解名
-     * @param visitable
+     * @param visible
      *            是否运行时可见
      * @return
      */
-    AnnotationVisitor visitAnnotation(String name, boolean visitable);
+    AnnotationVisitor visitAnnotation(String name, boolean visible);
 }

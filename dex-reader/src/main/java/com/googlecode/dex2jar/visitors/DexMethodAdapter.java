@@ -37,8 +37,8 @@ public class DexMethodAdapter implements DexMethodVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationAble#visitAnnotation(java.lang.String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-        return mv.visitAnnotation(name, visitable);
+    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+        return mv.visitAnnotation(name, visible);
     }
 
     /*
@@ -62,10 +62,10 @@ public class DexMethodAdapter implements DexMethodVisitor {
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation (int)
+     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParameterAnnotation (int)
      */
-    public DexAnnotationAble visitParamesterAnnotation(int index) {
-        return mv.visitParamesterAnnotation(index);
+    public DexAnnotationAble visitParameterAnnotation(int index) {
+        return mv.visitParameterAnnotation(index);
     }
 
 }

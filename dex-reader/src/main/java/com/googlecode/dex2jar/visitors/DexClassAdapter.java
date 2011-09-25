@@ -41,8 +41,8 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-        return dcv.visitAnnotation(name, visitable);
+    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+        return dcv.visitAnnotation(name, visible);
     }
 
     /*

@@ -48,11 +48,11 @@ public class Annotation {
 
     /**
      * @param type
-     * @param visitable
+     * @param visible
      */
-    public Annotation(String type, boolean visitable) {
+    public Annotation(String type, boolean visible) {
         super();
         this.type = type;
-        this.visible = visitable;
+        this.visible = visible;
     }
 }

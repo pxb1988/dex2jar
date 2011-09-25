@@ -517,7 +517,7 @@ public class DexFileReader implements Dex {
                                 int field_annotation_offset = in.readIntx();
                                 in.pushMove(field_annotation_offset);
                                 try {
-                                    DexAnnotationAble dpav = dmv.visitParamesterAnnotation(j);
+                                    DexAnnotationAble dpav = dmv.visitParameterAnnotation(j);
                                     if (dpav != null)
                                         new DexAnnotationReader(this).accept(in, dpav);
                                 } catch (Exception e) {

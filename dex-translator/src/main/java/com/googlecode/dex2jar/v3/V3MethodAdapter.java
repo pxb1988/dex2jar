@@ -166,8 +166,8 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-        Annotation ann = new Annotation(name, visitable);
+    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+        Annotation ann = new Annotation(name, visible);
         anns.add(ann);
         return new V3AnnAdapter(ann);
     }
@@ -221,13 +221,13 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation (int)
+     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParameterAnnotation (int)
      */
-    public DexAnnotationAble visitParamesterAnnotation(int index) {
+    public DexAnnotationAble visitParameterAnnotation(int index) {
         final List<Annotation> panns = paramAnns[index];
         return new DexAnnotationAble() {
-            public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-                Annotation ann = new Annotation(name, visitable);
+            public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+                Annotation ann = new Annotation(name, visible);
                 panns.add(ann);
                 return new V3AnnAdapter(ann);
             }

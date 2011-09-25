@@ -78,8 +78,8 @@ public class V3FieldAdapter implements DexFieldVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-        Annotation ann = new Annotation(name, visitable);
+    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+        Annotation ann = new Annotation(name, visible);
         anns.add(ann);
         return new V3AnnAdapter(ann);
     }

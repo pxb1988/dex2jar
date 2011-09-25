@@ -70,8 +70,8 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
             protected List<Annotation> anns = new ArrayList<Annotation>();
 
             @Override
-            public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-                Annotation ann = new Annotation(name, visitable);
+            public AnnotationVisitor visitAnnotation(String name, boolean visible) {
+                Annotation ann = new Annotation(name, visible);
                 anns.add(ann);
                 return new V3AnnAdapter(ann);
             }

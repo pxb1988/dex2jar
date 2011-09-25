@@ -204,11 +204,11 @@ public class V3ClassAdapter implements DexClassVisitor {
 
     boolean isInnerClass = false;
 
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (!isInnerClass) {
             isInnerClass = "Ldalvik/annotation/InnerClass;".equals(name);
         }
-        Annotation ann = new Annotation(name, visitable);
+        Annotation ann = new Annotation(name, visible);
         anns.add(ann);
         return new V3AnnAdapter(ann);
     }

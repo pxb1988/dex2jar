@@ -53,7 +53,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+    public AnnotationVisitor visitAnnotation(String name, boolean visible) {
 
         return this;
     }
@@ -100,9 +100,9 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation (int)
+     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParameterAnnotation (int)
      */
-    public DexAnnotationAble visitParamesterAnnotation(int index) {
+    public DexAnnotationAble visitParameterAnnotation(int index) {
 
         return this;
     }

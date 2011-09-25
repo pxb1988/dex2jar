@@ -25,5 +25,5 @@ public interface DexMethodVisitor extends DexAnnotationAble {
 
     void visitEnd();
 
-    DexAnnotationAble visitParamesterAnnotation(int index);
+    DexAnnotationAble visitParameterAnnotation(int index);
 }
