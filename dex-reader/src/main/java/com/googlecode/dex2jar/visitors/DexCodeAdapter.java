@@ -167,7 +167,17 @@ public class DexCodeAdapter implements DexCodeVisitor {
 
     @Override
     public void visitLabel(Label label) {
-        dcv.visitEnd();
+        dcv.visitLabel(label);
+    }
+
+    @Override
+    public void visitLineNumber(int line, Label label) {
+        dcv.visitLineNumber(line, label);
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg) {
+        dcv.visitLocalVariable(name, type, signature, start, end, reg);
     }
 
 }

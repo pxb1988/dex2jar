@@ -54,6 +54,7 @@ import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.reader.DexDebugInfoReader.LocalVariable;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
 /**
@@ -77,7 +78,7 @@ public class DexCodeReader implements DexOpcodes {
     /**
      * 标签映射,指令位置->指令编号
      */
-    private Map<Integer, Label> labels = new HashMap<Integer, Label>();
+    Map<Integer, Label> labels = new HashMap<Integer, Label>();
 
     /**
      * 方法的描述
@@ -272,20 +273,25 @@ public class DexCodeReader implements DexOpcodes {
         int tries_size = in.readShortx();
         int debug_off = in.readIntx();
         int instruction_size = in.readIntx();
+
+        LocalVariable localVariables[] = new LocalVariable[total_registers_size];
+        int args[];
         // 处理方法的参数
         {
-            int args[];
             int args_index;
             int i = total_registers_size - in_register_size;
+            String[] parameterTypes = method.getType().getParameterTypes();
             if ((method.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
-                args = new int[method.getType().getParameterTypes().length + 1];
+                args = new int[parameterTypes.length + 1];
+                localVariables[i] = new LocalVariable(i, 0, -1, "this", method.getOwner(), null);
                 args[0] = i++;
                 args_index = 1;
             } else {
-                args = new int[method.getType().getParameterTypes().length];
+                args = new int[parameterTypes.length];
                 args_index = 0;
             }
-            for (String type : method.getType().getParameterTypes()) {
+            for (String type : parameterTypes) {
+                localVariables[i] = new LocalVariable(i, 0, -1, "arg" + args_index, type, null);
                 args[args_index++] = i++;
                 if ("D".equals(type) || "J".equals(type)) {// 为Double/Long型特殊处理
                     i++;
@@ -307,11 +313,18 @@ public class DexCodeReader implements DexOpcodes {
                 in.pop();
             }
         }
-        // TODO 处理debug信息
+        // 处理debug信息
         if (debug_off != 0) {
-            // in.pushMove(debug_off);
-            // new DexDebugInfoReader(in, dex, total_registers_size).accept(dcv);
-            // in.pop();
+            in.pushMove(debug_off);
+            try {
+                int thisReg = -1;
+                if ((method.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
+                    thisReg = total_registers_size - in_register_size;
+                }
+                new DexDebugInfoReader(in, dex, instruction_size, this, localVariables,args).accept(dcv);
+            } finally {
+                in.pop();
+            }
         }
         // 查找标签
         in.push();
@@ -612,7 +625,7 @@ public class DexCodeReader implements DexOpcodes {
      * @param offset
      *            指令位置
      */
-    private void order(int offset) {
+    void order(int offset) {
         if (!labels.containsKey(offset)) {
             labels.put(offset, new Label());
         }

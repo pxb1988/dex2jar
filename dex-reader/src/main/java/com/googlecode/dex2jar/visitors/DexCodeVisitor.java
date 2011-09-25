@@ -352,4 +352,8 @@ public interface DexCodeVisitor {
     void visitEnd();
 
     void visitLabel(Label label);
+
+    void visitLineNumber(int line, Label label);
+
+    void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg);
 }

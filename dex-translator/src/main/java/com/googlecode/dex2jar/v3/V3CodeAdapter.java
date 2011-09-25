@@ -696,4 +696,14 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
         }
     }
+
+    @Override
+    public void visitLineNumber(int line, Label label) {
+        // TODO
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg) {
+        // TODO
+    }
 }

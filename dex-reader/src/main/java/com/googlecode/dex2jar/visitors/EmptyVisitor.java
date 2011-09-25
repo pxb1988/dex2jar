@@ -276,4 +276,14 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
 
     }
 
+    @Override
+    public void visitLineNumber(int line, Label label) {
+
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String type, String signature, Label start, Label end, int reg) {
+
+    }
+
 }
