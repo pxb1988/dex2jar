@@ -29,6 +29,8 @@
  */
 package com.googlecode.dex2jar.visitors;
 
+import com.googlecode.dex2jar.DexType;
+
 /**
  * A visitor to visit a Java annotation. The methods of this interface must be called in the following order: (
  * <tt>visit<tt> | <tt>visitEnum<tt> | 
@@ -46,21 +48,12 @@ public interface DexAnnotationVisitor {
      *            the value name.
      * @param value
      *            the actual value, whose type must be {@link Byte}, {@link Boolean}, {@link Character}, {@link Short},
-     *            {@link Integer}, {@link Long}, {@link Float}, {@link Double}, {@link String}. This value can also be
-     *            an array of byte, boolean, short, char, int, long, float or double values (this is equivalent to using
-     *            {@link #visitArray visitArray} and visiting each array element in turn, but is more convenient).
+     *            {@link Integer}, {@link Long}, {@link Float}, {@link Double}, {@link String} or {@link DexType}. This
+     *            value can also be an array of byte, boolean, short, char, int, long, float or double values (this is
+     *            equivalent to using {@link #visitArray visitArray} and visiting each array element in turn, but is
+     *            more convenient).
      */
     void visit(String name, Object value);
-
-    /**
-     * Visits a type value of the annotation.
-     * 
-     * @param name
-     *            the value name.
-     * @param type
-     *            type desc
-     */
-    void visitType(String name, String type);
 
     /**
      * Visits an enumeration value of the annotation.

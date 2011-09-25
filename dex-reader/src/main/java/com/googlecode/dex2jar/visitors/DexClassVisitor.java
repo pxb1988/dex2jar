@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar.visitors;
 
+import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 
@@ -26,6 +27,14 @@ public interface DexClassVisitor extends DexAnnotationAble {
 
     void visitSource(String file);
 
+    /**
+     * 
+     * @param field
+     * @param value
+     *            the actual value, whose type must be {@link Byte}, {@link Boolean}, {@link Character}, {@link Short},
+     *            {@link Integer}, {@link Long}, {@link Float}, {@link Double}, {@link String} or {@link DexType}.
+     * @return
+     */
     DexFieldVisitor visitField(Field field, Object value);
 
     DexMethodVisitor visitMethod(Method method);

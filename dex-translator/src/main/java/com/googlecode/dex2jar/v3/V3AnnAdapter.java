@@ -22,6 +22,7 @@ import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
+import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
@@ -81,6 +82,9 @@ public class V3AnnAdapter implements DexAnnotationVisitor {
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visit(java.lang.String, java.lang.Object)
      */
     public void visit(String name, Object value) {
+        if (value instanceof DexType) {
+            value = Type.getType(((DexType) value).desc);
+        }
         ann.items.add(new Item(name, value));
     }
 
@@ -122,11 +126,6 @@ public class V3AnnAdapter implements DexAnnotationVisitor {
      */
     public void visitEnum(String name, String desc, String value) {
         ann.items.add(new Item(name, new Field(null, value, desc)));
-    }
-
-    @Override
-    public void visitType(String name, String type) {
-        this.visit(name, Type.getType(type));
     }
 
 }

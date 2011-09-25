@@ -28,6 +28,7 @@ import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
+import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
@@ -221,6 +222,9 @@ public class V3ClassAdapter implements DexClassVisitor {
 
     public DexFieldVisitor visitField(Field field, Object value) {
         build();
+        if (value instanceof DexType) {
+            value = Type.getType(((DexType) value).desc);
+        }
         return new V3FieldAdapter(cv, field, value);
     }
 
