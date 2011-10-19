@@ -106,7 +106,7 @@ public class Main {
 
         for (String file : args) {
             File dex = new File(file);
-            final File gen = new File(FilenameUtils.getBaseName(file) + "_dex2jar.jar");
+            final File gen = new File(dex.getParentFile(),FilenameUtils.getBaseName(file) + "_dex2jar.jar");
             log.info("dex2jar {} -> {}", dex, gen);
             try {
                 doFile(dex, gen);
