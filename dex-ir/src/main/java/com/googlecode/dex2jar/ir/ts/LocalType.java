@@ -97,7 +97,7 @@ public class LocalType implements Transformer {
         tb.xtype.tb.xtype.type = tb.xtype.type;
     }
 
-    public static Type type(Value v) {
+    public static Type typeOf(Value v) {
         return get(v).xtype.type;
     }
 

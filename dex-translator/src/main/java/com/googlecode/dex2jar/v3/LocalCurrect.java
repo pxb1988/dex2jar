@@ -91,8 +91,8 @@ public class LocalCurrect implements Transformer {
     }
 
     private Type detectArray(E2Expr e2) {
-        Type t1 = LocalType.type(e2);
-        Type t2 = LocalType.type(e2.op1.value);
+        Type t1 = LocalType.typeOf(e2);
+        Type t2 = LocalType.typeOf(e2.op1.value);
         if (t2 == null) {
             if (e2.op1.value.vt == VT.ARRAY) {
                 Type t3 = detectArray((E2Expr) e2.op1.value);
@@ -124,11 +124,14 @@ public class LocalCurrect implements Transformer {
         case E0:
             if (value.vt == VT.CONSTANT) {
                 Constant cstExpr = ((Constant) value);
-                Type type = LocalType.type(value);
+                Type type = LocalType.typeOf(value);
                 if (type == null) {
-
-                    LocalType.type(value, Type.INT_TYPE);
-                    type = Type.INT_TYPE;
+                    // issue 71, if the type not detected, use type in constant
+                    type = cstExpr.type;
+                    if (type == null) {
+                        type = Type.INT_TYPE;
+                    }
+                    LocalType.type(value, type);
                 }
                 Object cst = cstExpr.value;
                 switch (type.getSort()) {
