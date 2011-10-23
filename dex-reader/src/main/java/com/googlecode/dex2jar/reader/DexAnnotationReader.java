@@ -17,7 +17,6 @@ package com.googlecode.dex2jar.reader;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.DataIn;
-import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
@@ -29,21 +28,11 @@ import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
  * @version $Id$
  */
 public class DexAnnotationReader {
-    private Dex dex;
 
     private static final int VISIBILITY_BUILD = 0;
 
     // private static final int VISIBILITY_RUNTIME = 1;
     // private static final int VISIBILITY_SYSTEM = 2;
-
-    /**
-     * @param dex
-     *            dex文件
-     */
-    public DexAnnotationReader(Dex dex) {
-        super();
-        this.dex = dex;
-    }
 
     /**
      * 处理
@@ -52,20 +41,20 @@ public class DexAnnotationReader {
      *            输入流
      * @param daa
      */
-    public void accept(DataIn in, DexAnnotationAble daa) {
-        int size = in.readIntx();
+    public static void accept(DexFileReader dex, DataIn in, DexAnnotationAble daa) {
+        int size = in.readUIntx();
         for (int j = 0; j < size; j++) {
-            int field_annotation_offset = in.readIntx();
-            in.pushMove(field_annotation_offset);
+            int annotation_off = in.readUIntx();
+            in.pushMove(annotation_off);
             try {
-                int visible_i = in.readByte();
-                int type_idx = (int) in.readUnsignedLeb128();
+                int visible_i = in.readUByte();
+                int type_idx = (int) in.readULeb128();
                 String type = dex.getType(type_idx);
                 DexAnnotationVisitor dav = daa.visitAnnotation(type, visible_i != VISIBILITY_BUILD);
                 if (dav != null) {
-                    long sizex = in.readUnsignedLeb128();
+                    long sizex = in.readULeb128();
                     for (int k = 0; k < sizex; k++) {
-                        int name_idx = (int) in.readUnsignedLeb128();
+                        int name_idx = (int) in.readULeb128();
                         String name = dex.getString(name_idx);
                         Object o = Constant.ReadConstant(dex, in);
                         doAccept(dav, name, o);

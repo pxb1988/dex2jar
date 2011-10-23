@@ -47,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DataIn;
-import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
@@ -69,7 +68,7 @@ public class DexCodeReader implements DexOpcodes {
     /**
      * dex文件
      */
-    private Dex dex;
+    private DexFileReader dex;
     /**
      * 输入流
      */
@@ -92,7 +91,7 @@ public class DexCodeReader implements DexOpcodes {
      * @param method
      *            方法的描述
      */
-    public DexCodeReader(Dex dex, DataIn in, Method method) {
+    public DexCodeReader(DexFileReader dex, DataIn in, Method method) {
         this.dex = dex;
         this.in = in;
         this.method = method;
@@ -105,7 +104,7 @@ public class DexCodeReader implements DexOpcodes {
             try {
                 switch (opcode) {
                 case OP_GOTO:// 10t
-                    order(currentOffset + (byte) (in.readByte() & 0xFF));
+                    order(currentOffset + in.readByte());
                     break;
                 case OP_IF_EQZ:// 21t
                 case OP_IF_NEZ:
@@ -121,7 +120,7 @@ public class DexCodeReader implements DexOpcodes {
                 case OP_IF_LE:
                 case DexInternalOpcode.OP_GOTO_16:// 20t;
                     in.skip(1);
-                    order(currentOffset + (short) (in.readShortx() & 0xFFFF));
+                    order(currentOffset + in.readShortx());
                     break;
                 case DexInternalOpcode.OP_GOTO_32:// 30t;
                     in.skip(1);
@@ -139,7 +138,7 @@ public class DexCodeReader implements DexOpcodes {
                         switch (opcode) {
                         case OP_SPARSE_SWITCH: {
                             in.skip(2);
-                            int switch_size = in.readShortx();
+                            int switch_size = in.readUShortx();
                             in.skip(4 * switch_size);// skip keys
                             for (int j = 0; j < switch_size; j++) {
                                 order(currentOffset + in.readIntx());
@@ -150,7 +149,7 @@ public class DexCodeReader implements DexOpcodes {
                         case OP_PACKED_SWITCH: {
 
                             in.skip(2);
-                            int switch_size = in.readShortx();
+                            int switch_size = in.readUShortx();
                             in.skip(4);
                             for (int j = 0; j < switch_size; j++) {
                                 int targetOffset = in.readIntx();
@@ -173,24 +172,21 @@ public class DexCodeReader implements DexOpcodes {
                         break;
                     case 1: // packed-switch-data
                     {
-                        int switch_size = in.readShortx(); // switch_size
-                        in.skip(4);// first_case
-                        in.skip(switch_size * 4);
+                        int switch_size = in.readUShortx(); // switch_size
+                        in.skip(switch_size * 4 + 4);
                         break;
                     }
                     case 2:// sparse-switch-data
                     {
-                        int switch_size = in.readShortx();
+                        int switch_size = in.readUShortx();
                         in.skip(switch_size * 8);
                         break;
                     }
                     case 3: {
-                        int elemWidth = in.readShortx();
-                        int initLength = in.readIntx();
-                        in.skip(elemWidth * initLength);
-                        if (elemWidth == 1 && initLength % 2 != 0) {
-                            in.skip(1);
-                        }
+                        int element_width = in.readUShortx();
+                        int size = in.readUIntx();
+                        // total byte of fill-array-data is ((size * element_width + 1) / 2 + 4) * 2;
+                        in.skip((size * element_width + 1) & 0xFFFFFFFE);
                         break;
                     }
                     }
@@ -209,47 +205,35 @@ public class DexCodeReader implements DexOpcodes {
     }
 
     private void findTryCatch(DataIn in, DexCodeVisitor dcv, int tries_size) {
+        int encoded_catch_handler_list = in.getCurrentPosition() + tries_size * 8;
         for (int i = 0; i < tries_size; i++) {
-            int start_addr = in.readIntx();
-            int insn_count = in.readShortx();
-            int handler_offset = in.readShortx();
-            in.push();
+            int start_addr = in.readUIntx();
+            int insn_count = in.readUShortx();
+            int handler_offset = in.readUShortx();
+
+            order(start_addr);
+            int end = start_addr + insn_count;
+            order(end);
+
+            in.pushMove(encoded_catch_handler_list + handler_offset);// move to encoded_catch_handler
             try {
-                in.skip((tries_size - i - 1) * 8 + handler_offset);
                 boolean catchAll = false;
-                int listSize = (int) in.readSignedLeb128();
+                int listSize = (int) in.readLeb128();
                 if (listSize <= 0) {
                     listSize = -listSize;
                     catchAll = true;
                 }
                 for (int k = 0; k < listSize; k++) {
-                    int type_id = (int) in.readUnsignedLeb128();
-                    int handler = (int) in.readUnsignedLeb128();
-                    order(start_addr);
-                    int end = 0;
-                    if (handler > start_addr && handler < start_addr + insn_count) {
-                        end = handler;
-                        order(handler);
-                    } else {
-                        end = start_addr + insn_count;
-                        order(start_addr + insn_count);
-                        order(handler);
-                    }
+                    int type_id = (int) in.readULeb128();
+                    int handler = (int) in.readULeb128();
+                    order(handler);
+
                     String type = dex.getType(type_id);
                     dcv.visitTryCatch(this.labels.get(start_addr), this.labels.get(end), this.labels.get(handler), type);
                 }
                 if (catchAll) {
-                    int handler = (int) in.readUnsignedLeb128();
-                    order(start_addr);
-                    int end = 0;
-                    if (handler > start_addr && handler < start_addr + insn_count) {
-                        end = handler;
-                        order(handler);
-                    } else {
-                        end = start_addr + insn_count;
-                        order(start_addr + insn_count);
-                        order(handler);
-                    }
+                    int handler = (int) in.readULeb128();
+                    order(handler);
                     dcv.visitTryCatch(this.labels.get(start_addr), this.labels.get(end), this.labels.get(handler), null);
                 }
             } finally {
@@ -266,12 +250,12 @@ public class DexCodeReader implements DexOpcodes {
     public void accept(DexCodeVisitor dcv) {
 
         DataIn in = this.in;
-        int total_registers_size = in.readShortx();
-        int in_register_size = in.readShortx();
+        int total_registers_size = in.readUShortx();
+        int in_register_size = in.readUShortx();
         in.skip(2);// outs_size
-        int tries_size = in.readShortx();
-        int debug_off = in.readIntx();
-        int instruction_size = in.readIntx();
+        int tries_size = in.readUShortx();
+        int debug_off = in.readUIntx();
+        int instruction_size = in.readUIntx();
 
         LocalVariable localVariables[] = new LocalVariable[total_registers_size];
         int args[];
@@ -304,7 +288,7 @@ public class DexCodeReader implements DexOpcodes {
             in.push();
             try {
                 in.skip(instruction_size * 2);
-                if (tries_size > 0 && instruction_size % 2 != 0) {
+                if ((instruction_size & 0x01) != 0) {// skip padding
                     in.skip(2);
                 }
                 findTryCatch(in, dcv, tries_size);
@@ -361,24 +345,21 @@ public class DexCodeReader implements DexOpcodes {
                         break;
                     case 1: // packed-switch-data
                     {
-                        int switch_size = in.readShortx(); // switch_size
-                        in.skip(4);// first_case
-                        in.skip(switch_size * 4);
+                        int switch_size = in.readUShortx(); // switch_size
+                        in.skip(switch_size * 4 + 4);
                         break;
                     }
                     case 2:// sparse-switch-data
                     {
-                        int switch_size = in.readShortx();
+                        int switch_size = in.readUShortx();
                         in.skip(switch_size * 8);
                         break;
                     }
-                    case 3: {
-                        int elemWidth = in.readShortx();
-                        int initLength = in.readIntx();
-                        in.skip(elemWidth * initLength);
-                        if (elemWidth == 1 && initLength % 2 != 0) {
-                            in.skip(1);
-                        }
+                    case 3: {// fill-array-data
+                        int element_width = in.readUShortx();
+                        int size = in.readUIntx();
+                        // total byte of fill-array-data is ((size * element_width + 1) / 2 + 4) * 2;
+                        in.skip((size * element_width + 1) & 0xFFFFFFFE);
                         break;
                     }
                     }
@@ -389,90 +370,87 @@ public class DexCodeReader implements DexOpcodes {
             }
             case F11n: {
                 int VV = in.readByte();
-                int B = (VV >>> 4) & 0xF;
-                if (0 != (B & 0x8)) {
-                    B = -((Integer.reverse(B) & 0x7) + 1);
-                }
+                int B = VV >>> 4;
                 n.x1n(opcode, VV & 0xF, B);
                 break;
             }
             case F11x:
-                n.x1x(opcode, in.readByte() & 0xFF);
+                n.x1x(opcode, in.readUByte());
                 break;
             case F12x: {
-                int VV = in.readByte();
-                n.x2x(opcode, VV & 0xF, (VV >>> 4) & 0xF);
+                int VV = in.readUByte();
+                n.x2x(opcode, VV & 0xF, VV >>> 4);
                 break;
             }
             case F20t:
                 in.skip(1);
-                n.x0t(opcode, (short) (in.readShortx() & 0xFFFF));
+                n.x0t(opcode, in.readShortx());
                 break;
             case F21c: {
-                int AA = in.readByte() & 0xFF;
-                int BBBB = in.readShortx() & 0xFFFF;
+                int AA = in.readUByte();
+                int BBBB = in.readUShortx();
                 n.x1c(opcode, AA, BBBB);
                 break;
             }
             case F21h: {
-                int A = in.readByte() & 0xFF;
-                int B = (short) (in.readShortx() & 0xFFFF);
+                int A = in.readUByte();
+                int B = in.readShortx();
                 n.x1h(opcode, A, B);
                 break;
             }
             case F21s: {
-                int AA = in.readByte() & 0xFF;
-                int BBBBB = (short) (in.readShortx() & 0xFFFF);
+                int AA = in.readUByte();
+                int BBBBB = in.readShortx();
                 n.x1s(opcode, AA, BBBBB);
                 break;
             }
             case F21t: {
-                int AA = in.readByte() & 0xFF;
-                int BBBB = (short) (in.readShortx() & 0xFFFF);
+                int AA = in.readUByte();
+                int BBBB = in.readShortx();
                 n.x1t(opcode, AA, BBBB);
                 break;
             }
             case F22b: {
-                int AA = in.readByte() & 0xFF;
-                int BB = in.readByte() & 0xFF;
-                int CC = (byte) (in.readByte() & 0xFF);
+                int AA = in.readUByte();
+                int BB = in.readUByte();
+                int CC = in.readByte();
                 n.x2b(opcode, AA, BB, CC);
                 break;
             }
             case F22c: {
-                int VV = in.readByte();
+                int VV = in.readUByte();
                 int A = VV & 0xF;
-                int B = (VV >>> 4) & 0xF;
-                int CCCC = in.readShortx() & 0xFFFF;
+                int B = VV >>> 4;
+                int CCCC = in.readUShortx();
                 n.x2c(opcode, A, B, CCCC);
                 break;
             }
             case F22s: {
-                int VV = in.readByte();
+                int VV = in.readUByte();
                 int A = VV & 0xF;
-                int B = (VV >>> 4) & 0xF;
-                int CCCC = (short) (in.readShortx() & 0xFFFF);
+                int B = VV >>> 4;
+                int CCCC = in.readShortx();
                 n.x2s(opcode, A, B, CCCC);
                 break;
             }
             case F22t: {
-                int VV = in.readByte();
+                int VV = in.readUByte();
                 int A = VV & 0xF;
-                int B = (VV >>> 4) & 0xF;
-                int CCCC = (short) (in.readShortx() & 0xFFFF);
+                int B = VV >>> 4;
+                int CCCC = in.readShortx();
                 n.x2t(opcode, A, B, CCCC);
                 break;
             }
             case F22x: {
-                int AA = in.readByte() & 0xFF;
-                int BBBB = in.readShortx() & 0xFFFF;
+                int AA = in.readUByte();
+                int BBBB = in.readUShortx();
                 n.x2x(opcode, AA, BBBB);
                 break;
             }
             case F23x: {
-                int AA = in.readByte() & 0xFF;
-                int BB = in.readByte() & 0xFF;
-                int CC = in.readByte() & 0xFF;
+                int AA = in.readUByte();
+                int BB = in.readUByte();
+                int CC = in.readUByte();
                 n.x3x(opcode, AA, BB, CC);
                 break;
             }
@@ -481,19 +459,19 @@ public class DexCodeReader implements DexOpcodes {
                 n.x0t(opcode, in.readIntx());
                 break;
             case F31c: {
-                int AA = in.readByte() & 0xFF;
-                int BBBBBBBB = in.readIntx();
+                int AA = in.readUByte();
+                int BBBBBBBB = in.readUIntx();
                 n.x1c(opcode, AA, BBBBBBBB);
                 break;
             }
             case F31i: {
-                int AA = in.readByte() & 0xFF;
+                int AA = in.readUByte();
                 int BBBBBBBB = in.readIntx();
                 n.x1i(opcode, AA, BBBBBBBB);
                 break;
             }
             case F31t: {
-                int AA = in.readByte() & 0xFF;
+                int AA = in.readUByte();
                 int BBBBBBBB = in.readIntx();
                 switch (opcode) {
                 case OP_FILL_ARRAY_DATA:
@@ -505,8 +483,8 @@ public class DexCodeReader implements DexOpcodes {
                         switch (opcode) {
                         case OP_SPARSE_SWITCH: {
 
-                            in.readShortx();
-                            int switch_size = in.readShortx();
+                            in.skip(2);
+                            int switch_size = in.readUShortx();
                             int cases[] = new int[switch_size];
                             int label[] = new int[switch_size];
                             for (int j = 0; j < switch_size; j++) {
@@ -522,7 +500,7 @@ public class DexCodeReader implements DexOpcodes {
                         case OP_PACKED_SWITCH: {
 
                             in.skip(2);
-                            int switch_size = in.readShortx();
+                            int switch_size = in.readUShortx();
                             int first_case = in.readIntx();
                             int last_case = first_case - 1 + switch_size;
                             int _labels[] = new int[switch_size];
@@ -537,8 +515,8 @@ public class DexCodeReader implements DexOpcodes {
                         case OP_FILL_ARRAY_DATA: {
 
                             in.skip(2);
-                            int elemWidth = in.readShortx();
-                            int initLength = in.readIntx();
+                            int elemWidth = in.readUShortx();
+                            int initLength = in.readUIntx();
                             Object[] values = new Object[initLength];
 
                             switch (elemWidth) {
@@ -549,7 +527,7 @@ public class DexCodeReader implements DexOpcodes {
                                 break;
                             case 2:
                                 for (int j = 0; j < initLength; j++) {
-                                    values[j] = in.readShortx();
+                                    values[j] = (short) in.readShortx();
                                 }
                                 break;
                             case 4:
@@ -578,34 +556,34 @@ public class DexCodeReader implements DexOpcodes {
             }
             case F32x: {
                 in.skip(1);
-                int AAAA = in.readShortx() & 0xFFFF;
-                int BBBB = in.readShortx() & 0xFFFF;
+                int AAAA = in.readUShortx();
+                int BBBB = in.readUShortx();
                 n.x2x(opcode, AAAA, BBBB);
                 break;
             }
 
             case F35c: {
-                int VV = in.readByte() & 0xFF;
+                int VV = in.readUByte();
                 int A = VV & 0xF;
-                int B = (VV >>> 4) & 0xF;
-                int CCCC = in.readShortx() & 0xFFFF;
-                VV = in.readShortx();
+                int B = VV >>> 4;
+                int CCCC = in.readUShortx();
+                VV = in.readUShortx();
                 int D = VV & 0xF;
                 int E = (VV >> 4) & 0xF;
                 int F = (VV >> 8) & 0xF;
-                int G = (VV >>> 12) & 0xF;
+                int G = VV >>> 12;
                 n.x5c(opcode, B, D, E, F, G, A, CCCC);
                 break;
             }
             case F3rc: {
-                int AA = in.readByte() & 0xFF;
-                int BBBB = in.readShortx() & 0xFFFF;
-                int CCCC = in.readShortx() & 0xFFFF;
+                int AA = in.readUByte();
+                int BBBB = in.readUShortx();
+                int CCCC = in.readUShortx();
                 n.xrc(opcode, CCCC, AA, BBBB);
                 break;
             }
             case F51l:
-                int AA = in.readByte() & 0xFF;
+                int AA = in.readUByte();
                 long BBBBBBBB_BBBBBBBB = in.readLongx();
                 n.x1l(opcode, AA, BBBBBBBB_BBBBBBBB);
                 break;

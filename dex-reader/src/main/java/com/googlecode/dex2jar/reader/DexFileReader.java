@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.DataInImpl;
-import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.ExceptionUtils;
 import com.googlecode.dex2jar.Field;
@@ -49,17 +49,19 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DexFileReader implements Dex {
+public class DexFileReader {
     private static final Logger log = LoggerFactory.getLogger(DexFileReader.class);
+    private static final byte[] DEX_FILE_MAGIC = new byte[] { 0x64, 0x65, 0x78, 0x0a, 0x30, 0x33, 0x35, 0x00 };
+
+    private static final int ENDIAN_CONSTANT = 0x12345678;
+    // private static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
+
     private int class_defs_off;
 
     private int class_defs_size;
 
     public static boolean ContinueOnException = false;
 
-    private int data_off;
-
-    private int data_size;
     private int field_ids_off;
     private int field_ids_size;
     private DataIn in;
@@ -82,84 +84,42 @@ public class DexFileReader implements Dex {
     public DexFileReader(byte[] data) {
         DataIn in = new DataInImpl(data);
         this.in = in;
-        // 0x 64 65 78
-        byte[] magic = in.readBytes(3);
-        log.debug("magic:'{}'", new String(magic));
-        // 0x 0A ?
-        in.skip(1);
-        // 0x30 33 35
-        byte[] version = in.readBytes(3);
-        log.debug("version:'{}'", new String(version));
-        // 0x 00 ?
-        in.readByte();
+        // { 0x64 0x65 0x78 0x0a 0x30 0x33 0x35 0x00 } = "dex\n035\0"
+        byte[] magic = in.readBytes(8);
 
-        int checksum = in.readIntx();
-        log.debug("checksum:0x{}", Integer.toHexString(checksum));
-        // signiture
-        // in.skipBytes(20);
-        // byte[] signature =
-        in.skip(20);
-        // log.debug("signature:0x{}", Hex.from(signature).encode().toString());
-        int fileSize = in.readIntx();
-        log.debug("fileSize:{}", fileSize);
-        int headSize = in.readIntx();
-        log.debug("headSize:{}", headSize);
-        int x28h = in.readIntx();
-        log.debug("x28h:{} (0x{})", x28h, Integer.toHexString(x28h));
-        int link_size = in.readIntx();
-        log.debug("link_size:{}", link_size);
-        int link_off = in.readIntx();
-        log.debug("link_off:{} (0x{})", link_off, Integer.toHexString(link_off));
+        if (!Arrays.equals(magic, DEX_FILE_MAGIC)) {
+            throw new DexException("not support magic.");
+        }
 
-        int mapOff = in.readIntx();
-        log.debug("x34h:{}", mapOff);
+        // skip uint checksum
+        // and 20 bytes signature
+        // and uint file_size
+        // and uint header_size 0x70
+        in.skip(4 + 20 + 4 + 4);
 
-        string_ids_size = in.readIntx();
-        log.debug("string_ids_size:{}", string_ids_size);
-        string_ids_off = in.readIntx();
-        log.debug("string_ids_off:{} (0x{})", string_ids_off, Integer.toHexString(string_ids_off));
-        type_ids_size = in.readIntx();
-        log.debug("type_ids_size:{} (0x{})", type_ids_size, Integer.toHexString(type_ids_size));
-        type_ids_off = in.readIntx();
-        log.debug("type_ids_off:{} (0x{})", type_ids_off, Integer.toHexString(type_ids_off));
+        int endian_tag = in.readUIntx();
+        if (endian_tag != ENDIAN_CONSTANT) {
+            throw new DexException("not support endian_tag");
+        }
 
-        proto_ids_size = in.readIntx();
-        log.debug("proto_ids_size:{} (0x{})", proto_ids_size, Integer.toHexString(proto_ids_size));
-        proto_ids_off = in.readIntx();
-        log.debug("proto_ids_off:{} (0x{})", proto_ids_off, Integer.toHexString(proto_ids_off));
+        // skip uint link_size
+        // and uint link_off
+        // and uint map_off
+        in.skip(4 + 4 + 4);
 
-        field_ids_size = in.readIntx();
-        log.debug("field_ids_size:{} (0x{})", field_ids_size, Integer.toHexString(field_ids_size));
-        field_ids_off = in.readIntx();
-        log.debug("field_ids_off:{} (0x{})", field_ids_off, Integer.toHexString(field_ids_off));
-        method_ids_size = in.readIntx();
-        log.debug("method_ids_size:{} (0x{})", method_ids_size, Integer.toHexString(method_ids_size));
-        method_ids_off = in.readIntx();
-        log.debug("method_ids_off:{} (0x{})", method_ids_off, Integer.toHexString(method_ids_off));
-
-        class_defs_size = in.readIntx();
-        log.debug("class_defs_size:{} (0x{})", class_defs_size, Integer.toHexString(class_defs_size));
-
-        class_defs_off = in.readIntx();
-        log.debug("class_defs_off:{} (0x{})", class_defs_off, Integer.toHexString(class_defs_off));
-
-        data_size = in.readIntx();
-        log.debug("data_size:{} (0x{})", data_size, Integer.toHexString(data_size));
-
-        data_off = in.readIntx();
-        log.debug("data_off:{} (0x{})", data_off, Integer.toHexString(data_off));
-        log.debug("=======End Of Head========");
-
-        // {
-        // in.pushMove(mapOff);
-        // int value = in.readShortx();
-        // System.out.println(this.getString(value));
-        // in.readShortx();
-        // int size = in.readIntx();
-        // int offset = in.readIntx();
-        // in.pop();
-        // }
-
+        string_ids_size = in.readUIntx();
+        string_ids_off = in.readUIntx();
+        type_ids_size = in.readUIntx();
+        type_ids_off = in.readUIntx();
+        proto_ids_size = in.readUIntx();
+        proto_ids_off = in.readUIntx();
+        field_ids_size = in.readUIntx();
+        field_ids_off = in.readUIntx();
+        method_ids_size = in.readUIntx();
+        method_ids_off = in.readUIntx();
+        class_defs_size = in.readUIntx();
+        class_defs_off = in.readUIntx();
+        // skip uint data_size data_off
     }
 
     public DexFileReader(File f) throws IOException {
@@ -177,22 +137,21 @@ public class DexFileReader implements Dex {
             in.pushMove(idxOffset);
             String className = null;
             try {
-                int class_idx = in.readIntx();
-                className = this.getType(class_idx);
-                int access_flags = in.readIntx();
-                int superclass_idx = in.readIntx();
+                className = this.getType(in.readUIntx());
+                int access_flags = in.readUIntx();
+                int superclass_idx = in.readUIntx();
                 String superClassName = superclass_idx == -1 ? null : this.getType(superclass_idx);
                 // 获取接口
                 String[] interfaceNames = null;
                 {
-                    int interfaces_off = in.readIntx();
+                    int interfaces_off = in.readUIntx();
                     if (interfaces_off != 0) {
                         in.pushMove(interfaces_off);
                         try {
-                            int size = in.readIntx();
+                            int size = in.readUIntx();
                             interfaceNames = new String[size];
                             for (int i = 0; i < size; i++) {
-                                interfaceNames[i] = getType(in.readShortx());
+                                interfaceNames[i] = getType(in.readUShortx());
                             }
                         } finally {
                             in.pop();
@@ -224,7 +183,7 @@ public class DexFileReader implements Dex {
 
         // 获取源文件
         {
-            int source_file_idx = in.readIntx();
+            int source_file_idx = in.readUIntx();
             if (source_file_idx != -1)
                 dcv.visitSource(this.getString(source_file_idx));
         }
@@ -233,15 +192,15 @@ public class DexFileReader implements Dex {
         Map<Integer, Integer> methodAnnotationPositions = new HashMap<Integer, Integer>();
         Map<Integer, Integer> paramAnnotationPositions = new HashMap<Integer, Integer>();
         {
-            int annotations_off = in.readIntx();
+            int annotations_off = in.readUIntx();
             if (annotations_off != 0) {
                 in.pushMove(annotations_off);
                 try {
-                    int class_annotations_off = in.readIntx();
+                    int class_annotations_off = in.readUIntx();
                     if (class_annotations_off != 0) {
                         in.pushMove(class_annotations_off);
                         try {
-                            new DexAnnotationReader(this).accept(in, dcv);
+                            DexAnnotationReader.accept(this, in, dcv);
                         } catch (Exception e) {
                             throw new RuntimeException("error on reading Annotation of class " + className, e);
                         } finally {
@@ -249,22 +208,22 @@ public class DexFileReader implements Dex {
                         }
                     }
 
-                    int field_annotation_size = in.readIntx();
-                    int method_annotation_size = in.readIntx();
-                    int parameter_annotation_size = in.readIntx();
+                    int field_annotation_size = in.readUIntx();
+                    int method_annotation_size = in.readUIntx();
+                    int parameter_annotation_size = in.readUIntx();
                     for (int i = 0; i < field_annotation_size; i++) {
-                        int field_idx = in.readIntx();
-                        int field_annotations_offset = in.readIntx();
+                        int field_idx = in.readUIntx();
+                        int field_annotations_offset = in.readUIntx();
                         fieldAnnotationPositions.put(field_idx, field_annotations_offset);
                     }
                     for (int i = 0; i < method_annotation_size; i++) {
-                        int method_idx = in.readIntx();
-                        int method_annotation_offset = in.readIntx();
+                        int method_idx = in.readUIntx();
+                        int method_annotation_offset = in.readUIntx();
                         methodAnnotationPositions.put(method_idx, method_annotation_offset);
                     }
                     for (int i = 0; i < parameter_annotation_size; i++) {
-                        int method_idx = in.readIntx();
-                        int parameter_annotation_offset = in.readIntx();
+                        int method_idx = in.readUIntx();
+                        int parameter_annotation_offset = in.readUIntx();
                         paramAnnotationPositions.put(method_idx, parameter_annotation_offset);
                     }
                 } finally {
@@ -273,17 +232,17 @@ public class DexFileReader implements Dex {
             }
         }
 
-        int class_data_off = in.readIntx();
+        int class_data_off = in.readUIntx();
 
-        int static_values_off = in.readIntx();
+        int static_values_off = in.readUIntx();
 
         if (class_data_off != 0) {
             in.pushMove(class_data_off);
             try {
-                int static_fields = (int) in.readUnsignedLeb128();
-                int instance_fields = (int) in.readUnsignedLeb128();
-                int direct_methods = (int) in.readUnsignedLeb128();
-                int virtual_methods = (int) in.readUnsignedLeb128();
+                int static_fields = (int) in.readULeb128();
+                int instance_fields = (int) in.readULeb128();
+                int direct_methods = (int) in.readULeb128();
+                int virtual_methods = (int) in.readULeb128();
                 {
                     int lastIndex = 0;
                     {
@@ -292,7 +251,7 @@ public class DexFileReader implements Dex {
                             if (static_values_off != 0) {
                                 in.pushMove(static_values_off);
                                 try {
-                                    int size = (int) in.readUnsignedLeb128();
+                                    int size = (int) in.readULeb128();
                                     constant = new Object[size];
                                     for (int i = 0; i < size; i++) {
                                         constant[i] = Constant.ReadConstant(this, in);
@@ -330,57 +289,69 @@ public class DexFileReader implements Dex {
         dcv.visitEnd();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.Dex#getField(int)
-     */
-    public Field getField(int id) {
+    /* default */Field getField(int id) {
         if (id >= this.field_ids_size || id < 0)
             throw new IllegalArgumentException("Id out of bound");
         DataIn in = this.in;
         int idxOffset = this.field_ids_off + id * 8;
         in.pushMove(idxOffset);
         try {
-            return new Field(this, in);
+            int owner_idx = in.readUShortx();
+            int type_idx = in.readUShortx();
+            int name_idx = in.readUIntx();
+            return new Field(getType(owner_idx), getType(type_idx), getString(name_idx));
         } finally {
             in.pop();
         }
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.Dex#getMethod(int)
-     */
-    public Method getMethod(int id) {
+    /* default */Method getMethod(int id) {
         if (id >= this.method_ids_size || id < 0)
             throw new IllegalArgumentException("Id out of bound");
         DataIn in = this.in;
         int idxOffset = this.method_ids_off + id * 8;
         in.pushMove(idxOffset);
         try {
-            return new Method(this, in);
+            int owner_idx = in.readUShortx();
+            int type_idx = in.readUShortx();
+            int name_idx = in.readUIntx();
+            return new Method(getType(owner_idx), getString(name_idx), getProto(type_idx));
         } finally {
             in.pop();
         }
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.Dex#getProto(int)
-     */
-    public Proto getProto(int id) {
+    /* default */Proto getProto(int id) {
         if (id >= this.proto_ids_size || id < 0)
             throw new IllegalArgumentException("Id out of bound");
         DataIn in = this.in;
         int idxOffset = this.proto_ids_off + id * 12;
         in.pushMove(idxOffset);
         try {
-            return new Proto(this, in);
+            in.skip(4);// skip shorty_idx uint
+            int return_type_idx = in.readUIntx();
+            int parameters_off = in.readUIntx();
+
+            String returnType = getType(return_type_idx);
+            String[] parameterTypes;
+            if (parameters_off != 0) {
+                in.pushMove(parameters_off);
+                try {
+                    int size = in.readUIntx();
+                    parameterTypes = new String[size];
+                    for (int i = 0; i < size; i++) {
+                        parameterTypes[i] = getType(in.readUShortx());
+                    }
+                } finally {
+                    in.pop();
+                }
+            } else {
+                parameterTypes = new String[0];
+            }
+            return new Proto(parameterTypes, returnType);
+
         } finally {
             in.pop();
         }
@@ -389,9 +360,8 @@ public class DexFileReader implements Dex {
     /**
      * 一个String id为4字节
      * 
-     * @see com.googlecode.dex2jar.Dex#getString(int)
      */
-    public String getString(int id) {
+    /* default */String getString(int id) {
         if (id >= this.string_ids_size || id < 0)
             throw new IllegalArgumentException("Id out of bound");
         DataIn in = this.in;
@@ -401,7 +371,7 @@ public class DexFileReader implements Dex {
             int offset = in.readIntx();
             in.pushMove(offset);
             try {
-                int length = (int) in.readUnsignedLeb128();
+                int length = (int) in.readULeb128();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream(length);
                 for (int b = in.readByte(); b != 0; b = in.readByte()) {
                     baos.write(b);
@@ -417,12 +387,7 @@ public class DexFileReader implements Dex {
 
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.Dex#getType(int)
-     */
-    public String getType(int id) {
+    /* default */String getType(int id) {
         if (id >= this.type_ids_size || id < 0)
             throw new IllegalArgumentException("Id out of bound");
         DataIn in = this.in;
@@ -448,10 +413,10 @@ public class DexFileReader implements Dex {
     protected int acceptField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions,
             Object value) {
         DataIn in = this.in;
-        int diff = (int) in.readUnsignedLeb128();
+        int diff = (int) in.readULeb128();
         int field_id = lastIndex + diff;
         Field field = getField(field_id);
-        int field_access_flags = (int) in.readUnsignedLeb128();
+        int field_access_flags = (int) in.readULeb128();
         field.setAccessFlags(field_access_flags);
         // //////////////////////////////////////////////////////////////
         DexFieldVisitor dfv = dcv.visitField(field, value);
@@ -460,7 +425,7 @@ public class DexFileReader implements Dex {
             if (annotation_offset != null) {
                 in.pushMove(annotation_offset);
                 try {
-                    new DexAnnotationReader(this).accept(in, dfv);
+                    DexAnnotationReader.accept(this, in, dfv);
                 } catch (Exception e) {
                     throw new DexException(e, "while accept annotation in field:%s.", field.toString());
                 } finally {
@@ -485,11 +450,11 @@ public class DexFileReader implements Dex {
     protected int acceptMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos,
             Map<Integer, Integer> parameterAnnos) {
         DataIn in = this.in;
-        int diff = (int) in.readUnsignedLeb128();
+        int diff = (int) in.readULeb128();
         int method_id = lastIndex + diff;
         Method method = getMethod(method_id);
-        int method_access_flags = (int) in.readUnsignedLeb128();
-        int code_off = (int) in.readUnsignedLeb128();
+        int method_access_flags = (int) in.readULeb128();
+        int code_off = (int) in.readULeb128();
         method.setAccessFlags(method_access_flags);
         try {
             DexMethodVisitor dmv = cv.visitMethod(method);
@@ -499,7 +464,7 @@ public class DexFileReader implements Dex {
                     if (annotation_offset != null) {
                         in.pushMove(annotation_offset);
                         try {
-                            new DexAnnotationReader(this).accept(in, dmv);
+                            DexAnnotationReader.accept(this, in, dmv);
                         } catch (Exception e) {
                             throw new DexException(e, "while accept annotation in method:%s.", method.toString());
                         } finally {
@@ -512,14 +477,14 @@ public class DexFileReader implements Dex {
                     if (parameter_annotation_offset != null) {
                         in.pushMove(parameter_annotation_offset);
                         try {
-                            int sizeJ = in.readIntx();
+                            int sizeJ = in.readUIntx();
                             for (int j = 0; j < sizeJ; j++) {
-                                int field_annotation_offset = in.readIntx();
+                                int field_annotation_offset = in.readUIntx();
                                 in.pushMove(field_annotation_offset);
                                 try {
                                     DexAnnotationAble dpav = dmv.visitParameterAnnotation(j);
                                     if (dpav != null)
-                                        new DexAnnotationReader(this).accept(in, dpav);
+                                        DexAnnotationReader.accept(this, in, dpav);
                                 } catch (Exception e) {
                                     throw new DexException(e,
                                             "while accept parameter annotation in method:[%s], parameter:[%d]",

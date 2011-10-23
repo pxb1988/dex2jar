@@ -17,7 +17,6 @@ package com.googlecode.dex2jar.reader;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.DataIn;
-import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexType;
 
@@ -52,8 +51,8 @@ public class Constant {
      * @param in
      * @return
      */
-    public static Object ReadConstant(Dex dex, DataIn in) {
-        int b = in.readByte();
+    public static Object ReadConstant(DexFileReader dex, DataIn in) {
+        int b = in.readUByte();
         int type = b & 0x1f;
         switch (type) {
         case VALUE_BYTE:
@@ -105,7 +104,7 @@ public class Constant {
             return dex.getField(field_id);
         }
         case VALUE_ARRAY: {
-            int size = (int) in.readUnsignedLeb128();
+            int size = (int) in.readULeb128();
             Object[] array = new Object[size];
             for (int i = 0; i < size; i++) {
                 array[i] = ReadConstant(dex, in);
@@ -114,12 +113,12 @@ public class Constant {
         }
         case VALUE_ANNOTATION: {
 
-            int _type = (int) in.readUnsignedLeb128();
+            int _type = (int) in.readULeb128();
             String _typeString = dex.getType(_type);
-            int size = (int) in.readUnsignedLeb128();
+            int size = (int) in.readULeb128();
             Annotation ann = new Annotation(_typeString, true);
             for (int i = 0; i < size; i++) {
-                int nameid = (int) in.readUnsignedLeb128();
+                int nameid = (int) in.readULeb128();
                 String nameString = dex.getString(nameid);
                 Object o = ReadConstant(dex, in);
                 ann.items.add(new Annotation.Item(nameString, o));
@@ -135,7 +134,7 @@ public class Constant {
         int length = ((before >> 5) & 0x7) + 1;
         long value = 0;
         for (int j = 0; j < length; j++) {
-            value |= ((long) in.readByte()) << (j * 8);
+            value |= ((long) in.readUByte()) << (j * 8);
         }
         return value;
     }
@@ -144,7 +143,7 @@ public class Constant {
         int bytes = ((before >> 5) & 0x7) + 1;
         long result = 0L;
         for (int i = 0; i < bytes; ++i) {
-            result |= ((long) in.readByte()) << (i * 8);
+            result |= ((long) in.readUByte()) << (i * 8);
         }
         result <<= (8 - bytes) * 8;
         return result;

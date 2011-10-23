@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar;
 
+
 /**
  * 方法
  * 
@@ -27,7 +28,6 @@ public class Method {
      */
     private int access_flags;
 
-    private Dex dex;
     /**
      * 方法名
      */
@@ -40,20 +40,11 @@ public class Method {
      * 参数和返回值
      */
     private Proto type;
-    /**
-     * 方法编号
-     */
-    private int type_idx;
 
-    public Method(Dex dex, DataIn in) {
-        int owner_idx = in.readShortx();
-        type_idx = in.readShortx();
-        int name_idx = in.readIntx();
-
-        owner = dex.getType(owner_idx);
-        // type = dex.getProto(type_idx);
-        name = dex.getString(name_idx);
-        this.dex = dex;
+    public Method(String owner, String name, Proto type) {
+        this.owner = owner;
+        this.name = name;
+        this.type = type;
     }
 
     /**
@@ -81,9 +72,6 @@ public class Method {
      * @return the type
      */
     public Proto getType() {
-        if (type == null) {
-            type = dex.getProto(type_idx);
-        }
         return type;
     }
 

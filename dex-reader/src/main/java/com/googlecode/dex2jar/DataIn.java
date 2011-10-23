@@ -30,9 +30,7 @@ public interface DataIn {
      */
     int getCurrentPosition();
 
-    void move(int offset);
-
-    boolean needPadding();
+    void move(int absOffset);
 
     void pop();
 
@@ -43,14 +41,14 @@ public interface DataIn {
      * 
      * <pre>
      * push();
-     * move(offset);
+     * move(absOffset);
      * </pre>
      * 
      * @see #push()
      * @see #move(int)
-     * @param offset
+     * @param absOffset
      */
-    void pushMove(int offset);
+    void pushMove(int absOffset);
 
     /**
 	 * 
@@ -60,19 +58,21 @@ public interface DataIn {
     byte[] readBytes(int size);
 
     int readIntx();
-
+    int readUIntx();
     long readLongx();
 
-    short readShortx();
+    int readShortx();
 
-    long readSignedLeb128();
+    int readUShortx();
+
+    long readLeb128();
 
     /**
      * @return
      */
-    int readUnsignedByte();
+    int readUByte();
 
-    long readUnsignedLeb128();
+    long readULeb128();
 
     /**
      * @param i

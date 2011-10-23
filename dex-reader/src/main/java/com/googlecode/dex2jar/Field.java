@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar;
 
+
 /**
  * 成员
  * 
@@ -38,15 +39,6 @@ public class Field {
      * 成员类型
      */
     private String type;
-
-    public Field(Dex dex, DataIn in) {
-        int owner_idx = in.readShortx();
-        int type_idx = in.readShortx();
-        int name_idx = in.readIntx();
-        owner = dex.getType(owner_idx);
-        type = dex.getType(type_idx);
-        name = dex.getString(name_idx);
-    }
 
     public Field(String owner, String name, String type) {
         this.owner = owner;

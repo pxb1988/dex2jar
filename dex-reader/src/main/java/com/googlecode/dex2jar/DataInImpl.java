@@ -33,37 +33,45 @@ public class DataInImpl implements DataIn {
             super(buf);
         }
 
-        public void setPos(int pos) {
-            this.pos = pos;
-        }
-
         public int getPos() {
             return pos;
         }
+
+        public void setPos(int pos) {
+            this.pos = pos;
+        }
     }
 
-    private Stack<Integer> stack = new Stack<Integer>();
     private XByteArrayInputStream in;
+    private Stack<Integer> stack = new Stack<Integer>();
 
     public DataInImpl(byte[] data) {
         in = new XByteArrayInputStream(data);
     }
 
-    public void move(int offset) {
-        in.setPos(offset);
+    public int getCurrentPosition() {
+        return this.in.getPos();
+    }
+
+    public void move(int absOffset) {
+        in.setPos(absOffset);
     }
 
     public void pop() {
         this.move(stack.pop());
     }
 
-    public void pushMove(int offset) {
-        this.push();
-        this.move(offset);
+    public void push() {
+        stack.push(in.getPos());
     }
 
-    public int readIntx() {
-        return in.read() | (in.read() << 8) | (in.read() << 16) | (in.read() << 24);
+    public void pushMove(int absOffset) {
+        this.push();
+        this.move(absOffset);
+    }
+
+    public int readByte() {
+        return (byte) in.read();
     }
 
     public byte[] readBytes(int size) {
@@ -76,20 +84,11 @@ public class DataInImpl implements DataIn {
         return data;
     }
 
-    public long readUnsignedLeb128() {
-        long value = 0;
-        int count = 0;
-        int b = in.read();
-        while ((b & 0x80) != 0) {
-            value |= (b & 0x7f) << count;
-            count += 7;
-            b = in.read();
-        }
-        value |= (b & 0x7f) << count;
-        return value;
+    public int readIntx() {
+        return in.read() | (in.read() << 8) | (in.read() << 16) | (in.read() << 24);
     }
 
-    public long readSignedLeb128() {
+    public long readLeb128() {
         int bitpos = 0;
         long vln = 0L;
         do {
@@ -104,35 +103,41 @@ public class DataInImpl implements DataIn {
         return vln;
     }
 
-    public void push() {
-        stack.push(in.getPos());
+    public long readLongx() {
+        return (readIntx() & 0x00000000FFFFFFFFL) | (((long) readIntx()) << 32);
     }
 
-    public short readShortx() {
-        return (short) (in.read() | (in.read() << 8));
+    public int readShortx() {
+        return (short) (readUByte() | (readUByte() << 8));
     }
 
-    public int readByte() {
+    public int readUByte() {
         return in.read();
     }
 
-    public int readUnsignedByte() {
-        return in.read() & 0xff;
+    public int readUIntx() {
+        return readIntx();
+    }
+
+    public long readULeb128() {
+        long value = 0;
+        int count = 0;
+        int b = in.read();
+        while ((b & 0x80) != 0) {
+            value |= (b & 0x7f) << count;
+            count += 7;
+            b = in.read();
+        }
+        value |= (b & 0x7f) << count;
+        return value;
+    }
+
+    @Override
+    public int readUShortx() {
+        return readUByte() | (readUByte() << 8);
     }
 
     public void skip(int bytes) {
         in.skip(bytes);
-    }
-
-    public boolean needPadding() {
-        return in.getPos() % 4 != 0;
-    }
-
-    public long readLongx() {
-        return ((long) readIntx()) | (((long) readIntx()) << 32);
-    }
-
-    public int getCurrentPosition() {
-        return this.in.getPos();
     }
 }

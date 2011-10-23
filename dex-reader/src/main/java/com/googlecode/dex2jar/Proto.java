@@ -15,8 +15,6 @@
  */
 package com.googlecode.dex2jar;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 参数和返回类型
@@ -38,34 +36,22 @@ public class Proto {
      */
     private String returnType;
 
-    public Proto(Dex dex, DataIn in) {
-        // int shorty_idx = in.readIntx();
-        in.skip(4);
-        int return_type_idx = in.readIntx();
-        int parameters_off = in.readIntx();
-
-        returnType = dex.getType(return_type_idx);
-        List<String> parameterTypeList = new ArrayList<String>();
-        StringBuilder ps = new StringBuilder("(");
-        if (parameters_off != 0) {
-            in.pushMove(parameters_off);
-            try {
-                int size = in.readIntx();
-                for (int i = 0; i < size; i++) {
-                    String p = dex.getType(in.readShortx());
-                    parameterTypeList.add(p);
-                    ps.append(p);
-                }
-            } finally {
-                in.pop();
-            }
-        }
-        ps.append(")").append(returnType);
-        desc = ps.toString();
-        parameterTypes = parameterTypeList.toArray(new String[parameterTypeList.size()]);
+    public Proto(String[] parameterTypes, String returnType) {
+        this.parameterTypes = parameterTypes;
+        this.returnType = returnType;
     }
 
     public String getDesc() {
+        if (desc == null) {
+            StringBuilder ps = new StringBuilder("(");
+            if (parameterTypes != null) {
+                for (String t : parameterTypes) {
+                    ps.append(t);
+                }
+            }
+            ps.append(")").append(returnType);
+            desc = ps.toString();
+        }
         return desc;
     }
 

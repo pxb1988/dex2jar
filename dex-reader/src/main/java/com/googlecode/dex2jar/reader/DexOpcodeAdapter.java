@@ -17,7 +17,6 @@ package com.googlecode.dex2jar.reader;
 
 import java.util.Map;
 
-import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
@@ -29,7 +28,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  */
 public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     private DexCodeVisitor dcv;
-    private Dex dex;
+    private DexFileReader dex;
 
     private Map<Integer, DexLabel> labels;
     private int offset;
@@ -38,7 +37,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
      * @param dex
      * @param labels
      */
-    public DexOpcodeAdapter(Dex dex, Map<Integer, DexLabel> labels, DexCodeVisitor dcv) {
+    public DexOpcodeAdapter(DexFileReader dex, Map<Integer, DexLabel> labels, DexCodeVisitor dcv) {
         super();
         this.dex = dex;
         this.labels = labels;
