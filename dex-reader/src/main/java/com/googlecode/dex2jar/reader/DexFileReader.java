@@ -299,7 +299,7 @@ public class DexFileReader {
             int owner_idx = in.readUShortx();
             int type_idx = in.readUShortx();
             int name_idx = in.readUIntx();
-            return new Field(getType(owner_idx), getType(type_idx), getString(name_idx));
+            return new Field(getType(owner_idx), getString(name_idx), getType(type_idx));
         } finally {
             in.pop();
         }
