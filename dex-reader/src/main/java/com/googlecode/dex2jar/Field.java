@@ -46,6 +46,12 @@ public class Field {
         this.name = name;
     }
 
+    public Field(String owner, String name, String type, int access_flags) {
+        this.owner = owner;
+        this.type = type;
+        this.name = name;
+        this.access_flags = access_flags;
+    }
     /**
      * @see #access_flags
      * @return the access_flags

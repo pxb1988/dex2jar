@@ -138,7 +138,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         this.tmp_reg = total;
         {
             int i = 0;
-            if ((irMethod.access & ACC_STATIC) == 0) {
+            if ((irMethod.access & Opcodes.ACC_STATIC) == 0) {
                 Local _this = nLocal("this", this.irMethod.owner);
                 list.add(nIdentity(_this, nThisRef(this.irMethod.owner)));
                 locals[args[i]] = _this;

@@ -13,23 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.visitors;
+package com.googlecode.dex2jar.util;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
+ * @author Panxiaobo <pxb1988 at gmail.com>
  * @version $Id$
  */
-public interface DexFileVisitor {
-    /**
-     * 
-     * @param access_flags
-     * @param className
-     * @param superClass
-     *            maybe null
-     * @param interfaceNames
-     * @return
-     */
-    DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames);
+public class ArrayOut {
 
-    void visitEnd();
+    int i = 0;
+
+    public List<String> array = new ArrayList<String>();
+    public List<Integer> is = new ArrayList<Integer>();
+
+    public void push() {
+        i++;
+    }
+
+    public void s(String s) {
+        is.add(i);
+        array.add(s);
+    }
+
+    public void s(String format, Object... arg) {
+        s(String.format(format, arg));
+    }
+
+    public void pop() {
+        i--;
+    }
+
 }

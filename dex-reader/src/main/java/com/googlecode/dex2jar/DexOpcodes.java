@@ -22,6 +22,27 @@ package com.googlecode.dex2jar;
  * @version $Id$
  */
 public abstract interface DexOpcodes {
+
+    int ACC_PUBLIC = 0x0001; // class, field, method
+    int ACC_PRIVATE = 0x0002; // class, field, method
+    int ACC_PROTECTED = 0x0004; // class, field, method
+    int ACC_STATIC = 0x0008; // field, method
+    int ACC_FINAL = 0x0010; // class, field, method
+    // int ACC_SUPER = 0x0020; // class
+    int ACC_SYNCHRONIZED = 0x0020; // method
+    int ACC_VOLATILE = 0x0040; // field
+    int ACC_BRIDGE = 0x0040; // method
+    int ACC_VARARGS = 0x0080; // method
+    int ACC_TRANSIENT = 0x0080; // field
+    int ACC_NATIVE = 0x0100; // method
+    int ACC_INTERFACE = 0x0200; // class
+    int ACC_ABSTRACT = 0x0400; // class, method
+    int ACC_STRICT = 0x0800; // method
+    int ACC_SYNTHETIC = 0x1000; // class, field, method
+    int ACC_ANNOTATION = 0x2000; // class
+    int ACC_ENUM = 0x4000; // class(?) field inner
+    int ACC_CONSTRUCTOR = 0x10000;// constructor method (class or instance initializer)
+
     public static final int OP_NOP = 0;
     public static final int OP_MOVE = 1;
     public static final int OP_MOVE_WIDE = 4;
@@ -32,7 +53,6 @@ public abstract interface DexOpcodes {
     public static final int OP_MOVE_EXCEPTION = 13;
     public static final int OP_RETURN_VOID = 14;
     public static final int OP_RETURN = 15;
-
 
     public static final int OP_CONST = 20;
     public static final int OP_CONST_WIDE = 24;

@@ -47,6 +47,12 @@ public class Method {
         this.type = type;
     }
 
+    public Method(String owner, String name, Proto type, int access_flags) {
+        this.owner = owner;
+        this.name = name;
+        this.type = type;
+        this.access_flags = access_flags;
+    }
     /**
      * @return the access_flags
      */

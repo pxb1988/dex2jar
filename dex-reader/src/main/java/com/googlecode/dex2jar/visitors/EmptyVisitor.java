@@ -32,7 +32,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
-    public DexClassVisitor visit(int accessFlags, String className, String superClass, String... interfaceNames) {
+    public DexClassVisitor visit(int accessFlags, String className, String superClass, String[] interfaceNames) {
 
         return this;
     }
