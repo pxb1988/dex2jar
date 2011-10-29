@@ -122,14 +122,14 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
             indexIt(stmt);
             stmt.list = this;
             size++;
-            if (position.next == null) {
-                last = stmt;
-            }
             stmt.next = position.next;
             stmt.pre = position;
-            position.next.pre = stmt;
+            if (position.next == null) {
+                last = stmt;
+            } else {
+                position.next.pre = stmt;
+            }
             position.next = stmt;
-
         }
     }
 
@@ -138,14 +138,14 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
             indexIt(stmt);
             stmt.list = this;
             size++;
-            if (position.pre == null) {
-                first = stmt;
-            }
             stmt.pre = position.pre;
             stmt.next = position;
-            position.pre.next = stmt;
+            if (position.pre == null) {
+                first = stmt;
+            } else {
+                position.pre.next = stmt;
+            }
             position.pre = stmt;
-
         }
     }
 
@@ -264,6 +264,12 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         }
         dist.next = start;
         start.pre = dist;
+    }
+
+    public void clear() {
+        size = 0;
+        first = null;
+        last = null;
     }
 
 }
