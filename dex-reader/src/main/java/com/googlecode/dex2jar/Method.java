@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar;
 
+import java.util.Arrays;
+
 /**
  * 方法
  * 
@@ -23,11 +25,9 @@ package com.googlecode.dex2jar;
  */
 public class Method {
     /**
-     * 修饰符
+     * 描述
      */
-    private int access_flags;
-
-    private Dex dex;
+    private String desc;
     /**
      * 方法名
      */
@@ -37,30 +37,34 @@ public class Method {
      */
     private String owner;
     /**
-     * 参数和返回值
+     * 参数类型
      */
-    private Proto type;
+    private String[] parameterTypes;
+
     /**
-     * 方法编号
+     * 返回类型
      */
-    private int type_idx;
+    private String returnType;
 
-    public Method(Dex dex, DataIn in) {
-        int owner_idx = in.readShortx();
-        type_idx = in.readShortx();
-        int name_idx = in.readIntx();
-
-        owner = dex.getType(owner_idx);
-        // type = dex.getProto(type_idx);
-        name = dex.getString(name_idx);
-        this.dex = dex;
+    public Method(String owner, String name, String[] parameterTypes, String returnType) {
+        this.owner = owner;
+        this.name = name;
+        this.parameterTypes = parameterTypes;
+        this.returnType = returnType;
     }
 
-    /**
-     * @return the access_flags
-     */
-    public int getAccessFlags() {
-        return access_flags;
+    public String getDesc() {
+        if (desc == null) {
+            StringBuilder ps = new StringBuilder("(");
+            if (parameterTypes != null) {
+                for (String t : parameterTypes) {
+                    ps.append(t);
+                }
+            }
+            ps.append(")").append(returnType);
+            desc = ps.toString();
+        }
+        return desc;
     }
 
     /**
@@ -78,21 +82,54 @@ public class Method {
     }
 
     /**
-     * @return the type
+     * @return the parameterTypes
      */
-    public Proto getType() {
-        if (type == null) {
-            type = dex.getProto(type_idx);
-        }
-        return type;
+    public String[] getParameterTypes() {
+        return parameterTypes;
     }
 
-    /**
-     * @param access_flags
-     *            the access_flags to set
-     */
-    public void setAccessFlags(int access_flags) {
-        this.access_flags = access_flags;
+    public String getReturnType() {
+        return returnType;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((owner == null) ? 0 : owner.hashCode());
+        result = prime * result + Arrays.hashCode(parameterTypes);
+        result = prime * result + ((returnType == null) ? 0 : returnType.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Method other = (Method) obj;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        if (owner == null) {
+            if (other.owner != null)
+                return false;
+        } else if (!owner.equals(other.owner))
+            return false;
+        if (!Arrays.equals(parameterTypes, other.parameterTypes))
+            return false;
+        if (returnType == null) {
+            if (other.returnType != null)
+                return false;
+        } else if (!returnType.equals(other.returnType))
+            return false;
+        return true;
     }
 
     /*
@@ -101,6 +138,6 @@ public class Method {
      * @see java.lang.Object#toString()
      */
     public String toString() {
-        return this.getOwner() + "." + this.getName() + this.getType();
+        return this.getOwner() + "." + this.getName() + this.getDesc();
     }
 }

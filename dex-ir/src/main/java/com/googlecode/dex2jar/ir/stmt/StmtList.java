@@ -16,13 +16,10 @@
 package com.googlecode.dex2jar.ir.stmt;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.objectweb.asm.Label;
 
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
@@ -86,6 +83,14 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         insertLast(stmt);
     }
 
+    public StmtList clone(Map<LabelStmt, LabelStmt> map) {
+        StmtList nList = new StmtList();
+        for (Stmt stmt : this) {
+            nList.add(stmt.clone(map));
+        }
+        return nList;
+    }
+
     @Override
     public int compare(Stmt o1, Stmt o2) {
         return o1.id - o2.id;
@@ -117,13 +122,14 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
             indexIt(stmt);
             stmt.list = this;
             size++;
-            if (position.next == null) {
-                last = stmt;
-            }
             stmt.next = position.next;
             stmt.pre = position;
+            if (position.next == null) {
+                last = stmt;
+            } else {
+                position.next.pre = stmt;
+            }
             position.next = stmt;
-
         }
     }
 
@@ -132,13 +138,14 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
             indexIt(stmt);
             stmt.list = this;
             size++;
-            if (position.pre == null) {
-                first = stmt;
-            }
             stmt.pre = position.pre;
             stmt.next = position;
+            if (position.pre == null) {
+                first = stmt;
+            } else {
+                position.pre.next = stmt;
+            }
             position.pre = stmt;
-
         }
     }
 
@@ -208,9 +215,13 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
             nas.pre = stmt.pre;
             if (stmt.next != null) {
                 stmt.next.pre = nas;
+            } else {
+                this.last = nas;
             }
             if (stmt.pre != null) {
                 stmt.pre.next = nas;
+            } else {
+                this.first = nas;
             }
             stmt.next = null;
             stmt.pre = null;
@@ -219,10 +230,6 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
     }
 
     public String toString() {
-        return toString(new HashMap<Label, Integer>());
-    }
-
-    public String toString(Map<Label, Integer> map) {
         if (this.size == 0) {
             return "[Empty]";
         }
@@ -234,6 +241,35 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
             sb.append(s).append("\n");
         }
         return sb.toString();
+    }
+
+    public void move(Stmt start, Stmt end, Stmt dist) {
+        if (start.pre == null) {
+            this.first = end.next;
+        } else {
+            start.pre.next = end.next;
+        }
+        if (end.next == null) {
+            this.last = start.pre;
+        } else {
+            end.next.pre = start.pre;
+        }
+
+        if (dist.next == null) {
+            this.last = end;
+            end.next = null;
+        } else {
+            dist.next.pre = end;
+            end.next = dist.next;
+        }
+        dist.next = start;
+        start.pre = dist;
+    }
+
+    public void clear() {
+        size = 0;
+        first = null;
+        last = null;
     }
 
 }

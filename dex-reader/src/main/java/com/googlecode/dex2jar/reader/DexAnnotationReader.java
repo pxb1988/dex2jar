@@ -15,13 +15,9 @@
  */
 package com.googlecode.dex2jar.reader;
 
-import org.objectweb.asm.AnnotationVisitor;
-
-import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.DataIn;
-import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
-
+import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 
 /**
  * 读取注解
@@ -29,23 +25,12 @@ import com.googlecode.dex2jar.visitors.DexAnnotationAble;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DexAnnotationReader {
-    private Dex dex;
-
+/* default */class DexAnnotationReader {
 
     private static final int VISIBILITY_BUILD = 0;
 
     // private static final int VISIBILITY_RUNTIME = 1;
     // private static final int VISIBILITY_SYSTEM = 2;
-
-    /**
-     * @param dex
-     *            dex文件
-     */
-    public DexAnnotationReader(Dex dex) {
-        super();
-        this.dex = dex;
-    }
 
     /**
      * 处理
@@ -54,20 +39,20 @@ public class DexAnnotationReader {
      *            输入流
      * @param daa
      */
-    public void accept(DataIn in, DexAnnotationAble daa) {
-        int size = in.readIntx();
+    public static void accept(DexFileReader dex, DataIn in, DexAnnotationAble daa) {
+        int size = in.readUIntx();
         for (int j = 0; j < size; j++) {
-            int field_annotation_offset = in.readIntx();
-            in.pushMove(field_annotation_offset);
+            int annotation_off = in.readUIntx();
+            in.pushMove(annotation_off);
             try {
-                int visible_i = in.readByte();
-                int type_idx = (int) in.readUnsignedLeb128();
+                int visible_i = in.readUByte();
+                int type_idx = (int) in.readULeb128();
                 String type = dex.getType(type_idx);
-                AnnotationVisitor dav = daa.visitAnnotation(type, visible_i != VISIBILITY_BUILD);
+                DexAnnotationVisitor dav = daa.visitAnnotation(type, visible_i != VISIBILITY_BUILD);
                 if (dav != null) {
-                    long sizex = in.readUnsignedLeb128();
+                    long sizex = in.readULeb128();
                     for (int k = 0; k < sizex; k++) {
-                        int name_idx = (int) in.readUnsignedLeb128();
+                        int name_idx = (int) in.readULeb128();
                         String name = dex.getString(name_idx);
                         Object o = Constant.ReadConstant(dex, in);
                         doAccept(dav, name, o);
@@ -80,9 +65,9 @@ public class DexAnnotationReader {
         }
     }
 
-    private static void doAccept(AnnotationVisitor dav, String name, Object o) {
+    private static void doAccept(DexAnnotationVisitor dav, String name, Object o) {
         if (o instanceof Object[]) {
-            AnnotationVisitor arrayVisitor = dav.visitArray(name);
+            DexAnnotationVisitor arrayVisitor = dav.visitArray(name);
             if (arrayVisitor != null) {
                 Object[] array = (Object[]) o;
                 for (Object e : array) {
@@ -92,13 +77,16 @@ public class DexAnnotationReader {
             }
         } else if (o instanceof Annotation) {
             Annotation ann = (Annotation) o;
-            AnnotationVisitor av = dav.visitAnnotation(name, ann.type);
+            DexAnnotationVisitor av = dav.visitAnnotation(name, ann.type);
             if (av != null) {
                 for (Annotation.Item item : ann.items) {
                     doAccept(av, item.name, item.value);
                 }
                 av.visitEnd();
             }
+        } else if (o instanceof Field) {
+            Field f = (Field) o;
+            dav.visitEnum(name, f.getType(), f.getName());
         } else {
             dav.visit(name, o);
         }

@@ -15,10 +15,8 @@
  */
 package com.googlecode.dex2jar.visitors;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Label;
-
 import com.googlecode.dex2jar.Field;
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
 
 /**
@@ -26,7 +24,7 @@ import com.googlecode.dex2jar.Method;
  * @version $Id$
  */
 public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor,
-        DexCodeVisitor, AnnotationVisitor {
+        DexCodeVisitor, DexAnnotationVisitor {
 
     /*
      * (non-Javadoc)
@@ -34,9 +32,8 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
-    public DexClassVisitor visit(int accessFlags, String className, String superClass, String... interfaceNames) {
-
-        return this;
+    public DexClassVisitor visit(int accessFlags, String className, String superClass, String[] interfaceNames) {
+        return null;
     }
 
     /*
@@ -53,29 +50,29 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+    public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
 
-        return this;
+        return null;
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitField(com.googlecode.dex2jar .Field, java.lang.Object)
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitField(int, com.googlecode.dex2jar.Field,
+     * java.lang.Object)
      */
-    public DexFieldVisitor visitField(Field field, Object value) {
-
-        return this;
+    public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
+        return null;
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitMethod(com.googlecode. dex2jar.Method)
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitMethod(int, com.googlecode.dex2jar.Method)
      */
-    public DexMethodVisitor visitMethod(Method method) {
+    public DexMethodVisitor visitMethod(int accessFlags, Method method) {
 
-        return this;
+        return null;
     }
 
     /*
@@ -94,17 +91,17 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      */
     public DexCodeVisitor visitCode() {
 
-        return this;
+        return null;
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParamesterAnnotation (int)
+     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParameterAnnotation (int)
      */
-    public DexAnnotationAble visitParamesterAnnotation(int index) {
+    public DexAnnotationAble visitParameterAnnotation(int index) {
 
-        return this;
+        return null;
     }
 
     /*
@@ -121,9 +118,9 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitAnnotation(java .lang.String, java.lang.String)
      */
-    public AnnotationVisitor visitAnnotation(String name, String desc) {
+    public DexAnnotationVisitor visitAnnotation(String name, String desc) {
 
-        return this;
+        return null;
     }
 
     /*
@@ -131,9 +128,9 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitArray(java.lang .String)
      */
-    public AnnotationVisitor visitArray(String name) {
+    public DexAnnotationVisitor visitArray(String name) {
 
-        return this;
+        return null;
     }
 
     /*
@@ -202,22 +199,22 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
     }
 
     @Override
-    public void visitJumpStmt(int opcode, int a, int b, Label label) {
+    public void visitJumpStmt(int opcode, int a, int b, DexLabel label) {
 
     }
 
     @Override
-    public void visitJumpStmt(int opConst, int reg, Label label) {
+    public void visitJumpStmt(int opConst, int reg, DexLabel label) {
 
     }
 
     @Override
-    public void visitJumpStmt(int opGoto, Label label) {
+    public void visitJumpStmt(int opGoto, DexLabel label) {
 
     }
 
     @Override
-    public void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels) {
+    public void visitLookupSwitchStmt(int opcode, int aA, DexLabel label, int[] cases, DexLabel[] labels) {
 
     }
 
@@ -252,7 +249,8 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
     }
 
     @Override
-    public void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels) {
+    public void visitTableSwitchStmt(int opcode, int aA, DexLabel label, int first_case, int last_case,
+            DexLabel[] labels) {
 
     }
 
@@ -262,7 +260,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
     }
 
     @Override
-    public void visitTryCatch(Label start, Label end, Label handler, String type) {
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
 
     }
 
@@ -272,7 +270,17 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
     }
 
     @Override
-    public void visitLabel(Label label) {
+    public void visitLabel(DexLabel label) {
+
+    }
+
+    @Override
+    public void visitLineNumber(int line, DexLabel label) {
+
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
 
     }
 

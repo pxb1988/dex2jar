@@ -21,7 +21,7 @@ package com.googlecode.dex2jar.ir;
  * @author Panxiaobo <pxb1988 at gmail.com>
  * @version $Id$
  */
-public abstract class Value {
+public abstract class Value implements Cloneable {
 
     /**
      * Represent an expression with no argument
@@ -87,11 +87,11 @@ public abstract class Value {
      */
     public static enum VT {
 
-        ADD("+"), AND("&"), ARRAY, CAST, CHECK_CAST, CMP, CMPG, CMPL, CONSTANT, DIV("/"), EQ("=="), EXCEPTION_REF, FIELD, GE(
+        ADD("+"), AND("&"), ARRAY, CAST, CHECK_CAST, LCMP, FCMPG, FCMPL, DCMPG, DCMPL, CONSTANT, DIV("/"), EQ("=="), EXCEPTION_REF, FIELD, GE(
                 ">="), GT(">"), INSTANCE_OF, //
         INVOKE_INTERFACE, INVOKE_NEW, INVOKE_SPECIAL, INVOKE_STATIC, INVOKE_VIRTUAL, //
         LE("<="), LENGTH, LOCAL, LT("<"), MUL("*"), NE("!="), NEG, //
-        NEW, NEW_ARRAY, NEW_MUTI_ARRAY, NOT, OR("|"), PARAMETER_REF, REM("%"), SHL(">>"), SHR("<<"), SUB("-"), THIS_REF, USHR(
+        NEW, NEW_ARRAY, NEW_MUTI_ARRAY, NOT, OR("|"), PARAMETER_REF, REM("%"), SHL("<<"), SHR(">>"), SUB("-"), THIS_REF, USHR(
                 ">>>"), XOR("^");
         private String name;
 
@@ -108,16 +108,16 @@ public abstract class Value {
         }
     }
 
+    public Object _lt_type;
     /**
      * The number of argument
      */
     final public ET et;
+
     /**
      * Value Type
      */
     final public VT vt;
-
-    public Object _lt_type;
 
     /**
      * 
@@ -131,4 +131,6 @@ public abstract class Value {
         this.vt = vt;
         this.et = et;
     }
+
+    public abstract Value clone();
 }

@@ -31,6 +31,7 @@ import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.LocalSplit;
 
@@ -105,6 +106,8 @@ public class LocalSplitTest {
         list.add(L1);
         list.add(nAssign(b, nString("123")));
         list.add(nAssign(ex, nString("test ex")));
+        list.add(Stmts.nLock(ex));
+        list.add(Stmts.nUnLock(ex));
         list.add(L2);
         list.add(nGoto(L4));
         list.add(L3);
@@ -261,5 +264,77 @@ public class LocalSplitTest {
         new LocalSplit().transform(jm);
 
         Assert.assertTrue(jm.locals.size() == 14);
+    }
+
+    @Test
+    public void test7() {
+        IrMethod jm = new IrMethod();
+
+        LabelStmt L2 = nLabel();
+        LabelStmt L3 = nLabel();
+        LabelStmt L4 = nLabel();
+        LabelStmt L5 = nLabel();
+
+        StmtList list = jm.stmts;
+        Local b = nLocal("b", null);
+        Local c = nLocal("c", null);
+        jm.locals.add(b);
+        jm.locals.add(c);
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L2));
+        list.add(nAssign(b, nInt(3)));
+        list.add(nGoto(L3));
+        list.add(L2);
+        list.add(nAssign(b, nInt(4)));
+        list.add(L3);
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L4));
+        list.add(Stmts.nReturnVoid());
+        list.add(L4);
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L5));
+        list.add(Stmts.nAssign(c, Exprs.nInvokeStatic(new Value[] { b }, Type.getType(String.class), "someMethod",
+                new Type[] { Type.INT_TYPE }, Type.VOID_TYPE)));
+        list.add(Stmts.nReturnVoid());
+        list.add(L5);
+
+        list.add(Stmts.nReturnVoid());
+
+        new LocalSplit().transform(jm);
+
+        Assert.assertTrue(jm.locals.size() == 2);
+    }
+
+    @Test
+    public void test8() {
+        IrMethod jm = new IrMethod();
+
+        LabelStmt L2 = nLabel();
+        LabelStmt L3 = nLabel();
+        LabelStmt L4 = nLabel();
+        LabelStmt L5 = nLabel();
+
+        StmtList list = jm.stmts;
+        Local b = nLocal("b", null);
+        Local c = nLocal("c", null);
+        jm.locals.add(b);
+        jm.locals.add(c);
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L2));
+        list.add(nAssign(b, nInt(3)));
+        list.add(nGoto(L3));
+        list.add(L2);
+        list.add(nAssign(b, nInt(4)));
+        list.add(L3);
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L4));
+        list.add(Stmts.nReturnVoid());
+        list.add(L4);
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L5));
+
+        list.add(Stmts.nReturnVoid());
+        list.add(L5);
+        list.add(Stmts.nAssign(c, Exprs.nInvokeStatic(new Value[] { b }, Type.getType(String.class), "someMethod",
+                new Type[] { Type.INT_TYPE }, Type.VOID_TYPE)));
+        list.add(Stmts.nReturnVoid());
+
+        new LocalSplit().transform(jm);
+
+        Assert.assertTrue(jm.locals.size() == 2);
     }
 }

@@ -17,6 +17,7 @@ package com.googlecode.dex2jar.ir.expr;
 
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
@@ -38,6 +39,15 @@ public class NewMutiArrayExpr extends EnExpr {
         this.baseType = base;
         this.dimension = dimension;
         this.ops = new ValueBox[sizes.length];
+    }
+
+    @Override
+    public Value clone() {
+        ValueBox[] nOps = new ValueBox[ops.length];
+        for (int i = 0; i < nOps.length; i++) {
+            nOps[i] = new ValueBox(ops[i].value.clone());
+        }
+        return new NewMutiArrayExpr(baseType, dimension, nOps);
     }
 
     public String toString() {

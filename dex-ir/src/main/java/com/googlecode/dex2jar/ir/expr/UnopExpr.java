@@ -39,6 +39,11 @@ public class UnopExpr extends E1Expr {
         super(type, new ValueBox(value));
     }
 
+    @Override
+    public Value clone() {
+        return new UnopExpr(vt, op.value.clone());
+    }
+
     public String toString() {
         switch (vt) {
         case LENGTH:

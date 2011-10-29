@@ -37,6 +37,11 @@ public class ArrayExpr extends E2Expr {
         super(VT.ARRAY, new ValueBox(base), new ValueBox(index));
     }
 
+    @Override
+    public Value clone() {
+        return new ArrayExpr(op1.value.clone(), op2.value.clone());
+    }
+
     public String toString() {
         return op1 + "[" + op2 + "]";
     }

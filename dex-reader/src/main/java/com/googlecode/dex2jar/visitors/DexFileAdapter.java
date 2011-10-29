@@ -28,7 +28,7 @@ public class DexFileAdapter implements DexFileVisitor {
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
-    public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames) {
+    public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
         return dfv.visit(access_flags, className, superClass, interfaceNames);
     }
 

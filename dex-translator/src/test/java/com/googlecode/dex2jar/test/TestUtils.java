@@ -26,7 +26,6 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -35,16 +34,13 @@ import java.util.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
-import org.objectweb.asm.tree.analysis.BasicValue;
 import org.objectweb.asm.tree.analysis.BasicVerifier;
 import org.objectweb.asm.tree.analysis.Frame;
-import org.objectweb.asm.tree.analysis.Value;
 import org.objectweb.asm.util.AbstractVisitor;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.TraceMethodVisitor;
@@ -116,15 +112,9 @@ public abstract class TestUtils {
     public static void verify(final ClassReader cr) throws AnalyzerException, IllegalArgumentException,
             IllegalAccessException {
         ClassNode cn = new ClassNode();
-        cr.accept(cn, ClassReader.SKIP_DEBUG);
+        cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
 
-        Type syperType = cn.superName == null ? null : Type.getObjectType(cn.superName);
         List methods = cn.methods;
-
-        List interfaces = new ArrayList();
-        for (Iterator i = cn.interfaces.iterator(); i.hasNext();) {
-            interfaces.add(Type.getObjectType(i.next().toString()));
-        }
 
         for (int i = 0; i < methods.size(); ++i) {
             MethodNode method = (MethodNode) methods.get(i);
@@ -134,6 +124,12 @@ public abstract class TestUtils {
                 a.analyze(cn.name, method);
             } catch (Exception e) {
                 printAnalyzerResult(method, a, new PrintWriter(System.out));
+                try {
+                    PrintWriter out = new PrintWriter("target/error.log", "utf8");
+                    printAnalyzerResult(method, a, out);
+                    out.close();
+                } catch (Exception e2) {
+                }
                 throw new DexException("method " + method.name + " " + method.desc, e);
             }
         }

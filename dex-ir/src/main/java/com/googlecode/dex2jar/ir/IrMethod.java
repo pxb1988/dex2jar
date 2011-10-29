@@ -44,17 +44,19 @@ public class IrMethod {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("// ").append(this.owner.getClassName()).append("\n");
-        sb.append(ToStringUtil.getAccDes(access)).append(ToStringUtil.toShortClassName(ret)).append(' ')
-                .append(this.name).append('(');
-        boolean first = true;
-        for (Type arg : args) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(',');
+        sb.append("// ").append(this.owner == null ? null : this.owner.getClassName()).append("\n");
+        sb.append(ToStringUtil.getAccDes(access)).append(ret == null ? null : ToStringUtil.toShortClassName(ret))
+                .append(' ').append(this.name).append('(');
+        if (args != null) {
+            boolean first = true;
+            for (Type arg : args) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(',');
+                }
+                sb.append(ToStringUtil.toShortClassName(arg));
             }
-            sb.append(ToStringUtil.toShortClassName(arg));
         }
         sb.append(") {\n\n").append(stmts).append("\n");
         if (traps.size() > 0) {

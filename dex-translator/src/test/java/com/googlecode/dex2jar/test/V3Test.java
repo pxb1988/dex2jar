@@ -17,7 +17,6 @@ package com.googlecode.dex2jar.test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -62,7 +61,7 @@ public class V3Test {
         DexFileReader reader = new DexFileReader(data);
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
         reader.accept(afa);
-        reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(),
+        reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), null,
                 new ClassVisitorFactory() {
                     public ClassVisitor create(final String name) {
                         return new ClassWriter(ClassWriter.COMPUTE_MAXS) {

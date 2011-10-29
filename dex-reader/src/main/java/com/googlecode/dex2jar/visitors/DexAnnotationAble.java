@@ -15,7 +15,6 @@
  */
 package com.googlecode.dex2jar.visitors;
 
-import org.objectweb.asm.AnnotationVisitor;
 
 /**
  * 用于访问注解
@@ -29,9 +28,9 @@ public interface DexAnnotationAble {
      * 
      * @param name
      *            注解名
-     * @param visitable
+     * @param visible
      *            是否运行时可见
      * @return
      */
-    AnnotationVisitor visitAnnotation(String name, boolean visitable);
+    DexAnnotationVisitor visitAnnotation(String name, boolean visible);
 }

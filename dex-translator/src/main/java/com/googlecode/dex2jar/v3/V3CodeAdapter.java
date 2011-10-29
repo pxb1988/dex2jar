@@ -24,12 +24,13 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nAnd;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCast;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCheckCast;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nCmp;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nCmpg;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nCmpl;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nDCmpg;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nDCmpl;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nDiv;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nEq;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nExceptionRef;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nFCmpg;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nFCmpl;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nField;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nGe;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nGt;
@@ -38,6 +39,7 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeInterface;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeSpecial;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeStatic;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeVirtual;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nLCmp;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLe;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLength;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
@@ -62,7 +64,6 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nLabel;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLock;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLookupSwitch;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
@@ -77,6 +78,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
@@ -86,8 +88,6 @@ import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
@@ -97,10 +97,10 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  */
 public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
-    private static LabelStmt toLabelStmt(Label label) {
+    private static LabelStmt toLabelStmt(DexLabel label) {
         LabelStmt ls = (LabelStmt) label.info;
         if (ls == null) {
-            ls = nLabel(label);
+            ls = new LabelStmt(new Label());
             label.info = ls;
         }
         return ls;
@@ -117,14 +117,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     /**
      * @param mv
      */
-    public V3CodeAdapter(Method method) {
+    public V3CodeAdapter(int accessFlags, IrMethod irMethod) {
         super();
-        IrMethod irMethod = new IrMethod();
-        irMethod.access = method.getAccessFlags();
-        irMethod.args = Type.getArgumentTypes(method.getType().getDesc());
-        irMethod.ret = Type.getType(method.getType().getReturnType());
-        irMethod.owner = Type.getType(method.getOwner());
-        irMethod.name = method.getName();
         this.list = irMethod.stmts;
         this.irMethod = irMethod;
     }
@@ -136,7 +130,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         this.tmp_reg = total;
         {
             int i = 0;
-            if ((irMethod.access & ACC_STATIC) == 0) {
+            if ((irMethod.access & Opcodes.ACC_STATIC) == 0) {
                 Local _this = nLocal("this", this.irMethod.owner);
                 list.add(nIdentity(_this, nThisRef(this.irMethod.owner)));
                 locals[args[i]] = _this;
@@ -281,7 +275,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             list.add(nAssign(locals[a], nInstanceOf(locals[b], Type.getType(type))));
             break;
         case OP_NEW_ARRAY:
-            list.add(nAssign(locals[a], nNewArray(Type.getType(type).getElementType(), locals[b])));
+            list.add(nAssign(locals[a], nNewArray(Type.getType(type.substring(1)), locals[b])));
             break;
         }
     }
@@ -306,15 +300,19 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         Local b = locals[cC];
         switch (opcode) {
         case OP_CMPL_FLOAT:
+            list.add(nAssign(dist, nFCmpl(a, b)));
+            break;
         case OP_CMPL_DOUBLE:
-            list.add(nAssign(dist, nCmpl(a, b)));
+            list.add(nAssign(dist, nDCmpl(a, b)));
             break;
         case OP_CMPG_FLOAT:
+            list.add(nAssign(dist, nFCmpg(a, b)));
+            break;
         case OP_CMPG_DOUBLE:
-            list.add(nAssign(dist, nCmpg(a, b)));
+            list.add(nAssign(dist, nDCmpg(a, b)));
             break;
         case OP_CMP_LONG:
-            list.add(nAssign(dist, nCmp(a, b)));
+            list.add(nAssign(dist, nLCmp(a, b)));
             break;
         }
     }
@@ -345,11 +343,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     public void visitEnd() {
         irMethod.locals.addAll(Arrays.asList(this.locals));
         this.locals = null;
-        for (Stmt stmt : list) {// clean label.info
-            if (stmt.st == ST.LABEL) {
-                ((LabelStmt) stmt).label.info = null;
-            }
-        }
+        // for (Stmt stmt : list) {// clean label.info
+        // if (stmt.st == ST.LABEL) {
+        // ((LabelStmt) stmt).label.info = null;
+        // }
+        // }
 
     }
 
@@ -422,7 +420,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitJumpStmt(int opcode, int r1, int r2, Label label) {
+    public void visitJumpStmt(int opcode, int r1, int r2, DexLabel label) {
         Local a = locals[r1];
         Local b = locals[r2];
         LabelStmt ls = toLabelStmt(label);
@@ -449,7 +447,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitJumpStmt(int opcode, int reg, Label label) {
+    public void visitJumpStmt(int opcode, int reg, DexLabel label) {
         Local a = locals[reg];
         Value b = nInt(0);
         LabelStmt ls = toLabelStmt(label);
@@ -476,18 +474,17 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitJumpStmt(int opcode, Label label) {
-
+    public void visitJumpStmt(int opcode, DexLabel label) {
         list.add(nGoto(toLabelStmt(label)));
     }
 
     @Override
-    public void visitLabel(Label label) {
+    public void visitLabel(DexLabel label) {
         list.add(toLabelStmt(label));
     }
 
     @Override
-    public void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels) {
+    public void visitLookupSwitchStmt(int opcode, int aA, DexLabel label, int[] cases, DexLabel[] labels) {
         LabelStmt[] lss = new LabelStmt[cases.length];
         for (int i = 0; i < cases.length; i++) {
             lss[i] = toLabelStmt(labels[i]);
@@ -506,20 +503,20 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         switch (opcode) {
         case OP_INVOKE_VIRTUAL:
             invoke = nInvokeVirtual(vs, Type.getType(method.getOwner()), method.getName(),
-                    Type.getArgumentTypes(method.getType().getDesc()), Type.getType(method.getType().getReturnType()));
+                    Type.getArgumentTypes(method.getDesc()), Type.getType(method.getReturnType()));
             break;
         case OP_INVOKE_SUPER:
         case OP_INVOKE_DIRECT:
             invoke = nInvokeSpecial(vs, Type.getType(method.getOwner()), method.getName(),
-                    Type.getArgumentTypes(method.getType().getDesc()), Type.getType(method.getType().getReturnType()));
+                    Type.getArgumentTypes(method.getDesc()), Type.getType(method.getReturnType()));
             break;
         case OP_INVOKE_STATIC:
             invoke = nInvokeStatic(vs, Type.getType(method.getOwner()), method.getName(),
-                    Type.getArgumentTypes(method.getType().getDesc()), Type.getType(method.getType().getReturnType()));
+                    Type.getArgumentTypes(method.getDesc()), Type.getType(method.getReturnType()));
             break;
         case OP_INVOKE_INTERFACE:
             invoke = nInvokeInterface(vs, Type.getType(method.getOwner()), method.getName(),
-                    Type.getArgumentTypes(method.getType().getDesc()), Type.getType(method.getType().getReturnType()));
+                    Type.getArgumentTypes(method.getDesc()), Type.getType(method.getReturnType()));
             break;
         }
         list.add(nAssign(saveTo, invoke));
@@ -575,7 +572,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels) {
+    public void visitTableSwitchStmt(int opcode, int aA, DexLabel label, int first_case, int last_case,
+            DexLabel[] labels) {
         LabelStmt[] lss = new LabelStmt[labels.length];
         for (int i = 0; i < labels.length; i++) {
             lss[i] = toLabelStmt(labels[i]);
@@ -585,7 +583,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitTryCatch(Label start, Label end, Label handler, String type) {
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
         irMethod.traps.add(new Trap(toLabelStmt(start), toLabelStmt(end), toLabelStmt(handler), type == null ? null
                 : Type.getType(type)));
     }
@@ -611,34 +609,93 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         case OP_INT_TO_LONG:
         case OP_FLOAT_TO_LONG:
         case OP_DOUBLE_TO_LONG:
-
-            list.add(nAssign(dist, nCast(src, Type.LONG_TYPE)));
-            break;
         case OP_INT_TO_FLOAT:
         case OP_DOUBLE_TO_FLOAT:
         case OP_LONG_TO_FLOAT:
-            list.add(nAssign(dist, nCast(src, Type.FLOAT_TYPE)));
-            break;
         case OP_INT_TO_DOUBLE:
         case OP_FLOAT_TO_DOUBLE:
         case OP_LONG_TO_DOUBLE:
-            list.add(nAssign(dist, nCast(src, Type.DOUBLE_TYPE)));
-            break;
         case OP_LONG_TO_INT:
         case OP_DOUBLE_TO_INT:
         case OP_FLOAT_TO_INT:
-            list.add(nAssign(dist, nCast(src, Type.INT_TYPE)));
-            break;
         case OP_INT_TO_BYTE:
-            list.add(nAssign(dist, nCast(src, Type.BYTE_TYPE)));
-            break;
         case OP_INT_TO_CHAR:
-            list.add(nAssign(dist, nCast(src, Type.CHAR_TYPE)));
-            break;
         case OP_INT_TO_SHORT:
-            list.add(nAssign(dist, nCast(src, Type.SHORT_TYPE)));
+            Type from;
+            switch (opcode) {
+            case OP_INT_TO_LONG:
+            case OP_INT_TO_BYTE:
+            case OP_INT_TO_CHAR:
+            case OP_INT_TO_SHORT:
+            case OP_INT_TO_FLOAT:
+            case OP_INT_TO_DOUBLE:
+                from = Type.INT_TYPE;
+                break;
+            case OP_FLOAT_TO_LONG:
+            case OP_FLOAT_TO_DOUBLE:
+            case OP_FLOAT_TO_INT:
+                from = Type.FLOAT_TYPE;
+                break;
+            case OP_DOUBLE_TO_LONG:
+            case OP_DOUBLE_TO_FLOAT:
+            case OP_DOUBLE_TO_INT:
+                from = Type.DOUBLE_TYPE;
+                break;
+            case OP_LONG_TO_FLOAT:
+            case OP_LONG_TO_DOUBLE:
+            case OP_LONG_TO_INT:
+                from = Type.LONG_TYPE;
+                break;
+            default:
+                throw new RuntimeException();
+            }
+            Type to;
+            switch (opcode) {
+            case OP_INT_TO_LONG:
+            case OP_FLOAT_TO_LONG:
+            case OP_DOUBLE_TO_LONG:
+                to = Type.LONG_TYPE;
+                break;
+            case OP_INT_TO_FLOAT:
+            case OP_DOUBLE_TO_FLOAT:
+            case OP_LONG_TO_FLOAT:
+                to = Type.FLOAT_TYPE;
+                break;
+            case OP_INT_TO_DOUBLE:
+            case OP_FLOAT_TO_DOUBLE:
+            case OP_LONG_TO_DOUBLE:
+                to = Type.DOUBLE_TYPE;
+                break;
+            case OP_LONG_TO_INT:
+            case OP_DOUBLE_TO_INT:
+            case OP_FLOAT_TO_INT:
+                to = Type.INT_TYPE;
+                break;
+            case OP_INT_TO_BYTE:
+                to = Type.BYTE_TYPE;
+                break;
+            case OP_INT_TO_CHAR:
+                to = Type.CHAR_TYPE;
+                break;
+            case OP_INT_TO_SHORT:
+                to = Type.SHORT_TYPE;
+                break;
+            default:
+                throw new RuntimeException();
+            }
+            list.add(nAssign(dist, nCast(src, from, to)));
             break;
 
         }
+    }
+
+    @Override
+    public void visitLineNumber(int line, DexLabel label) {
+        // TODO
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
+        // TODO
     }
 }

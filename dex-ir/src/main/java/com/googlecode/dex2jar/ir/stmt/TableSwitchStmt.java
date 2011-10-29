@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
+import java.util.Map;
+
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
@@ -43,6 +45,15 @@ public class TableSwitchStmt extends E1Stmt {
         this.highIndex = highIndex;
         this.targets = targets;
         this.defaultTarget = defaultTarget;
+    }
+
+    @Override
+    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
+        LabelStmt[] nTargets = new LabelStmt[targets.length];
+        for (int i = 0; i < nTargets.length; i++) {
+            nTargets[i] = cloneLabel(map, targets[i]);
+        }
+        return new TableSwitchStmt(op.value.clone(), lowIndex, highIndex, nTargets, cloneLabel(map, defaultTarget));
     }
 
     public String toString() {

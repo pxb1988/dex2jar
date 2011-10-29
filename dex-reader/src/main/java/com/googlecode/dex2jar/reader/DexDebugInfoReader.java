@@ -15,15 +15,7 @@
  */
 package com.googlecode.dex2jar.reader;
 
-import java.util.HashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.googlecode.dex2jar.DataIn;
-import com.googlecode.dex2jar.Dex;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
-
 
 /**
  * 读取debug信息
@@ -31,7 +23,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DexDebugInfoReader {
+/* default */class DexDebugInfoReader {
     public static final int DBG_END_SEQUENCE = 0;
     public static final int DBG_ADVANCE_PC = 1;
     public static final int DBG_ADVANCE_LINE = 2;
@@ -46,19 +38,26 @@ public class DexDebugInfoReader {
     public static final int DBG_LINE_BASE = -4;
     public static final int DBG_LINE_RANGE = 15;
     private DataIn in;
-    private Dex dex;
+    private DexFileReader dex;
 
-    // private int regsize;
+    private int instruction_size;
+    private DexCodeReader codeReader;
+    LocalVariable variableList[];
+    int args[];
 
     /**
      * @param in
      * @param dex
      */
-    public DexDebugInfoReader(DataIn in, Dex dex, int regsize) {
+    public DexDebugInfoReader(DataIn in, DexFileReader dex, int instruction_size, DexCodeReader codeReader,
+            LocalVariable localVariables[], int args[]) {
         super();
         this.in = in;
         this.dex = dex;
-        // this.regsize = regsize;
+        this.instruction_size = instruction_size;
+        this.codeReader = codeReader;
+        this.variableList = localVariables;
+        this.args = args;
     }
 
     public static class LocalVariable {
@@ -93,70 +92,85 @@ public class DexDebugInfoReader {
      * @param dcv
      */
     public void accept(DexCodeVisitor dcv) {
+        // System.out.println("==");
         DataIn in = this.in;
-        int lineRegister = (int) in.readUnsignedLeb128();
+        int line = (int) in.readULeb128();
         {
-            int szParams = (int) in.readUnsignedLeb128();
-            String ps[] = new String[szParams];
+            int szParams = (int) in.readULeb128();
+            int offset = szParams == this.args.length ? 0 : 1;
             for (int i = 0; i < szParams; i++) {
-                int string_offset = (int) (in.readUnsignedLeb128() - 1);
-                ps[i] = dex.getString(string_offset);
+                int string_offset = (int) in.readULeb128() - 1;
+                if (string_offset < 0) {// NO_INDEX
+                    this.variableList[this.args[i + offset]] = null;// remove the variable
+                } else {
+                    String psName = dex.getString(string_offset);
+                    this.variableList[this.args[i + offset]].name = psName;
+                }
             }
         }
-        int addressRegister = 0;
-        HashMap<Integer, LocalVariable> variableList = new HashMap<Integer, LocalVariable>();
+        int pcOffset = 0;
+        {// init line
+            codeReader.order(pcOffset);
+            dcv.visitLineNumber(line, codeReader.labels.get(pcOffset));
+        }
+
         l1: while (true) {
-            int opcode = in.readByte();
+            int opcode = in.readUByte();
             switch (opcode) {
             case DBG_END_SEQUENCE:
                 break l1;
             case DBG_ADVANCE_PC: {
-                int offset = (int) in.readUnsignedLeb128();
-                addressRegister += offset;
+                int offset = (int) in.readULeb128();
+                pcOffset += offset;
             }
                 break;
             case DBG_ADVANCE_LINE: {
-                int offset = (int) in.readUnsignedLeb128();
-                lineRegister += offset;
+                int offset = (int) in.readULeb128();
+                line += offset;
             }
                 break;
             case DBG_START_LOCAL: {
-                int regNum = (int) in.readUnsignedLeb128();
-                int nameIdx = (int) in.readUnsignedLeb128() - 1;
-                int typeIdx = (int) in.readUnsignedLeb128() - 1;
+                int regNum = (int) in.readULeb128();
+                int nameIdx = (int) in.readULeb128() - 1;
+                int typeIdx = (int) in.readULeb128() - 1;
                 if ((nameIdx >= 0) && (typeIdx >= 0)) {
-                    LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1, dex.getString(nameIdx), dex.getType(typeIdx), null);
-                    variableList.put(regNum, localVariable);
+                    codeReader.order(pcOffset);
+                    LocalVariable localVariable = new LocalVariable(regNum, pcOffset, -1, dex.getString(nameIdx),
+                            dex.getType(typeIdx), null);
+                    variableList[regNum] = localVariable;
                 }
             }
                 break;
             case DBG_START_LOCAL_EXTENDED: {
-                int regNum = (int) in.readUnsignedLeb128();
-                int nameIdx = (int) in.readUnsignedLeb128() - 1;
-                int typeIdx = (int) in.readUnsignedLeb128() - 1;
-                int sigIdx = (int) in.readUnsignedLeb128() - 1;
+                int regNum = (int) in.readULeb128();
+                int nameIdx = (int) in.readULeb128() - 1;
+                int typeIdx = (int) in.readULeb128() - 1;
+                int sigIdx = (int) in.readULeb128() - 1;
                 if ((nameIdx >= 0) && (typeIdx >= 0)) {
-                    LocalVariable localVariable = new LocalVariable(regNum, addressRegister, -1, dex.getString(nameIdx), dex.getType(typeIdx),
-                            dex.getString(sigIdx));
-                    variableList.put(regNum, localVariable);
+                    codeReader.order(pcOffset);
+                    LocalVariable localVariable = new LocalVariable(regNum, pcOffset, -1, dex.getString(nameIdx),
+                            dex.getType(typeIdx), dex.getString(sigIdx));
+                    variableList[regNum] = localVariable;
                 }
             }
                 break;
             case DBG_END_LOCAL: {
-                int regNum = (int) in.readUnsignedLeb128();
-                LocalVariable v = variableList.get(regNum);
-                if (v != null) {
-                    // dcv.visitLocalVariable(v.name, v.type, v.signature,
-                    // v.start, addressRegister, v.reg);
-                }
+                int regNum = (int) in.readULeb128();
+                LocalVariable v = variableList[regNum];
+                codeReader.order(pcOffset);
+                v.end = pcOffset;
+                // System.out.println(v.start + " - " + pcOffset);
+                dcv.visitLocalVariable(v.name, v.type, v.signature, codeReader.labels.get(v.start),
+                        codeReader.labels.get(pcOffset), v.reg);
+
             }
                 break;
             case DBG_RESTART_LOCAL: {
-                int regNum = (int) in.readUnsignedLeb128();
-                LocalVariable v = variableList.get(regNum);
-                if (v != null) {
-                    v.start = addressRegister;
-                }
+                int regNum = (int) in.readULeb128();
+                LocalVariable v = variableList[regNum];
+                v.start = pcOffset;
+                v.end = -1;
+                codeReader.order(pcOffset);
             }
                 break;
             case DBG_SET_PROLOGUE_END: {
@@ -168,21 +182,28 @@ public class DexDebugInfoReader {
                 break;
 
             case DBG_SET_FILE: {
-                int sourceFileIdx = (int) in.readUnsignedLeb128() - 1;
-                if (log.isDebugEnabled()) {
-                    log.debug("source file:{}", dex.getString(sourceFileIdx));
-                }
+                in.readULeb128();// skip source file in debug
+                // int sourceFileIdx = (int) in.readULeb128() - 1;
             }
                 break;
             default: {
                 int adjustedOpcode = opcode - DBG_FIRST_SPECIAL;
-                lineRegister += DBG_LINE_BASE + (adjustedOpcode % DBG_LINE_RANGE);
-                addressRegister += (adjustedOpcode / DBG_LINE_RANGE);
-                // dcv.visitLineNumber(lineRegister, addressRegister);
+                line += DBG_LINE_BASE + (adjustedOpcode % DBG_LINE_RANGE);
+                if (adjustedOpcode / DBG_LINE_RANGE != 0) {
+                    pcOffset += (adjustedOpcode / DBG_LINE_RANGE);
+                    codeReader.order(pcOffset);
+                    dcv.visitLineNumber(line, codeReader.labels.get(pcOffset));
+                }
             }
             }
         }
+        for (LocalVariable v : variableList) {
+            if (v != null && v.end < 0) {
+                codeReader.order(this.instruction_size);
+                // System.out.println(v.start + " - " + instruction_size);
+                dcv.visitLocalVariable(v.name, v.type, v.signature, codeReader.labels.get(v.start),
+                        codeReader.labels.get(instruction_size), v.reg);
+            }
+        }
     }
-
-    private static final Logger log = LoggerFactory.getLogger(DexDebugInfoReader.class);
 }

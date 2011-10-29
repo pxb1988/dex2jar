@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar;
 
+
 /**
  * 成员
  * 
@@ -22,10 +23,6 @@ package com.googlecode.dex2jar;
  * @version $Id$
  */
 public class Field {
-    /**
-     * 修饰符
-     */
-    private int access_flags;
     /**
      * 成员名
      */
@@ -39,21 +36,10 @@ public class Field {
      */
     private String type;
 
-    public Field(Dex dex, DataIn in) {
-        int owner_idx = in.readShortx();
-        int type_idx = in.readShortx();
-        int name_idx = in.readIntx();
-        owner = dex.getType(owner_idx);
-        type = dex.getType(type_idx);
-        name = dex.getString(name_idx);
-    }
-
-    /**
-     * @see #access_flags
-     * @return the access_flags
-     */
-    public int getAccessFlags() {
-        return access_flags;
+    public Field(String owner, String name, String type) {
+        this.owner = owner;
+        this.type = type;
+        this.name = name;
     }
 
     /**
@@ -75,14 +61,6 @@ public class Field {
      */
     public String getType() {
         return type;
-    }
-
-    /**
-     * @see #access_flags
-     * @param access_flags
-     */
-    public void setAccessFlags(int access_flags) {
-        this.access_flags = access_flags;
     }
 
     /*

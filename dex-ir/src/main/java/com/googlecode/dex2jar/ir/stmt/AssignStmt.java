@@ -15,6 +15,9 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
+import java.util.Map;
+
+import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 
@@ -31,6 +34,10 @@ public class AssignStmt extends E2Stmt {
 
     public AssignStmt(ST type, ValueBox left, ValueBox right) {
         super(type, left, right);
+    }
+
+    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
+        return new AssignStmt(st, new ValueBox((Value) op1.value.clone()), new ValueBox((Value) op2.value.clone()));
     }
 
     public String toString() {

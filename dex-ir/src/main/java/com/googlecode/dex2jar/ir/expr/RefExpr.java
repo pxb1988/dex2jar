@@ -17,6 +17,7 @@ package com.googlecode.dex2jar.ir.expr;
 
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.E0Expr;
 import com.googlecode.dex2jar.ir.Value.VT;
 
@@ -40,6 +41,11 @@ public class RefExpr extends E0Expr {
         super(vt);
         this.type = refType;
         this.parameterIndex = index;
+    }
+
+    @Override
+    public Value clone() {
+        return new RefExpr(vt, type, parameterIndex);
     }
 
     public String toString() {

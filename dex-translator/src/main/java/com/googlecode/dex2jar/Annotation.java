@@ -15,54 +15,44 @@
  */
 package com.googlecode.dex2jar;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
+ * 注解
+ * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public interface Dex {
-    /**
-     * 
-     * 获取类型
-     * 
-     * @param id
-     *            编号
-     * @return
-     */
-    String getType(int id);
+public class Annotation {
+    public static class Item {
+        public String name;
+
+        public Object value;
+
+        /**
+         * @param name
+         * @param value
+         */
+        public Item(String name, Object value) {
+            super();
+            this.name = name;
+            this.value = value;
+        }
+    }
+
+    public List<Item> items = new ArrayList<Item>();
+
+    public String type;
+    public boolean visible;
 
     /**
-     * 获取字符串
-     * 
-     * @param id
-     *            字编号
-     * @return
+     * @param type
+     * @param visible
      */
-    String getString(int id);
-
-    /**
-     * 获取方法的参数及其返回值
-     * 
-     * @param id
-     *            编号
-     * @return
-     */
-    Proto getProto(int id);
-
-    /**
-     * 获取方法
-     * 
-     * @param id
-     *            编号
-     * @return
-     */
-    Method getMethod(int id);
-
-    /**
-     * 获取成员
-     * 
-     * @param id
-     *            编号
-     * @return
-     */
-    Field getField(int id);
+    public Annotation(String type, boolean visible) {
+        super();
+        this.type = type;
+        this.visible = visible;
+    }
 }

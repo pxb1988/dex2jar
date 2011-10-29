@@ -15,11 +15,8 @@
  */
 package com.googlecode.dex2jar.visitors;
 
-import org.objectweb.asm.AnnotationVisitor;
-
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -41,8 +38,8 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-        return dcv.visitAnnotation(name, visitable);
+    public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
+        return dcv.visitAnnotation(name, visible);
     }
 
     /*
@@ -57,19 +54,20 @@ public class DexClassAdapter implements DexClassVisitor {
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitField(com.googlecode.dex2jar .Field, java.lang.Object)
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitField(int, com.googlecode.dex2jar .Field,
+     * java.lang.Object)
      */
-    public DexFieldVisitor visitField(Field field, Object value) {
-        return dcv.visitField(field, value);
+    public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
+        return dcv.visitField(accessFlags, field, value);
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitMethod(com.googlecode. dex2jar.Method)
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitMethod(int, com.googlecode. dex2jar.Method)
      */
-    public DexMethodVisitor visitMethod(Method method) {
-        return dcv.visitMethod(method);
+    public DexMethodVisitor visitMethod(int accessFlags, Method method) {
+        return dcv.visitMethod(accessFlags, method);
     }
 
     /*

@@ -34,14 +34,7 @@ public class LocalCurrect implements Transformer {
                 E2Stmt s2 = (E2Stmt) st;
                 if (s2.op1.value.vt == VT.ARRAY) {
                     E2Expr array = (E2Expr) s2.op1.value;
-                    Type t1 = LocalType.type(array);
-                    Type t2 = LocalType.type(array.op1.value);
-                    if (t2.getSort() == Type.ARRAY) {
-                        Type nT1 = t2.getElementType();
-                        if (!nT1.equals(t1)) {
-                            LocalType.type(array, nT1);
-                        }
-                    }
+                    detectArray(array);
                 }
                 currectArrayInExpr(s2.op1);
                 currectArrayInExpr(s2.op2);
@@ -82,14 +75,7 @@ public class LocalCurrect implements Transformer {
         case E2:
             E2Expr e2 = (E2Expr) value;
             if (e2.vt == VT.ARRAY) {
-                Type t1 = LocalType.type(e2);
-                Type t2 = LocalType.type(e2.op1.value);
-                if (t2.getSort() == Type.ARRAY) {
-                    Type nT1 = t2.getElementType();
-                    if (!nT1.equals(t1)) {
-                        LocalType.type(e2, nT1);
-                    }
-                }
+                detectArray(e2);
             }
 
             currectArrayInExpr(e2.op1);
@@ -104,6 +90,31 @@ public class LocalCurrect implements Transformer {
         }
     }
 
+    private Type detectArray(E2Expr e2) {
+        Type t1 = LocalType.typeOf(e2);
+        Type t2 = LocalType.typeOf(e2.op1.value);
+        if (t2 == null) {
+            if (e2.op1.value.vt == VT.ARRAY) {
+                Type t3 = detectArray((E2Expr) e2.op1.value);
+                if (t3 != null) {
+                    if (t3.getSort() == Type.ARRAY) {
+                        Type t4 = Type.getType(t3.getDescriptor().substring(1));
+                        LocalType.type(e2, t4);
+                        return t4;
+                    }
+                }
+            }
+        }
+        if (t2 != null && t2.getSort() == Type.ARRAY) {
+            Type nT1 = Type.getType(t2.getDescriptor().substring(1));
+            if (!nT1.equals(t1)) {
+                LocalType.type(e2, nT1);
+                return nT1;
+            }
+        }
+        return t1;
+    }
+
     private void currectCstInExpr(ValueBox vb) {
         if (vb == null) {
             return;
@@ -113,11 +124,14 @@ public class LocalCurrect implements Transformer {
         case E0:
             if (value.vt == VT.CONSTANT) {
                 Constant cstExpr = ((Constant) value);
-                Type type = LocalType.type(value);
+                Type type = LocalType.typeOf(value);
                 if (type == null) {
-
-                    LocalType.type(value, Type.INT_TYPE);
-                    type = Type.INT_TYPE;
+                    // issue 71, if the type not detected, use type in constant
+                    type = cstExpr.type;
+                    if (type == null) {
+                        type = Type.INT_TYPE;
+                    }
+                    LocalType.type(value, type);
                 }
                 Object cst = cstExpr.value;
                 switch (type.getSort()) {
@@ -152,17 +166,6 @@ public class LocalCurrect implements Transformer {
             break;
         case E2:
             E2Expr e2 = (E2Expr) value;
-            if (e2.vt == VT.ARRAY) {
-                Type t1 = LocalType.type(e2);
-                Type t2 = LocalType.type(e2.op1.value);
-                if (t2.getSort() == Type.ARRAY) {
-                    Type nT1 = t2.getElementType();
-                    if (!nT1.equals(t1)) {
-                        LocalType.type(e2, t1);
-                    }
-                }
-            }
-
             currectCstInExpr(e2.op1);
             currectCstInExpr(e2.op2);
             break;

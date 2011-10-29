@@ -17,10 +17,7 @@ package com.googlecode.dex2jar.reader;
 
 import java.util.Map;
 
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Type;
-
-import com.googlecode.dex2jar.Dex;
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -29,31 +26,31 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
+/* default */ class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     private DexCodeVisitor dcv;
-    private Dex dex;
+    private DexFileReader dex;
 
-    private Map<Integer, Label> labels;
+    private Map<Integer, DexLabel> labels;
     private int offset;
 
     /**
      * @param dex
      * @param labels
      */
-    public DexOpcodeAdapter(Dex dex, Map<Integer, Label> labels, DexCodeVisitor dcv) {
+    /* defualt */DexOpcodeAdapter(DexFileReader dex, Map<Integer, DexLabel> labels, DexCodeVisitor dcv) {
         super();
         this.dex = dex;
         this.labels = labels;
         this.dcv = dcv;
     }
 
-    private Label getLabel(int offset) {
+    private DexLabel getLabel(int offset) {
         return labels.get(this.offset + offset);
     }
 
     public void offset(int currentOffset) {
         this.offset = currentOffset;
-        Label label = getLabel(0);
+        DexLabel label = getLabel(0);
         if (label != null) {
             dcv.visitLabel(label);
         }
@@ -64,7 +61,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     }
 
     public void visitLookupSwitchStmt(int opcode, int aA, int defaultOffset, int[] cases, int[] iLabel) {
-        Label[] labels = new Label[iLabel.length];
+        DexLabel[] labels = new DexLabel[iLabel.length];
         for (int i = 0; i < iLabel.length; i++) {
             labels[i] = getLabel(iLabel[i]);
         }
@@ -72,7 +69,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     }
 
     public void visitTableSwitchStmt(int opcode, int aA, int defaultOffset, int first_case, int last_case, int[] iLabel) {
-        Label[] labels = new Label[iLabel.length];
+        DexLabel[] labels = new DexLabel[iLabel.length];
         for (int i = 0; i < iLabel.length; i++) {
             labels[i] = getLabel(iLabel[i]);
         }
@@ -528,7 +525,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_INVOKE_STATIC:
         case OP_INVOKE_INTERFACE:
             Method m = dex.getMethod(cCCC);
-            int realSize = m.getType().getParameterTypes().length + (opcode == OP_INVOKE_STATIC ? 0 : 1);
+            int realSize = m.getParameterTypes().length + (opcode == OP_INVOKE_STATIC ? 0 : 1);
             if (realSize != args.length) {// there are some double or float in args
                 int[] nArgs = new int[realSize];
                 int i = 0;
@@ -536,9 +533,9 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
                 if (opcode != OP_INVOKE_STATIC) {
                     nArgs[i++] = args[j++];
                 }
-                for (String t : m.getType().getParameterTypes()) {
+                for (String t : m.getParameterTypes()) {
                     nArgs[i++] = args[j];
-                    j += Type.getType(t).getSize();
+                    j += "J".equals(t) || "D".equals(t) ? 2 : 1;
                 }
                 dcv.visitMethodStmt(opcode, nArgs, m);
             } else {
@@ -567,7 +564,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             int nOpcode = opcode - (OP_INVOKE_VIRTUAL_RANGE - OP_INVOKE_VIRTUAL);
 
             Method m = dex.getMethod(bBBB);
-            int realSize = m.getType().getParameterTypes().length + (nOpcode == OP_INVOKE_STATIC ? 0 : 1);
+            int realSize = m.getParameterTypes().length + (nOpcode == OP_INVOKE_STATIC ? 0 : 1);
             if (realSize != args.length) {// there are some double or float in args
                 int[] nArgs = new int[realSize];
                 int i = 0;
@@ -575,9 +572,9 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
                 if (nOpcode != OP_INVOKE_STATIC) {
                     nArgs[i++] = args[j++];
                 }
-                for (String t : m.getType().getParameterTypes()) {
+                for (String t : m.getParameterTypes()) {
                     nArgs[i++] = args[j];
-                    j += Type.getType(t).getSize();
+                    j += "J".equals(t) || "D".equals(t) ? 2 : 1;
                 }
                 dcv.visitMethodStmt(nOpcode, nArgs, m);
             } else {

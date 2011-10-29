@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -119,7 +120,8 @@ public abstract class Stmt {
     /**
      * Used in Local Split, backward frame of the {@link Stmt}
      */
-    public ValueBox[] _ls_backward_frame;
+    public Object _ls_backward_frame;
+
     /**
      * Used in Local Split, forward frame of the {@link Stmt}
      */
@@ -128,7 +130,6 @@ public abstract class Stmt {
      * The number of argument
      */
     public final ET et;
-
     /**
      * Used in ordering statements in a {@link TreeSet}, id of the {@link Stmt} in its {@link StmtList}
      */
@@ -146,12 +147,12 @@ public abstract class Stmt {
      */
     /* default */
     Stmt next;
+
     /**
      * Previous statement in {@link StmtList}
      */
     /* default */
     Stmt pre;
-
     /**
      * Statement Type
      */
@@ -167,6 +168,17 @@ public abstract class Stmt {
     protected Stmt(ST st, ET et) {
         this.st = st;
         this.et = et;
+    }
+
+    public abstract Stmt clone(Map<LabelStmt, LabelStmt> map);
+
+    protected LabelStmt cloneLabel(Map<LabelStmt, LabelStmt> map, LabelStmt label) {
+        LabelStmt nTarget = map.get(label);
+        if (nTarget == null) {
+            nTarget = Stmts.nLabel();
+            map.put(label, nTarget);
+        }
+        return nTarget;
     }
 
     /**

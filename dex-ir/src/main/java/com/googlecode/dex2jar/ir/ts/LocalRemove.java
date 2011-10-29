@@ -268,6 +268,8 @@ public class LocalRemove implements Transformer {
                     execStmt(vbs, st, preLocal);
                     for (ValueBox vb : vbs) {
                         switch (vb.value.vt) {
+                        case CONSTANT:
+                            continue;
                         case LOCAL:
                             tmp.push(vb);
                             continue;

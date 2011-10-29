@@ -29,7 +29,6 @@ import com.googlecode.dex2jar.ir.ValueBox;
  * @see VT#CHECK_CAST
  * @see VT#INSTANCE_OF
  * @see VT#NEW_ARRAY
- * @see VT#CAST
  * 
  * @author Panxiaobo <pxb1988 at gmail.com>
  * @version $Id$
@@ -44,17 +43,28 @@ public class TypeExpr extends E1Expr {
 
     }
 
+    @Override
+    public Value clone() {
+        return new TypeExpr(vt, op.value.clone(), type);
+    }
+
     public String toString() {
         switch (super.vt) {
         case CHECK_CAST:
-        case CAST:
-            return "((" + ToStringUtil.toShortClassName(type) + ")" + op + ")";
-        case INSTANCE_OF:
+       case INSTANCE_OF:
             return "(" + op + " instanceof " + ToStringUtil.toShortClassName(type) + ")";
         case NEW_ARRAY:
+            if (type.getSort() == Type.ARRAY) {
+                StringBuilder sb = new StringBuilder("new ")
+                        .append(ToStringUtil.toShortClassName(type.getElementType())).append("[").append(op)
+                        .append("]");
+                for (int i = 0; i < type.getDimensions(); i++) {
+                    sb.append("[]");
+                }
+                return sb.toString();
+            }
             return "new " + ToStringUtil.toShortClassName(type) + "[" + op + "]";
         }
         return "UNKNOW";
     }
-
 }

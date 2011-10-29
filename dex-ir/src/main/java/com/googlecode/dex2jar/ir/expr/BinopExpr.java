@@ -24,9 +24,11 @@ import com.googlecode.dex2jar.ir.ValueBox;
  * 
  * @see VT#ADD
  * @see VT#AND
- * @see VT#CMP
- * @see VT#CMPG
- * @see VT#CMPL
+ * @see VT#LCMP
+ * @see VT#FCMPG
+ * @see VT#DCMPG
+ * @see VT#FCMPL
+ * @see VT#DCMPL
  * @see VT#DIV
  * @see VT#EQ
  * @see VT#GE
@@ -50,6 +52,11 @@ public class BinopExpr extends E2Expr {
 
     public BinopExpr(VT type, Value op1, Value op2) {
         super(type, new ValueBox(op1), new ValueBox(op2));
+    }
+
+    @Override
+    public Value clone() {
+        return new BinopExpr(vt, op1.value.clone(), op2.value.clone());
     }
 
     public String toString() {

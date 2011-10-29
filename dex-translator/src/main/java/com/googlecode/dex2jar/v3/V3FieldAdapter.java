@@ -24,10 +24,10 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 
 import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Annotation.Item;
+import com.googlecode.dex2jar.Field;
+import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
-
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -40,6 +40,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
     protected Field field;
     protected FieldVisitor fv;
     protected Object value;
+    protected int accessFlags;
 
     protected void build() {
         if (!build) {
@@ -60,7 +61,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
                     }
                 }
             }
-            FieldVisitor fv = cv.visitField(field.getAccessFlags(), field.getName(), field.getType(), signature, value);
+            FieldVisitor fv = cv.visitField(accessFlags, field.getName(), field.getType(), signature, value);
             if (fv != null) {
                 for (Annotation ann : anns) {
                     AnnotationVisitor av = fv.visitAnnotation(ann.type, ann.visible);
@@ -78,8 +79,8 @@ public class V3FieldAdapter implements DexFieldVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
      */
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-        Annotation ann = new Annotation(name, visitable);
+    public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
+        Annotation ann = new Annotation(name, visible);
         anns.add(ann);
         return new V3AnnAdapter(ann);
     }
@@ -88,11 +89,12 @@ public class V3FieldAdapter implements DexFieldVisitor {
      * @param cv
      * @param field
      */
-    public V3FieldAdapter(ClassVisitor cv, Field field, Object value) {
+    public V3FieldAdapter(ClassVisitor cv, int accessFlags, Field field, Object value) {
         super();
         this.cv = cv;
         this.field = field;
         this.value = value;
+        this.accessFlags = accessFlags;
     }
 
     /*

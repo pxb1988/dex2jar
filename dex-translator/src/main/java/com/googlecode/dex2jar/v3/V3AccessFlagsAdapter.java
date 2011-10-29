@@ -22,12 +22,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.objectweb.asm.AnnotationVisitor;
-
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
@@ -64,14 +63,14 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
-    public DexClassVisitor visit(int access_flags, final String className, String superClass, String... interfaceNames) {
+    public DexClassVisitor visit(int access_flags, final String className, String superClass, String[] interfaceNames) {
 
         return new DexClassVisitor() {
             protected List<Annotation> anns = new ArrayList<Annotation>();
 
             @Override
-            public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
-                Annotation ann = new Annotation(name, visitable);
+            public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
+                Annotation ann = new Annotation(name, visible);
                 anns.add(ann);
                 return new V3AnnAdapter(ann);
             }
@@ -81,12 +80,12 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
             }
 
             @Override
-            public DexMethodVisitor visitMethod(Method method) {
+            public DexMethodVisitor visitMethod(int accessFlags, Method method) {
                 return null;
             }
 
             @Override
-            public DexFieldVisitor visitField(Field field, Object value) {
+            public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
                 return null;
             }
 

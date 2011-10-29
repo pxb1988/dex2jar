@@ -1,9 +1,9 @@
 package com.googlecode.dex2jar.v3;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.MethodNode;
 
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.ir.Constant;
@@ -17,6 +17,7 @@ import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.ArrayExpr;
+import com.googlecode.dex2jar.ir.expr.CastExpr;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.expr.NewExpr;
@@ -62,7 +63,7 @@ public class IrMethod2AsmMethod implements Opcodes {
                     if (((AssignStmt) stmt).op1.value.vt == VT.LOCAL) {
                         Local local = (Local) ((AssignStmt) stmt).op1.value;
                         if (local._ls_index == -1) {
-                            Type localType = LocalType.type(local);
+                            Type localType = LocalType.typeOf(local);
                             if (!Type.VOID_TYPE.equals(localType)) {// skip void type
                                 Value ref = (Value) ((AssignStmt) stmt).op2.value;
                                 switch (ref.vt) {
@@ -77,7 +78,7 @@ public class IrMethod2AsmMethod implements Opcodes {
                                     break;
                                 default:
                                     local._ls_index = indexHolder[0];
-                                    indexHolder[0] += LocalType.type(ref).getSize();
+                                    indexHolder[0] += LocalType.typeOf(ref).getSize();
                                     break;
                                 }
                             }
@@ -90,26 +91,20 @@ public class IrMethod2AsmMethod implements Opcodes {
         });
     }
 
-    public void convert(IrMethod ir, MethodNode asm) {
-
+    public void convert(IrMethod ir, MethodVisitor asm) {
         reIndexLocal(ir);
-
-        asm.instructions.clear();
         reBuildInstructions(ir, asm);
-
-        asm.tryCatchBlocks.clear();
         reBuildTryCatchBlocks(ir, asm);
-
     }
 
-    private void reBuildTryCatchBlocks(IrMethod ir, MethodNode asm) {
+    private void reBuildTryCatchBlocks(IrMethod ir, MethodVisitor asm) {
         for (Trap trap : ir.traps) {
             asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handler.label, trap.type == null ? null
                     : trap.type.getInternalName());
         }
     }
 
-    private void reBuildInstructions(IrMethod ir, MethodNode asm) {
+    private void reBuildInstructions(IrMethod ir, MethodVisitor asm) {
         for (Stmt st : ir.stmts) {
             switch (st.st) {
             case LABEL:
@@ -121,15 +116,39 @@ public class IrMethod2AsmMethod implements Opcodes {
                 Value v2 = e2.op2.value;
                 switch (v1.vt) {
                 case LOCAL:
-                    accept(v2, asm);
+
                     Local local = ((Local) v1);
                     int i = local._ls_index;
-                    if (i >= 0) {// skip void type locals
-                        if (local._ls_read_count == 0) {// no read, just pop it
-                            asm.visitInsn(LocalType.type(v1).getSize() == 2 ? POP2 : POP);
-                        } else {
-                            asm.visitVarInsn(LocalType.type(v1).getOpcode(ISTORE), i);
+
+                    boolean skipOrg = false;
+                    if (LocalType.typeOf(v1).equals(Type.INT_TYPE)) {// check for IINC
+                        if (v2.vt == VT.ADD) {
+                            E2Expr e = (E2Expr) v2;
+                            if ((e.op1.value == local && e.op2.value.vt == VT.CONSTANT)
+                                    || (e.op2.value == local && e.op1.value.vt == VT.CONSTANT)) {
+                                int increment = (Integer) ((Constant) (e.op1.value == local ? e.op2.value : e.op1.value)).value;
+                                asm.visitIincInsn(i, increment);
+                                skipOrg = true;
+                            }
+                        } else if (v2.vt == VT.SUB) {
+                            E2Expr e = (E2Expr) v2;
+                            if (e.op1.value == local && e.op2.value.vt == VT.CONSTANT) {
+                                int increment = -(Integer) ((Constant) e.op2.value).value;
+                                asm.visitIincInsn(i, increment);
+                                skipOrg = true;
+                            }
                         }
+                    }
+                    if (!skipOrg) {
+                        accept(v2, asm);
+                        if (i >= 0) {// skip void type locals
+                            if (local._ls_read_count == 0) {// no read, just pop it
+                                asm.visitInsn(LocalType.typeOf(v1).getSize() == 2 ? POP2 : POP);
+                            } else {
+                                asm.visitVarInsn(LocalType.typeOf(v1).getOpcode(ISTORE), i);
+                            }
+                        }
+
                     }
                     break;
                 case FIELD:
@@ -150,10 +169,10 @@ public class IrMethod2AsmMethod implements Opcodes {
                     accept(ae.op1.value, asm);
                     accept(ae.op2.value, asm);
                     accept(v2, asm);
-                    Type tp1 = LocalType.type(ae.op1.value);
-                    Type tp2 = LocalType.type(ae);
+                    Type tp1 = LocalType.typeOf(ae.op1.value);
+                    Type tp2 = LocalType.typeOf(ae);
                     if (tp1.getSort() == Type.ARRAY) {
-                        asm.visitInsn(tp1.getElementType().getOpcode(IASTORE));
+                        asm.visitInsn(Type.getType(tp1.getDescriptor().substring(1)).getOpcode(IASTORE));
                     } else {
                         asm.visitInsn(tp2.getOpcode(IASTORE));
                     }
@@ -187,7 +206,7 @@ public class IrMethod2AsmMethod implements Opcodes {
             case RETURN: {
                 Value v = ((UnopStmt) st).op.value;
                 accept(v, asm);
-                asm.visitInsn(LocalType.type(v).getOpcode(IRETURN));
+                asm.visitInsn(LocalType.typeOf(v).getOpcode(IRETURN));
             }
                 break;
             case RETURN_VOID:
@@ -221,14 +240,14 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private void reBuildJumpInstructions(JumpStmt st, MethodNode asm) {
+    private void reBuildJumpInstructions(JumpStmt st, MethodVisitor asm) {
 
         Label target = st.target.label;
         Value v = st.op.value;
         Value v1 = ((E2Expr) v).op1.value;
         Value v2 = ((E2Expr) v).op2.value;
 
-        Type type = LocalType.type(v1);
+        Type type = LocalType.typeOf(v1);
 
         switch (type.getSort()) {
         case Type.INT:
@@ -313,13 +332,13 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private static void accept(Value value, MethodNode asm) {
+    private static void accept(Value value, MethodVisitor asm) {
 
         switch (value.et) {
         case E0:
             switch (value.vt) {
             case LOCAL:
-                asm.visitVarInsn(LocalType.type(value).getOpcode(ILOAD), ((Local) value)._ls_index);
+                asm.visitVarInsn(LocalType.typeOf(value).getOpcode(ILOAD), ((Local) value)._ls_index);
                 break;
             case CONSTANT:
                 Constant cst = (Constant) value;
@@ -346,7 +365,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private static void reBuildEnExpression(EnExpr value, MethodNode asm) {
+    private static void reBuildEnExpression(EnExpr value, MethodVisitor asm) {
         if (value.vt == VT.INVOKE_NEW) {
             asm.visitTypeInsn(NEW, ((InvokeExpr) value).methodOwnerType.getInternalName());
             asm.visitInsn(DUP);
@@ -396,7 +415,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private static void reBuildE1Expression(E1Expr e1, MethodNode asm) {
+    private static void reBuildE1Expression(E1Expr e1, MethodVisitor asm) {
         if (e1.op != null) {// the op is null if GETSTATIC
             accept(e1.op.value, asm);
         }
@@ -455,29 +474,29 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
             break;
         case CAST: {
-            TypeExpr te = (TypeExpr) e1;
-            cast2(LocalType.type(e1.op.value), te.type, asm);
+            CastExpr te = (CastExpr) e1;
+            cast2(LocalType.typeOf(e1.op.value), te.to, asm);
         }
             break;
         case LENGTH:
             asm.visitInsn(ARRAYLENGTH);
             break;
         case NEG:
-            asm.visitInsn(LocalType.type(e1).getOpcode(INEG));
+            asm.visitInsn(LocalType.typeOf(e1).getOpcode(INEG));
             break;
         }
     }
 
-    private static void reBuildE2Expression(E2Expr e2, MethodNode asm) {
+    private static void reBuildE2Expression(E2Expr e2, MethodVisitor asm) {
         accept(e2.op1.value, asm);
         accept(e2.op2.value, asm);
-        Type type = LocalType.type(e2.op2.value);
+        Type type = LocalType.typeOf(e2.op2.value);
+        Type tp1 = LocalType.typeOf(e2.op1.value);
         switch (e2.vt) {
         case ARRAY:
-            Type tp1 = LocalType.type(e2.op1.value);
-            Type tp2 = LocalType.type(e2);
+            Type tp2 = LocalType.typeOf(e2);
             if (tp1.getSort() == Type.ARRAY) {
-                asm.visitInsn(tp1.getElementType().getOpcode(IALOAD));
+                asm.visitInsn(Type.getType(tp1.getDescriptor().substring(1)).getOpcode(IALOAD));
             } else {
                 asm.visitInsn(tp2.getOpcode(IALOAD));
             }
@@ -508,26 +527,33 @@ public class IrMethod2AsmMethod implements Opcodes {
             break;
 
         case SHL:
-            asm.visitInsn(type.getOpcode(ISHL));
+            asm.visitInsn(tp1.getOpcode(ISHL));
             break;
         case SHR:
-            asm.visitInsn(type.getOpcode(ISHR));
+            asm.visitInsn(tp1.getOpcode(ISHR));
             break;
         case USHR:
-            asm.visitInsn(type.getOpcode(IUSHR));
+            asm.visitInsn(tp1.getOpcode(IUSHR));
             break;
-        case CMP:
+        case LCMP:
             asm.visitInsn(LCMP);
             break;
-        case CMPG:
-            asm.visitInsn(type.getSort() == Type.FLOAT ? FCMPG : DCMPG);
-        case CMPL:
-            asm.visitInsn(type.getSort() == Type.FLOAT ? FCMPL : DCMPL);
+        case FCMPG:
+            asm.visitInsn(FCMPG);
+            break;
+        case DCMPG:
+            asm.visitInsn(DCMPG);
+            break;
+        case FCMPL:
+            asm.visitInsn(FCMPL);
+            break;
+        case DCMPL:
+            asm.visitInsn(DCMPL);
             break;
         }
     }
 
-    private static void cast2(Type t1, Type t2, MethodNode asm) {
+    private static void cast2(Type t1, Type t2, MethodVisitor asm) {
         if (t1.equals(t2)) {
             return;
         }
@@ -555,6 +581,15 @@ public class IrMethod2AsmMethod implements Opcodes {
         // int I2B = 145; // -
         // int I2C = 146; // -
         // int I2S = 147; // -
+
+        switch (t1.getSort()) {
+        case Type.BOOLEAN:
+        case Type.BYTE:
+        case Type.CHAR:
+        case Type.SHORT:
+            t1 = Type.INT_TYPE;
+            break;
+        }
 
         int opcode;
         switch (t1.getSort() * 10 + t2.getSort()) {

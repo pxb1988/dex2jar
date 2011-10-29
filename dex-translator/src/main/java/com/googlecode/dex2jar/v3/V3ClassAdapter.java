@@ -28,8 +28,10 @@ import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
+import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
@@ -51,6 +53,7 @@ public class V3ClassAdapter implements DexClassVisitor {
     protected String file;
     protected String[] interfaceNames;
     protected String superClass;
+    protected Map<Method, Exception> exceptions;
 
     /**
      * @param innerNameMap
@@ -62,8 +65,8 @@ public class V3ClassAdapter implements DexClassVisitor {
      * @param interfaceNames
      */
     public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap,
-            Map<String, Set<String>> extraMemberClass, ClassVisitor cv, int access_flags, String className,
-            String superClass, String[] interfaceNames) {
+            Map<String, Set<String>> extraMemberClass, Map<Method, Exception> exceptions, ClassVisitor cv,
+            int access_flags, String className, String superClass, String[] interfaceNames) {
         super();
         this.innerAccessFlagsMap = accessFlagsMap;
         this.innerNameMap = innerNameMap;
@@ -73,6 +76,7 @@ public class V3ClassAdapter implements DexClassVisitor {
         this.className = className;
         this.superClass = superClass;
         this.interfaceNames = interfaceNames;
+        this.exceptions = exceptions;
     }
 
     protected void build() {
@@ -123,6 +127,11 @@ public class V3ClassAdapter implements DexClassVisitor {
 
             // access in class has no acc_static or acc_private
             accessInClass &= ~(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE);
+
+            if (isInnerClass && (access_flags & Opcodes.ACC_PROTECTED) != 0) {
+                accessInClass &= ~Opcodes.ACC_PROTECTED;
+                accessInClass |= Opcodes.ACC_PUBLIC;
+            }
 
             String[] nInterfaceNames = null;
             if (interfaceNames != null) {
@@ -180,8 +189,7 @@ public class V3ClassAdapter implements DexClassVisitor {
                     for (Item it : ann.items) {
                         if ("value".equals(it.name)) {
                             Method m = (Method) it.value;
-                            cv.visitOuterClass(Type.getType(m.getOwner()).getInternalName(), m.getName(), m.getType()
-                                    .getDesc());
+                            cv.visitOuterClass(Type.getType(m.getOwner()).getInternalName(), m.getName(), m.getDesc());
                         }
                     }
                     continue;
@@ -199,11 +207,11 @@ public class V3ClassAdapter implements DexClassVisitor {
 
     boolean isInnerClass = false;
 
-    public AnnotationVisitor visitAnnotation(String name, boolean visitable) {
+    public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (!isInnerClass) {
             isInnerClass = "Ldalvik/annotation/InnerClass;".equals(name);
         }
-        Annotation ann = new Annotation(name, visitable);
+        Annotation ann = new Annotation(name, visible);
         anns.add(ann);
         return new V3AnnAdapter(ann);
     }
@@ -213,14 +221,24 @@ public class V3ClassAdapter implements DexClassVisitor {
         cv.visitEnd();
     }
 
-    public DexFieldVisitor visitField(Field field, Object value) {
+    public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
         build();
-        return new V3FieldAdapter(cv, field, value);
+        if (value instanceof DexType) {
+            value = Type.getType(((DexType) value).desc);
+        }
+        return new V3FieldAdapter(cv, accessFlags, field, value);
     }
 
-    public DexMethodVisitor visitMethod(Method method) {
+    public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         build();
-        return new V3MethodAdapter(cv, method);
+        return new V3MethodAdapter(accessFlags, method, this.exceptions) {
+
+            @Override
+            public void visitEnd() {
+                super.visitEnd();
+                methodNode.accept(cv);
+            }
+        };
     }
 
     public void visitSource(String file) {

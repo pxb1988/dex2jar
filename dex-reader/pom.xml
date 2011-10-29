@@ -7,26 +7,12 @@
 		<artifactId>dex2jar</artifactId>
 		<version>1.0</version>
 	</parent>
-
-	<groupId>com.googlecode.dex2jar</groupId>
 	<artifactId>dex-reader</artifactId>
-	<version>1.1</version>
+	<version>1.3</version>
 	<name>Dex Reader</name>
 	<description>A tool for converting Android's .dex format to Java's .class format</description>
 	<url>http://code.google.como/p/dex2jar/</url>
 	<dependencies>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.5.6</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<version>1.5.6</version>
-			<scope>provided</scope>
-		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -38,11 +24,23 @@
 			<artifactId>commons-io</artifactId>
 			<version>2.0</version>
 		</dependency>
-		<dependency>
-			<groupId>asm</groupId>
-			<artifactId>asm-debug-all</artifactId>
-			<version>3.2</version>
-			<scope>provided</scope>
-		</dependency>
 	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+						<manifestEntries>
+							<Implementation-Build>${maven.build.timestamp}</Implementation-Build>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

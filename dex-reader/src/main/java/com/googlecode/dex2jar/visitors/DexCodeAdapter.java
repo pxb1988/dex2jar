@@ -15,9 +15,8 @@
  */
 package com.googlecode.dex2jar.visitors;
 
-import org.objectweb.asm.Label;
-
 import com.googlecode.dex2jar.Field;
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
 
 /**
@@ -91,22 +90,22 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitJumpStmt(int opcode, int a, int b, Label label) {
+    public void visitJumpStmt(int opcode, int a, int b, DexLabel label) {
         dcv.visitJumpStmt(opcode, a, b, label);
     }
 
     @Override
-    public void visitJumpStmt(int opConst, int reg, Label label) {
+    public void visitJumpStmt(int opConst, int reg, DexLabel label) {
         dcv.visitJumpStmt(opConst, reg, label);
     }
 
     @Override
-    public void visitJumpStmt(int opGoto, Label label) {
+    public void visitJumpStmt(int opGoto, DexLabel label) {
         dcv.visitJumpStmt(opGoto, label);
     }
 
     @Override
-    public void visitLookupSwitchStmt(int opcode, int aA, Label label, int[] cases, Label[] labels) {
+    public void visitLookupSwitchStmt(int opcode, int aA, DexLabel label, int[] cases, DexLabel[] labels) {
         dcv.visitLookupSwitchStmt(opcode, aA, label, cases, labels);
     }
 
@@ -141,7 +140,7 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitTableSwitchStmt(int opcode, int aA, Label label, int first_case, int last_case, Label[] labels) {
+    public void visitTableSwitchStmt(int opcode, int aA, DexLabel label, int first_case, int last_case, DexLabel[] labels) {
         dcv.visitTableSwitchStmt(opcode, aA, label, first_case, last_case, labels);
     }
 
@@ -151,7 +150,7 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitTryCatch(Label start, Label end, Label handler, String type) {
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
         dcv.visitTryCatch(start, end, handler, type);
     }
 
@@ -166,8 +165,18 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitLabel(Label label) {
-        dcv.visitEnd();
+    public void visitLabel(DexLabel label) {
+        dcv.visitLabel(label);
+    }
+
+    @Override
+    public void visitLineNumber(int line, DexLabel label) {
+        dcv.visitLineNumber(line, label);
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
+        dcv.visitLocalVariable(name, type, signature, start, end, reg);
     }
 
 }

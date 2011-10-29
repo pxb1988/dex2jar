@@ -17,6 +17,7 @@ package com.googlecode.dex2jar.ir.expr;
 
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ToStringUtil;
@@ -50,6 +51,15 @@ public class InvokeExpr extends EnExpr {
         this.methodName = methodName;
         this.methodOwnerType = ownerType;
         this.argmentTypes = argmentTypes;
+    }
+
+    @Override
+    public Value clone() {
+        ValueBox[] nOps = new ValueBox[ops.length];
+        for (int i = 0; i < nOps.length; i++) {
+            nOps[i] = new ValueBox(ops[i].value.clone());
+        }
+        return new InvokeExpr(vt, nOps, methodOwnerType, methodName, argmentTypes, methodReturnType);
     }
 
     public String toString() {
