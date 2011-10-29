@@ -15,8 +15,6 @@
  */
 package com.googlecode.dex2jar.reader;
 
-import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
@@ -27,7 +25,7 @@ import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DexAnnotationReader {
+/* default */class DexAnnotationReader {
 
     private static final int VISIBILITY_BUILD = 0;
 

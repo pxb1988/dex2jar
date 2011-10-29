@@ -15,7 +15,6 @@
  */
 package com.googlecode.dex2jar;
 
-
 /**
  * 方法
  * 
@@ -24,10 +23,9 @@ package com.googlecode.dex2jar;
  */
 public class Method {
     /**
-     * 修饰符
+     * 描述
      */
-    private int access_flags;
-
+    private String desc;
     /**
      * 方法名
      */
@@ -37,27 +35,34 @@ public class Method {
      */
     private String owner;
     /**
-     * 参数和返回值
+     * 参数类型
      */
-    private Proto type;
+    private String[] parameterTypes;
 
-    public Method(String owner, String name, Proto type) {
-        this.owner = owner;
-        this.name = name;
-        this.type = type;
-    }
-
-    public Method(String owner, String name, Proto type, int access_flags) {
-        this.owner = owner;
-        this.name = name;
-        this.type = type;
-        this.access_flags = access_flags;
-    }
     /**
-     * @return the access_flags
+     * 返回类型
      */
-    public int getAccessFlags() {
-        return access_flags;
+    private String returnType;
+
+    public Method(String owner, String name, String[] parameterTypes, String returnType) {
+        this.owner = owner;
+        this.name = name;
+        this.parameterTypes = parameterTypes;
+        this.returnType = returnType;
+    }
+
+    public String getDesc() {
+        if (desc == null) {
+            StringBuilder ps = new StringBuilder("(");
+            if (parameterTypes != null) {
+                for (String t : parameterTypes) {
+                    ps.append(t);
+                }
+            }
+            ps.append(")").append(returnType);
+            desc = ps.toString();
+        }
+        return desc;
     }
 
     /**
@@ -75,18 +80,14 @@ public class Method {
     }
 
     /**
-     * @return the type
+     * @return the parameterTypes
      */
-    public Proto getType() {
-        return type;
+    public String[] getParameterTypes() {
+        return parameterTypes;
     }
 
-    /**
-     * @param access_flags
-     *            the access_flags to set
-     */
-    public void setAccessFlags(int access_flags) {
-        this.access_flags = access_flags;
+    public String getReturnType() {
+        return returnType;
     }
 
     /*
@@ -95,6 +96,6 @@ public class Method {
      * @see java.lang.Object#toString()
      */
     public String toString() {
-        return this.getOwner() + "." + this.getName() + this.getType();
+        return this.getOwner() + "." + this.getName() + this.getDesc();
     }
 }

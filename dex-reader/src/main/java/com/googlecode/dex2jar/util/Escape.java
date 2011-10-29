@@ -19,7 +19,6 @@ import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.Proto;
 
 /**
  * @author Panxiaobo <pxb1988 at gmail.com>
@@ -156,17 +155,12 @@ public class Escape implements DexOpcodes {
     }
 
     public static String v(Field f) {
-        return String.format("new Field(%s,%s,%s,%s)", v(f.getOwner()), v(f.getName()), v(f.getType()),
-                fieldAcc(f.getAccessFlags()));
+        return String.format("new Field(%s,%s,%s)", v(f.getOwner()), v(f.getName()), v(f.getType()));
     }
 
     public static String v(Method m) {
-        return String.format("new Method(%s,%s,%s,%s)", v(m.getOwner()), v(m.getName()), v(m.getType()),
-                methodAcc(m.getAccessFlags()));
-    }
-
-    public static String v(Proto p) {
-        return String.format("new Proto(%s,%s)", v(p.getParameterTypes()), v(p.getReturnType()));
+        return String.format("new Method(%s,%s,%s,%s)", v(m.getOwner()), v(m.getName()), v(m.getParameterTypes()),
+                v(m.getReturnType()));
     }
 
     public static String v(String s) {

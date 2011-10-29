@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar;
+package com.googlecode.dex2jar.reader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.List;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class Annotation {
+/* default */class Annotation {
     public static class Item {
         public String name;
 

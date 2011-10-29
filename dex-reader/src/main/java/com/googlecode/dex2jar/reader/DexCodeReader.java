@@ -43,14 +43,9 @@ import static com.googlecode.dex2jar.reader.OpcodeFormat.F51l;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.DexException;
-import com.googlecode.dex2jar.DexOpcodeDump;
-import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.DexLabel;
+import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.reader.DexDebugInfoReader.LocalVariable;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -61,10 +56,8 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DexCodeReader implements DexOpcodes {
+/* default */class DexCodeReader implements DexOpcodes {
 
-    private static final Logger log = LoggerFactory.getLogger(DexCodeReader.class);
-    private static int ACC_STATIC = 0x0008;
     /**
      * dex文件
      */
@@ -76,7 +69,9 @@ public class DexCodeReader implements DexOpcodes {
     /**
      * 标签映射,指令位置->指令编号
      */
-    Map<Integer, DexLabel> labels = new HashMap<Integer, DexLabel>();
+    /* default */Map<Integer, DexLabel> labels = new HashMap<Integer, DexLabel>();
+
+    private boolean isStatic;
 
     /**
      * 方法的描述
@@ -88,13 +83,15 @@ public class DexCodeReader implements DexOpcodes {
      *            dex文件
      * @param in
      *            输入流
+     * @param isStatic
      * @param method
      *            方法的描述
      */
-    public DexCodeReader(DexFileReader dex, DataIn in, Method method) {
+    /* default */DexCodeReader(DexFileReader dex, DataIn in, boolean isStatic, Method method) {
         this.dex = dex;
         this.in = in;
         this.method = method;
+        this.isStatic = isStatic;
     }
 
     private void findLabels(DataIn in, int instruction_size) {
@@ -263,8 +260,8 @@ public class DexCodeReader implements DexOpcodes {
         {
             int args_index;
             int i = total_registers_size - in_register_size;
-            String[] parameterTypes = method.getType().getParameterTypes();
-            if ((method.getAccessFlags() & ACC_STATIC) == 0) {
+            String[] parameterTypes = method.getParameterTypes();
+            if (!isStatic) {
                 args = new int[parameterTypes.length + 1];
                 localVariables[i] = new LocalVariable(i, 0, -1, "this", method.getOwner(), null);
                 args[0] = i++;
@@ -297,7 +294,7 @@ public class DexCodeReader implements DexOpcodes {
             }
         }
         // 处理debug信息
-        if (debug_off != 0) {
+        if (debug_off != 0 && (0 != (dex.config & DexFileReader.SKIP_DEBUG))) {
             in.pushMove(debug_off);
             try {
                 new DexDebugInfoReader(in, dex, instruction_size, this, localVariables, args).accept(dcv);
@@ -327,10 +324,6 @@ public class DexCodeReader implements DexOpcodes {
             n.offset(currentOffset);
 
             int format = DexOpcodeUtil.format(opcode);
-
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("%04x: %s", currentOffset, DexOpcodeDump.dump(opcode)));
-            }
 
             switch (format) {
             case F10t:

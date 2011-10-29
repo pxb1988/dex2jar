@@ -33,8 +33,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      * java.lang.String[])
      */
     public DexClassVisitor visit(int accessFlags, String className, String superClass, String[] interfaceNames) {
-
-        return this;
+        return null;
     }
 
     /*
@@ -53,27 +52,27 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      */
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
 
-        return this;
+        return null;
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitField(com.googlecode.dex2jar .Field, java.lang.Object)
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitField(int, com.googlecode.dex2jar.Field,
+     * java.lang.Object)
      */
-    public DexFieldVisitor visitField(Field field, Object value) {
-
-        return this;
+    public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
+        return null;
     }
 
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitMethod(com.googlecode. dex2jar.Method)
+     * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitMethod(int, com.googlecode.dex2jar.Method)
      */
-    public DexMethodVisitor visitMethod(Method method) {
+    public DexMethodVisitor visitMethod(int accessFlags, Method method) {
 
-        return this;
+        return null;
     }
 
     /*
@@ -92,7 +91,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      */
     public DexCodeVisitor visitCode() {
 
-        return this;
+        return null;
     }
 
     /*
@@ -102,7 +101,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      */
     public DexAnnotationAble visitParameterAnnotation(int index) {
 
-        return this;
+        return null;
     }
 
     /*
@@ -121,7 +120,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      */
     public DexAnnotationVisitor visitAnnotation(String name, String desc) {
 
-        return this;
+        return null;
     }
 
     /*
@@ -131,7 +130,7 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
      */
     public DexAnnotationVisitor visitArray(String name) {
 
-        return this;
+        return null;
     }
 
     /*

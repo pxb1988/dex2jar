@@ -191,7 +191,7 @@ public class ASMifierCodeV implements DexCodeVisitor, DexOpcodes {
 
     @Override
     public void visitReturnStmt(int opcode) {
-        m.s("code.visitReturnStmt(%s);", opcode);
+        m.s("code.visitReturnStmt(%s);", op(opcode));
     }
 
     @Override

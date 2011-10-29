@@ -26,16 +26,11 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.googlecode.dex2jar.DataIn;
-import com.googlecode.dex2jar.DataInImpl;
 import com.googlecode.dex2jar.DexException;
-import com.googlecode.dex2jar.ExceptionUtils;
+import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.Proto;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -50,17 +45,14 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  * @version $Id$
  */
 public class DexFileReader {
-    private static final Logger log = LoggerFactory.getLogger(DexFileReader.class);
     private static final byte[] DEX_FILE_MAGIC = new byte[] { 0x64, 0x65, 0x78, 0x0a, 0x30, 0x33, 0x35, 0x00 };
 
-    private static final int ENDIAN_CONSTANT = 0x12345678;
-    // private static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
+    /* default */static final int ENDIAN_CONSTANT = 0x12345678;
+    // /* default */static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
 
     private int class_defs_off;
 
     private int class_defs_size;
-
-    public static boolean ContinueOnException = false;
 
     private int field_ids_off;
     private int field_ids_size;
@@ -75,13 +67,29 @@ public class DexFileReader {
     private int type_ids_off;
     private int type_ids_size;
 
+    /* default */int config = 0;
+
+    public static final int SKIP_DEBUG = 0x00000001;
+    public static final int SKIP_CODE = 0x00000002;
+
+    /**
+     * equal to DexFileReader(data, 0)
+     * 
+     * @param data
+     * @see #DexFileReader(byte[], int)
+     */
+    public DexFileReader(byte[] data) {
+        this(data, 0);
+    }
+
     /**
      * 
      * @param data
-     * @param continueOnException
-     *            发生异常的时候是否继续
+     * @param config
+     *            {@link #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_FIELD}, {@link #SKIP_METHOD}
+     * 
      */
-    public DexFileReader(byte[] data) {
+    public DexFileReader(byte[] data, int config) {
         DataIn in = new DataInImpl(data);
         this.in = in;
         // { 0x64 0x65 0x78 0x0a 0x30 0x33 0x35 0x00 } = "dex\n035\0"
@@ -123,11 +131,19 @@ public class DexFileReader {
     }
 
     public DexFileReader(File f) throws IOException {
-        this(FileUtils.readFileToByteArray(f));
+        this(f, 0);
+    }
+
+    public DexFileReader(File f, int config) throws IOException {
+        this(FileUtils.readFileToByteArray(f), config);
     }
 
     public DexFileReader(InputStream in) throws IOException {
-        this(IOUtils.toByteArray(in));
+        this(in, 0);
+    }
+
+    public DexFileReader(InputStream in, int config) throws IOException {
+        this(IOUtils.toByteArray(in), config);
     }
 
     public void accept(DexFileVisitor dv) {
@@ -162,14 +178,6 @@ public class DexFileReader {
                 if (dcv != null)// 不处理
                 {
                     acceptClass(dv, dcv, className);
-                }
-            } catch (Exception e) {
-                DexException dexException = new DexException(e, "while accept class id:[%d],name:[%s]", cid, className);
-                if (!ContinueOnException) {
-                    throw dexException;
-                } else {
-                    log.error("dex2jar got an Exception, but will continue.");
-                    ExceptionUtils.niceExceptionMessage(log, dexException, 0);
                 }
             } finally {
                 in.pop();
@@ -306,55 +314,54 @@ public class DexFileReader {
 
     }
 
-    /* default */Method getMethod(int id) {
-        if (id >= this.method_ids_size || id < 0)
+    /* default */Method getMethod(int method_idx) {
+        if (method_idx >= this.method_ids_size || method_idx < 0)
             throw new IllegalArgumentException("Id out of bound");
         DataIn in = this.in;
-        int idxOffset = this.method_ids_off + id * 8;
+        int idxOffset = this.method_ids_off + method_idx * 8;
         in.pushMove(idxOffset);
         try {
             int owner_idx = in.readUShortx();
-            int type_idx = in.readUShortx();
+            int proto_idx = in.readUShortx();
             int name_idx = in.readUIntx();
-            return new Method(getType(owner_idx), getString(name_idx), getProto(type_idx));
-        } finally {
-            in.pop();
-        }
-
-    }
-
-    /* default */Proto getProto(int id) {
-        if (id >= this.proto_ids_size || id < 0)
-            throw new IllegalArgumentException("Id out of bound");
-        DataIn in = this.in;
-        int idxOffset = this.proto_ids_off + id * 12;
-        in.pushMove(idxOffset);
-        try {
-            in.skip(4);// skip shorty_idx uint
-            int return_type_idx = in.readUIntx();
-            int parameters_off = in.readUIntx();
-
-            String returnType = getType(return_type_idx);
             String[] parameterTypes;
-            if (parameters_off != 0) {
-                in.pushMove(parameters_off);
+            String returnType;
+            {
+                int proto_off = this.proto_ids_off + proto_idx * 12;
+                if (proto_off >= proto_ids_size) {
+                    throw new IllegalArgumentException("Id out of bound");
+                }
+                in.pushMove(proto_off);
                 try {
-                    int size = in.readUIntx();
-                    parameterTypes = new String[size];
-                    for (int i = 0; i < size; i++) {
-                        parameterTypes[i] = getType(in.readUShortx());
+                    in.skip(4);// skip shorty_idx uint
+                    int return_type_idx = in.readUIntx();
+                    int parameters_off = in.readUIntx();
+
+                    returnType = getType(return_type_idx);
+
+                    if (parameters_off != 0) {
+                        in.pushMove(parameters_off);
+                        try {
+                            int size = in.readUIntx();
+                            parameterTypes = new String[size];
+                            for (int i = 0; i < size; i++) {
+                                parameterTypes[i] = getType(in.readUShortx());
+                            }
+                        } finally {
+                            in.pop();
+                        }
+                    } else {
+                        parameterTypes = new String[0];
                     }
                 } finally {
                     in.pop();
                 }
-            } else {
-                parameterTypes = new String[0];
             }
-            return new Proto(parameterTypes, returnType);
-
+            return new Method(getType(owner_idx), getString(name_idx), parameterTypes, returnType);
         } finally {
             in.pop();
         }
+
     }
 
     /**
@@ -417,9 +424,8 @@ public class DexFileReader {
         int field_id = lastIndex + diff;
         Field field = getField(field_id);
         int field_access_flags = (int) in.readULeb128();
-        field.setAccessFlags(field_access_flags);
         // //////////////////////////////////////////////////////////////
-        DexFieldVisitor dfv = dcv.visitField(field, value);
+        DexFieldVisitor dfv = dcv.visitField(field_access_flags, field, value);
         if (dfv != null) {
             Integer annotation_offset = fieldAnnotationPositions.get(field_id);
             if (annotation_offset != null) {
@@ -451,13 +457,12 @@ public class DexFileReader {
             Map<Integer, Integer> parameterAnnos) {
         DataIn in = this.in;
         int diff = (int) in.readULeb128();
-        int method_id = lastIndex + diff;
-        Method method = getMethod(method_id);
         int method_access_flags = (int) in.readULeb128();
         int code_off = (int) in.readULeb128();
-        method.setAccessFlags(method_access_flags);
+        int method_id = lastIndex + diff;
+        Method method = getMethod(method_id);
         try {
-            DexMethodVisitor dmv = cv.visitMethod(method);
+            DexMethodVisitor dmv = cv.visitMethod(method_access_flags, method);
             if (dmv != null) {
                 {
                     Integer annotation_offset = methodAnnos.get(method_id);
@@ -498,13 +503,14 @@ public class DexFileReader {
                         }
                     }
                 }
-                if (code_off != 0) {
+                if (code_off != 0 && (0 == (SKIP_CODE & config))) {
                     in.pushMove(code_off);
                     try {
                         DexCodeVisitor dcv = dmv.visitCode();
                         if (dcv != null) {
                             try {
-                                new DexCodeReader(this, in, method).accept(dcv);
+                                new DexCodeReader(this, in, (0 != (DexOpcodes.ACC_STATIC & method_access_flags)),
+                                        method).accept(dcv);
                             } catch (Exception e) {
                                 throw new DexException(e, "while accept code in method:[%s]", method.toString());
                             }
@@ -518,6 +524,7 @@ public class DexFileReader {
         } catch (Exception e) {
             throw new DexException(e, "while accept method:[%s]", method.toString());
         }
+
         return method_id;
     }
 }

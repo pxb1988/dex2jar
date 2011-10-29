@@ -1,6 +1,6 @@
 package com.googlecode.dex2jar.reader;
 
-public interface OpcodeFormat {
+/* default */public interface OpcodeFormat {
     int F10t = 1;
     int F10x = 2;
     int F11n = 3;

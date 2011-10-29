@@ -13,48 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar;
+package com.googlecode.dex2jar.reader;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Stack;
 
 /**
+ * @see DexFileReader#ENDIAN_CONSTANT
+ * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DataInImpl implements DataIn {
+/* default */class DataInImpl extends ByteArrayInputStream implements DataIn {
 
-    private static class XByteArrayInputStream extends ByteArrayInputStream {
-        /**
-         * @param buf
-         */
-        public XByteArrayInputStream(byte[] buf) {
-            super(buf);
-        }
-
-        public int getPos() {
-            return pos;
-        }
-
-        public void setPos(int pos) {
-            this.pos = pos;
-        }
-    }
-
-    private XByteArrayInputStream in;
     private Stack<Integer> stack = new Stack<Integer>();
 
     public DataInImpl(byte[] data) {
-        in = new XByteArrayInputStream(data);
+        super(data);
     }
 
     public int getCurrentPosition() {
-        return this.in.getPos();
+        return super.pos;
     }
 
     public void move(int absOffset) {
-        in.setPos(absOffset);
+        super.pos = absOffset;
     }
 
     public void pop() {
@@ -62,7 +46,7 @@ public class DataInImpl implements DataIn {
     }
 
     public void push() {
-        stack.push(in.getPos());
+        stack.push(super.pos);
     }
 
     public void pushMove(int absOffset) {
@@ -71,13 +55,13 @@ public class DataInImpl implements DataIn {
     }
 
     public int readByte() {
-        return (byte) in.read();
+        return (byte) super.read();
     }
 
     public byte[] readBytes(int size) {
         byte[] data = new byte[size];
         try {
-            in.read(data);
+            super.read(data);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -85,14 +69,14 @@ public class DataInImpl implements DataIn {
     }
 
     public int readIntx() {
-        return in.read() | (in.read() << 8) | (in.read() << 16) | (in.read() << 24);
+        return super.read() | (super.read() << 8) | (super.read() << 16) | (super.read() << 24);
     }
 
     public long readLeb128() {
         int bitpos = 0;
         long vln = 0L;
         do {
-            int inp = in.read();
+            int inp = super.read();
             vln |= ((long) (inp & 0x7F)) << bitpos;
             bitpos += 7;
             if ((inp & 0x80) == 0)
@@ -112,7 +96,7 @@ public class DataInImpl implements DataIn {
     }
 
     public int readUByte() {
-        return in.read();
+        return super.read();
     }
 
     public int readUIntx() {
@@ -122,11 +106,11 @@ public class DataInImpl implements DataIn {
     public long readULeb128() {
         long value = 0;
         int count = 0;
-        int b = in.read();
+        int b = super.read();
         while ((b & 0x80) != 0) {
             value |= (b & 0x7f) << count;
             count += 7;
-            b = in.read();
+            b = super.read();
         }
         value |= (b & 0x7f) << count;
         return value;
@@ -138,6 +122,6 @@ public class DataInImpl implements DataIn {
     }
 
     public void skip(int bytes) {
-        in.skip(bytes);
+        super.skip(bytes);
     }
 }

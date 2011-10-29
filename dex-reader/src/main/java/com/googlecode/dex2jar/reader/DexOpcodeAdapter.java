@@ -26,7 +26,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
+/* default */ class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     private DexCodeVisitor dcv;
     private DexFileReader dex;
 
@@ -37,7 +37,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
      * @param dex
      * @param labels
      */
-    public DexOpcodeAdapter(DexFileReader dex, Map<Integer, DexLabel> labels, DexCodeVisitor dcv) {
+    /* defualt */DexOpcodeAdapter(DexFileReader dex, Map<Integer, DexLabel> labels, DexCodeVisitor dcv) {
         super();
         this.dex = dex;
         this.labels = labels;
@@ -525,7 +525,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
         case OP_INVOKE_STATIC:
         case OP_INVOKE_INTERFACE:
             Method m = dex.getMethod(cCCC);
-            int realSize = m.getType().getParameterTypes().length + (opcode == OP_INVOKE_STATIC ? 0 : 1);
+            int realSize = m.getParameterTypes().length + (opcode == OP_INVOKE_STATIC ? 0 : 1);
             if (realSize != args.length) {// there are some double or float in args
                 int[] nArgs = new int[realSize];
                 int i = 0;
@@ -533,7 +533,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
                 if (opcode != OP_INVOKE_STATIC) {
                     nArgs[i++] = args[j++];
                 }
-                for (String t : m.getType().getParameterTypes()) {
+                for (String t : m.getParameterTypes()) {
                     nArgs[i++] = args[j];
                     j += "J".equals(t) || "D".equals(t) ? 2 : 1;
                 }
@@ -564,7 +564,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
             int nOpcode = opcode - (OP_INVOKE_VIRTUAL_RANGE - OP_INVOKE_VIRTUAL);
 
             Method m = dex.getMethod(bBBB);
-            int realSize = m.getType().getParameterTypes().length + (nOpcode == OP_INVOKE_STATIC ? 0 : 1);
+            int realSize = m.getParameterTypes().length + (nOpcode == OP_INVOKE_STATIC ? 0 : 1);
             if (realSize != args.length) {// there are some double or float in args
                 int[] nArgs = new int[realSize];
                 int i = 0;
@@ -572,7 +572,7 @@ public class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
                 if (nOpcode != OP_INVOKE_STATIC) {
                     nArgs[i++] = args[j++];
                 }
-                for (String t : m.getType().getParameterTypes()) {
+                for (String t : m.getParameterTypes()) {
                     nArgs[i++] = args[j];
                     j += "J".equals(t) || "D".equals(t) ? 2 : 1;
                 }

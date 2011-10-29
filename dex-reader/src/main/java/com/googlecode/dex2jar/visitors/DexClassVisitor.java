@@ -28,16 +28,16 @@ public interface DexClassVisitor extends DexAnnotationAble {
     void visitSource(String file);
 
     /**
-     * 
+     * @param accessFlags
      * @param field
      * @param value
      *            the actual value, whose type must be {@link Byte}, {@link Boolean}, {@link Character}, {@link Short},
      *            {@link Integer}, {@link Long}, {@link Float}, {@link Double}, {@link String} or {@link DexType}.
      * @return
      */
-    DexFieldVisitor visitField(Field field, Object value);
+    DexFieldVisitor visitField(int accessFlags, Field field, Object value);
 
-    DexMethodVisitor visitMethod(Method method);
+    DexMethodVisitor visitMethod(int accessFlags, Method method);
 
     void visitEnd();
 }

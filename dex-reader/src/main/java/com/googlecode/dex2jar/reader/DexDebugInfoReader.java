@@ -15,10 +15,6 @@
  */
 package com.googlecode.dex2jar.reader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
 /**
@@ -27,7 +23,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DexDebugInfoReader {
+/* default */class DexDebugInfoReader {
     public static final int DBG_END_SEQUENCE = 0;
     public static final int DBG_ADVANCE_PC = 1;
     public static final int DBG_ADVANCE_LINE = 2;
@@ -186,10 +182,8 @@ public class DexDebugInfoReader {
                 break;
 
             case DBG_SET_FILE: {
-                int sourceFileIdx = (int) in.readULeb128() - 1;
-                if (log.isDebugEnabled()) {
-                    log.debug("source file:{}", dex.getString(sourceFileIdx));
-                }
+                in.readULeb128();// skip source file in debug
+                // int sourceFileIdx = (int) in.readULeb128() - 1;
             }
                 break;
             default: {
@@ -212,6 +206,4 @@ public class DexDebugInfoReader {
             }
         }
     }
-
-    private static final Logger log = LoggerFactory.getLogger(DexDebugInfoReader.class);
 }

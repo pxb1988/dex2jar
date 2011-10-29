@@ -15,8 +15,6 @@
  */
 package com.googlecode.dex2jar.reader;
 
-import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.DataIn;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexType;
 
@@ -26,7 +24,7 @@ import com.googlecode.dex2jar.DexType;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class Constant {
+/* default */class Constant {
     private static final int VALUE_BYTE = 0;
     private static final int VALUE_SHORT = 2;
     private static final int VALUE_CHAR = 3;

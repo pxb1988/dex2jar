@@ -19,7 +19,7 @@ package com.googlecode.dex2jar.reader;
  * @author Panxiaobo [pxb1988@gmail.com]
  * 
  */
-interface DexInternalOpcode {
+/* default */interface DexInternalOpcode {
 
     public static final int OP_MOVE_FROM16 = 2;
     public static final int OP_MOVE_16 = 3;
@@ -51,14 +51,14 @@ interface DexInternalOpcode {
     public static final int OP_AGET_BYTE = 72;
     public static final int OP_AGET_CHAR = 73;
     public static final int OP_AGET_SHORT = 74;
-    
+
     public static final int OP_APUT_WIDE = 76;
     public static final int OP_APUT_OBJECT = 77;
     public static final int OP_APUT_BOOLEAN = 78;
     public static final int OP_APUT_BYTE = 79;
     public static final int OP_APUT_CHAR = 80;
     public static final int OP_APUT_SHORT = 81;
-    
+
     public static final int OP_IGET_WIDE = 83;
     public static final int OP_IGET_OBJECT = 84;
     public static final int OP_IGET_BOOLEAN = 85;

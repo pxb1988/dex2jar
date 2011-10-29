@@ -74,7 +74,7 @@ public class ASMifierClassV implements DexClassVisitor {
     }
 
     @Override
-    public DexFieldVisitor visitField(Field field, Object value) {
+    public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
         String fieldName = String.format("f%03d_%s", fCount++, field.getName());
         out.s("%s(cv);", fieldName);
 
@@ -82,7 +82,8 @@ public class ASMifierClassV implements DexClassVisitor {
         fieldOuts.add(f);
         f.s("public static void %s(DexClassVisitor cv) {", fieldName);
         f.push();
-        f.s("DexFieldVisitor fv=cv.visitField(%s,%s);", Escape.v(field), Escape.v(value));
+        f.s("DexFieldVisitor fv=cv.visitField(%s, %s, %s);", Escape.fieldAcc(accessFlags), Escape.v(field),
+                Escape.v(value));
         f.s("if(fv != null) {");
         f.push();
         return new DexFieldVisitor() {
@@ -104,7 +105,7 @@ public class ASMifierClassV implements DexClassVisitor {
     }
 
     @Override
-    public DexMethodVisitor visitMethod(Method method) {
+    public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         String methodName = String.format("m%03d_%s", mCount++, method.getName().replace('<', '_').replace('>', '_'));
         out.s("%s(cv);", methodName);
 
@@ -112,7 +113,7 @@ public class ASMifierClassV implements DexClassVisitor {
         methodOuts.add(m);
         m.s("public static void %s(DexClassVisitor cv) {", methodName);
         m.push();
-        m.s("DexMethodVisitor mv=cv.visitMethod(%s);", Escape.v(method));
+        m.s("DexMethodVisitor mv=cv.visitMethod(%s, %s);", Escape.methodAcc(accessFlags), Escape.v(method));
         m.s("if(mv != null) {");
         m.push();
 

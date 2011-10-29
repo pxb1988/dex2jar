@@ -49,7 +49,7 @@ import com.googlecode.dex2jar.DexOpcodes;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-class DexOpcodeUtil implements DexOpcodes, DexInternalOpcode {
+/* default */class DexOpcodeUtil implements DexOpcodes, DexInternalOpcode {
     public static int format(int opcode) {
         switch (opcode) {
         case OP_GOTO:

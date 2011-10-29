@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar;
+package com.googlecode.dex2jar.reader;
 
 /**
  * 输入流
@@ -21,7 +21,7 @@ package com.googlecode.dex2jar;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public interface DataIn {
+/* default */interface DataIn {
 
     /**
      * 获取当前位置
@@ -58,7 +58,9 @@ public interface DataIn {
     byte[] readBytes(int size);
 
     int readIntx();
+
     int readUIntx();
+
     long readLongx();
 
     int readShortx();
