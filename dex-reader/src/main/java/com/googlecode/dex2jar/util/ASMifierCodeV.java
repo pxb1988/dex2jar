@@ -27,9 +27,9 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @version $Id$
  */
 public class ASMifierCodeV implements DexCodeVisitor, DexOpcodes {
-    ArrayOut m;
+    Out m;
 
-    public ASMifierCodeV(ArrayOut m) {
+    public ASMifierCodeV(Out m) {
         this.m = m;
     }
 

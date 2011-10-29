@@ -53,6 +53,7 @@ public class V3ClassAdapter implements DexClassVisitor {
     protected String file;
     protected String[] interfaceNames;
     protected String superClass;
+    protected Map<Method, Exception> exceptions;
 
     /**
      * @param innerNameMap
@@ -64,8 +65,8 @@ public class V3ClassAdapter implements DexClassVisitor {
      * @param interfaceNames
      */
     public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap,
-            Map<String, Set<String>> extraMemberClass, ClassVisitor cv, int access_flags, String className,
-            String superClass, String[] interfaceNames) {
+            Map<String, Set<String>> extraMemberClass, Map<Method, Exception> exceptions, ClassVisitor cv,
+            int access_flags, String className, String superClass, String[] interfaceNames) {
         super();
         this.innerAccessFlagsMap = accessFlagsMap;
         this.innerNameMap = innerNameMap;
@@ -75,6 +76,7 @@ public class V3ClassAdapter implements DexClassVisitor {
         this.className = className;
         this.superClass = superClass;
         this.interfaceNames = interfaceNames;
+        this.exceptions = exceptions;
     }
 
     protected void build() {
@@ -187,8 +189,7 @@ public class V3ClassAdapter implements DexClassVisitor {
                     for (Item it : ann.items) {
                         if ("value".equals(it.name)) {
                             Method m = (Method) it.value;
-                            cv.visitOuterClass(Type.getType(m.getOwner()).getInternalName(), m.getName(), m.getType()
-                                    .getDesc());
+                            cv.visitOuterClass(Type.getType(m.getOwner()).getInternalName(), m.getName(), m.getDesc());
                         }
                     }
                     continue;
@@ -220,17 +221,24 @@ public class V3ClassAdapter implements DexClassVisitor {
         cv.visitEnd();
     }
 
-    public DexFieldVisitor visitField(Field field, Object value) {
+    public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
         build();
         if (value instanceof DexType) {
             value = Type.getType(((DexType) value).desc);
         }
-        return new V3FieldAdapter(cv, field, value);
+        return new V3FieldAdapter(cv, accessFlags, field, value);
     }
 
-    public DexMethodVisitor visitMethod(Method method) {
+    public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         build();
-        return new V3MethodAdapter(cv, method);
+        return new V3MethodAdapter(accessFlags, method, this.exceptions) {
+
+            @Override
+            public void visitEnd() {
+                super.visitEnd();
+                methodNode.accept(cv);
+            }
+        };
     }
 
     public void visitSource(String file) {

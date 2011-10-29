@@ -11,6 +11,7 @@ import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Cfg;
@@ -142,26 +143,29 @@ public class EndRemover implements Transformer {
 
             LabelStmt start = null;
 
-            boolean allNotThrow = true;
             for (Stmt p = trap.start.getNext(); p != null && p != trap.end;) {
                 boolean notThrow = Cfg.notThrow(p);
                 if (!notThrow) {
-                    allNotThrow = false;
                     start = null;
                     p = p.getNext();
                     continue;
                 }
                 switch (p.st) {
                 case LABEL:
+                    if (start != null) {
+                        move4Label(irMethod.stmts, start, p.getPre(), (LabelStmt) p);
+                    }
                     start = (LabelStmt) p;
                     p = p.getNext();
+
                     break;
                 case GOTO:
                 case RETURN:
                 case RETURN_VOID:
                     if (start != null) {
                         Stmt tmp = p.getNext();
-                        move(irMethod.stmts, start, p);
+                        move4End(irMethod.stmts, start, p);
+                        start = null;
                         p = tmp;
                     } else {
                         p = p.getNext();
@@ -171,15 +175,23 @@ public class EndRemover implements Transformer {
                     p = p.getNext();
                 }
             }
-            if (allNotThrow) {
-                it.remove();
-            }
-
         }
     }
 
-    private void move(StmtList stmts, LabelStmt start, Stmt p) {
-        stmts.insertBefore(start, Stmts.nGoto(start));
-        stmts.move(start, p, stmts.getLast());
+    private void move4Label(StmtList stmts, LabelStmt start, Stmt end, LabelStmt label) {
+        move4End(stmts, start, end);
+        stmts.insertAftre(end, Stmts.nGoto(label));
+    }
+
+    private void move4End(StmtList stmts, LabelStmt start, Stmt end) {
+        Stmt g1 = Stmts.nGoto(start);
+        stmts.insertBefore(start, g1);
+        Stmt last = stmts.getLast();
+        while (last.st == ST.GOTO && ((JumpStmt) last).target == start) {
+            stmts.remove(last);
+            last = stmts.getLast();
+        }
+        stmts.move(start, end, last);
+
     }
 }

@@ -22,7 +22,7 @@ import java.util.List;
  * @author Panxiaobo <pxb1988 at gmail.com>
  * @version $Id$
  */
-public class ArrayOut {
+public class ArrayOut implements Out {
 
     int i = 0;
 

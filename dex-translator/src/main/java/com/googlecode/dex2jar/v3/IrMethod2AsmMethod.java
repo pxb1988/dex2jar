@@ -1,9 +1,9 @@
 package com.googlecode.dex2jar.v3;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.MethodNode;
 
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.ir.Constant;
@@ -91,26 +91,20 @@ public class IrMethod2AsmMethod implements Opcodes {
         });
     }
 
-    public void convert(IrMethod ir, MethodNode asm) {
-
+    public void convert(IrMethod ir, MethodVisitor asm) {
         reIndexLocal(ir);
-
-        asm.instructions.clear();
         reBuildInstructions(ir, asm);
-
-        asm.tryCatchBlocks.clear();
         reBuildTryCatchBlocks(ir, asm);
-
     }
 
-    private void reBuildTryCatchBlocks(IrMethod ir, MethodNode asm) {
+    private void reBuildTryCatchBlocks(IrMethod ir, MethodVisitor asm) {
         for (Trap trap : ir.traps) {
             asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handler.label, trap.type == null ? null
                     : trap.type.getInternalName());
         }
     }
 
-    private void reBuildInstructions(IrMethod ir, MethodNode asm) {
+    private void reBuildInstructions(IrMethod ir, MethodVisitor asm) {
         for (Stmt st : ir.stmts) {
             switch (st.st) {
             case LABEL:
@@ -246,7 +240,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private void reBuildJumpInstructions(JumpStmt st, MethodNode asm) {
+    private void reBuildJumpInstructions(JumpStmt st, MethodVisitor asm) {
 
         Label target = st.target.label;
         Value v = st.op.value;
@@ -338,7 +332,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private static void accept(Value value, MethodNode asm) {
+    private static void accept(Value value, MethodVisitor asm) {
 
         switch (value.et) {
         case E0:
@@ -371,7 +365,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private static void reBuildEnExpression(EnExpr value, MethodNode asm) {
+    private static void reBuildEnExpression(EnExpr value, MethodVisitor asm) {
         if (value.vt == VT.INVOKE_NEW) {
             asm.visitTypeInsn(NEW, ((InvokeExpr) value).methodOwnerType.getInternalName());
             asm.visitInsn(DUP);
@@ -421,7 +415,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private static void reBuildE1Expression(E1Expr e1, MethodNode asm) {
+    private static void reBuildE1Expression(E1Expr e1, MethodVisitor asm) {
         if (e1.op != null) {// the op is null if GETSTATIC
             accept(e1.op.value, asm);
         }
@@ -493,7 +487,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private static void reBuildE2Expression(E2Expr e2, MethodNode asm) {
+    private static void reBuildE2Expression(E2Expr e2, MethodVisitor asm) {
         accept(e2.op1.value, asm);
         accept(e2.op2.value, asm);
         Type type = LocalType.typeOf(e2.op2.value);
@@ -559,7 +553,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    private static void cast2(Type t1, Type t2, MethodNode asm) {
+    private static void cast2(Type t1, Type t2, MethodVisitor asm) {
         if (t1.equals(t2)) {
             return;
         }

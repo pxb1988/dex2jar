@@ -63,7 +63,7 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
-    public DexClassVisitor visit(int access_flags, final String className, String superClass, String... interfaceNames) {
+    public DexClassVisitor visit(int access_flags, final String className, String superClass, String[] interfaceNames) {
 
         return new DexClassVisitor() {
             protected List<Annotation> anns = new ArrayList<Annotation>();
@@ -80,12 +80,12 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
             }
 
             @Override
-            public DexMethodVisitor visitMethod(Method method) {
+            public DexMethodVisitor visitMethod(int accessFlags, Method method) {
                 return null;
             }
 
             @Override
-            public DexFieldVisitor visitField(Field field, Object value) {
+            public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
                 return null;
             }
 

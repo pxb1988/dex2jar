@@ -18,6 +18,10 @@ package com.googlecode.dex2jar.v3;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -31,8 +35,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DexException;
+import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.Version;
 import com.googlecode.dex2jar.reader.DexFileReader;
+import com.googlecode.dex2jar.util.ASMifierCodeV;
+import com.googlecode.dex2jar.util.Escape;
+import com.googlecode.dex2jar.util.Out;
+import com.googlecode.dex2jar.visitors.DexClassVisitor;
+import com.googlecode.dex2jar.visitors.DexCodeVisitor;
+import com.googlecode.dex2jar.visitors.DexMethodVisitor;
+import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -43,37 +55,119 @@ public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void doData(byte[] data, File destJar) throws IOException {
-        final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(destJar));
 
         DexFileReader reader = new DexFileReader(data);
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
-        reader.accept(afa);
-        reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), new ClassVisitorFactory() {
-            public ClassVisitor create(final String name) {
-                return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
-                    /*
-                     * (non-Javadoc)
-                     * 
-                     * @see org.objectweb.asm.ClassWriter#visitEnd()
-                     */
-                    @Override
-                    public void visitEnd() {
-                        super.visitEnd();
-                        try {
-                            byte[] data = this.toByteArray();
-                            ZipEntry entry = new ZipEntry(name + ".class");
-                            zos.putNextEntry(entry);
-                            zos.write(data);
-                            zos.closeEntry();
-                        } catch (IOException e) {
-                            e.printStackTrace();
+        reader.accept(afa, DexFileReader.SKIP_CODE | DexFileReader.SKIP_DEBUG);
+
+        final Map<Method, Exception> exceptions = new HashMap<Method, Exception>();
+        final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(destJar));
+        try {
+            reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), exceptions,
+                    new ClassVisitorFactory() {
+                        public ClassVisitor create(final String name) {
+                            return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
+                                /*
+                                 * (non-Javadoc)
+                                 * 
+                                 * @see org.objectweb.asm.ClassWriter#visitEnd()
+                                 */
+                                @Override
+                                public void visitEnd() {
+                                    super.visitEnd();
+                                    try {
+                                        byte[] data = this.toByteArray();
+                                        ZipEntry entry = new ZipEntry(name + ".class");
+                                        zos.putNextEntry(entry);
+                                        zos.write(data);
+                                        zos.closeEntry();
+                                    } catch (IOException e) {
+                                        e.printStackTrace(System.err);
+                                    }
+                                }
+                            };
                         }
-                    }
-                };
+                    }), DexFileReader.SKIP_DEBUG);
+            zos.finish();
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+        } finally {
+            zos.close();
+        }
+
+        if (exceptions.size() > 0) {
+
+            for (Map.Entry<Method, Exception> e : exceptions.entrySet()) {
+                System.err.println("Error:" + e.getKey().toString() + "->" + e.getValue().getMessage());
             }
-        }));
-        zos.finish();
-        zos.close();
+            File errorFile = new File(destJar.getParentFile(), FilenameUtils.getBaseName(destJar.getName())
+                    + ".error.txt");
+            final PrintWriter fw = new PrintWriter(new OutputStreamWriter(FileUtils.openOutputStream(errorFile),
+                    "UTF-8"));
+            fw.println("dex2jar version:" + Version.getVersionString());
+            final Out out = new Out() {
+
+                @Override
+                public void s(String format, Object... arg) {
+                    fw.println(String.format(format, arg));
+                }
+
+                @Override
+                public void s(String s) {
+                    fw.println(s);
+                }
+
+                @Override
+                public void push() {
+
+                }
+
+                @Override
+                public void pop() {
+
+                }
+            };
+            reader.accept(new EmptyVisitor() {
+
+                @Override
+                public DexClassVisitor visit(int accessFlags, String className, String superClass,
+                        String[] interfaceNames) {
+                    return new EmptyVisitor() {
+
+                        @Override
+                        public DexMethodVisitor visitMethod(final int accessFlags, final Method method) {
+                            if (exceptions.containsKey(method)) {
+                                return new EmptyVisitor() {
+
+                                    @Override
+                                    public DexCodeVisitor visitCode() {
+                                        out.s("===========================================");
+                                        Exception exception = exceptions.get(method);
+                                        exception.printStackTrace(fw);
+                                        out.s("");
+                                        out.s("DexMethodVisitor mv=cv.visitMethod(%s, %s);",
+                                                Escape.methodAcc(accessFlags), Escape.v(method));
+                                        return new ASMifierCodeV(out);
+                                    }
+
+                                    @Override
+                                    public void visitEnd() {
+                                        fw.flush();
+                                    }
+                                };
+                            }
+                            return null;
+                        }
+
+                    };
+                }
+
+            }, DexFileReader.SKIP_DEBUG);
+
+            fw.close();
+            System.err.println("Detail Error Information in File " + errorFile);
+            System.err.println("Please report this file to http://code.google.com/p/dex2jar/issues/entry if possible.");
+        }
     }
 
     public static void doFile(File srcDex) throws IOException {
@@ -99,14 +193,11 @@ public class Main {
             return;
         }
 
-        log.debug("DexFileReader.ContinueOnException = true;");
-        DexFileReader.ContinueOnException = true;
-
         boolean containsError = false;
 
         for (String file : args) {
             File dex = new File(file);
-            final File gen = new File(dex.getParentFile(),FilenameUtils.getBaseName(file) + "_dex2jar.jar");
+            final File gen = new File(dex.getParentFile(), FilenameUtils.getBaseName(file) + "_dex2jar.jar");
             log.info("dex2jar {} -> {}", dex, gen);
             try {
                 doFile(dex, gen);

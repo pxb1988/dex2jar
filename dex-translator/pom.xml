@@ -8,7 +8,6 @@
 		<version>1.0</version>
 	</parent>
 
-	<groupId>com.googlecode.dex2jar</groupId>
 	<artifactId>dex-translator</artifactId>
 	<version>0.0.9.0-SNAPSHOT</version>
 	<name>Dex Translator</name>

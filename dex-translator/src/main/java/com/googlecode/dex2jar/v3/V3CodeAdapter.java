@@ -88,8 +88,6 @@ import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
@@ -119,14 +117,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     /**
      * @param mv
      */
-    public V3CodeAdapter(Method method) {
+    public V3CodeAdapter(int accessFlags, IrMethod irMethod) {
         super();
-        IrMethod irMethod = new IrMethod();
-        irMethod.access = method.getAccessFlags();
-        irMethod.args = Type.getArgumentTypes(method.getType().getDesc());
-        irMethod.ret = Type.getType(method.getType().getReturnType());
-        irMethod.owner = Type.getType(method.getOwner());
-        irMethod.name = method.getName();
         this.list = irMethod.stmts;
         this.irMethod = irMethod;
     }
@@ -511,20 +503,20 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         switch (opcode) {
         case OP_INVOKE_VIRTUAL:
             invoke = nInvokeVirtual(vs, Type.getType(method.getOwner()), method.getName(),
-                    Type.getArgumentTypes(method.getType().getDesc()), Type.getType(method.getType().getReturnType()));
+                    Type.getArgumentTypes(method.getDesc()), Type.getType(method.getReturnType()));
             break;
         case OP_INVOKE_SUPER:
         case OP_INVOKE_DIRECT:
             invoke = nInvokeSpecial(vs, Type.getType(method.getOwner()), method.getName(),
-                    Type.getArgumentTypes(method.getType().getDesc()), Type.getType(method.getType().getReturnType()));
+                    Type.getArgumentTypes(method.getDesc()), Type.getType(method.getReturnType()));
             break;
         case OP_INVOKE_STATIC:
             invoke = nInvokeStatic(vs, Type.getType(method.getOwner()), method.getName(),
-                    Type.getArgumentTypes(method.getType().getDesc()), Type.getType(method.getType().getReturnType()));
+                    Type.getArgumentTypes(method.getDesc()), Type.getType(method.getReturnType()));
             break;
         case OP_INVOKE_INTERFACE:
             invoke = nInvokeInterface(vs, Type.getType(method.getOwner()), method.getName(),
-                    Type.getArgumentTypes(method.getType().getDesc()), Type.getType(method.getType().getReturnType()));
+                    Type.getArgumentTypes(method.getDesc()), Type.getType(method.getReturnType()));
             break;
         }
         list.add(nAssign(saveTo, invoke));

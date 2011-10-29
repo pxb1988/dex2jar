@@ -15,13 +15,13 @@
  */
 package com.googlecode.dex2jar.v3;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnList;
@@ -34,10 +34,15 @@ import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.asm.LdcOptimizeAdapter;
+import com.googlecode.dex2jar.ir.Constant;
+import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.Value;
+import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.LocalType;
@@ -76,82 +81,61 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         }
     }
 
-    final protected List<Annotation> anns = new ArrayList<Annotation>();
-
-    final protected ClassVisitor cv;
-
     final protected Method method;
 
     final protected MethodNode methodNode = new MethodNode();
 
-    final protected List<Annotation>[] paramAnns;
+    final protected int accessFlags;
+    Map<Method, Exception> exceptions;
 
     /**
-     * @param cv
+     * @param accessFlags
      * @param method
      */
-    @SuppressWarnings("unchecked")
-    public V3MethodAdapter(ClassVisitor cv, Method method) {
+    public V3MethodAdapter(int accessFlags, Method method, Map<Method, Exception> exceptions) {
         super();
-        this.cv = cv;
         this.method = method;
-        List<Annotation>[] paramAnns = new List[method.getType().getParameterTypes().length];
-        for (int i = 0; i < paramAnns.length; i++) {
-            paramAnns[i] = new ArrayList<Annotation>();
-        }
-        this.paramAnns = paramAnns;
-        methodNode.tryCatchBlocks = new ArrayList<Object>();
+        this.accessFlags = accessFlags;
+        this.exceptions = exceptions;
     }
+
+    Annotation throwsAnnotation;
+    Annotation signatureAnnotation;
+    IrMethod irMethod;
 
     private void build() {
         List<String> exceptions = new ArrayList<String>();
         String signature = null;
-        for (Iterator<Annotation> it = anns.iterator(); it.hasNext();) {
-            Annotation ann = it.next();
-            if ("Ldalvik/annotation/Throws;".equals(ann.type)) {
-                it.remove();
-                for (Item item : ann.items) {
-                    if (item.name.equals("value")) {
-                        Annotation values = (Annotation) item.value;
-                        for (Item i : values.items) {
-                            exceptions.add(((Type) i.value).getInternalName());
-                        }
+        if (this.throwsAnnotation != null) {
+            for (Item item : this.throwsAnnotation.items) {
+                if (item.name.equals("value")) {
+                    Annotation values = (Annotation) item.value;
+                    for (Item i : values.items) {
+                        exceptions.add(((Type) i.value).getInternalName());
                     }
                 }
-            } else if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
-                it.remove();
-                for (Item item : ann.items) {
-                    if (item.name.equals("value")) {
-                        Annotation values = (Annotation) item.value;
-                        StringBuilder sb = new StringBuilder();
-                        for (Item i : values.items) {
-                            sb.append(i.value.toString());
-                        }
-                        signature = sb.toString();
+            }
+        }
+        if (this.signatureAnnotation != null) {
+            for (Item item : this.signatureAnnotation.items) {
+                if (item.name.equals("value")) {
+                    Annotation values = (Annotation) item.value;
+                    StringBuilder sb = new StringBuilder();
+                    for (Item i : values.items) {
+                        sb.append(i.value.toString());
                     }
+                    signature = sb.toString();
                 }
             }
         }
 
         MethodNode methodNode = this.methodNode;
-        methodNode.access = method.getAccessFlags();
+        methodNode.access = this.accessFlags;
         methodNode.name = method.getName();
-        methodNode.desc = method.getType().getDesc();
+        methodNode.desc = method.getDesc();
         methodNode.signature = signature;
         methodNode.exceptions = exceptions;
-        for (Annotation ann : anns) {
-            AnnotationVisitor av = methodNode.visitAnnotation(ann.type, ann.visible);
-            V3AnnAdapter.accept(ann.items, av);
-            av.visitEnd();
-        }
-
-        for (int i = 0; i < paramAnns.length; i++) {
-            for (Annotation ann : paramAnns[i]) {
-                AnnotationVisitor av = methodNode.visitParameterAnnotation(i, ann.type, ann.visible);
-                V3AnnAdapter.accept(ann.items, av);
-                av.visitEnd();
-            }
-        }
+        methodNode.tryCatchBlocks = new ArrayList<Object>();
     }
 
     void dump(MethodNode methodNode) {
@@ -168,12 +152,22 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     /*
      * (non-Javadoc)
      * 
-     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java.lang .String, boolean)
+     * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java .lang .String, boolean)
      */
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
-        Annotation ann = new Annotation(name, visible);
-        anns.add(ann);
-        return new V3AnnAdapter(ann);
+        if (name.equals("Ldalvik/annotation/Signature;")) {
+            this.throwsAnnotation = new Annotation(name, visible);
+            return new V3AnnAdapter(this.throwsAnnotation);
+        } else if (name.equals("Ldalvik/annotation/Signature;")) {
+            this.signatureAnnotation = new Annotation(name, visible);
+            return new V3AnnAdapter(this.signatureAnnotation);
+        } else {
+            AnnotationVisitor av = methodNode.visitAnnotation(name, visible);
+            if (av != null) {
+                return new Dex2AsmAnnotationAdapter(av);
+            }
+            return null;
+        }
     }
 
     /*
@@ -182,24 +176,14 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitCode()
      */
     public DexCodeVisitor visitCode() {
-        return new V3CodeAdapter(method) {
-
-            @Override
-            public void visitEnd() {
-                super.visitEnd();
-                if (irMethod.stmts.getSize() > 1) {
-
-                    endremove.transform(irMethod);
-
-                    // indexLabelStmt4Debug(irMethod.stmts);
-
-                    for (Transformer ts : tses) {
-                        ts.transform(irMethod);
-                    }
-                }
-                new IrMethod2AsmMethod().convert(irMethod, methodNode);
-            }
-        };
+        IrMethod irMethod = new IrMethod();
+        irMethod.access = accessFlags;
+        irMethod.args = Type.getArgumentTypes(method.getDesc());
+        irMethod.ret = Type.getType(method.getReturnType());
+        irMethod.owner = Type.getType(method.getOwner());
+        irMethod.name = method.getName();
+        this.irMethod = irMethod;
+        return new V3CodeAdapter(this.accessFlags, irMethod);
     }
 
     /*
@@ -207,18 +191,37 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitEnd()
      */
-    @SuppressWarnings("unchecked")
     public void visitEnd() {
         build();
-        MethodNode methodNode = this.methodNode;
-        MethodVisitor mv = cv.visitMethod(methodNode.access, methodNode.name, methodNode.desc, methodNode.signature,
-                (String[]) methodNode.exceptions.toArray(new String[methodNode.exceptions.size()]));
-        if (mv != null) {
-            try {
-                methodNode.accept(new LdcOptimizeAdapter(mv));
-            } catch (Exception e) {
-                throw new RuntimeException("Error visit method:" + this.method, e);
+        try {
+            if (irMethod.stmts.getSize() > 1) {
+                indexLabelStmt4Debug(irMethod.stmts);
+                endremove.transform(irMethod);
+
+                for (Transformer ts : tses) {
+                    ts.transform(irMethod);
+                }
             }
+            new IrMethod2AsmMethod().convert(irMethod, new LdcOptimizeAdapter(methodNode));
+        } catch (Exception e) {
+            if (this.exceptions == null) {
+                throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
+            }
+            this.exceptions.put(method, e);// record the exception
+
+            // replace the generated code with
+            // 'return new RuntimeException("Generated by Dex2jar, and Some Exception Caught : xxxxxxxxxxxxx");'
+            StringWriter s = new StringWriter();
+            e.printStackTrace(new PrintWriter(s));
+            String msg = s.toString();
+            methodNode.instructions.clear();
+            methodNode.tryCatchBlocks.clear();
+            irMethod.traps.clear();
+            irMethod.stmts.clear();
+            irMethod.stmts.add(Stmts.nThrow(Exprs.nInvokeNew(
+                    new Value[] { Constant.nString("Generated by Dex2jar, and Some Exception Caught :" + msg), },
+                    new Type[] { Type.getType(String.class) }, Type.getType(RuntimeException.class))));
+            new IrMethod2AsmMethod().convert(irMethod, methodNode);
         }
     }
 
@@ -227,13 +230,14 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParameterAnnotation (int)
      */
-    public DexAnnotationAble visitParameterAnnotation(int index) {
-        final List<Annotation> panns = paramAnns[index];
+    public DexAnnotationAble visitParameterAnnotation(final int index) {
         return new DexAnnotationAble() {
             public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
-                Annotation ann = new Annotation(name, visible);
-                panns.add(ann);
-                return new V3AnnAdapter(ann);
+                AnnotationVisitor av = methodNode.visitParameterAnnotation(index, name, visible);
+                if (av != null) {
+                    return new Dex2AsmAnnotationAdapter(av);
+                }
+                return null;
             }
         };
     }

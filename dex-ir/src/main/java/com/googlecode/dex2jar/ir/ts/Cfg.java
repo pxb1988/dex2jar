@@ -152,9 +152,9 @@ public class Cfg {
             // TODO add more
         case IF:
             return notThrow(((E1Stmt) s).op.value);
-        case LOCK:
-        case UNLOCK:
-            return notThrow(((E1Stmt) s).op.value);
+//        case LOCK:
+//        case UNLOCK:
+//            return notThrow(((E1Stmt) s).op.value);
         }
         return false;
     }
