@@ -96,7 +96,6 @@ public class Method {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((desc == null) ? 0 : desc.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((owner == null) ? 0 : owner.hashCode());
         result = prime * result + Arrays.hashCode(parameterTypes);
@@ -113,11 +112,6 @@ public class Method {
         if (getClass() != obj.getClass())
             return false;
         Method other = (Method) obj;
-        if (desc == null) {
-            if (other.desc != null)
-                return false;
-        } else if (!desc.equals(other.desc))
-            return false;
         if (name == null) {
             if (other.name != null)
                 return false;
