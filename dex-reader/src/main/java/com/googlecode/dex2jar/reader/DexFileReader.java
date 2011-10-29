@@ -67,29 +67,15 @@ public class DexFileReader {
     private int type_ids_off;
     private int type_ids_size;
 
-    /* default */int config = 0;
-
     public static final int SKIP_DEBUG = 0x00000001;
     public static final int SKIP_CODE = 0x00000002;
 
     /**
-     * equal to DexFileReader(data, 0)
      * 
      * @param data
-     * @see #DexFileReader(byte[], int)
+     * 
      */
     public DexFileReader(byte[] data) {
-        this(data, 0);
-    }
-
-    /**
-     * 
-     * @param data
-     * @param config
-     *            {@link #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_FIELD}, {@link #SKIP_METHOD}
-     * 
-     */
-    public DexFileReader(byte[] data, int config) {
         DataIn in = new DataInImpl(data);
         this.in = in;
         // { 0x64 0x65 0x78 0x0a 0x30 0x33 0x35 0x00 } = "dex\n035\0"
@@ -131,22 +117,24 @@ public class DexFileReader {
     }
 
     public DexFileReader(File f) throws IOException {
-        this(f, 0);
-    }
-
-    public DexFileReader(File f, int config) throws IOException {
-        this(FileUtils.readFileToByteArray(f), config);
+        this(FileUtils.readFileToByteArray(f));
     }
 
     public DexFileReader(InputStream in) throws IOException {
-        this(in, 0);
-    }
-
-    public DexFileReader(InputStream in, int config) throws IOException {
-        this(IOUtils.toByteArray(in), config);
+        this(IOUtils.toByteArray(in));
     }
 
     public void accept(DexFileVisitor dv) {
+        this.accept(dv, 0);
+    }
+
+    /**
+     * 
+     * @param dv
+     * @param config
+     *            {@link #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_FIELD}, {@link #SKIP_METHOD}
+     */
+    public void accept(DexFileVisitor dv, int config) {
         DataIn in = this.in;
         for (int cid = 0; cid < class_defs_size; cid++) {
             int idxOffset = this.class_defs_off + cid * 32;
@@ -177,7 +165,7 @@ public class DexFileReader {
                 DexClassVisitor dcv = dv.visit(access_flags, className, superClassName, interfaceNames);
                 if (dcv != null)// 不处理
                 {
-                    acceptClass(dv, dcv, className);
+                    acceptClass(dv, dcv, className, config);
                 }
             } finally {
                 in.pop();
@@ -186,7 +174,7 @@ public class DexFileReader {
         dv.visitEnd();
     }
 
-    private void acceptClass(DexFileVisitor dv, DexClassVisitor dcv, String className) {
+    private void acceptClass(DexFileVisitor dv, DexClassVisitor dcv, String className, int config) {
         DataIn in = this.in;
 
         // 获取源文件
@@ -283,11 +271,13 @@ public class DexFileReader {
                     }
                     lastIndex = 0;
                     for (int i = 0; i < direct_methods; i++) {
-                        lastIndex = acceptMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions);
+                        lastIndex = acceptMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions,
+                                config);
                     }
                     lastIndex = 0;
                     for (int i = 0; i < virtual_methods; i++) {
-                        lastIndex = acceptMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions);
+                        lastIndex = acceptMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions,
+                                config);
                     }
                 }
             } finally {
@@ -454,7 +444,7 @@ public class DexFileReader {
      * @return
      */
     protected int acceptMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos,
-            Map<Integer, Integer> parameterAnnos) {
+            Map<Integer, Integer> parameterAnnos, int config) {
         DataIn in = this.in;
         int diff = (int) in.readULeb128();
         int method_access_flags = (int) in.readULeb128();
@@ -510,7 +500,7 @@ public class DexFileReader {
                         if (dcv != null) {
                             try {
                                 new DexCodeReader(this, in, (0 != (DexOpcodes.ACC_STATIC & method_access_flags)),
-                                        method).accept(dcv);
+                                        method).accept(dcv, config);
                             } catch (Exception e) {
                                 throw new DexException(e, "while accept code in method:[%s]", method.toString());
                             }
