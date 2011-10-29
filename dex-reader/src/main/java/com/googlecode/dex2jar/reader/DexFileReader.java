@@ -317,10 +317,10 @@ public class DexFileReader {
             String[] parameterTypes;
             String returnType;
             {
-                int proto_off = this.proto_ids_off + proto_idx * 12;
-                if (proto_off >= proto_ids_size) {
+                if (proto_idx >= proto_ids_size) {
                     throw new IllegalArgumentException("Id out of bound");
                 }
+                int proto_off = this.proto_ids_off + proto_idx * 12;
                 in.pushMove(proto_off);
                 try {
                     in.skip(4);// skip shorty_idx uint
