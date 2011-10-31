@@ -195,6 +195,7 @@ public class LocalRemove implements Transformer {
                             if (ie.ops[0].value == aLeft && ie.methodOwnerType.equals(c.type)) {
                                 list.remove(st);
                                 it.remove();
+                                je.locals.remove(stmt.op1.value);
                                 ValueBox[] vb = new ValueBox[ie.ops.length - 1];
                                 System.arraycopy(ie.ops, 1, vb, 0, vb.length);
                                 AssignStmt nas = Stmts.nAssign(as.op1,

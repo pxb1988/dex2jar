@@ -294,7 +294,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
             }
         }
         // 处理debug信息
-        if (debug_off != 0 && (0 != (config & DexFileReader.SKIP_DEBUG))) {
+        if (debug_off != 0 && (0 == (config & DexFileReader.SKIP_DEBUG))) {
             in.pushMove(debug_off);
             try {
                 new DexDebugInfoReader(in, dex, instruction_size, this, localVariables, args).accept(dcv);

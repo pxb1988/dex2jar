@@ -59,6 +59,7 @@ public class ResTest {
             log.info("Testing res file {}", name);
             File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
             File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
+            Main.doData(Main.readClasses(dex), distFile, null);
             Main.doFile(dex, distFile);
             TestUtils.checkZipFile(distFile);
         }

@@ -29,7 +29,6 @@ import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
-import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
@@ -48,49 +47,14 @@ import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
  */
 public class LocalSplit implements Transformer {
 
-    static class BackwardMarker extends Value {
-        Set<BackwardMarker> parent;
-        boolean used = false;
-
-        protected BackwardMarker() {
-            super(null, null);
-        }
-
-        BackwardMarker(boolean use) {
-            this();
-            this.used = use;
-        }
-
-        @Override
-        public Value clone() {
-            return null;
-        }
-
-        public String toString() {
-            return used ? "1" : "0";
-        }
-
-        public void use() {
-            if (!used) {
-                used = true;
-                if (parent != null) {
-                    for (BackwardMarker p : parent) {
-                        p.use();
-                    }
-                }
-
-            }
-        }
-    }
-
-    static ValueBox exec(ValueBox vb, ValueBox[] currentFrame) {
+    static ValueBox exec(ValueBox vb, Phi[] currentFrame) {
         if (vb == null)
             return null;
         Value v = vb.value;
         switch (v.et) {
         case E0:
             if (v.vt == VT.LOCAL) {
-                Local local = (Local) trimLocalVB(currentFrame[((Local) v)._ls_index]).value;
+                Local local = trim(currentFrame[((Local) v)._ls_index]);
                 local._ls_read_count++;
                 vb = local._ls_vb;
             }
@@ -114,13 +78,42 @@ public class LocalSplit implements Transformer {
         return vb;
     }
 
-    static ValueBox trimLocalVB(ValueBox vb) {
-        if (vb == null)
+    static Local trim(ValueBox vb) {
+        Local local = (Local) vb.value;
+        if (local == null) {
             return null;
-        while (vb != ((Local) vb.value)._ls_vb) {
-            vb = ((Local) vb.value)._ls_vb;
         }
-        return vb;
+        while (local._ls_vb.value != local) {
+            local = (Local) local._ls_vb.value;
+        }
+        return local;
+    }
+
+    private static class Phi extends ValueBox {
+        public Phi() {
+            super(null);
+        }
+
+        public List<Phi> parent;
+
+        public void setLocal(Local local) {
+            if (this.value != null) {
+                Local local2 = trim(this);
+                if (local2 != local) {
+                    local2._ls_vb = local._ls_vb;
+                }
+                this.value = local;
+            } else {
+                this.value = local;
+            }
+            if (parent != null) {
+                for (Phi p : parent) {
+                    if (p == null || p.value != local) {
+                        p.setLocal(local);
+                    }
+                }
+            }
+        }
     }
 
     public void transform(final IrMethod jm) {
@@ -130,21 +123,28 @@ public class LocalSplit implements Transformer {
             Local local = jm.locals.get(i);
             local._ls_index = i;
         }
-        jm.locals.clear();
-        final List<Local> locals = jm.locals;
 
+        jm.locals.clear();
         Cfg.createCFG(jm);
 
-        Cfg.Backward(jm, new FrameVisitor<BackwardMarker[]>() {
+        final ArrayList<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
 
-            private void doLocalRef(ValueBox vb, BackwardMarker[] frame) {
+        Cfg.Forward(jm, new FrameVisitor<Phi[]>() {
+
+            private void doLocalRef(ValueBox vb, Phi[] frame) {
                 if (vb == null)
                     return;
                 Value v = vb.value;
                 switch (v.et) {
                 case E0:
                     if (v.vt == VT.LOCAL) {
-                        frame[((Local) v)._ls_index] = new BackwardMarker(true);
+                        Phi p = frame[((Local) v)._ls_index];
+                        if (p.value == null) {
+                            Local local = new Local("a_" + localId++, null);
+                            ValueBox nvb = new ValueBox(local);
+                            local._ls_vb = nvb;
+                            p.setLocal(local);
+                        }
                     }
                     break;
                 case E1:
@@ -165,16 +165,20 @@ public class LocalSplit implements Transformer {
                 }
             }
 
+            int localId = 0;
+            Phi[] tmp = new Phi[orgLocalSize];
+
             @Override
-            public BackwardMarker[] exec(Stmt stmt) {
-                BackwardMarker[] tmp = new BackwardMarker[orgLocalSize];
-                if (stmt._ls_backward_frame != null) {
-                    System.arraycopy(stmt._ls_backward_frame, 0, tmp, 0, tmp.length);
-                } else {
-                    for (int i = 0; i < tmp.length; i++) {
-                        tmp[i] = new BackwardMarker(false);
+            public Phi[] exec(Stmt stmt) {
+                _ls_visit_order.add(stmt);
+                Phi[] currentFrame = (Phi[]) stmt._ls_forward_frame;
+                if (currentFrame == null) {
+                    stmt._ls_forward_frame = currentFrame = new Phi[orgLocalSize];
+                    for (int i = 0; i < currentFrame.length; i++) {
+                        currentFrame[i] = new Phi();
                     }
                 }
+                System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
 
                 switch (stmt.et) {
                 case E0:
@@ -186,8 +190,11 @@ public class LocalSplit implements Transformer {
                 case E2:
                     E2Stmt e2 = (E2Stmt) stmt;
                     if (e2.op1.value.vt == VT.LOCAL) {
-                        tmp[((Local) e2.op1.value)._ls_index] = new BackwardMarker(false);
+
                         doLocalRef(e2.op2, tmp);
+                        Phi phi = new Phi();
+                        tmp[((Local) e2.op1.value)._ls_index] = phi;
+                        e2.op1 = phi;
                     } else {
                         doLocalRef(e2.op1, tmp);
                         doLocalRef(e2.op2, tmp);
@@ -204,130 +211,39 @@ public class LocalSplit implements Transformer {
             }
 
             @Override
-            public void merge(BackwardMarker[] currnetFrame, Stmt dist) {
-                if (dist._ls_backward_frame == null) {
-                    BackwardMarker[] distFrame = new BackwardMarker[orgLocalSize];
-                    dist._ls_backward_frame = distFrame;
-                    if (dist._cfg_tos.size() > 1) {
-                        for (int i = 0; i < orgLocalSize; i++) {
-                            if (currnetFrame[i].used) {
-                                distFrame[i] = currnetFrame[i];
-                            } else {
-                                BackwardMarker bm = new BackwardMarker();
-                                Set<BackwardMarker> parent = currnetFrame[i].parent;
-                                if (parent == null) {
-                                    parent = new HashSet<BackwardMarker>();
-                                    currnetFrame[i].parent = parent;
-                                }
-                                parent.add(bm);
-                                distFrame[i] = bm;
-                            }
+            public void merge(Phi[] sourceF, Stmt distStmt) {
+                Phi[] targetF = (Phi[]) distStmt._ls_forward_frame;
+                int dist_froms_size = distStmt._cfg_froms.size();
+                if (targetF != null) {
+                    for (int i = 0; i < targetF.length; i++) {
+                        Phi source = sourceF[i];
+                        Phi target = targetF[i];
+                        if (target.parent == null) {
+                            target.parent = new ArrayList<Phi>(dist_froms_size);
+                        }
+                        target.parent.add(source);
+                        if (target.value != null) {
+                            source.setLocal(trim(((Local) target.value)._ls_vb));
+                        }
+                    }
+                } else {
+                    distStmt._ls_forward_frame = targetF = new Phi[orgLocalSize];
+                    if (distStmt._cfg_froms.size() > 1) {
+                        for (int i = 0; i < targetF.length; i++) {
+                            Phi target = new Phi();
+                            target.parent = new ArrayList<Phi>(dist_froms_size);
+                            target.parent.add(sourceF[i]);
+                            targetF[i] = target;
                         }
                     } else {
-                        // for (int i = 0; i < currnetFrame.length; i++) {
-                        // dist._ls_backward_frame[i] = currnetFrame[i];
-                        // }
-                        System.arraycopy(currnetFrame, 0, dist._ls_backward_frame, 0, orgLocalSize);
-                    }
-                } else {
-                    BackwardMarker[] distFrame = (BackwardMarker[]) dist._ls_backward_frame;
-
-                    for (int i = 0; i < orgLocalSize; i++) {
-                        if (!distFrame[i].used) {
-                            if (currnetFrame[i].used) {
-                                distFrame[i].use();
-                            } else {
-                                Set<BackwardMarker> parent = currnetFrame[i].parent;
-                                if (parent == null) {
-                                    parent = new HashSet<BackwardMarker>();
-                                    currnetFrame[i].parent = parent;
-                                }
-                                parent.add(distFrame[i]);
-                            }
-                        }
+                        System.arraycopy(sourceF, 0, targetF, 0, sourceF.length);
                     }
                 }
             }
         });
 
-        // for (Stmt stmt : jm.stmts) {
-        // System.out.printf("%30s |%s\n",
-        // stmt._ls_backward_frame == null ? "" : Arrays.asList(stmt._ls_backward_frame), stmt);
-        // }
-
-        final ArrayList<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
-
-        Cfg.Forward(jm, new FrameVisitor<ValueBox[]>() {
-
-            int localId = 0;
-            ValueBox[] tmp = new ValueBox[orgLocalSize];
-
-            @Override
-            public ValueBox[] exec(Stmt stmt) {
-                _ls_visit_order.add(stmt);
-                ValueBox[] currentFrame = (ValueBox[]) stmt._ls_forward_frame;
-                if (currentFrame == null) {
-                    stmt._ls_forward_frame = currentFrame = new ValueBox[orgLocalSize];
-                }
-
-                switch (stmt.st) {
-                case ASSIGN:
-                case IDENTITY:
-                    E2Stmt assignStmt = (E2Stmt) stmt;
-                    if (assignStmt.op1.value.vt == VT.LOCAL) {
-                        System.arraycopy(currentFrame, 0, tmp, 0, tmp.length);
-                        Local local = (Local) assignStmt.op1.value;
-                        int reg = local._ls_index;
-                        Local nLocal = Exprs.nLocal("a_" + localId++, null);
-                        nLocal._ls_index = reg;
-                        locals.add(nLocal);
-                        ValueBox vb = new ValueBox(nLocal);
-                        nLocal._ls_vb = vb;
-                        assignStmt.op1 = vb;
-                        tmp[reg] = vb;
-                        currentFrame = tmp;
-                    }
-                }
-                return currentFrame;
-            }
-
-            @Override
-            public void merge(ValueBox[] frame, Stmt distStmt) {
-                ValueBox[] currentFrame = (ValueBox[]) frame;
-                if (distStmt == null) {
-                    return;
-                }
-                if (distStmt._ls_forward_frame == null) {
-                    distStmt._ls_forward_frame = new ValueBox[currentFrame.length];
-                    System.arraycopy(currentFrame, 0, distStmt._ls_forward_frame, 0, currentFrame.length);
-                } else {
-                    ValueBox[] b = (ValueBox[]) distStmt._ls_forward_frame;
-                    BackwardMarker[] backwardFrame = (BackwardMarker[]) distStmt._ls_backward_frame;
-                    for (int i = 0; i < currentFrame.length; i++) {
-                        if (!backwardFrame[i].used) {
-                            continue;
-                        }
-                        ValueBox ai = trimLocalVB(currentFrame[i]);
-                        ValueBox bi = trimLocalVB(b[i]);
-                        if (bi == null) {
-                            // b[i] = ai;
-                            continue;
-                        }
-                        if (ai == bi) {
-                            continue;
-                        }
-
-                        if (ai.value != bi.value) {
-                            locals.remove(ai.value);
-                        }
-                        Local la = (Local) ai.value;
-                        ai.value = bi.value;
-                        la._ls_vb = bi;
-                    }
-                }
-            }
-        });
-
+        int unRef = 0;
+        Set<Local> locals = new HashSet<Local>();
         // reassign valuebox
         for (Iterator<Stmt> it = list.iterator(); it.hasNext();) {
             Stmt st = it.next();
@@ -337,7 +253,7 @@ public class LocalSplit implements Transformer {
                     continue;
                 }
             }
-            ValueBox[] currentFrame = st._ls_forward_frame;
+            Phi[] currentFrame = (Phi[]) st._ls_forward_frame;
             switch (st.et) {
             case E0:
                 break;
@@ -350,9 +266,14 @@ public class LocalSplit implements Transformer {
                 switch (e2.st) {
                 case ASSIGN:
                 case IDENTITY:
-                    if (e2.op1.value.vt == VT.LOCAL) {
-                        e2.op1 = trimLocalVB(e2.op1);
-                        Local local = (Local) e2.op1.value;
+                    if (e2.op1 instanceof Phi) {
+                        Local local = (Local) trim(e2.op1);
+                        if (local == null) {
+                            local = new Local("unRef" + unRef++, null);
+                            local._ls_vb = new ValueBox(local);
+                        }
+                        locals.add(local);
+                        e2.op1 = local._ls_vb;
                         local._ls_write_count++;
                         if (e2.op2.value.vt == VT.INVOKE_SPECIAL) {
                             InvokeExpr ie = (InvokeExpr) e2.op2.value;
@@ -378,8 +299,8 @@ public class LocalSplit implements Transformer {
             }
             // clean
             st._ls_forward_frame = null;
-            st._ls_backward_frame = null;
         }
+        jm.locals.addAll(locals);
         jm.stmts._ls_visit_order = _ls_visit_order;
     }
 }

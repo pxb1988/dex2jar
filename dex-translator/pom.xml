@@ -9,7 +9,7 @@
 	</parent>
 
 	<artifactId>dex-translator</artifactId>
-	<version>0.0.9.0-SNAPSHOT</version>
+	<version>0.0.9.1-SNAPSHOT</version>
 	<name>Dex Translator</name>
 	<description>A tool for converting Android's .dex format to Java's .class format</description>
 	<url>http://code.google.como/p/dex2jar/</url>

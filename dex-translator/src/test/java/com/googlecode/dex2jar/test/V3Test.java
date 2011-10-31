@@ -84,7 +84,7 @@ public class V3Test {
                             }
                         };
                     }
-                }));
+                }), DexFileReader.SKIP_DEBUG);
     }
 
 }

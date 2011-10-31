@@ -24,7 +24,6 @@ import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.E1Expr;
 import com.googlecode.dex2jar.ir.Value.E2Expr;
-import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
@@ -47,39 +46,6 @@ public class Cfg {
 
     public interface StmtVisitor<T> {
         T exec(Stmt stmt);
-    }
-
-    public static <T> void Backward(IrMethod jm, StmtVisitor<T> sv) {
-
-        // clean
-        for (Stmt st : jm.stmts) {
-            st._cfg_visited = false;
-        }
-
-        boolean isFv = sv instanceof FrameVisitor;
-        FrameVisitor<T> fv = isFv ? ((FrameVisitor<T>) sv) : null;
-        Stack<Stmt> toVisitQueue = new Stack<Stmt>();
-
-        toVisitQueue.addAll(jm.stmts._cfg_tais);
-
-        while (!toVisitQueue.isEmpty()) {
-            Stmt currentStmt = toVisitQueue.pop();
-            if (currentStmt == null || currentStmt._cfg_visited) {
-                continue;
-            } else {
-                currentStmt._cfg_visited = true;
-            }
-            toVisitQueue.addAll(currentStmt._cfg_froms);
-
-            T afterExecFrame = sv.exec(currentStmt);
-
-            if (isFv) {
-                for (Stmt dist : currentStmt._cfg_froms) {
-                    fv.merge(afterExecFrame, dist);
-                }
-            }
-
-        }
     }
 
     private static boolean notThrow(Value s) {
@@ -144,17 +110,12 @@ public class Cfg {
         case ASSIGN:
             E2Stmt e2 = (E2Stmt) s;
             return notThrow(e2.op1.value) && notThrow(e2.op2.value);
-            // case UNLOCK:
         case TABLE_SWITCH:
         case LOOKUP_SWITCH:
             E1Stmt s1 = (E1Stmt) s;
             return notThrow(s1.op.value);
-            // TODO add more
         case IF:
             return notThrow(((E1Stmt) s).op.value);
-//        case LOCK:
-//        case UNLOCK:
-//            return notThrow(((E1Stmt) s).op.value);
         }
         return false;
     }
@@ -234,7 +195,9 @@ public class Cfg {
     }
 
     public static <T> void Forward(IrMethod jm, StmtVisitor<T> sv) {
-
+        if (jm.stmts.getSize() == 0) {
+            return;
+        }
         // clean
         for (Stmt st : jm.stmts) {
             st._cfg_visited = false;
