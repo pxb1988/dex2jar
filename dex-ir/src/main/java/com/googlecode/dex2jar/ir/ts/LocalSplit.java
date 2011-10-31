@@ -54,7 +54,7 @@ public class LocalSplit implements Transformer {
         switch (v.et) {
         case E0:
             if (v.vt == VT.LOCAL) {
-                Local local = (Local) currentFrame[((Local) v)._ls_index].value;
+                Local local = trim(currentFrame[((Local) v)._ls_index]);
                 local._ls_read_count++;
                 vb = local._ls_vb;
             }
@@ -78,6 +78,17 @@ public class LocalSplit implements Transformer {
         return vb;
     }
 
+    static Local trim(ValueBox vb) {
+        Local local = (Local) vb.value;
+        if (local == null) {
+            return null;
+        }
+        while (local._ls_vb.value != local) {
+            local = (Local) local._ls_vb.value;
+        }
+        return local;
+    }
+
     private static class Phi extends ValueBox {
         public Phi() {
             super(null);
@@ -85,8 +96,16 @@ public class LocalSplit implements Transformer {
 
         public List<Phi> parent;
 
-        public void setLocal(Value local) {
-            this.value = local;
+        public void setLocal(Local local) {
+            if (this.value != null) {
+                Local local2 = trim(this);
+                if (local2 != local) {
+                    local2._ls_vb = local._ls_vb;
+                }
+                this.value = local;
+            } else {
+                this.value = local;
+            }
             if (parent != null) {
                 for (Phi p : parent) {
                     if (p == null || p.value != local) {
@@ -121,7 +140,7 @@ public class LocalSplit implements Transformer {
                     if (v.vt == VT.LOCAL) {
                         Phi p = frame[((Local) v)._ls_index];
                         if (p.value == null) {
-                            Local local = new Local("a" + localId++, null);
+                            Local local = new Local("a_" + localId++, null);
                             ValueBox nvb = new ValueBox(local);
                             local._ls_vb = nvb;
                             p.setLocal(local);
@@ -204,7 +223,7 @@ public class LocalSplit implements Transformer {
                         }
                         target.parent.add(source);
                         if (target.value != null) {
-                            source.setLocal(target.value);
+                            source.setLocal(trim(((Local) target.value)._ls_vb));
                         }
                     }
                 } else {
@@ -248,7 +267,7 @@ public class LocalSplit implements Transformer {
                 case ASSIGN:
                 case IDENTITY:
                     if (e2.op1 instanceof Phi) {
-                        Local local = (Local) e2.op1.value;
+                        Local local = (Local) trim(e2.op1);
                         if (local == null) {
                             local = new Local("unRef" + unRef++, null);
                             local._ls_vb = new ValueBox(local);
