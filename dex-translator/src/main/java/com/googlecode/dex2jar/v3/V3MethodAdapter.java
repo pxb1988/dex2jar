@@ -196,7 +196,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         if (irMethod != null) {
             try {
                 if (irMethod.stmts.getSize() > 1) {
-                    indexLabelStmt4Debug(irMethod.stmts);
+                    // indexLabelStmt4Debug(irMethod.stmts);
                     endremove.transform(irMethod);
 
                     for (Transformer ts : tses) {

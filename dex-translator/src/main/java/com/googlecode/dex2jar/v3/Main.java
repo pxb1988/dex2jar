@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.ir.ET;
 import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.util.ASMifierCodeV;
 import com.googlecode.dex2jar.util.Escape;
@@ -187,7 +188,8 @@ public class Main {
 
     public static String getVersionString() {
         return "dex2jar version: reader-" + DexFileReader.class.getPackage().getImplementationVersion()
-                + ", translator-" + Main.class.getPackage().getImplementationVersion();
+                + ", translator-" + Main.class.getPackage().getImplementationVersion() + ", ir-"
+                + ET.class.getPackage().getImplementationVersion();
     }
 
     /**
