@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.Version;
 import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.util.ASMifierCodeV;
 import com.googlecode.dex2jar.util.Escape;
@@ -55,12 +54,15 @@ public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void doData(byte[] data, File destJar) throws IOException {
+        doData(data, destJar, new HashMap<Method, Exception>());
+    }
+
+    public static void doData(byte[] data, File destJar, final Map<Method, Exception> exceptions) throws IOException {
 
         DexFileReader reader = new DexFileReader(data);
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
         reader.accept(afa, DexFileReader.SKIP_CODE | DexFileReader.SKIP_DEBUG);
 
-        final Map<Method, Exception> exceptions = new HashMap<Method, Exception>();
         final ZipOutputStream zos = new ZipOutputStream(FileUtils.openOutputStream(destJar));
         try {
             reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), exceptions,
@@ -90,12 +92,15 @@ public class Main {
                     }), DexFileReader.SKIP_DEBUG);
             zos.finish();
         } catch (Exception e) {
+            if (exceptions == null) {
+                throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
+            }
             e.printStackTrace(System.err);
         } finally {
             zos.close();
         }
 
-        if (exceptions.size() > 0) {
+        if (exceptions != null && exceptions.size() > 0) {
 
             for (Map.Entry<Method, Exception> e : exceptions.entrySet()) {
                 System.err.println("Error:" + e.getKey().toString() + "->" + e.getValue().getMessage());
@@ -104,7 +109,7 @@ public class Main {
                     + ".error.txt");
             final PrintWriter fw = new PrintWriter(new OutputStreamWriter(FileUtils.openOutputStream(errorFile),
                     "UTF-8"));
-            fw.println("dex2jar version:" + Version.getVersionString());
+            fw.println(getVersionString());
             final Out out = new Out() {
 
                 @Override
@@ -147,11 +152,13 @@ public class Main {
                                         out.s("");
                                         out.s("DexMethodVisitor mv=cv.visitMethod(%s, %s);",
                                                 Escape.methodAcc(accessFlags), Escape.v(method));
+                                        out.s("DexCodeVisitor code = mv.visitCode();");
                                         return new ASMifierCodeV(out);
                                     }
 
                                     @Override
                                     public void visitEnd() {
+                                        out.s("mv.visitEnd();");
                                         fw.flush();
                                     }
                                 };
@@ -178,11 +185,16 @@ public class Main {
         doData(readClasses(srcDex), distJar);
     }
 
+    public static String getVersionString() {
+        return "dex2jar version: reader-" + DexFileReader.class.getPackage().getImplementationVersion()
+                + ", translator-" + Main.class.getPackage().getImplementationVersion();
+    }
+
     /**
      * @param args
      */
     public static void main(String... args) {
-        log.info("version:" + Version.getVersionString());
+        log.info(getVersionString());
         if (args.length == 0) {
             System.err.println("dex2jar file1.dexORapk file2.dexORapk ...");
             return;
