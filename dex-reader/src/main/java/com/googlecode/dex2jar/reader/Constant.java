@@ -66,10 +66,10 @@ import com.googlecode.dex2jar.DexType;
             return new Long(readIntBits(in, b));
 
         case VALUE_CHAR:
-            return new Character((char) readIntBits(in, b));
+            return new Character((char) readUIntBits(in, b));
 
         case VALUE_STRING:
-            return dex.getString((int) readIntBits(in, b));
+            return dex.getString((int) readUIntBits(in, b));
 
         case VALUE_FLOAT:
             return Float.intBitsToFloat((int) (readFloatBits(in, b) >> 32));
@@ -85,20 +85,20 @@ import com.googlecode.dex2jar.DexType;
 
         }
         case VALUE_TYPE: {
-            int type_id = (int) readIntBits(in, b);
+            int type_id = (int) readUIntBits(in, b);
             return new DexType(dex.getType(type_id));
         }
         case VALUE_ENUM: {
-            return dex.getField((int) readIntBits(in, b));
+            return dex.getField((int) readUIntBits(in, b));
         }
 
         case VALUE_METHOD: {
-            int method_id = (int) readIntBits(in, b);
+            int method_id = (int) readUIntBits(in, b);
             return dex.getMethod(method_id);
 
         }
         case VALUE_FIELD: {
-            int field_id = (int) readIntBits(in, b);
+            int field_id = (int) readUIntBits(in, b);
             return dex.getField(field_id);
         }
         case VALUE_ARRAY: {
@@ -129,6 +129,16 @@ import com.googlecode.dex2jar.DexType;
     }
 
     public static long readIntBits(DataIn in, int before) {
+        int length = ((before >> 5) & 0x7) + 1;
+        long value = 0;
+        for (int j = 0; j < length; j++) {
+            value |= ((long) in.readUByte()) << (j * 8);
+        }
+        int shift = (8 - length) * 8;
+        return value << shift >> shift;
+    }
+
+    public static long readUIntBits(DataIn in, int before) {
         int length = ((before >> 5) & 0x7) + 1;
         long value = 0;
         for (int j = 0; j < length; j++) {
