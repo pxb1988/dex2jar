@@ -33,6 +33,7 @@ import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.LocalType;
 import com.googlecode.dex2jar.ir.ts.Transformer;
 import com.googlecode.dex2jar.v3.EndRemover;
+import com.googlecode.dex2jar.v3.ExceptionHandlerCurrect;
 import com.googlecode.dex2jar.v3.IrMethod2AsmMethod;
 import com.googlecode.dex2jar.v3.LocalCurrect;
 
@@ -54,8 +55,8 @@ public class Issue71Test {
         irMethod.stmts.add(nAssign(a, nLong(0L)));
         irMethod.stmts.add(nAssign(a, nAdd(a, nLong(2))));
 
-        Transformer[] tses = new Transformer[] { new LocalSplit(), new LocalRemove(), new LocalType(),
-                new LocalCurrect() };
+        Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrect(), new LocalSplit(), new LocalRemove(),
+                new LocalType(), new LocalCurrect() };
         Transformer endremove = new EndRemover();
         endremove.transform(irMethod);
 
