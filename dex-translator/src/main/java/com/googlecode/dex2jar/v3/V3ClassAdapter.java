@@ -16,6 +16,7 @@
 package com.googlecode.dex2jar.v3;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
+import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -205,15 +207,33 @@ public class V3ClassAdapter implements DexClassVisitor {
         }
     }
 
+    Map<String, Object> annotationDefaults;
     boolean isInnerClass = false;
 
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (!isInnerClass) {
             isInnerClass = "Ldalvik/annotation/InnerClass;".equals(name);
         }
-        Annotation ann = new Annotation(name, visible);
-        anns.add(ann);
-        return new V3AnnAdapter(ann);
+        if (name.equals("Ldalvik/annotation/AnnotationDefault;")) {
+            return new EmptyVisitor() {
+                @Override
+                public DexAnnotationVisitor visitAnnotation(String name, String desc) {
+                    return new EmptyVisitor() {
+                        @Override
+                        public void visit(String name, Object value) {
+                            if (annotationDefaults == null) {
+                                annotationDefaults = new HashMap<String, Object>();
+                            }
+                            annotationDefaults.put(name, value);
+                        }
+                    };
+                }
+            };
+        } else {
+            Annotation ann = new Annotation(name, visible);
+            anns.add(ann);
+            return new V3AnnAdapter(ann);
+        }
     }
 
     public void visitEnd() {
@@ -236,6 +256,16 @@ public class V3ClassAdapter implements DexClassVisitor {
             @Override
             public void visitEnd() {
                 super.visitEnd();
+                if (annotationDefaults != null) {
+                    Object value = annotationDefaults.get(method.getName());
+                    if (value != null) {
+                        AnnotationVisitor av = methodNode.visitAnnotationDefault();
+                        if (av != null) {
+                            av.visit(null, value);
+                            av.visitEnd();
+                        }
+                    }
+                }
                 methodNode.accept(cv);
             }
         };

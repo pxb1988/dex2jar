@@ -154,6 +154,7 @@ public class ASMifierClassV implements DexClassVisitor {
 
             @Override
             public void visitEnd() {
+                m.s("mv.visitEnd();");
                 m.pop();
                 m.s("}");
                 m.pop();
