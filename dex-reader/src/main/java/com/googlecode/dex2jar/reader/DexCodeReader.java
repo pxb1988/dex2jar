@@ -96,7 +96,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
     private void findLabels(DataIn in, int instruction_size) {
         for (int baseOffset = in.getCurrentPosition(), currentOffset = 0; currentOffset < instruction_size; currentOffset = (in
-                .getCurrentPosition() - baseOffset) >>> 1) {
+                .getCurrentPosition() - baseOffset) / 2) {
             int opcode = in.readByte() & 0xff;
             try {
                 switch (opcode) {
@@ -318,7 +318,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         // 处理指令
         int currentOffset = 0;
         for (int baseOffset = in.getCurrentPosition(); currentOffset < instruction_size; currentOffset = (in
-                .getCurrentPosition() - baseOffset) >>> 1) {
+                .getCurrentPosition() - baseOffset) / 2) {
             int opcode = in.readByte() & 0xff;
 
             n.offset(currentOffset);
@@ -363,7 +363,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
             }
             case F11n: {
                 int VV = in.readByte();
-                int B = VV >>> 4;
+                int B = VV >> 4;
                 n.x1n(opcode, VV & 0xF, B);
                 break;
             }

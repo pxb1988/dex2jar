@@ -122,8 +122,11 @@ public class LocalType implements Transformer {
                 break;
             case THIS_REF:
             case PARAMETER_REF:
-            case EXCEPTION_REF:
                 type(tb, ((RefExpr) v).type);
+                break;
+            case EXCEPTION_REF:
+                Type type = ((RefExpr) v).type;
+                type(tb, type == null ? Type.getType(Throwable.class) : type);
                 break;
             case NEW:
                 type(tb, ((NewExpr) v).type);

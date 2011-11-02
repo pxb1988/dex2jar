@@ -215,11 +215,13 @@ public class LocalRemove implements Transformer {
                         switch (as.op2.value.vt) {
                         case LOCAL: {
                             Local b = (Local) as.op2.value;
-                            b._ls_read_count += aLeft._ls_read_count - 1;
-                            je.locals.remove(aLeft);
-                            aLeft._ls_vb.value = b;
-                            list.remove(st);
-                            orderList.set(p, null);
+                            if (b._ls_write_count == 1) {// if b is only write for once
+                                b._ls_read_count += aLeft._ls_read_count - 1;
+                                je.locals.remove(aLeft);
+                                aLeft._ls_vb.value = b;
+                                list.remove(st);
+                                orderList.set(p, null);
+                            }
                             continue;
                         }
                         case CONSTANT: {
@@ -296,40 +298,42 @@ public class LocalRemove implements Transformer {
             }
         }
 
-        // replace new again
-        for (int p = 0; p < orderList.size(); p++) {
-            Stmt st = orderList.get(p);
-            if (st == null || !list.contains(st)) {
-                continue;
-            }
-            switch (st.st) {
-            case ASSIGN:
-            case IDENTITY:
-                AssignStmt as = (AssignStmt) st;
-                if (as.op1.value.vt == VT.LOCAL) {
-                    Local aLeft = (Local) as.op1.value;
-                    if (as.op2.value.vt == VT.NEW) {// remove new
-                        NewExpr c = (NewExpr) as.op2.value;
-                        boolean replaced = false;
-                        for (Iterator<AssignStmt> it = list._ls_inits.iterator(); it.hasNext();) {
-                            AssignStmt stmt = it.next();
-                            InvokeExpr ie = (InvokeExpr) stmt.op2.value;
-                            if (ie.ops[0].value == aLeft && ie.methodOwnerType.equals(c.type)) {
-                                list.remove(st);
-                                it.remove();
-                                ValueBox[] vb = new ValueBox[ie.ops.length - 1];
-                                System.arraycopy(ie.ops, 1, vb, 0, vb.length);
-                                AssignStmt nas = Stmts.nAssign(as.op1,
-                                        new ValueBox(Exprs.nInvokeNew(vb, ie.argmentTypes, ie.methodOwnerType)));
-                                list.replace(stmt, nas);
-                                aLeft._ls_read_count--;
-                                orderList.set(orderList.indexOf(stmt), nas);
-                                replaced = true;
-                                break;
+        if (list._ls_inits.size() > 0) {
+            // replace new again
+            for (int p = 0; p < orderList.size(); p++) {
+                Stmt st = orderList.get(p);
+                if (st == null || !list.contains(st)) {
+                    continue;
+                }
+                switch (st.st) {
+                case ASSIGN:
+                case IDENTITY:
+                    AssignStmt as = (AssignStmt) st;
+                    if (as.op1.value.vt == VT.LOCAL) {
+                        Local aLeft = (Local) as.op1.value;
+                        if (as.op2.value.vt == VT.NEW) {// remove new
+                            NewExpr c = (NewExpr) as.op2.value;
+                            boolean replaced = false;
+                            for (Iterator<AssignStmt> it = list._ls_inits.iterator(); it.hasNext();) {
+                                AssignStmt stmt = it.next();
+                                InvokeExpr ie = (InvokeExpr) stmt.op2.value;
+                                if (ie.ops[0].value == aLeft && ie.methodOwnerType.equals(c.type)) {
+                                    list.remove(st);
+                                    it.remove();
+                                    ValueBox[] vb = new ValueBox[ie.ops.length - 1];
+                                    System.arraycopy(ie.ops, 1, vb, 0, vb.length);
+                                    AssignStmt nas = Stmts.nAssign(as.op1,
+                                            new ValueBox(Exprs.nInvokeNew(vb, ie.argmentTypes, ie.methodOwnerType)));
+                                    list.replace(stmt, nas);
+                                    aLeft._ls_read_count--;
+                                    orderList.set(orderList.indexOf(stmt), nas);
+                                    replaced = true;
+                                    break;
+                                }
                             }
-                        }
-                        if (replaced) {
-                            continue;
+                            if (replaced) {
+                                continue;
+                            }
                         }
                     }
                 }

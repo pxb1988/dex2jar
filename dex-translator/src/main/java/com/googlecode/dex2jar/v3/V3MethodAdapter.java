@@ -59,8 +59,8 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     private static Transformer endremove = new EndRemover();
     private static final Logger log = LoggerFactory.getLogger(V3MethodAdapter.class);
-    private static Transformer[] tses = new Transformer[] { new LocalSplit(), new LocalRemove(), new LocalType(),
-            new LocalCurrect() };
+    private static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrect(), new LocalSplit(),
+            new LocalRemove(), new LocalType(), new LocalCurrect() };
     static {
         log.debug("InsnList.check=false");
         // Optimize Tree Analyzer
@@ -97,6 +97,8 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         this.method = method;
         this.accessFlags = accessFlags;
         this.exceptions = exceptions;
+        // issue 88, the desc must set before visitParameterAnnotation
+        methodNode.desc = method.getDesc();
     }
 
     Annotation throwsAnnotation;
