@@ -97,6 +97,8 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         this.method = method;
         this.accessFlags = accessFlags;
         this.exceptions = exceptions;
+        // issue 88, the desc must set before visitParameterAnnotation
+        methodNode.desc = method.getDesc();
     }
 
     Annotation throwsAnnotation;
