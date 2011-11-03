@@ -20,6 +20,8 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Opcodes;
@@ -27,8 +29,6 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.util.TraceMethodVisitor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
@@ -58,11 +58,11 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  */
 public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     private static Transformer endremove = new EndRemover();
-    private static final Logger log = LoggerFactory.getLogger(V3MethodAdapter.class);
+    private static final Logger log = Logger.getLogger(V3MethodAdapter.class.getName());
     private static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrect(), new LocalSplit(),
             new LocalRemove(), new LocalType(), new LocalCurrect() };
     static {
-        log.debug("InsnList.check=false");
+        log.log(Level.CONFIG, "InsnList.check=false");
         // Optimize Tree Analyzer
         InsnList.check = false;
     }

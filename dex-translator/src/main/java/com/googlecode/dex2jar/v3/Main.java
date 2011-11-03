@@ -31,8 +31,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.Method;
@@ -51,8 +49,6 @@ import com.googlecode.dex2jar.visitors.EmptyVisitor;
  * @version $Id$
  */
 public class Main {
-
-    private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void doData(byte[] data, File destJar) throws IOException {
         doData(data, destJar, new HashMap<Method, Exception>());
@@ -196,7 +192,7 @@ public class Main {
      * @param args
      */
     public static void main(String... args) {
-        log.info(getVersionString());
+        System.out.println(getVersionString());
         if (args.length == 0) {
             System.err.println("dex2jar file1.dexORapk file2.dexORapk ...");
             return;
@@ -212,19 +208,19 @@ public class Main {
         for (String file : args) {
             File dex = new File(file);
             final File gen = new File(dex.getParentFile(), FilenameUtils.getBaseName(file) + "_dex2jar.jar");
-            log.info("dex2jar {} -> {}", dex, gen);
+            System.out.println("dex2jar " + dex + " -> " + gen);
             try {
                 doFile(dex, gen);
             } catch (Exception e) {
                 containsError = true;
-                niceExceptionMessage(log, new DexException(e, "while process file: [%s]", dex), 0);
+                niceExceptionMessage(new DexException(e, "while process file: [%s]", dex), 0);
             }
         }
-        log.info("Done.");
+        System.out.println("Done.");
         System.exit(containsError ? -1 : 0);
     }
 
-    public static void niceExceptionMessage(Logger log, Throwable t, int deep) {
+    public static void niceExceptionMessage(Throwable t, int deep) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < deep + 1; i++) {
             sb.append(".");
@@ -232,13 +228,14 @@ public class Main {
         sb.append(' ');
         if (t instanceof DexException) {
             sb.append(t.getMessage());
-            log.error(sb.toString());
+            System.err.println(sb.toString());
             if (t.getCause() != null) {
-                niceExceptionMessage(log, t.getCause(), deep + 1);
+                niceExceptionMessage(t.getCause(), deep + 1);
             }
         } else {
             if (t != null) {
-                log.error(sb.append("ROOT cause:").toString(), t);
+                System.err.println(sb.append("ROOT cause:").toString());
+                t.printStackTrace(System.err);
             }
         }
     }

@@ -24,8 +24,6 @@ import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.reader.DexFileReader;
@@ -39,19 +37,18 @@ import com.googlecode.dex2jar.v3.V3AccessFlagsAdapter;
  * 
  */
 public class V3Test {
-    static final Logger log = LoggerFactory.getLogger(V3Test.class);
 
     @Test
     public void test() throws Exception {
         try {
             File file = new File("target/test-classes/dexes");
             for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip", "apk" }, false)) {
-                log.info("dex2jar file {}", f);
+                System.out.println("dex2jar file " + f);
                 File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dex2jar");
                 doData(Main.readClasses(f), distDir);
             }
         } catch (Exception e) {
-            Main.niceExceptionMessage(log, e, 0);
+            Main.niceExceptionMessage(e, 0);
             throw e;
         }
     }
@@ -76,7 +73,7 @@ public class V3Test {
                                 try {
                                     byte[] data = this.toByteArray();
                                     FileUtils.writeByteArrayToFile(new File(destDir, name + ".class"), data);
-                                    log.info("verify {}", name);
+                                    System.out.println("verify " + name);
                                     TestUtils.verify(new ClassReader(data));
                                 } catch (Exception e) {
                                     throw new DexException(e);

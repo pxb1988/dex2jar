@@ -44,8 +44,6 @@ import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.util.AbstractVisitor;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.TraceMethodVisitor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.DexException;
 
@@ -54,8 +52,6 @@ import com.googlecode.dex2jar.DexException;
  * 
  */
 public abstract class TestUtils {
-
-    private static final Logger log = LoggerFactory.getLogger(TestUtils.class);
 
     public static File dex(File file, File distFile) throws Exception {
         return dex(new File[] { file }, distFile);
@@ -95,7 +91,7 @@ public abstract class TestUtils {
         for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
             ZipEntry entry = e.nextElement();
             if (entry.getName().endsWith(".class")) {
-                log.info("checking {}", entry.getName());
+                System.out.println("checking " + entry.getName());
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 InputStream is = zipFile.getInputStream(entry);

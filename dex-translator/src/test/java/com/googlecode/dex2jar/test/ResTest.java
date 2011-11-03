@@ -25,8 +25,6 @@ import java.util.Map.Entry;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.googlecode.dex2jar.v3.Main;
 
@@ -35,7 +33,6 @@ import com.googlecode.dex2jar.v3.Main;
  * 
  */
 public class ResTest {
-    static final Logger log = LoggerFactory.getLogger(ResTest.class);
 
     @Test
     public void test() throws Exception {
@@ -56,13 +53,13 @@ public class ResTest {
 
         for (Entry<String, List<File>> e : m.entrySet()) {
             String name = e.getKey();
-            log.info("Testing res file {}", name);
+            System.out.println("Testing res file " + name);
             File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
             File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
             Main.doData(Main.readClasses(dex), distFile, null);
             Main.doFile(dex, distFile);
             TestUtils.checkZipFile(distFile);
         }
-        log.info("Done.");
+        System.out.println("Done.");
     }
 }
