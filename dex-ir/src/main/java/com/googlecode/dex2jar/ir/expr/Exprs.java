@@ -140,8 +140,8 @@ public final class Exprs {
         return new UnopExpr(VT.LENGTH, array);
     }
 
-    public static Local nLocal(String name, Type type) {
-        return new Local(name, type);
+    public static Local nLocal(String name) {
+        return new Local(name);
     }
 
     public static BinopExpr nLt(Value a, Value b) {

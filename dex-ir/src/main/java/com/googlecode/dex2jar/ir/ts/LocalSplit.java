@@ -140,7 +140,7 @@ public class LocalSplit implements Transformer {
                     if (v.vt == VT.LOCAL) {
                         Phi p = frame[((Local) v)._ls_index];
                         if (p.value == null) {
-                            Local local = new Local("a_" + localId++, null);
+                            Local local = new Local("a_" + localId++);
                             ValueBox nvb = new ValueBox(local);
                             local._ls_vb = nvb;
                             p.setLocal(local);
@@ -269,7 +269,7 @@ public class LocalSplit implements Transformer {
                     if (e2.op1 instanceof Phi) {
                         Local local = (Local) trim(e2.op1);
                         if (local == null) {
-                            local = new Local("unRef" + unRef++, null);
+                            local = new Local("unRef" + unRef++);
                             local._ls_vb = new ValueBox(local);
                         }
                         locals.add(local);

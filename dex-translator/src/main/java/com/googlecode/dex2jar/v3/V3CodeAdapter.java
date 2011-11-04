@@ -131,21 +131,21 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         {
             int i = 0;
             if ((irMethod.access & Opcodes.ACC_STATIC) == 0) {
-                Local _this = nLocal("this", this.irMethod.owner);
+                Local _this = nLocal("this");
                 list.add(nIdentity(_this, nThisRef(this.irMethod.owner)));
                 locals[args[i]] = _this;
                 i++;
             }
             int j = 0;
             for (; i < args.length; i++, j++) {
-                Local _arg = nLocal("arg_" + args[i], this.irMethod.args[j]);
+                Local _arg = nLocal("arg_" + args[i]);
                 list.add(nIdentity(_arg, nParameterRef(this.irMethod.args[j], j)));
                 locals[args[i]] = _arg;
             }
         }
         for (int i = 0; i < locals.length; i++) {
             if (locals[i] == null) {
-                locals[i] = nLocal("a" + i, null);
+                locals[i] = nLocal("a" + i);
             }
         }
     }

@@ -42,9 +42,9 @@ public class LocalRemoverTest {
         IrMethod jm = new IrMethod();
         StmtList list = jm.stmts;
         {
-            Local a = nLocal("a", null);
-            Local b = nLocal("b", null);
-            Local c = nLocal("c", null);
+            Local a = nLocal("a");
+            Local b = nLocal("b");
+            Local c = nLocal("c");
             jm.locals.add(a);
             jm.locals.add(b);
             jm.locals.add(c);
@@ -65,9 +65,9 @@ public class LocalRemoverTest {
         IrMethod jm = new IrMethod();
         StmtList list = jm.stmts;
         {
-            Local a = nLocal("a", null);
-            Local b = nLocal("b", null);
-            Local c = nLocal("c", null);
+            Local a = nLocal("a");
+            Local b = nLocal("b");
+            Local c = nLocal("c");
 
             jm.locals.add(a);
             jm.locals.add(b);
@@ -89,9 +89,9 @@ public class LocalRemoverTest {
         IrMethod jm = new IrMethod();
         StmtList list = jm.stmts;
         {
-            Local a = nLocal("a", null);
-            Local b = nLocal("b", null);
-            Local c = nLocal("c", null);
+            Local a = nLocal("a");
+            Local b = nLocal("b");
+            Local c = nLocal("c");
 
             jm.locals.add(a);
             jm.locals.add(b);
@@ -119,9 +119,9 @@ public class LocalRemoverTest {
         IrMethod jm = new IrMethod();
         StmtList list = jm.stmts;
         {
-            Local a = nLocal("a", null);
-            Local b = nLocal("b", null);
-            Local c = nLocal("c", null);
+            Local a = nLocal("a");
+            Local b = nLocal("b");
+            Local c = nLocal("c");
 
             jm.locals.add(a);
             jm.locals.add(b);
@@ -143,7 +143,7 @@ public class LocalRemoverTest {
 
         IrMethod jm = new IrMethod();
 
-        Local b = nLocal("a", null);
+        Local b = nLocal("a");
 
         StmtList list = jm.stmts;
         jm.locals.add(b);
@@ -166,7 +166,7 @@ public class LocalRemoverTest {
 
         IrMethod jm = new IrMethod();
 
-        Local b = nLocal("a", null);
+        Local b = nLocal("a");
 
         StmtList list = jm.stmts;
         jm.locals.add(b);
@@ -198,8 +198,8 @@ public class LocalRemoverTest {
         LabelStmt L4 = nLabel();
         jm.traps.add(new Trap(L1, L2, L3, exType));
 
-        Local b = nLocal("a", null);
-        Local ex = nLocal("ex", exType);
+        Local b = nLocal("a");
+        Local ex = nLocal("ex");
         StmtList list = jm.stmts;
         jm.locals.add(b);
         jm.locals.add(ex);
@@ -227,9 +227,9 @@ public class LocalRemoverTest {
     public void t8() {
         IrMethod jm = new IrMethod();
 
-        Local array = nLocal("array", null);
-        Local index = nLocal("index", null);
-        Local value = nLocal("value", null);
+        Local array = nLocal("array");
+        Local index = nLocal("index");
+        Local value = nLocal("value");
         StmtList list = jm.stmts;
         jm.locals.add(array);
         jm.locals.add(index);
@@ -257,12 +257,12 @@ public class LocalRemoverTest {
         LabelStmt L4 = nLabel();
         jm.traps.add(new Trap(L1, L2, L3, exType));
 
-        Local b = nLocal("b", null);
-        Local ex = nLocal("ex", exType);
-        Local c = nLocal("c", exType);
-        Local d = nLocal("d", exType);
-        Local e = nLocal("e", exType);
-        Local cst = nLocal("cst", exType);
+        Local b = nLocal("b");
+        Local ex = nLocal("ex");
+        Local c = nLocal("c");
+        Local d = nLocal("d");
+        Local e = nLocal("e");
+        Local cst = nLocal("cst");
         StmtList list = jm.stmts;
         jm.locals.add(b);
         jm.locals.add(ex);

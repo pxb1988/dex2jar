@@ -15,10 +15,10 @@ public class StmtListTest {
     public void toStringTest() {
 
         StmtList list = new StmtList();
-        Local a = Exprs.nLocal("this", Type.getType("Ljava/lang/String;"));
-        Local b = Exprs.nLocal("b", Type.INT_TYPE);
-        Local c = Exprs.nLocal("c", Type.LONG_TYPE);
-        Local d = Exprs.nLocal("d", Type.FLOAT_TYPE);
+        Local a = Exprs.nLocal("this");
+        Local b = Exprs.nLocal("b");
+        Local c = Exprs.nLocal("c");
+        Local d = Exprs.nLocal("d");
         LabelStmt L1 = Stmts.nLabel();
 
         list.add(Stmts.nIdentity(a, Exprs.nThisRef(Type.getType("La/Some;"))));

@@ -77,7 +77,7 @@ public class ExceptionHandlerCurrect implements Transformer {
                 irMethod.stmts.insertAftre(pre, g);
                 irMethod.stmts.insertBefore(st, lbl);
                 if (ex == null) {
-                    ex = Exprs.nLocal("unRefEx", null);
+                    ex = Exprs.nLocal("unRefEx");
                 }
                 irMethod.stmts.insertBefore(lbl, Stmts.nAssign(ex, Exprs.nExceptionRef(t.type)));
             }
