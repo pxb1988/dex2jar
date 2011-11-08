@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.dump;
+package com.googlecode.dex2jar.util;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -28,7 +28,6 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ProxyOutputStream;
-import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
@@ -77,7 +76,7 @@ public class Dump implements DexFileVisitor {
     }
 
     public static void doFile(File srcDex) throws IOException {
-        doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + ".dump.jar"));
+        doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + "_dump.jar"));
     }
 
     public static void doFile(File srcDex, File destJar) throws IOException {
@@ -176,6 +175,31 @@ public class Dump implements DexFileVisitor {
         this.writerManager = writerManager;
     }
 
+    public static String toJavaClass(String desc) {
+        switch (desc.charAt(0)) {
+        case 'L':
+            return desc.substring(0, desc.length() - 1).replace('/', '.');
+        case 'B':
+            return "byte";
+        case 'S':
+            return "short";
+        case 'C':
+            return "char";
+
+        case 'I':
+            return "int";
+        case 'J':
+            return "long";
+        case 'F':
+            return "float";
+        case 'D':
+            return "double";
+        case '[':
+            return toJavaClass(desc.substring(1)) + "[]";
+        }
+        return desc;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -184,7 +208,7 @@ public class Dump implements DexFileVisitor {
      */
     public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
 
-        String javaClassName = Type.getType(className).getClassName();
+        String javaClassName = toJavaClass(className);
         out = writerManager.get(javaClassName);
         out.printf("//class:%04d  access:0x%04x\n", class_count++, access_flags);
         out.print(getAccDes(access_flags));
@@ -196,15 +220,15 @@ public class Dump implements DexFileVisitor {
         if (superClass != null) {
             if (!"Ljava/lang/Object;".equals(superClass)) {
                 out.print(" extends ");
-                out.print(Type.getType(superClass).getClassName());
+                out.print(toJavaClass(superClass));
             }
         }
         if (interfaceNames != null && interfaceNames.length > 0) {
             out.print(" implements ");
-            out.print(Type.getType(interfaceNames[0]).getClassName());
+            out.print(toJavaClass(interfaceNames[0]));
             for (int i = 1; i < interfaceNames.length; i++) {
                 out.print(',');
-                out.print(Type.getType(interfaceNames[i]).getClassName());
+                out.print(toJavaClass(interfaceNames[i]));
             }
         }
         out.println();
@@ -228,8 +252,7 @@ public class Dump implements DexFileVisitor {
             public DexFieldVisitor visitField(int accesFlags, Field field, Object value) {
                 out.printf("//field:%04d  access:0x%04x\n", field_count++, accesFlags);
                 out.printf("//%s\n", field);
-                out.printf("%s %s %s", getAccDes(accesFlags), Type.getType(field.getType()).getClassName(),
-                        field.getName());
+                out.printf("%s %s %s", getAccDes(accesFlags), toJavaClass(field.getType()), field.getName());
                 if (value != null) {
                     out.print('=');
                     out.print(value);
@@ -244,14 +267,13 @@ public class Dump implements DexFileVisitor {
                 out.printf("//method:%04d  access:0x%04x\n", method_count++, accesFlags);
                 out.printf("//%s\n", method);
 
-                out.printf("%s%s %s(", getAccDes(accesFlags), Type.getType(method.getReturnType()).getClassName(),
-                        method.getName());
+                out.printf("%s%s %s(", getAccDes(accesFlags), toJavaClass(method.getReturnType()), method.getName());
                 String ps[] = method.getParameterTypes();
                 if (ps != null && ps.length > 0) {
-                    out.print(Type.getType(ps[0]).getClassName());
+                    out.print(toJavaClass(ps[0]));
                     for (int i = 1; i < ps.length; i++) {
                         out.print(',');
-                        out.print(Type.getType(ps[i]).getClassName());
+                        out.print(toJavaClass(ps[i]));
                     }
                 }
                 out.println(')');

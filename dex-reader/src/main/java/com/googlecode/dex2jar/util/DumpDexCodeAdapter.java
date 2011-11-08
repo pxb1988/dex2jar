@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.dump;
+package com.googlecode.dex2jar.util;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodeDump;
@@ -51,7 +49,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
     }
 
     private static String c(String type) {
-        return Type.getType(type).getClassName();
+        return Dump.toJavaClass(type);
     }
 
     private List<DexLabel> labels = new ArrayList<DexLabel>();
@@ -178,7 +176,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
      */
     @Override
     public void visitFilledNewArrayStmt(int opcode, int[] regs, String type) {
-        info(opcode, "TEMP=new %s[%d]", Type.getType(type).getElementType().getClassName(), regs.length);
+        info(opcode, "TEMP=new %s[%d]", Dump.toJavaClass(type.substring(1)), regs.length);
         for (int i = 0; i < regs.length; i++) {
             info(opcode, "TEMP[%d]=v%d", i, regs[i]);
         }
@@ -384,12 +382,12 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
         int i = 0;
         if (!this.isStatic) {
             int reg = args[i++];
-            String type = Type.getType(method.getOwner()).getClassName();
+            String type = Dump.toJavaClass(method.getOwner());
             out.printf("%20s:v%d   //%s\n", "this", reg, type);
         }
         for (String type : method.getParameterTypes()) {
             int reg = args[i++];
-            type = Type.getType(type).getClassName();
+            type = Dump.toJavaClass(type);
             out.printf("%20s:v%d   //%s\n", "", reg, type);
         }
     }
@@ -638,7 +636,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
             info(opcode, "v%d=NEW %s", toReg, type);
             break;
         case OP_CHECK_CAST:
-            info(opcode, "v%d=(%s) v%d", toReg, Type.getType(type).getClassName(), toReg);
+            info(opcode, "v%d=(%s) v%d", toReg, Dump.toJavaClass(type), toReg);
             break;
         }
     }
@@ -652,10 +650,10 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
     public void visitClassStmt(int opcode, int toReg, int fromReg, String type) {
         switch (opcode) {
         case OP_INSTANCE_OF:
-            info(opcode, "v%d=v%d instanceof %s", toReg, fromReg, Type.getType(type).getClassName());
+            info(opcode, "v%d=v%d instanceof %s", toReg, fromReg, Dump.toJavaClass(type));
             break;
         case OP_NEW_ARRAY:
-            info(opcode, "v%d=new %s[v%d]", toReg, Type.getType(type).getClassName(), fromReg);
+            info(opcode, "v%d=new %s[v%d]", toReg, Dump.toJavaClass(type), fromReg);
             break;
 
         }
