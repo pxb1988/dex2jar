@@ -19,10 +19,9 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
@@ -36,13 +35,13 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  */
 public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
     private static class TryCatch {
-        public Label end;
+        public DexLabel end;
 
-        public Label handler;
-        public Label start;
+        public DexLabel handler;
+        public DexLabel start;
         public String type;
 
-        public TryCatch(Label start, Label end, Label handler, String type) {
+        public TryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
             super();
             this.start = start;
             this.end = end;
@@ -55,7 +54,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
         return Type.getType(type).getClassName();
     }
 
-    private List<Label> labels = new ArrayList<Label>();
+    private List<DexLabel> labels = new ArrayList<DexLabel>();
 
     private Method method;
 
@@ -63,13 +62,16 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
 
     private List<TryCatch> trys = new ArrayList<TryCatch>();
 
+    private boolean isStatic;
+
     /**
      * @param dcv
      */
-    public DumpDexCodeAdapter(DexCodeVisitor dcv, Method m, PrintWriter out) {
+    public DumpDexCodeAdapter(DexCodeVisitor dcv, boolean isStatic, Method m, PrintWriter out) {
         super(dcv);
         this.method = m;
         this.out = out;
+        this.isStatic = isStatic;
     }
 
     protected void info(int opcode, String format, Object... args) {
@@ -81,7 +83,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
         }
     }
 
-    protected int labelIndex(Label label) {
+    protected int labelIndex(DexLabel label) {
         int i = labels.indexOf(label);
         if (i > -1)
             return i;
@@ -380,12 +382,12 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
     @Override
     public void visitArguments(int total, int[] args) {
         int i = 0;
-        if ((method.getAccessFlags() & Opcodes.ACC_STATIC) == 0) {
+        if (!this.isStatic) {
             int reg = args[i++];
             String type = Type.getType(method.getOwner()).getClassName();
             out.printf("%20s:v%d   //%s\n", "this", reg, type);
         }
-        for (String type : method.getType().getParameterTypes()) {
+        for (String type : method.getParameterTypes()) {
             int reg = args[i++];
             type = Type.getType(type).getClassName();
             out.printf("%20s:v%d   //%s\n", "", reg, type);
@@ -406,7 +408,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
      * @see com.googlecode.dex2jar.visitors.DexCodeAdapter#visitJumpInsn(int, int)
      */
     @Override
-    public void visitJumpStmt(int opcode, Label label) {
+    public void visitJumpStmt(int opcode, DexLabel label) {
         switch (opcode) {
         case OP_GOTO:
             info(opcode, "goto L%s", labelIndex(label));
@@ -414,7 +416,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
         }
     }
 
-    public void visitJumpStmt(int opcode, int reg, Label label) {
+    public void visitJumpStmt(int opcode, int reg, DexLabel label) {
         switch (opcode) {
         case OP_IF_EQZ:
             info(opcode, "if v%d == 0 goto L%s", reg, labelIndex(label));
@@ -443,7 +445,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
      * @see com.googlecode.dex2jar.visitors.DexCodeAdapter#visitJumpInsn(int, int, int, int)
      */
     @Override
-    public void visitJumpStmt(int opcode, int reg1, int reg2, Label label) {
+    public void visitJumpStmt(int opcode, int reg1, int reg2, DexLabel label) {
         switch (opcode) {
         case OP_IF_EQ:
             info(opcode, "if v%d == v%d goto L%s", reg1, reg2, labelIndex(label));
@@ -472,7 +474,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
      * @see com.googlecode.dex2jar.visitors.DexCodeAdapter#visitLabel(int)
      */
     @Override
-    public void visitLabel(Label label) {
+    public void visitLabel(DexLabel label) {
         boolean find = false;
         for (TryCatch tc : trys) {
             if (label.equals(tc.end)) {
@@ -532,7 +534,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
      * @see com.googlecode.dex2jar.visitors.DexCodeAdapter#visitLookupSwitchInsn(int, int, int, int[], int[])
      */
     @Override
-    public void visitLookupSwitchStmt(int opcode, int reg, Label label, int[] cases, Label[] label2) {
+    public void visitLookupSwitchStmt(int opcode, int reg, DexLabel label, int[] cases, DexLabel[] label2) {
         info(opcode, "switch(v%d)", reg);
         for (int i = 0; i < cases.length; i++) {
             info(-1, "case %d: goto L%s", cases[i], labelIndex(label2[i]));
@@ -552,13 +554,13 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
         case OP_INVOKE_STATIC: {
             int i = 0;
             StringBuilder sb = new StringBuilder();
-            for (int j = 0; j < method.getType().getParameterTypes().length; j++) {
+            for (int j = 0; j < method.getParameterTypes().length; j++) {
                 sb.append('v').append(regs[i++]).append(',');
             }
             if (sb.length() > 0) {
                 sb.deleteCharAt(sb.length() - 1);
             }
-            if (method.getType().getReturnType().equals("V")) {
+            if (method.getReturnType().equals("V")) {
                 info(opcode, "%s.%s(%s)  //%s", c(method.getOwner()), method.getName(), sb.toString(),
                         method.toString());
             } else {
@@ -574,13 +576,13 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
         case OP_INVOKE_SUPER: {
             int i = 1;
             StringBuilder sb = new StringBuilder();
-            for (int j = 0; j < method.getType().getParameterTypes().length; j++) {
+            for (int j = 0; j < method.getParameterTypes().length; j++) {
                 sb.append(',').append('v').append(regs[i++]);
             }
             if (sb.length() > 0) {
                 sb.deleteCharAt(0);
             }
-            if (method.getType().getReturnType().equals("V")) {
+            if (method.getReturnType().equals("V")) {
                 info(opcode, "v%d.%s(%s)  //%s", regs[0], method.getName(), sb.toString(), method.toString());
             } else {
                 info(opcode, "TEMP=v%d.%s(%s)  //%s", regs[0], method.getName(), sb.toString(), method.toString());
@@ -597,7 +599,8 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
      * @see com.googlecode.dex2jar.visitors.DexCodeAdapter#visitTableSwitchInsn(int, int, int, int, int, int[])
      */
     @Override
-    public void visitTableSwitchStmt(int opcode, int reg, Label label, int first_case, int last_case, Label[] labels) {
+    public void visitTableSwitchStmt(int opcode, int reg, DexLabel label, int first_case, int last_case,
+            DexLabel[] labels) {
         info(opcode, "switch(v%d)", reg);
         for (int i = 0; i < labels.length; i++) {
             info(opcode, "case %d: goto L%s", first_case + i, labelIndex(labels[i]));
@@ -611,7 +614,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
      * @see com.googlecode.dex2jar.visitors.DexCodeAdapter#visitTryCatch(int, int, int, java.lang.String)
      */
     @Override
-    public void visitTryCatch(Label start, Label end, Label handler, String type) {
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
         TryCatch tc = new TryCatch(start, end, handler, type);
         trys.add(tc);
         int id = trys.indexOf(tc);

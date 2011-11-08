@@ -28,9 +28,9 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ProxyOutputStream;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.reader.DexFileReader;
@@ -100,55 +100,52 @@ public class Dump implements DexFileVisitor {
 
     public static String getAccDes(int acc) {
         StringBuilder sb = new StringBuilder();
-        if ((acc & Opcodes.ACC_PUBLIC) != 0) {
+        if ((acc & DexOpcodes.ACC_PUBLIC) != 0) {
             sb.append("public ");
         }
-        if ((acc & Opcodes.ACC_PROTECTED) != 0) {
+        if ((acc & DexOpcodes.ACC_PROTECTED) != 0) {
             sb.append("protected ");
         }
-        if ((acc & Opcodes.ACC_PRIVATE) != 0) {
+        if ((acc & DexOpcodes.ACC_PRIVATE) != 0) {
             sb.append("private ");
         }
-        if ((acc & Opcodes.ACC_STATIC) != 0) {
+        if ((acc & DexOpcodes.ACC_STATIC) != 0) {
             sb.append("static ");
         }
-        if ((acc & Opcodes.ACC_ABSTRACT) != 0 && (acc & Opcodes.ACC_INTERFACE) == 0) {
+        if ((acc & DexOpcodes.ACC_ABSTRACT) != 0 && (acc & DexOpcodes.ACC_INTERFACE) == 0) {
             sb.append("abstract ");
         }
-        if ((acc & Opcodes.ACC_ANNOTATION) != 0) {
+        if ((acc & DexOpcodes.ACC_ANNOTATION) != 0) {
             sb.append("annotation ");
         }
-        if ((acc & Opcodes.ACC_BRIDGE) != 0) {
+        if ((acc & DexOpcodes.ACC_BRIDGE) != 0) {
             sb.append("bridge ");
         }
-        if ((acc & Opcodes.ACC_DEPRECATED) != 0) {
-            sb.append("deprecated ");
-        }
-        if ((acc & Opcodes.ACC_ENUM) != 0) {
+        if ((acc & DexOpcodes.ACC_ENUM) != 0) {
             sb.append("enum ");
         }
-        if ((acc & Opcodes.ACC_FINAL) != 0) {
+        if ((acc & DexOpcodes.ACC_FINAL) != 0) {
             sb.append("final ");
         }
-        if ((acc & Opcodes.ACC_INTERFACE) != 0) {
+        if ((acc & DexOpcodes.ACC_INTERFACE) != 0) {
             sb.append("interace ");
         }
-        if ((acc & Opcodes.ACC_NATIVE) != 0) {
+        if ((acc & DexOpcodes.ACC_NATIVE) != 0) {
             sb.append("native ");
         }
-        if ((acc & Opcodes.ACC_STRICT) != 0) {
+        if ((acc & DexOpcodes.ACC_STRICT) != 0) {
             sb.append("strict ");
         }
-        if ((acc & Opcodes.ACC_SYNCHRONIZED) != 0) {
+        if ((acc & DexOpcodes.ACC_SYNCHRONIZED) != 0) {
             sb.append("synchronized ");
         }
-        if ((acc & Opcodes.ACC_TRANSIENT) != 0) {
+        if ((acc & DexOpcodes.ACC_TRANSIENT) != 0) {
             sb.append("transient ");
         }
-        if ((acc & Opcodes.ACC_VARARGS) != 0) {
+        if ((acc & DexOpcodes.ACC_VARARGS) != 0) {
             sb.append("varargs ");
         }
-        if ((acc & Opcodes.ACC_VOLATILE) != 0) {
+        if ((acc & DexOpcodes.ACC_VOLATILE) != 0) {
             sb.append("volatile ");
         }
         return sb.toString();
@@ -185,13 +182,13 @@ public class Dump implements DexFileVisitor {
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
-    public DexClassVisitor visit(int access_flags, String className, String superClass, String... interfaceNames) {
+    public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
 
         String javaClassName = Type.getType(className).getClassName();
         out = writerManager.get(javaClassName);
         out.printf("//class:%04d  access:0x%04x\n", class_count++, access_flags);
         out.print(getAccDes(access_flags));
-        if ((access_flags & Opcodes.ACC_INTERFACE) == 0) {
+        if ((access_flags & DexOpcodes.ACC_INTERFACE) == 0) {
             out.print("class ");
         }
         out.print(javaClassName);
@@ -228,26 +225,28 @@ public class Dump implements DexFileVisitor {
                 super.visitEnd();
             }
 
-            public DexFieldVisitor visitField(Field field, Object value) {
-                out.printf("//field:%04d  access:0x%04x\n", field_count++, field.getAccessFlags());
+            public DexFieldVisitor visitField(int accesFlags, Field field, Object value) {
+                out.printf("//field:%04d  access:0x%04x\n", field_count++, accesFlags);
                 out.printf("//%s\n", field);
-                out.printf("%s %s %s", getAccDes(field.getAccessFlags()), Type.getType(field.getType()).getClassName(), field.getName());
+                out.printf("%s %s %s", getAccDes(accesFlags), Type.getType(field.getType()).getClassName(),
+                        field.getName());
                 if (value != null) {
                     out.print('=');
                     out.print(value);
                 }
                 out.println(';');
 
-                return dcv.visitField(field, value);
+                return dcv.visitField(accesFlags, field, value);
             }
 
-            public DexMethodVisitor visitMethod(final Method method) {
+            public DexMethodVisitor visitMethod(final int accesFlags, final Method method) {
                 out.println();
-                out.printf("//method:%04d  access:0x%04x\n", method_count++, method.getAccessFlags());
+                out.printf("//method:%04d  access:0x%04x\n", method_count++, accesFlags);
                 out.printf("//%s\n", method);
 
-                out.printf("%s%s %s(", getAccDes(method.getAccessFlags()), Type.getType(method.getType().getReturnType()).getClassName(), method.getName());
-                String ps[] = method.getType().getParameterTypes();
+                out.printf("%s%s %s(", getAccDes(accesFlags), Type.getType(method.getReturnType()).getClassName(),
+                        method.getName());
+                String ps[] = method.getParameterTypes();
                 if (ps != null && ps.length > 0) {
                     out.print(Type.getType(ps[0]).getClassName());
                     for (int i = 1; i < ps.length; i++) {
@@ -257,7 +256,7 @@ public class Dump implements DexFileVisitor {
                 }
                 out.println(')');
 
-                DexMethodVisitor dmv = dcv.visitMethod(method);
+                DexMethodVisitor dmv = dcv.visitMethod(accesFlags, method);
                 if (dmv == null) {
                     return null;
                 }
@@ -266,7 +265,7 @@ public class Dump implements DexFileVisitor {
                         DexCodeVisitor dcv = mv.visitCode();
                         if (dcv == null)
                             return null;
-                        return new DumpDexCodeAdapter(dcv, method, out);
+                        return new DumpDexCodeAdapter(dcv, (accesFlags & DexOpcodes.ACC_STATIC) != 0, method, out);
                     }
                 };
             }
