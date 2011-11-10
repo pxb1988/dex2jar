@@ -23,4 +23,8 @@ package com.googlecode.dex2jar;
  */
 public class DexLabel {
     public Object info;
+
+    public String toString() {
+        return String.format("L%08x", this.hashCode());
+    }
 }

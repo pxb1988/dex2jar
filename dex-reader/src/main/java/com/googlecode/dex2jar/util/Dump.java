@@ -33,12 +33,9 @@ import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.reader.DexFileReader;
-import com.googlecode.dex2jar.visitors.DexClassAdapter;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
-import com.googlecode.dex2jar.visitors.DexFileVisitor;
-import com.googlecode.dex2jar.visitors.DexMethodAdapter;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
@@ -46,14 +43,14 @@ import com.googlecode.dex2jar.visitors.EmptyVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class Dump implements DexFileVisitor {
+public class Dump extends EmptyVisitor {
     public interface WriterManager {
         PrintWriter get(String name);
     }
 
     public static void doData(byte[] data, File destJar) throws IOException {
         final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
-        new DexFileReader(data).accept(new Dump(new EmptyVisitor(), new WriterManager() {
+        new DexFileReader(data).accept(new Dump(new WriterManager() {
 
             public PrintWriter get(String name) {
                 try {
@@ -160,8 +157,6 @@ public class Dump implements DexFileVisitor {
 
     private int class_count = 0;
 
-    private DexFileVisitor dfv;
-
     private PrintWriter out;
 
     private WriterManager writerManager;
@@ -169,9 +164,8 @@ public class Dump implements DexFileVisitor {
     /**
      * @param dfv
      */
-    public Dump(DexFileVisitor dfv, WriterManager writerManager) {
+    public Dump(WriterManager writerManager) {
         super();
-        this.dfv = dfv;
         this.writerManager = writerManager;
     }
 
@@ -232,10 +226,7 @@ public class Dump implements DexFileVisitor {
             }
         }
         out.println();
-        DexClassVisitor dcv = dfv.visit(access_flags, className, superClass, interfaceNames);
-        if (dcv == null)
-            return null;
-        return new DexClassAdapter(dcv) {
+        return new EmptyVisitor() {
 
             int field_count = 0;
 
@@ -259,7 +250,7 @@ public class Dump implements DexFileVisitor {
                 }
                 out.println(';');
 
-                return dcv.visitField(accesFlags, field, value);
+                return null;
             }
 
             public DexMethodVisitor visitMethod(final int accesFlags, final Method method) {
@@ -278,29 +269,12 @@ public class Dump implements DexFileVisitor {
                 }
                 out.println(')');
 
-                DexMethodVisitor dmv = dcv.visitMethod(accesFlags, method);
-                if (dmv == null) {
-                    return null;
-                }
-                return new DexMethodAdapter(dmv) {
+                return new EmptyVisitor() {
                     public DexCodeVisitor visitCode() {
-                        DexCodeVisitor dcv = mv.visitCode();
-                        if (dcv == null)
-                            return null;
-                        return new DumpDexCodeAdapter(dcv, (accesFlags & DexOpcodes.ACC_STATIC) != 0, method, out);
+                        return new DumpDexCodeAdapter((accesFlags & DexOpcodes.ACC_STATIC) != 0, method, out);
                     }
                 };
             }
         };
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visitEnd()
-     */
-    public void visitEnd() {
-        dfv.visitEnd();
-    }
-
 }

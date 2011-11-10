@@ -26,12 +26,13 @@ import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexCodeAdapter;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
+import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
+public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
     private static class TryCatch {
         public DexLabel end;
 
@@ -65,8 +66,7 @@ public class DumpDexCodeAdapter extends DexCodeAdapter implements DexOpcodes {
     /**
      * @param dcv
      */
-    public DumpDexCodeAdapter(DexCodeVisitor dcv, boolean isStatic, Method m, PrintWriter out) {
-        super(dcv);
+    public DumpDexCodeAdapter( boolean isStatic, Method m, PrintWriter out) {
         this.method = m;
         this.out = out;
         this.isStatic = isStatic;

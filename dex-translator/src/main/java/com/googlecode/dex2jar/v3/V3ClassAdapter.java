@@ -224,6 +224,9 @@ public class V3ClassAdapter implements DexClassVisitor {
                             if (annotationDefaults == null) {
                                 annotationDefaults = new HashMap<String, Object>();
                             }
+                            if (value instanceof DexType) {
+                                value = Type.getType(((DexType) value).desc);
+                            }
                             annotationDefaults.put(name, value);
                         }
                     };
