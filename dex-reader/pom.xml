@@ -8,7 +8,7 @@
 		<version>1.0</version>
 	</parent>
 	<artifactId>dex-reader</artifactId>
-	<version>1.3</version>
+	<version>${dex2jar.reader.version}</version>
 	<name>Dex Reader</name>
 	<description>A tool for converting Android's .dex format to Java's .class format</description>
 	<url>http://code.google.como/p/dex2jar/</url>

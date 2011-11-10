@@ -15,8 +15,6 @@
  */
 package com.googlecode.dex2jar.ir;
 
-import org.objectweb.asm.Type;
-
 import com.googlecode.dex2jar.ir.Value.E0Expr;
 
 /**
@@ -32,11 +30,9 @@ public class Local extends E0Expr {
     public ValueBox _ls_vb;
     public int _ls_write_count;
     public String name;
-    public Type type;
 
-    public Local(String name, Type type) {
+    public Local(String name) {
         super(Value.VT.LOCAL);
-        this.type = type;
         this.name = name;
     }
 

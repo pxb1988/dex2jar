@@ -24,13 +24,11 @@ import java.util.TreeSet;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
-import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
-import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
-import com.googlecode.dex2jar.visitors.DexMethodVisitor;
+import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
@@ -40,7 +38,7 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
     private Map<String, Integer> map = new HashMap<String, Integer>();
     private Map<String, String> innerNameMap = new HashMap<String, String>();
 
-    private Map<String, Set<String>> extraMember = new HashMap();
+    private Map<String, Set<String>> extraMember = new HashMap<String, Set<String>>();
 
     /**
      * @return the innerNameMap
@@ -65,7 +63,7 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
      */
     public DexClassVisitor visit(int access_flags, final String className, String superClass, String[] interfaceNames) {
 
-        return new DexClassVisitor() {
+        return new EmptyVisitor() {
             protected List<Annotation> anns = new ArrayList<Annotation>();
 
             @Override
@@ -73,20 +71,6 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
                 Annotation ann = new Annotation(name, visible);
                 anns.add(ann);
                 return new V3AnnAdapter(ann);
-            }
-
-            @Override
-            public void visitSource(String file) {
-            }
-
-            @Override
-            public DexMethodVisitor visitMethod(int accessFlags, Method method) {
-                return null;
-            }
-
-            @Override
-            public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
-                return null;
             }
 
             @Override
@@ -118,7 +102,7 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
                                 if (it.value == null) {
                                     Set<String> set = extraMember.get(enclosingClass);
                                     if (set == null) {
-                                        set = new TreeSet();
+                                        set = new TreeSet<String>();
                                         extraMember.put(enclosingClass, set);
                                     }
                                     set.add(className);

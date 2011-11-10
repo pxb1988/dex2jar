@@ -40,8 +40,9 @@ import static com.googlecode.dex2jar.reader.OpcodeFormat.F35c;
 import static com.googlecode.dex2jar.reader.OpcodeFormat.F3rc;
 import static com.googlecode.dex2jar.reader.OpcodeFormat.F51l;
 
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexLabel;
@@ -69,7 +70,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
     /**
      * 标签映射,指令位置->指令编号
      */
-    /* default */Map<Integer, DexLabel> labels = new HashMap<Integer, DexLabel>();
+    /* default */Map<Integer, DexLabel> labels = new TreeMap<Integer, DexLabel>();
 
     private boolean isStatic;
 
@@ -316,12 +317,29 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
     private void acceptInsn(DataIn in, int instruction_size, DexOpcodeAdapter n) {
         // 处理指令
-        int currentOffset = 0;
-        for (int baseOffset = in.getCurrentPosition(); currentOffset < instruction_size; currentOffset = (in
+        Iterator<Integer> labelOffsetIterator = this.labels.keySet().iterator();
+        Integer nextLabelOffset = labelOffsetIterator.hasNext() ? labelOffsetIterator.next() : null;
+        for (int baseOffset = in.getCurrentPosition(), currentOffset = 0; currentOffset < instruction_size; currentOffset = (in
                 .getCurrentPosition() - baseOffset) / 2) {
+            boolean currentOffsetVisited = false;
+            while (nextLabelOffset != null) {// issue 65, a label may `inside` an instruction
+                int _intNextLabelOffset = nextLabelOffset;// autobox
+                if (_intNextLabelOffset > currentOffset) {
+                    break;
+                } else if (_intNextLabelOffset == currentOffset) {
+                    currentOffsetVisited = true;
+                    n.offset(currentOffset);
+                    nextLabelOffset = labelOffsetIterator.hasNext() ? labelOffsetIterator.next() : null;
+                    break;
+                } else {// _intNextLabelOffset < currentOffset
+                    n.offset(_intNextLabelOffset);
+                    nextLabelOffset = labelOffsetIterator.hasNext() ? labelOffsetIterator.next() : null;
+                }
+            }
+            if (!currentOffsetVisited) {
+                n.offset(currentOffset);
+            }
             int opcode = in.readByte() & 0xff;
-
-            n.offset(currentOffset);
 
             int format = DexOpcodeUtil.format(opcode);
 
@@ -582,7 +600,14 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                 break;
             }
         }
-        n.offset(currentOffset);
+        while (nextLabelOffset != null) {
+            n.offset(nextLabelOffset);
+            if (labelOffsetIterator.hasNext()) {
+                nextLabelOffset = labelOffsetIterator.next();
+            } else {
+                break;
+            }
+        }
     }
 
     /**

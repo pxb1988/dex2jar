@@ -51,7 +51,8 @@ public class TypeExpr extends E1Expr {
     public String toString() {
         switch (super.vt) {
         case CHECK_CAST:
-       case INSTANCE_OF:
+            return "((" + ToStringUtil.toShortClassName(type) + ")" + op + ")";
+        case INSTANCE_OF:
             return "(" + op + " instanceof " + ToStringUtil.toShortClassName(type) + ")";
         case NEW_ARRAY:
             if (type.getSort() == Type.ARRAY) {

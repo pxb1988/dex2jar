@@ -49,7 +49,7 @@ public class Issue71Test {
         irMethod.name = "test";
         irMethod.args = new Type[] {};
         irMethod.ret = Type.VOID_TYPE;
-        Local a = nLocal("a", null);
+        Local a = nLocal("a");
         irMethod.locals.add(a);
 
         irMethod.stmts.add(nAssign(a, nLong(0L)));

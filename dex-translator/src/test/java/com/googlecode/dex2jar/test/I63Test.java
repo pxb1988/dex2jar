@@ -38,7 +38,7 @@ public class I63Test {
 
         LabelStmt L1 = Stmts.nLabel();
         LabelStmt L2 = Stmts.nLabel();
-        Local left = Exprs.nLocal("a", null);
+        Local left = Exprs.nLocal("a");
         irMethod.locals.add(left);
         irMethod.stmts.add(L1);
         irMethod.stmts.add(Stmts.nAssign(left, Exprs.nStaticField(Type.getType("La/A;"), "a", Type.getType("La/A;"))));

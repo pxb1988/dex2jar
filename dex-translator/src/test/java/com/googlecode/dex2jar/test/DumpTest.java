@@ -19,35 +19,35 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.googlecode.dex2jar.DexException;
-import com.googlecode.dex2jar.ExceptionUtils;
-import com.googlecode.dex2jar.dump.Dump;
+import com.googlecode.dex2jar.util.Dump;
+import com.googlecode.dex2jar.v3.Main;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * 
  */
 public class DumpTest {
-    static final Logger log = LoggerFactory.getLogger(DumpTest.class);
 
     @Test
-    public void test() throws IOException {
-        File file = new File("target/test-classes/dexes");
-        if (file.exists() && file.isDirectory()) {
-            for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip" }, false)) {
-                log.info("dump file {}", f);
-                try {
-                    Dump.doFile(f);
-                } catch (Exception e) {
-                    DexException t = new DexException("while accept file: " + f, e);
-                    ExceptionUtils.niceExceptionMessage(log, t, 0);
-                    throw t;
-                }
+    public void test() throws Exception {
+        try {
+            File file = new File("target/test-classes/dexes");
+            for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip", "apk" }, false)) {
+                System.out.println("dump file " + f);
+                File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dump.jar");
+                doData(Main.readClasses(f), distDir);
             }
+        } catch (Exception e) {
+            Main.niceExceptionMessage(e, 0);
+            throw e;
         }
     }
+
+    public static void doData(byte[] data, final File destJar) throws IOException {
+        Dump.doData(data, destJar);
+    }
+
 }

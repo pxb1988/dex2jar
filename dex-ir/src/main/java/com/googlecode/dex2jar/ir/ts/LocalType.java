@@ -150,7 +150,7 @@ public class LocalType implements Transformer {
                 break;
             case CHECK_CAST: {
                 TypeExpr te = (TypeExpr) v;
-                merge(exec(te.op.value), tb);
+                type(exec(te.op.value), Type.getType(Object.class));
                 type(tb, te.type);
             }
                 break;
