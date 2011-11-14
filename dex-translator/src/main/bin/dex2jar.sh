@@ -16,7 +16,7 @@ PRGDIR=`dirname "$PRG"`
 #
 
 _classpath="."
-for k in $PRGDIR/lib/*.jar
+for k in "$PRGDIR"/lib/*.jar
 do
  _classpath="${_classpath}:${k}"
 done
