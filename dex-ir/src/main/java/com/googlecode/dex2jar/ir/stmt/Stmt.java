@@ -121,6 +121,9 @@ public abstract class Stmt {
      * Used in Local Split, forward frame of the {@link Stmt}
      */
     public Object _ls_forward_frame;
+    
+    public Stmt _ro_default_next;
+    
     /**
      * The number of argument
      */
