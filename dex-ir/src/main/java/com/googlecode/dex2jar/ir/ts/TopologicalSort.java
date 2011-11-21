@@ -187,8 +187,8 @@ public class TopologicalSort implements Transformer {
         }
         // 2.1 link exception handler
         for (Trap t : traps) {
-            for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
-                link(s.getPre(), t.handler);
+            for (Stmt s = t.start; s != t.end; s = s.getNext()) {
+                link(s, t.handler);
             }
         }
         // 2.2 link normal
