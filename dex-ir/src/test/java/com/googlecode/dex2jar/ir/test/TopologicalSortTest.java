@@ -11,9 +11,9 @@ import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
-import com.googlecode.dex2jar.ir.ts.Reorder;
+import com.googlecode.dex2jar.ir.ts.TopologicalSort;
 
-public class ReorderTest {
+public class TopologicalSortTest {
     @Test
     public void testGOTO() {
         IrMethod jm = new IrMethod();
@@ -30,7 +30,11 @@ public class ReorderTest {
         list.add(ls);
         list.add(Stmts.nReturnVoid());
 
-        new Reorder().transform(jm);
+        System.out.println("before========");
+        System.out.println(jm);
+        new TopologicalSort().transform(jm);
+        System.out.println("after======");
+        System.out.println(jm);
     }
 
     @Test
@@ -49,7 +53,11 @@ public class ReorderTest {
         list.add(ls);
         list.add(Stmts.nReturnVoid());
 
-        new Reorder().transform(jm);
+        System.out.println("before========");
+        System.out.println(jm);
+        new TopologicalSort().transform(jm);
+        System.out.println("after======");
+        System.out.println(jm);
     }
 
     @Test
@@ -71,7 +79,11 @@ public class ReorderTest {
         list.add(L1);
         list.add(Stmts.nAssign(b, Constant.nInt(789)));
         list.add(Stmts.nGoto(L2));
-        new Reorder().transform(jm);
+        System.out.println("before========");
+        System.out.println(jm);
+        new TopologicalSort().transform(jm);
+        System.out.println("after======");
+        System.out.println(jm);
     }
 
     @Test
@@ -93,6 +105,10 @@ public class ReorderTest {
         list.add(L1);
         list.add(Stmts.nAssign(b, Constant.nInt(789)));
         list.add(Stmts.nGoto(L2));
-        new Reorder().transform(jm);
+        System.out.println("before========");
+        System.out.println(jm);
+        new TopologicalSort().transform(jm);
+        System.out.println("after======");
+        System.out.println(jm);
     }
 }

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
@@ -70,7 +69,6 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         }
     }
 
-    public Set<Stmt> _cfg_tais;
     public List<AssignStmt> _ls_inits = new ArrayList<AssignStmt>();
     public List<Stmt> _ls_visit_order;
 

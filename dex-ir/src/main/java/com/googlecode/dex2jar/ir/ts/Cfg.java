@@ -15,7 +15,6 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
-import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
 
@@ -151,7 +150,6 @@ public class Cfg {
                 }
             }
         }
-        Set<Stmt> tails = new TreeSet<Stmt>(jm.stmts);
 
         for (Stmt st : jm.stmts) {
             switch (st.st) {
@@ -177,21 +175,14 @@ public class Cfg {
                 }
                 break;
             case THROW:
-                if (st._cfg_tos.size() < 1) {
-                    tails.add(st);
-                }
-                break;
             case RETURN:
             case RETURN_VOID:
-                tails.add(st);
                 break;
             default:
                 link(st, st.getNext());
                 break;
             }
-
         }
-        jm.stmts._cfg_tais = tails;
     }
 
     public static <T> void Forward(IrMethod jm, StmtVisitor<T> sv) {

@@ -1,12 +1,15 @@
 package com.googlecode.dex2jar.ir.ts;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
 
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.Exprs;
@@ -19,7 +22,7 @@ import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 
-public class Reorder implements Transformer {
+public class TopologicalSort implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
@@ -28,8 +31,8 @@ public class Reorder implements Transformer {
             return;
         }
         StmtList stmts = irMethod.stmts;
-        // 1.
-        init(stmts);
+        // 1. generate graph
+        init(stmts, irMethod.traps);
 
         // 2.
         removeLoop(stmts);
@@ -37,12 +40,9 @@ public class Reorder implements Transformer {
         // 3. topological sorting algorithms
         List<Stmt> out = topologicalSort(stmts);
 
-        System.out.println(out);
         stmts.clear();
         // 4. rebuild stmts
         rebuild(stmts, out);
-
-        System.out.println(stmts);
     }
 
     private void rebuild(StmtList stmts, List<Stmt> out) {
@@ -50,7 +50,7 @@ public class Reorder implements Transformer {
         for (int i = 0; i < out.size(); i++) {
             Stmt stmt = out.get(i);
             stmts.add(stmt);
-            Stmt orgNext = stmt._ro_default_next;
+            Stmt orgNext = stmt._ts_default_next;
             if (orgNext != null && orgNext.st == ST.LABEL) {
                 if (i + 1 < out.size()) {
                     Stmt next = out.get(i + 1);
@@ -89,77 +89,24 @@ public class Reorder implements Transformer {
     }
 
     private List<Stmt> topologicalSort(StmtList stmts) {
-        // TODO generate cfg
-        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
-            stmt._cfg_visited = false;
-            switch (stmt.st) {
-            case GOTO:
-                JumpStmt js = (JumpStmt) stmt;
-                for (Stmt f : stmt._cfg_froms) {
-                    f._cfg_tos.remove(stmt);
-                    f._cfg_tos.addAll(stmt._cfg_tos);
-                    f._ro_default_next = js.target;
-                }
-
-                for (Stmt t : stmt._cfg_tos) {
-                    t._cfg_froms.remove(stmt);
-                    t._cfg_froms.addAll(stmt._cfg_froms);
-                }
-                break;
-            }
-        }
 
         List<Stmt> out = new ArrayList<Stmt>(stmts.getSize());
         Stack<Stmt> stack = new Stack<Stmt>();
         stack.push(stmts.getFirst());
 
+        boolean visitedFlag = false;
+
         while (!stack.empty()) {
             Stmt stmt = stack.pop();
-            if (stmt._cfg_visited) {
+            if (stmt._cfg_visited == visitedFlag) {
                 continue;
             }
             if (stmt._cfg_froms.size() == 0 || stack.size() == 0) {
-                stmt._cfg_visited = true;
+                stmt._cfg_visited = visitedFlag;
                 out.add(stmt);
-                Collection<Stmt> tos = stmt._cfg_tos;
-                if (stmt.st == ST.TABLE_SWITCH) {
-                    TableSwitchStmt tss = (TableSwitchStmt) stmt;
-                    List<Stmt> toPush = new ArrayList<Stmt>(tss._cfg_tos.size());
-                    toPush.remove(tss.defaultTarget);
-                    for (int i = 0; i < tss.targets.length; i++) {
-                        toPush.add(tss.targets[i]);
-                    }
-                    toPush.add(tss.defaultTarget);
-
-                    for (Stmt t : tss._cfg_tos) {
-                        if (!toPush.contains(t)) {
-                            toPush.add(t);
-                        }
-                    }
-
-                    Collections.reverse(toPush);
-                    tos = toPush;
-                } else if (stmt.st == ST.LOOKUP_SWITCH) {
-                    LookupSwitchStmt lss = (LookupSwitchStmt) stmt;
-                    List<Stmt> toPush = new ArrayList<Stmt>(lss._cfg_tos.size());
-                    toPush.remove(lss.defaultTarget);
-                    for (int i = 0; i < lss.targets.length; i++) {
-                        toPush.add(lss.targets[i]);
-                    }
-                    toPush.add(lss.defaultTarget);
-
-                    for (Stmt t : lss._cfg_tos) {
-                        if (!toPush.contains(t)) {
-                            toPush.add(t);
-                        }
-                    }
-
-                    Collections.reverse(toPush);
-                    tos = toPush;
-                }
-                for (Stmt t : tos) {
+                for (Stmt t : stmt._ts_tos) {
                     t._cfg_froms.remove(stmt);
-                    if (!t._cfg_visited) {
+                    if (t._cfg_visited != visitedFlag) {
                         stack.push(t);
                     }
                 }
@@ -174,12 +121,35 @@ public class Reorder implements Transformer {
      * @param stmts
      */
     private void removeLoop(StmtList stmts) {
-        // TODO Auto-generated method stub
+        dfsRemove(stmts.getFirst(), new HashSet<Stmt>());
     }
 
-    private void init(StmtList stmts) {
-        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
+    private void dfsRemove(Stmt stmt, Set<Stmt> visited) {
+        visited.add(stmt);
+        for (Stmt to : new ArrayList<Stmt>(stmt._ts_tos)) {
+            if (visited.contains(to)) {// a loop
+                to._cfg_froms.remove(stmt);
+                while (stmt._ts_tos.remove(to)) {
+                }
+            } else if (!to._cfg_visited) {
+                dfsRemove(to, visited);
+            }
+        }
+        visited.remove(stmt);
+        stmt._cfg_visited = true;
+    }
 
+    private static void link(Stmt from, Stmt to) {
+        if (to == null) {// last stmt is a LabelStmt
+            return;
+        }
+        from._ts_tos.add(to);
+        to._cfg_froms.add(from);
+    }
+
+    private void init(StmtList stmts, List<Trap> traps) {
+        // 1. init _ts_default_next and insert label after IF stmt
+        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
             switch (stmt.st) {
             case IF:
                 Stmt n = stmt.getNext();
@@ -187,7 +157,7 @@ public class Reorder implements Transformer {
                     LabelStmt ls = Stmts.nLabel();
                     stmts.insertAftre(stmt, ls);
                 }
-                stmt._ro_default_next = stmt.getNext();
+                stmt._ts_default_next = stmt.getNext();
                 break;
             case GOTO:
             case RETURN:
@@ -195,12 +165,84 @@ public class Reorder implements Transformer {
             case TABLE_SWITCH:
             case LOOKUP_SWITCH:
             case THROW:
-                stmt._ro_default_next = null;
+                stmt._ts_default_next = null;
                 break;
             default:
-                stmt._ro_default_next = stmt.getNext();
+                stmt._ts_default_next = stmt.getNext();
                 break;
             }
+        }
+        // 2. init cfg
+        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
+            if (stmt._cfg_froms == null) {
+                stmt._cfg_froms = new TreeSet<Stmt>(stmts);
+            } else {
+                stmt._cfg_froms.clear();
+            }
+            if (stmt._ts_tos == null) {
+                stmt._ts_tos = new ArrayList<Stmt>(2);
+            } else {
+                stmt._ts_tos.clear();
+            }
+        }
+        // 2.1 link exception handler
+        for (Trap t : traps) {
+            for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
+                link(s.getPre(), t.handler);
+            }
+        }
+        // 2.2 link normal
+        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
+            switch (stmt.st) {
+            case GOTO:
+                link(stmt, ((JumpStmt) stmt).target);
+                break;
+            case IF:
+                link(stmt, ((JumpStmt) stmt).target);
+                link(stmt, stmt.getNext());
+                break;
+            case LOOKUP_SWITCH:
+                LookupSwitchStmt lss = (LookupSwitchStmt) stmt;
+                link(stmt, lss.defaultTarget);
+                for (LabelStmt ls : lss.targets) {
+                    link(stmt, ls);
+                }
+                break;
+            case TABLE_SWITCH:
+                TableSwitchStmt tss = (TableSwitchStmt) stmt;
+                link(stmt, tss.defaultTarget);
+                for (LabelStmt ls : tss.targets) {
+                    link(stmt, ls);
+                }
+                break;
+            case THROW:
+            case RETURN:
+            case RETURN_VOID:
+                break;
+            default:
+                link(stmt, stmt.getNext());
+                break;
+            }
+        }
+        // 3. remove goto
+        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
+            stmt._cfg_visited = false;
+            switch (stmt.st) {
+            case GOTO:
+                JumpStmt js = (JumpStmt) stmt;
+                for (Stmt f : stmt._cfg_froms) {
+                    f._ts_tos.remove(stmt);
+                    f._ts_tos.addAll(stmt._ts_tos);
+                    f._ts_default_next = js.target;
+                }
+
+                for (Stmt t : stmt._ts_tos) {
+                    t._cfg_froms.remove(stmt);
+                    t._cfg_froms.addAll(stmt._cfg_froms);
+                }
+                break;
+            }
+            Collections.reverse(stmt._ts_tos);
         }
     }
 

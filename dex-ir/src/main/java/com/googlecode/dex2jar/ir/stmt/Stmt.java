@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -121,9 +122,10 @@ public abstract class Stmt {
      * Used in Local Split, forward frame of the {@link Stmt}
      */
     public Object _ls_forward_frame;
-    
-    public Stmt _ro_default_next;
-    
+
+    public Stmt _ts_default_next;
+    public List<Stmt> _ts_tos;
+
     /**
      * The number of argument
      */
