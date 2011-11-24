@@ -25,12 +25,17 @@ import java.util.Stack;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-/* default */class DataInImpl extends ByteArrayInputStream implements DataIn {
+/* default */class ReverseEndianDataIn extends ByteArrayInputStream implements DataIn {
 
     private Stack<Integer> stack = new Stack<Integer>();
 
-    public DataInImpl(byte[] data) {
+    public ReverseEndianDataIn(byte[] data) {
         super(data);
+    }
+
+    public ReverseEndianDataIn(byte[] data, int currentPosition) {
+        this(data);
+        move(currentPosition);
     }
 
     public int getCurrentPosition() {
@@ -69,7 +74,7 @@ import java.util.Stack;
     }
 
     public int readIntx() {
-        return super.read() | (super.read() << 8) | (super.read() << 16) | (super.read() << 24);
+        return (super.read() << 24) | (super.read() << 16) | (super.read() << 8) | super.read();
     }
 
     public long readLeb128() {
@@ -88,11 +93,11 @@ import java.util.Stack;
     }
 
     public long readLongx() {
-        return (readIntx() & 0x00000000FFFFFFFFL) | (((long) readIntx()) << 32);
+        return (((long) readIntx()) << 32) | (readIntx() & 0x00000000FFFFFFFFL);
     }
 
     public int readShortx() {
-        return (short) (readUByte() | (readUByte() << 8));
+        return (short) readUShortx();
     }
 
     public int readUByte() {
@@ -118,7 +123,7 @@ import java.util.Stack;
 
     @Override
     public int readUShortx() {
-        return readUByte() | (readUByte() << 8);
+        return (readUByte() << 8) | readUByte();
     }
 
     public void skip(int bytes) {

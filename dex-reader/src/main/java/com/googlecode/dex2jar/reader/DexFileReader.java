@@ -48,7 +48,7 @@ public class DexFileReader {
     private static final byte[] DEX_FILE_MAGIC = new byte[] { 0x64, 0x65, 0x78, 0x0a, 0x30, 0x33, 0x35, 0x00 };
 
     /* default */static final int ENDIAN_CONSTANT = 0x12345678;
-    // /* default */static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
+    /* default */static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
 
     private int class_defs_off;
 
@@ -76,8 +76,8 @@ public class DexFileReader {
      * 
      */
     public DexFileReader(byte[] data) {
-        DataIn in = new DataInImpl(data);
-        this.in = in;
+        DataIn in = new EndianDataIn(data);
+
         // { 0x64 0x65 0x78 0x0a 0x30 0x33 0x35 0x00 } = "dex\n035\0"
         byte[] magic = in.readBytes(8);
 
@@ -92,9 +92,13 @@ public class DexFileReader {
         in.skip(4 + 20 + 4 + 4);
 
         int endian_tag = in.readUIntx();
-        if (endian_tag != ENDIAN_CONSTANT) {
+        if (endian_tag == REVERSE_ENDIAN_CONSTANT) {
+            in = new ReverseEndianDataIn(data, in.getCurrentPosition());
+        } else if (endian_tag != ENDIAN_CONSTANT) {
             throw new DexException("not support endian_tag");
         }
+
+        this.in = in;
 
         // skip uint link_size
         // and uint link_off
