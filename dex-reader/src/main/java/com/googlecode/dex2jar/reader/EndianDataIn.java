@@ -92,10 +92,6 @@ import java.util.Stack;
         return vln;
     }
 
-    public long readLongx() {
-        return (readIntx() & 0x00000000FFFFFFFFL) | (((long) readIntx()) << 32);
-    }
-
     public int readShortx() {
         return (short) readUShortx();
     }

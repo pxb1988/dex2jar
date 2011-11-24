@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.Stack;
 
 /**
- * @see DexFileReader#ENDIAN_CONSTANT
+ * @see DexFileReader#REVERSE_ENDIAN_CONSTANT
  * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
@@ -90,10 +90,6 @@ import java.util.Stack;
         if (((1L << (bitpos - 1)) & vln) != 0)
             vln -= (1L << bitpos);
         return vln;
-    }
-
-    public long readLongx() {
-        return (((long) readIntx()) << 32) | (readIntx() & 0x00000000FFFFFFFFL);
     }
 
     public int readShortx() {

@@ -61,8 +61,6 @@ package com.googlecode.dex2jar.reader;
 
     int readUIntx();
 
-    long readLongx();
-
     int readShortx();
 
     int readUShortx();

@@ -584,7 +584,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         }
     }
 
-    public void xrc(int opcode, int c, int a, int b) {
+    public void xrc(int opcode, int a, int b, int c) {
         int args[] = new int[a];
         for (int i = 0; i < a; i++) {
             args[i] = c + i;
@@ -649,12 +649,12 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
     }
 
-    public void xrms(int opcode, int c, int a, int b) {
+    public void xrms(int opcode, int a, int b, int c) {
         // TODO Auto-generated method stub
 
     }
 
-    public void xrmi(int opcode, int c, int a, int b) {
+    public void xrmi(int opcode, int a, int b, int c) {
         // TODO Auto-generated method stub
 
     }
