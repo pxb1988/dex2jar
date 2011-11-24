@@ -42,6 +42,7 @@ public abstract interface DexOpcodes {
     int ACC_ANNOTATION = 0x2000; // class
     int ACC_ENUM = 0x4000; // class(?) field inner
     int ACC_CONSTRUCTOR = 0x10000;// constructor method (class or instance initializer)
+    int ACC_DECLARED_SYNCHRONIZED = 0x20000;
 
     public static final int OP_NOP = 0;
     public static final int OP_MOVE = 1;
@@ -162,21 +163,6 @@ public abstract interface DexOpcodes {
     public static final int OP_MUL_DOUBLE = 173;
     public static final int OP_DIV_DOUBLE = 174;
     public static final int OP_REM_DOUBLE = 175;
-
-    public static final int OP_EXECUTE_INLINE = 238;
-
-    public static final int OP_INVOKE_DIRECT_EMPTY = 240;
-
-    public static final int OP_IGET_QUICK = 242;
-    public static final int OP_IGET_WIDE_QUICK = 243;
-    public static final int OP_IGET_OBJECT_QUICK = 244;
-    public static final int OP_IPUT_QUICK = 245;
-    public static final int OP_IPUT_WIDE_QUICK = 246;
-    public static final int OP_IPUT_OBJECT_QUICK = 247;
-    public static final int OP_INVOKE_VIRTUAL_QUICK = 248;
-    public static final int OP_INVOKE_VIRTUAL_QUICK_RANGE = 249;
-    public static final int OP_INVOKE_SUPER_QUICK = 250;
-    public static final int OP_INVOKE_SUPER_QUICK_RANGE = 251;
 
     public static final int OP_ADD_INT_LIT_X = 0x00FF0000 | 216;
     public static final int OP_RSUB_INT_LIT_X = 0x00FF0000 | 217;

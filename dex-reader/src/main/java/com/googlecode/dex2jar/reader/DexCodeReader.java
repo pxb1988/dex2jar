@@ -15,31 +15,6 @@
  */
 package com.googlecode.dex2jar.reader;
 
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F10t;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F10x;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F11n;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F11x;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F12x;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F20t;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F21c;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F21h;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F21s;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F21t;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F22b;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F22c;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F22s;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F22t;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F22x;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F23x;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F30t;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F31c;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F31i;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F31t;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F32x;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F35c;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F3rc;
-import static com.googlecode.dex2jar.reader.OpcodeFormat.F51l;
-
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -98,7 +73,11 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
     private void findLabels(DataIn in, int instruction_size) {
         for (int baseOffset = in.getCurrentPosition(), currentOffset = 0; currentOffset < instruction_size; currentOffset = (in
                 .getCurrentPosition() - baseOffset) / 2) {
-            int opcode = in.readByte() & 0xff;
+            int opcode = in.readUByte();
+            if (opcode == 0xFF) {
+                opcode = 0xFF00 | in.readUByte();
+            }
+            OpcodeFormat format = OpcodeFormat.get(opcode);
             try {
                 switch (opcode) {
                 case OP_GOTO:// 10t
@@ -190,8 +169,11 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                     }
                     break;
                 default: {
-                    int size = DexOpcodeUtil.length(opcode);
-                    in.skip(size * 2 - 1);
+                    if (opcode >> 4 == 0xFF) {
+                        in.skip(2 * format.getSize() - 2);
+                    } else {
+                        in.skip(2 * format.getSize() - 1);
+                    }
                     break;
                 }
 
@@ -339,9 +321,11 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
             if (!currentOffsetVisited) {
                 n.offset(currentOffset);
             }
-            int opcode = in.readByte() & 0xff;
-
-            int format = DexOpcodeUtil.format(opcode);
+            int opcode = in.readUByte();
+            if (opcode == 0xFF) {
+                opcode = 0xFF00 | in.readUByte();
+            }
+            OpcodeFormat format = OpcodeFormat.get(opcode);
 
             switch (format) {
             case F10t:
@@ -393,6 +377,11 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                 n.x2x(opcode, VV & 0xF, VV >>> 4);
                 break;
             }
+            case F20bc: {
+                int AA = in.readUByte();
+                n.x0bc(opcode, AA, in.readUShortx());
+                break;
+            }
             case F20t:
                 in.skip(1);
                 n.x0t(opcode, in.readShortx());
@@ -434,6 +423,14 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                 int B = VV >>> 4;
                 int CCCC = in.readUShortx();
                 n.x2c(opcode, A, B, CCCC);
+                break;
+            }
+            case F22cs: {
+                int VV = in.readUByte();
+                int A = VV & 0xF;
+                int B = VV >>> 4;
+                int CCCC = in.readUShortx();
+                n.x2cs(opcode, A, B, CCCC);
                 break;
             }
             case F22s: {
@@ -565,6 +562,13 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                 }
                 break;
             }
+            case F32s: {
+                int aa = in.readUByte();
+                int bb = in.readUByte();
+                int cccc = in.readShortx();
+                n.x2s(opcode, aa, bb, cccc);
+                break;
+            }
             case F32x: {
                 in.skip(1);
                 int AAAA = in.readUShortx();
@@ -572,32 +576,105 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                 n.x2x(opcode, AAAA, BBBB);
                 break;
             }
-
+            case F33x: {
+                int aa = in.readUByte();
+                int bb = in.readUByte();
+                int cccc = in.readUShortx();
+                n.x3x(opcode, aa, bb, cccc);
+                break;
+            }
             case F35c: {
                 int VV = in.readUByte();
-                int A = VV & 0xF;
-                int B = VV >>> 4;
-                int CCCC = in.readUShortx();
+                int g = VV & 0xF;
+                int a = VV >>> 4;
+                int bbbb = in.readUShortx();
                 VV = in.readUShortx();
-                int D = VV & 0xF;
-                int E = (VV >> 4) & 0xF;
-                int F = (VV >> 8) & 0xF;
-                int G = VV >>> 12;
-                n.x5c(opcode, B, D, E, F, G, A, CCCC);
+                int c = VV & 0xF;
+                int d = (VV >> 4) & 0xF;
+                int e = (VV >> 8) & 0xF;
+                int f = VV >>> 12;
+                n.x5c(opcode, a, c, d, e, f, g, bbbb);
+                break;
+            }
+            case F35mi: {
+                int VV = in.readUByte();
+                int g = VV & 0xF;
+                int a = VV >>> 4;
+                int bbbb = in.readUShortx();
+                VV = in.readUShortx();
+                int c = VV & 0xF;
+                int d = (VV >> 4) & 0xF;
+                int e = (VV >> 8) & 0xF;
+                int f = VV >>> 12;
+                n.x5mi(opcode, a, c, d, e, f, g, bbbb);
+                break;
+            }
+            case F35ms: {
+                int VV = in.readUByte();
+                int g = VV & 0xF;
+                int a = VV >>> 4;
+                int bbbb = in.readUShortx();
+                VV = in.readUShortx();
+                int c = VV & 0xF;
+                int d = (VV >> 4) & 0xF;
+                int e = (VV >> 8) & 0xF;
+                int f = VV >>> 12;
+                n.x5ms(opcode, a, c, d, e, f, g, bbbb);
                 break;
             }
             case F3rc: {
+                int aa = in.readUByte();
+                int bbbb = in.readUShortx();
+                int cccc = in.readUShortx();
+                n.xrc(opcode, cccc, aa, bbbb);
+                break;
+            }
+            case F3rmi: {
                 int AA = in.readUByte();
                 int BBBB = in.readUShortx();
                 int CCCC = in.readUShortx();
-                n.xrc(opcode, CCCC, AA, BBBB);
+                n.xrmi(opcode, CCCC, AA, BBBB);
                 break;
             }
-            case F51l:
+            case F3rms: {
+                int AA = in.readUByte();
+                int BBBB = in.readUShortx();
+                int CCCC = in.readUShortx();
+                n.xrms(opcode, CCCC, AA, BBBB);
+                break;
+            }
+            case F40sc: {
+                int bbbb_bbbb = in.readUIntx();
+                int aaaa = in.readUShortx();
+                n.x0sc(opcode, aaaa, bbbb_bbbb);
+                break;
+            }
+            case F41c: {
+                int bbbb_bbbb = in.readUIntx();
+                int aaaa = in.readUShortx();
+                n.x1c(opcode, aaaa, bbbb_bbbb);
+                break;
+            }
+            case F51l: {
                 int AA = in.readUByte();
                 long BBBBBBBB_BBBBBBBB = in.readLongx();
                 n.x1l(opcode, AA, BBBBBBBB_BBBBBBBB);
                 break;
+            }
+            case F52c: {
+                int cccc_cccc = in.readUIntx();
+                int aaaa = in.readUShortx();
+                int bbbb = in.readUShortx();
+                n.x2c(opcode, aaaa, bbbb, cccc_cccc);
+                break;
+            }
+            case F5rc: {
+                int bbbb_bbbb = in.readUIntx();
+                int aaaa = in.readUShortx();
+                int cccc = in.readUShortx();
+                n.xrc(opcode, cccc, aaaa, bbbb_bbbb);
+                break;
+            }
             }
         }
         while (nextLabelOffset != null) {

@@ -26,7 +26,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-/* default */ class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
+/* default */class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
     private DexCodeVisitor dcv;
     private DexFileReader dex;
 
@@ -119,18 +119,23 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         }
     }
 
-    public void x1c(int opcode, int A, int B) {
+    public void x1c(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_STRING:
         case OP_CONST_STRING_JUMBO:
-            dcv.visitConstStmt(OP_CONST_STRING, A, dex.getString(B));
+            dcv.visitConstStmt(OP_CONST_STRING, a, dex.getString(b));
             break;
         case OP_CONST_CLASS:
-            dcv.visitConstStmt(OP_CONST_CLASS, A, dex.getType(B));
+        case OP_CONST_CLASS_JUMBO:
+            dcv.visitConstStmt(OP_CONST_CLASS, a, dex.getType(b));
             break;
         case OP_CHECK_CAST:
+        case OP_CHECK_CAST_JUMBO:
+            dcv.visitClassStmt(OP_CHECK_CAST, a, dex.getType(b));
+            break;
         case OP_NEW_INSTANCE:
-            dcv.visitClassStmt(opcode, A, dex.getType(B));
+        case OP_NEW_INSTANCE_JUMBO:
+            dcv.visitClassStmt(OP_NEW_INSTANCE, a, dex.getType(b));
             break;
         case OP_SGET:
         case OP_SGET_WIDE:
@@ -139,7 +144,14 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_SGET_BYTE:
         case OP_SGET_CHAR:
         case OP_SGET_SHORT:
-            dcv.visitFieldStmt(OP_SGET, A, dex.getField(B));
+        case OP_SGET_JUMBO:
+        case OP_SGET_WIDE_JUMBO:
+        case OP_SGET_OBJECT_JUMBO:
+        case OP_SGET_BOOLEAN_JUMBO:
+        case OP_SGET_BYTE_JUMBO:
+        case OP_SGET_CHAR_JUMBO:
+        case OP_SGET_SHORT_JUMBO:
+            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b));
             break;
         case OP_SPUT:
         case OP_SPUT_WIDE:
@@ -148,43 +160,50 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_SPUT_BYTE:
         case OP_SPUT_CHAR:
         case OP_SPUT_SHORT:
-            dcv.visitFieldStmt(OP_SPUT, A, dex.getField(B));
+        case OP_SPUT_JUMBO:
+        case OP_SPUT_WIDE_JUMBO:
+        case OP_SPUT_OBJECT_JUMBO:
+        case OP_SPUT_BOOLEAN_JUMBO:
+        case OP_SPUT_BYTE_JUMBO:
+        case OP_SPUT_CHAR_JUMBO:
+        case OP_SPUT_SHORT_JUMBO:
+            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b));
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x1h(int opcode, int A, int B) {
+    public void x1h(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_HIGH16:
-            dcv.visitConstStmt(OP_CONST, A, B << 16);
+            dcv.visitConstStmt(OP_CONST, a, b << 16);
             break;
         case OP_CONST_WIDE_HIGH16:
-            dcv.visitConstStmt(OP_CONST_WIDE, A, ((long) B) << 48);
+            dcv.visitConstStmt(OP_CONST_WIDE, a, ((long) b) << 48);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x1i(int opcode, int aA, int bBBBBBBB) {
+    public void x1i(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST:
-            dcv.visitConstStmt(opcode, aA, bBBBBBBB);
+            dcv.visitConstStmt(opcode, a, b);
             break;
         case OP_CONST_WIDE_32:
-            dcv.visitConstStmt(OP_CONST_WIDE, aA, (long) bBBBBBBB);
+            dcv.visitConstStmt(OP_CONST_WIDE, a, (long) b);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x1l(int opcode, int aA, long bBBBBBBB_BBBBBBBB) {
+    public void x1l(int opcode, int a, long b) {
         switch (opcode) {
         case OP_CONST_WIDE:
-            dcv.visitConstStmt(opcode, aA, bBBBBBBB_BBBBBBBB);
+            dcv.visitConstStmt(opcode, a, b);
             break;
         default:
             throw new RuntimeException("");
@@ -195,33 +214,33 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
      * OP_CONST_4
      * 
      * @param opcode
-     * @param A
-     * @param B
+     * @param a
+     * @param b
      */
-    public void x1n(int opcode, int A, int B) {
+    public void x1n(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_4:
-            dcv.visitConstStmt(OP_CONST, A, B);
+            dcv.visitConstStmt(OP_CONST, a, b);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x1s(int opcode, int A, int B) {
+    public void x1s(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_16:
-            dcv.visitConstStmt(OP_CONST, A, B);
+            dcv.visitConstStmt(OP_CONST, a, b);
             break;
         case OP_CONST_WIDE_16:
-            dcv.visitConstStmt(OP_CONST_WIDE, A, (long) B);
+            dcv.visitConstStmt(OP_CONST_WIDE, a, (long) b);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x1t(int opcode, int A, int offset) {
+    public void x1t(int opcode, int a, int offset) {
         switch (opcode) {
         case OP_IF_EQZ:
         case OP_IF_NEZ:
@@ -229,39 +248,39 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_IF_GEZ:
         case OP_IF_GTZ:
         case OP_IF_LEZ:
-            dcv.visitJumpStmt(opcode, A, getLabel(offset));
+            dcv.visitJumpStmt(opcode, a, getLabel(offset));
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x1x(int opcode, int A) {
+    public void x1x(int opcode, int a) {
         switch (opcode) {
         case OP_MOVE_RESULT:
         case OP_MOVE_RESULT_WIDE:
         case OP_MOVE_RESULT_OBJECT:
         case OP_MOVE_EXCEPTION:
-            dcv.visitMoveStmt(opcode, A);
+            dcv.visitMoveStmt(opcode, a);
             break;
         case OP_RETURN:
         case OP_RETURN_WIDE:
         case OP_RETURN_OBJECT:
-            dcv.visitReturnStmt(OP_RETURN, A);
+            dcv.visitReturnStmt(OP_RETURN, a);
             break;
         case OP_THROW:
-            dcv.visitReturnStmt(opcode, A);
+            dcv.visitReturnStmt(opcode, a);
             break;
         case OP_MONITOR_ENTER:
         case OP_MONITOR_EXIT:
-            dcv.visitMonitorStmt(opcode, A);
+            dcv.visitMonitorStmt(opcode, a);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x2b(int opcode, int aA, int bB, int cC) {
+    public void x2b(int opcode, int a, int b, int c) {
         switch (opcode) {
         case OP_ADD_INT_LIT8:
         case OP_RSUB_INT_LIT8:
@@ -274,18 +293,22 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_SHL_INT_LIT8:
         case OP_SHR_INT_LIT8:
         case OP_USHR_INT_LIT8:
-            dcv.visitBinopLitXStmt(opcode - (OP_ADD_INT_LIT8 - OP_ADD_INT_LIT_X), aA, bB, cC);
+            dcv.visitBinopLitXStmt(opcode - (OP_ADD_INT_LIT8 - OP_ADD_INT_LIT_X), a, b, c);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x2c(int opcode, int a, int b, int cCCC) {
+    public void x2c(int opcode, int a, int b, int c) {
         switch (opcode) {
         case OP_INSTANCE_OF:
+        case OP_INSTANCE_OF_JUMBO:
+            dcv.visitClassStmt(OP_INSTANCE_OF, a, b, dex.getType(c));
+            break;
         case OP_NEW_ARRAY:
-            dcv.visitClassStmt(opcode, a, b, dex.getType(cCCC));
+        case OP_NEW_ARRAY_JUMBO:
+            dcv.visitClassStmt(OP_NEW_ARRAY, a, b, dex.getType(c));
             break;
         case OP_IGET:
         case OP_IGET_WIDE:
@@ -294,7 +317,14 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_IGET_BYTE:
         case OP_IGET_CHAR:
         case OP_IGET_SHORT:
-            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(cCCC));
+        case OP_IGET_JUMBO:
+        case OP_IGET_WIDE_JUMBO:
+        case OP_IGET_OBJECT_JUMBO:
+        case OP_IGET_BOOLEAN_JUMBO:
+        case OP_IGET_BYTE_JUMBO:
+        case OP_IGET_CHAR_JUMBO:
+        case OP_IGET_SHORT_JUMBO:
+            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c));
             break;
         case OP_IPUT:
         case OP_IPUT_WIDE:
@@ -303,14 +333,21 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_IPUT_BYTE:
         case OP_IPUT_CHAR:
         case OP_IPUT_SHORT:
-            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(cCCC));
+        case OP_IPUT_JUMBO:
+        case OP_IPUT_WIDE_JUMBO:
+        case OP_IPUT_OBJECT_JUMBO:
+        case OP_IPUT_BOOLEAN_JUMBO:
+        case OP_IPUT_BYTE_JUMBO:
+        case OP_IPUT_CHAR_JUMBO:
+        case OP_IPUT_SHORT_JUMBO:
+            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c));
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x2s(int opcode, int a, int b, int cCCC) {
+    public void x2s(int opcode, int a, int b, int c) {
         switch (opcode) {
         case OP_ADD_INT_LIT16:
         case OP_RSUB_INT:
@@ -320,14 +357,14 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_AND_INT_LIT16:
         case OP_OR_INT_LIT16:
         case OP_XOR_INT_LIT16:
-            dcv.visitBinopLitXStmt(opcode - (OP_ADD_INT_LIT16 - OP_ADD_INT_LIT_X), a, b, cCCC);
+            dcv.visitBinopLitXStmt(opcode - (OP_ADD_INT_LIT16 - OP_ADD_INT_LIT_X), a, b, c);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x2t(int opcode, int a, int b, int cCCC) {
+    public void x2t(int opcode, int a, int b, int c) {
         switch (opcode) {
         case OP_IF_EQ:
         case OP_IF_NE:
@@ -335,32 +372,32 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_IF_GE:
         case OP_IF_GT:
         case OP_IF_LE:
-            dcv.visitJumpStmt(opcode, a, b, getLabel(cCCC));
+            dcv.visitJumpStmt(opcode, a, b, getLabel(c));
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x2x(int opcode, int A, int B) {
+    public void x2x(int opcode, int a, int b) {
         switch (opcode) {
         case OP_MOVE:
         case OP_MOVE_FROM16:
         case OP_MOVE_16:
-            dcv.visitMoveStmt(OP_MOVE, A, B);
+            dcv.visitMoveStmt(OP_MOVE, a, b);
             break;
         case OP_MOVE_WIDE:
         case OP_MOVE_WIDE_FROM16:
         case OP_MOVE_WIDE_16:
-            dcv.visitMoveStmt(OP_MOVE_WIDE, A, B);
+            dcv.visitMoveStmt(OP_MOVE_WIDE, a, b);
             break;
         case OP_MOVE_OBJECT:
         case OP_MOVE_OBJECT_FROM16:
         case OP_MOVE_OBJECT_16:
-            dcv.visitMoveStmt(OP_MOVE_OBJECT, A, B);
+            dcv.visitMoveStmt(OP_MOVE_OBJECT, a, b);
             break;
         case OP_ARRAY_LENGTH:
-            dcv.visitUnopStmt(OP_ARRAY_LENGTH, A, B);
+            dcv.visitUnopStmt(OP_ARRAY_LENGTH, a, b);
             break;
         case OP_NEG_INT:
         case OP_NOT_INT:
@@ -383,7 +420,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_INT_TO_BYTE:
         case OP_INT_TO_CHAR:
         case OP_INT_TO_SHORT:
-            dcv.visitUnopStmt(opcode, A, B);
+            dcv.visitUnopStmt(opcode, a, b);
             break;
         case OP_ADD_INT_2ADDR:
         case OP_SUB_INT_2ADDR:
@@ -417,21 +454,21 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_MUL_DOUBLE_2ADDR:
         case OP_DIV_DOUBLE_2ADDR:
         case OP_REM_DOUBLE_2ADDR:
-            dcv.visitBinopStmt(opcode - (OP_ADD_INT_2ADDR - OP_ADD_INT), A, A, B);
+            dcv.visitBinopStmt(opcode - (OP_ADD_INT_2ADDR - OP_ADD_INT), a, a, b);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x3x(int opcode, int aA, int bB, int cC) {
+    public void x3x(int opcode, int a, int b, int c) {
         switch (opcode) {
         case OP_CMPL_FLOAT:
         case OP_CMPG_FLOAT:
         case OP_CMPL_DOUBLE:
         case OP_CMPG_DOUBLE:
         case OP_CMP_LONG:
-            dcv.visitCmpStmt(opcode, aA, bB, cC);
+            dcv.visitCmpStmt(opcode, a, b, c);
             break;
 
         case OP_AGET:
@@ -441,7 +478,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_AGET_BYTE:
         case OP_AGET_CHAR:
         case OP_AGET_SHORT:
-            dcv.visitArrayStmt(OP_AGET, aA, bB, cC);
+            dcv.visitArrayStmt(OP_AGET, a, b, c);
             break;
         case OP_APUT:
         case OP_APUT_WIDE:
@@ -450,7 +487,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_APUT_BYTE:
         case OP_APUT_CHAR:
         case OP_APUT_SHORT:
-            dcv.visitArrayStmt(OP_APUT, aA, bB, cC);
+            dcv.visitArrayStmt(OP_APUT, a, b, c);
             break;
         case OP_ADD_INT:
         case OP_SUB_INT:
@@ -484,47 +521,47 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_MUL_DOUBLE:
         case OP_DIV_DOUBLE:
         case OP_REM_DOUBLE:
-            dcv.visitBinopStmt(opcode, aA, bB, cC);
+            dcv.visitBinopStmt(opcode, a, b, c);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    public void x5c(int opcode, int b, int d, int e, int f, int g, int a, int cCCC) {
+    public void x5c(int opcode, int a, int c, int d, int e, int f, int g, int b) {
         int args[];
-        switch (b) {
+        switch (a) {
         case 0:
             args = new int[0];
             break;
         case 1:
-            args = new int[] { d };
+            args = new int[] { c };
             break;
         case 2:
-            args = new int[] { d, e };
+            args = new int[] { c, d };
             break;
         case 3:
-            args = new int[] { d, e, f };
+            args = new int[] { c, d, e };
             break;
         case 4:
-            args = new int[] { d, e, f, g };
+            args = new int[] { c, d, e, f };
             break;
         case 5:
-            args = new int[] { d, e, f, g, a };
+            args = new int[] { c, d, e, f, g };
             break;
         default:
             throw new RuntimeException("");
         }
         switch (opcode) {
         case OP_FILLED_NEW_ARRAY:
-            dcv.visitFilledNewArrayStmt(opcode, args, dex.getType(cCCC));
+            dcv.visitFilledNewArrayStmt(opcode, args, dex.getType(b));
             break;
         case OP_INVOKE_VIRTUAL:
         case OP_INVOKE_SUPER:
         case OP_INVOKE_DIRECT:
         case OP_INVOKE_STATIC:
         case OP_INVOKE_INTERFACE:
-            Method m = dex.getMethod(cCCC);
+            Method m = dex.getMethod(b);
             int realSize = m.getParameterTypes().length + (opcode == OP_INVOKE_STATIC ? 0 : 1);
             if (realSize != args.length) {// there are some double or float in args
                 int[] nArgs = new int[realSize];
@@ -547,23 +584,30 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         }
     }
 
-    public void xrc(int opcode, int cCCC, int aA, int bBBB) {
-        int args[] = new int[aA];
-        for (int i = 0; i < aA; i++) {
-            args[i] = cCCC + i;
+    public void xrc(int opcode, int c, int a, int b) {
+        int args[] = new int[a];
+        for (int i = 0; i < a; i++) {
+            args[i] = c + i;
         }
         switch (opcode) {
         case OP_FILLED_NEW_ARRAY_RANGE:
-            dcv.visitFilledNewArrayStmt(OP_FILLED_NEW_ARRAY, args, dex.getType(bBBB));
+        case OP_FILLED_NEW_ARRAY_JUMBO:
+            dcv.visitFilledNewArrayStmt(OP_FILLED_NEW_ARRAY, args, dex.getType(b));
             break;
         case OP_INVOKE_VIRTUAL_RANGE:
         case OP_INVOKE_SUPER_RANGE:
         case OP_INVOKE_DIRECT_RANGE:
         case OP_INVOKE_STATIC_RANGE:
         case OP_INVOKE_INTERFACE_RANGE:
-            int nOpcode = opcode - (OP_INVOKE_VIRTUAL_RANGE - OP_INVOKE_VIRTUAL);
+        case OP_INVOKE_VIRTUAL_JUMBO:
+        case OP_INVOKE_SUPER_JUMBO:
+        case OP_INVOKE_DIRECT_JUMBO:
+        case OP_INVOKE_STATIC_JUMBO:
+        case OP_INVOKE_INTERFACE_JUMBO:
+            int nOpcode = opcode
+                    - (((opcode >> 4 == 0xFF) ? OP_INVOKE_VIRTUAL_JUMBO : OP_INVOKE_VIRTUAL_RANGE) - OP_INVOKE_VIRTUAL);
 
-            Method m = dex.getMethod(bBBB);
+            Method m = dex.getMethod(b);
             int realSize = m.getParameterTypes().length + (nOpcode == OP_INVOKE_STATIC ? 0 : 1);
             if (realSize != args.length) {// there are some double or float in args
                 int[] nArgs = new int[realSize];
@@ -584,6 +628,40 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         default:
             throw new RuntimeException("");
         }
+    }
+
+    public void x0bc(int opcode, int a, int b) {
+        // TODO Auto-generated method stub
+    }
+
+    public void x2cs(int opcode, int a, int b, int c) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void x5mi(int opcode, int a, int c, int d, int e, int f, int g, int b) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void x5ms(int opcode, int a, int c, int d, int e, int f, int g, int b) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void xrms(int opcode, int c, int a, int b) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void xrmi(int opcode, int c, int a, int b) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void x0sc(int opcode, int a, int b) {
+        // TODO Auto-generated method stub
+
     }
 
 }
