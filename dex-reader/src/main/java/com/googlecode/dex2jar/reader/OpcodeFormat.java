@@ -1,6 +1,6 @@
 package com.googlecode.dex2jar.reader;
 
-import static com.googlecode.dex2jar.DexOpcodes.*;
+import static com.googlecode.dex2jar.OdexOpcodes.*;
 import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
 
 /* default */enum OpcodeFormat {
@@ -21,12 +21,19 @@ import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
         return size;
     }
 
-    public static OpcodeFormat get(int opcode) {
+    public static OpcodeFormat get(int opcode, int apiLevel) {
         switch (opcode) {
+        case 0x00F0:// OP_INVOKE_DIRECT_EMPTY,OP_INVOKE_OBJECT_INIT_RANGE
+            if (apiLevel < 14) {
+                return F35c;
+            } else {
+                return F3rc;
+            }
         case OP_GOTO:
             return F10t;
         case OP_NOP:
         case OP_RETURN_VOID:
+        case OP_RETURN_VOID_BARRIER:
             return F10x;
         case OP_CONST_4:
             return F11n;
@@ -99,6 +106,8 @@ import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
         case OP_DIV_DOUBLE_2ADDR:
         case OP_REM_DOUBLE_2ADDR:
             return F12x;
+        case OP_THROW_VERIFICATION_ERROR:
+            return F20bc;
         case OP_GOTO_16:
             return F20t;
         case OP_CONST_STRING:
@@ -119,6 +128,12 @@ import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
         case OP_SPUT_BYTE:
         case OP_SPUT_CHAR:
         case OP_SPUT_SHORT:
+        case OP_SGET_VOLATILE:
+        case OP_SPUT_VOLATILE:
+        case OP_SGET_WIDE_VOLATILE:
+        case OP_SPUT_WIDE_VOLATILE:
+        case OP_SGET_OBJECT_VOLATILE:
+        case OP_SPUT_OBJECT_VOLATILE:
             return F21c;
         case OP_CONST_HIGH16:
         case OP_CONST_WIDE_HIGH16:
@@ -161,7 +176,20 @@ import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
         case OP_IPUT_BYTE:
         case OP_IPUT_CHAR:
         case OP_IPUT_SHORT:
+        case OP_IGET_VOLATILE:
+        case OP_IPUT_VOLATILE:
+        case OP_IGET_OBJECT_VOLATILE:
+        case OP_IGET_WIDE_VOLATILE:
+        case OP_IPUT_WIDE_VOLATILE:
+        case OP_IPUT_OBJECT_VOLATILE:
             return F22c;
+        case OP_IGET_QUICK:
+        case OP_IGET_WIDE_QUICK:
+        case OP_IGET_OBJECT_QUICK:
+        case OP_IPUT_QUICK:
+        case OP_IPUT_WIDE_QUICK:
+        case OP_IPUT_OBJECT_QUICK:
+            return F22cs;
         case OP_ADD_INT_LIT16:
         case OP_RSUB_INT:
         case OP_MUL_INT_LIT16:
@@ -256,6 +284,11 @@ import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
         case OP_INVOKE_STATIC:
         case OP_INVOKE_INTERFACE:
             return F35c;
+        case OP_EXECUTE_INLINE:
+            return F35mi;
+        case OP_INVOKE_VIRTUAL_QUICK:
+        case OP_INVOKE_SUPER_QUICK:
+            return F35ms;
         case OP_FILLED_NEW_ARRAY_RANGE:
         case OP_INVOKE_VIRTUAL_RANGE:
         case OP_INVOKE_SUPER_RANGE:
@@ -263,6 +296,35 @@ import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
         case OP_INVOKE_STATIC_RANGE:
         case OP_INVOKE_INTERFACE_RANGE:
             return F3rc;
+        case OP_EXECUTE_INLINE_RANGE:
+            return F3rmi;
+        case OP_INVOKE_VIRTUAL_QUICK_RANGE:
+        case OP_INVOKE_SUPER_QUICK_RANGE:
+            return F3rms;
+        case OP_CONST_CLASS_JUMBO:
+        case OP_CHECK_CAST_JUMBO:
+        case OP_NEW_INSTANCE_JUMBO:
+        case OP_SGET_JUMBO:
+        case OP_SGET_WIDE_JUMBO:
+        case OP_SGET_OBJECT_JUMBO:
+        case OP_SGET_BOOLEAN_JUMBO:
+        case OP_SGET_BYTE_JUMBO:
+        case OP_SGET_CHAR_JUMBO:
+        case OP_SGET_SHORT_JUMBO:
+        case OP_SPUT_JUMBO:
+        case OP_SPUT_WIDE_JUMBO:
+        case OP_SPUT_OBJECT_JUMBO:
+        case OP_SPUT_BOOLEAN_JUMBO:
+        case OP_SPUT_BYTE_JUMBO:
+        case OP_SPUT_CHAR_JUMBO:
+        case OP_SPUT_SHORT_JUMBO:
+        case OP_SGET_VOLATILE_JUMBO:
+        case OP_SGET_WIDE_VOLATILE_JUMBO:
+        case OP_SGET_OBJECT_VOLATILE_JUMBO:
+        case OP_SPUT_VOLATILE_JUMBO:
+        case OP_SPUT_WIDE_VOLATILE_JUMBO:
+        case OP_SPUT_OBJECT_VOLATILE_JUMBO:
+            return F41c;
         case OP_CONST_WIDE:
             return F51l;
         case OP_INSTANCE_OF_JUMBO:
@@ -281,31 +343,20 @@ import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
         case OP_IPUT_BYTE_JUMBO:
         case OP_IPUT_CHAR_JUMBO:
         case OP_IPUT_SHORT_JUMBO:
+        case OP_IGET_VOLATILE_JUMBO:
+        case OP_IGET_WIDE_VOLATILE_JUMBO:
+        case OP_IGET_OBJECT_VOLATILE_JUMBO:
+        case OP_IPUT_VOLATILE_JUMBO:
+        case OP_IPUT_WIDE_VOLATILE_JUMBO:
+        case OP_IPUT_OBJECT_VOLATILE_JUMBO:
             return F52c;
-        case OP_SGET_JUMBO:
-        case OP_SGET_WIDE_JUMBO:
-        case OP_SGET_OBJECT_JUMBO:
-        case OP_SGET_BOOLEAN_JUMBO:
-        case OP_SGET_BYTE_JUMBO:
-        case OP_SGET_CHAR_JUMBO:
-        case OP_SGET_SHORT_JUMBO:
-        case OP_SPUT_JUMBO:
-        case OP_SPUT_WIDE_JUMBO:
-        case OP_SPUT_OBJECT_JUMBO:
-        case OP_SPUT_BOOLEAN_JUMBO:
-        case OP_SPUT_BYTE_JUMBO:
-        case OP_SPUT_CHAR_JUMBO:
-        case OP_SPUT_SHORT_JUMBO:
-        case OP_CONST_CLASS_JUMBO:
-        case OP_CHECK_CAST_JUMBO:
-        case OP_NEW_INSTANCE_JUMBO:
-            return F41c;
+        case OP_FILLED_NEW_ARRAY_JUMBO:
         case OP_INVOKE_VIRTUAL_JUMBO:
         case OP_INVOKE_SUPER_JUMBO:
         case OP_INVOKE_DIRECT_JUMBO:
         case OP_INVOKE_STATIC_JUMBO:
         case OP_INVOKE_INTERFACE_JUMBO:
-        case OP_FILLED_NEW_ARRAY_JUMBO:
+        case OP_INVOKE_OBJECT_INIT_JUMBO:
             return F5rc;
         }
         throw new RuntimeException("opcode format for " + opcode + " not found!");

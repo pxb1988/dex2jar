@@ -139,7 +139,7 @@ package com.googlecode.dex2jar.reader;
     int OP_IPUT_WIDE_VOLATILE = 0x0000e9;
     int OP_SGET_WIDE_VOLATILE = 0x0000ea;
     int OP_SPUT_WIDE_VOLATILE = 0x0000eb;
-    int OP_THROW_VERIFICATION_ERROR = 0x0000ed;
+
     int OP_EXECUTE_INLINE = 0x0000ee;
     int OP_EXECUTE_INLINE_RANGE = 0x0000ef;
     int OP_INVOKE_DIRECT_EMPTY = 0x0000f0;//

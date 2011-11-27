@@ -18,15 +18,16 @@ package com.googlecode.dex2jar.reader;
 import java.util.Map;
 
 import com.googlecode.dex2jar.DexLabel;
-import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.OdexOpcodes;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
+import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-/* default */class DexOpcodeAdapter implements DexOpcodes, DexInternalOpcode {
+/* default */class DexOpcodeAdapter implements OdexOpcodes, DexInternalOpcode {
     private DexCodeVisitor dcv;
     private DexFileReader dex;
 
@@ -112,7 +113,8 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_NOP:
             break;
         case OP_RETURN_VOID:
-            dcv.visitReturnStmt(opcode);
+        case OP_RETURN_VOID_BARRIER:
+            dcv.visitReturnStmt(OP_RETURN_VOID);
             break;
         default:
             throw new RuntimeException("");
@@ -562,22 +564,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_INVOKE_STATIC:
         case OP_INVOKE_INTERFACE:
             Method m = dex.getMethod(b);
-            int realSize = m.getParameterTypes().length + (opcode == OP_INVOKE_STATIC ? 0 : 1);
-            if (realSize != args.length) {// there are some double or float in args
-                int[] nArgs = new int[realSize];
-                int i = 0;
-                int j = 0;
-                if (opcode != OP_INVOKE_STATIC) {
-                    nArgs[i++] = args[j++];
-                }
-                for (String t : m.getParameterTypes()) {
-                    nArgs[i++] = args[j];
-                    j += "J".equals(t) || "D".equals(t) ? 2 : 1;
-                }
-                dcv.visitMethodStmt(opcode, nArgs, m);
-            } else {
-                dcv.visitMethodStmt(opcode, args, m);
-            }
+            reBuildArgs(opcode, args, m);
             break;
         default:
             throw new RuntimeException("");
@@ -606,32 +593,54 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         case OP_INVOKE_INTERFACE_JUMBO:
             int nOpcode = opcode
                     - (((opcode >> 4 == 0xFF) ? OP_INVOKE_VIRTUAL_JUMBO : OP_INVOKE_VIRTUAL_RANGE) - OP_INVOKE_VIRTUAL);
-
             Method m = dex.getMethod(b);
-            int realSize = m.getParameterTypes().length + (nOpcode == OP_INVOKE_STATIC ? 0 : 1);
-            if (realSize != args.length) {// there are some double or float in args
-                int[] nArgs = new int[realSize];
-                int i = 0;
-                int j = 0;
-                if (nOpcode != OP_INVOKE_STATIC) {
-                    nArgs[i++] = args[j++];
-                }
-                for (String t : m.getParameterTypes()) {
-                    nArgs[i++] = args[j];
-                    j += "J".equals(t) || "D".equals(t) ? 2 : 1;
-                }
-                dcv.visitMethodStmt(nOpcode, nArgs, m);
-            } else {
-                dcv.visitMethodStmt(nOpcode, args, m);
-            }
+            reBuildArgs(nOpcode, args, m);
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
+    void reBuildArgs(int opcode, int[] args, Method m) {
+        int realSize = m.getParameterTypes().length + (opcode == OP_INVOKE_STATIC ? 0 : 1);
+        if (realSize != args.length) {// there are some double or float in args
+            int[] nArgs = new int[realSize];
+            int i = 0;
+            int j = 0;
+            if (opcode != OP_INVOKE_STATIC) {
+                nArgs[i++] = args[j++];
+            }
+            for (String t : m.getParameterTypes()) {
+                nArgs[i++] = args[j];
+                j += "J".equals(t) || "D".equals(t) ? 2 : 1;
+            }
+            dcv.visitMethodStmt(opcode, nArgs, m);
+        } else {
+            dcv.visitMethodStmt(opcode, args, m);
+        }
+    }
+
     public void x0bc(int opcode, int a, int b) {
-        // TODO Auto-generated method stub
+        switch (opcode) {
+        case OP_THROW_VERIFICATION_ERROR:
+
+            Object ref;
+            switch (a >> 6) {
+            case 0:// type;
+                ref = dex.getType(b);
+                break;
+            case 1:// field;
+                ref = dex.getField(b);
+                break;
+            case 2:// method;
+                ref = dex.getMethod(b);
+                break;
+            default:
+                throw new RuntimeException();
+            }
+            ((OdexCodeVisitor) dcv).visitReturnStmt(opcode, a & 0x3F, ref);
+            break;
+        }
     }
 
     public void x2cs(int opcode, int a, int b, int c) {
@@ -640,8 +649,47 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
     }
 
     public void x5mi(int opcode, int a, int c, int d, int e, int f, int g, int b) {
-        // TODO Auto-generated method stub
-
+        int args[];
+        switch (a) {
+        case 0:
+            args = new int[0];
+            break;
+        case 1:
+            args = new int[] { c };
+            break;
+        case 2:
+            args = new int[] { c, d };
+            break;
+        case 3:
+            args = new int[] { c, d, e };
+            break;
+        case 4:
+            args = new int[] { c, d, e, f };
+            break;
+        case 5:
+            args = new int[] { c, d, e, f, g };
+            break;
+        default:
+            throw new RuntimeException("");
+        }
+        switch (opcode) {
+        case OP_EXECUTE_INLINE:
+            Method m = getInlineMethod(b);
+            int parameterReCount = 0;
+            for (String type : m.getParameterTypes()) {
+                switch (type.charAt(0)) {
+                case 'D':
+                case 'J':
+                    parameterReCount += 2;
+                    break;
+                default:
+                    parameterReCount += 1;
+                }
+            }
+            int nOpcode = parameterReCount == a ? OP_INVOKE_STATIC : OP_INVOKE_VIRTUAL;
+            reBuildArgs(nOpcode, args, m);
+            break;
+        }
     }
 
     public void x5ms(int opcode, int a, int c, int d, int e, int f, int g, int b) {
@@ -654,9 +702,34 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
     }
 
-    public void xrmi(int opcode, int a, int b, int c) {
-        // TODO Auto-generated method stub
+    Method getInlineMethod(int idx) {
+        // FIXME
+        return null;
+    }
 
+    public void xrmi(int opcode, int a, int b, int c) {
+        int args[] = new int[a];
+        for (int i = 0; i < a; i++) {
+            args[i] = c + i;
+        }
+        switch (opcode) {
+        case OP_EXECUTE_INLINE_RANGE:
+            Method m = getInlineMethod(b);
+            int parameterReCount = 0;
+            for (String type : m.getParameterTypes()) {
+                switch (type.charAt(0)) {
+                case 'D':
+                case 'J':
+                    parameterReCount += 2;
+                    break;
+                default:
+                    parameterReCount += 1;
+                }
+            }
+            int nOpcode = parameterReCount == a ? OP_INVOKE_STATIC : OP_INVOKE_VIRTUAL;
+            reBuildArgs(nOpcode, args, m);
+            break;
+        }
     }
 
     public void x0sc(int opcode, int a, int b) {

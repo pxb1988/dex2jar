@@ -77,6 +77,7 @@ public class DexFileReader {
     private boolean odex = false;
     private DataIn odex_in;
     private int odex_depsOffset;
+    int apiLevel = 13;
 
     /**
      * 
@@ -444,6 +445,10 @@ public class DexFileReader {
         } finally {
             in.pop();
         }
+    }
+
+    public void setApiLevel(int apiLevel) {
+        this.apiLevel = apiLevel;
     }
 
     /**

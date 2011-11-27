@@ -81,7 +81,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                     opcode = uOpcodeL;
                 }
             }
-            OpcodeFormat format = OpcodeFormat.get(opcode);
+            OpcodeFormat format = OpcodeFormat.get(opcode, dex.apiLevel);
             try {
                 switch (opcode) {
                 case OP_GOTO:// 10t
@@ -324,7 +324,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                     opcode = uOpcodeL;
                 }
             }
-            OpcodeFormat format = OpcodeFormat.get(opcode);
+            OpcodeFormat format = OpcodeFormat.get(opcode, 13);
 
             switch (format) {
             case F10t:
