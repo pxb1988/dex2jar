@@ -38,7 +38,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
      * @param dex
      * @param labels
      */
-    /* defualt */DexOpcodeAdapter(DexFileReader dex, Map<Integer, DexLabel> labels, DexCodeVisitor dcv) {
+    /* package */DexOpcodeAdapter(DexFileReader dex, Map<Integer, DexLabel> labels, DexCodeVisitor dcv) {
         super();
         this.dex = dex;
         this.labels = labels;
@@ -684,10 +684,12 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_IGET_QUICK:
         case OP_IGET_WIDE_QUICK:
         case OP_IGET_OBJECT_QUICK:
+            ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_QUICK, a, b, c);
+            break;
         case OP_IPUT_QUICK:
         case OP_IPUT_WIDE_QUICK:
         case OP_IPUT_OBJECT_QUICK:
-            ((OdexCodeVisitor) dcv).visitFieldStmt(opcode, a, b, c);
+            ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_QUICK, a, b, c);
             break;
         }
     }
