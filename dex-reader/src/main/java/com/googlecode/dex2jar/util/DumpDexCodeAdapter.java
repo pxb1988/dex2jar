@@ -24,8 +24,6 @@ import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.visitors.DexCodeAdapter;
-import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**

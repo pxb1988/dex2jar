@@ -20,30 +20,34 @@ import java.io.IOException;
 import java.util.Stack;
 
 /**
- * @see DexFileReader#ENDIAN_CONSTANT
  * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-/* default */class EndianDataIn extends ByteArrayInputStream implements DataIn {
+/* default */abstract class EndianDataIn extends ByteArrayInputStream implements DataIn {
 
     private Stack<Integer> stack = new Stack<Integer>();
+    private int base;
 
-    public EndianDataIn(byte[] data) {
+    public EndianDataIn(byte[] data, int base) {
         super(data);
+        this.base = base;
     }
 
-    public EndianDataIn(byte[] data, int currentPosition) {
-        this(data);
-        move(currentPosition);
+    public int readShortx() {
+        return (short) readUShortx();
+    }
+
+    public int readIntx() {
+        return readUIntx();
     }
 
     public int getCurrentPosition() {
-        return super.pos;
+        return super.pos - base;
     }
 
     public void move(int absOffset) {
-        super.pos = absOffset;
+        super.pos = absOffset + base;
     }
 
     public void pop() {
@@ -59,10 +63,6 @@ import java.util.Stack;
         this.move(absOffset);
     }
 
-    public int readByte() {
-        return (byte) super.read();
-    }
-
     public byte[] readBytes(int size) {
         byte[] data = new byte[size];
         try {
@@ -71,10 +71,6 @@ import java.util.Stack;
             throw new RuntimeException(e);
         }
         return data;
-    }
-
-    public int readIntx() {
-        return super.read() | (super.read() << 8) | (super.read() << 16) | (super.read() << 24);
     }
 
     public long readLeb128() {
@@ -92,18 +88,6 @@ import java.util.Stack;
         return vln;
     }
 
-    public int readShortx() {
-        return (short) readUShortx();
-    }
-
-    public int readUByte() {
-        return super.read();
-    }
-
-    public int readUIntx() {
-        return readIntx();
-    }
-
     public long readULeb128() {
         long value = 0;
         int count = 0;
@@ -117,12 +101,60 @@ import java.util.Stack;
         return value;
     }
 
+    public void skip(int bytes) {
+        super.skip(bytes);
+    }
+
+    public int readByte() {
+        return (byte) readUByte();
+    }
+
+    public int readUByte() {
+        if (super.pos >= super.count) {
+            throw new RuntimeException("EOF");
+        }
+        return super.read();
+    }
+}
+
+/**
+ * @see DexFileReader#REVERSE_ENDIAN_CONSTANT
+ * @author Panxiaobo
+ * 
+ */
+class BigEndianDataIn extends EndianDataIn implements DataIn {
+
+    public BigEndianDataIn(byte[] data, int base) {
+        super(data, base);
+    }
+
     @Override
+    public int readUShortx() {
+        return (readUByte() << 8) | readUByte();
+    }
+
+    public int readUIntx() {
+        return (readUByte() << 24) | (readUByte() << 16) | (readUByte() << 8) | readUByte();
+    }
+}
+
+/**
+ * @see DexFileReader#ENDIAN_CONSTANT
+ * @author Panxiaobo
+ * 
+ */
+class LittleEndianDataIn extends EndianDataIn implements DataIn {
+
+    public LittleEndianDataIn(byte[] data, int base) {
+        super(data, base);
+    }
+
     public int readUShortx() {
         return readUByte() | (readUByte() << 8);
     }
 
-    public void skip(int bytes) {
-        super.skip(bytes);
+    public int readUIntx() {
+        return readUByte() | (readUByte() << 8) | (readUByte() << 16) | (readUByte() << 24);
+
     }
 }

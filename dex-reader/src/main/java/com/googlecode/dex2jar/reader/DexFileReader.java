@@ -37,6 +37,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
+import com.googlecode.dex2jar.visitors.OdexFileVisitor;
 
 /**
  * 读取dex文件
@@ -45,7 +46,10 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  * @version $Id$
  */
 public class DexFileReader {
-    private static final byte[] DEX_FILE_MAGIC = new byte[] { 0x64, 0x65, 0x78, 0x0a, 0x30, 0x33, 0x35, 0x00 };
+    private static final byte[] DEX_FILE_MAGIC = new byte[] { 0x64, 0x65, 0x78 };
+    private static final byte[] ODEX_FILE_MAGIC = new byte[] { 0x64, 0x65, 0x79 };
+    private static final byte[] VERSION_035 = new byte[] { 0x30, 0x33, 0x35 };
+    private static final byte[] VERSION_036 = new byte[] { 0x30, 0x33, 0x36 };
 
     /* default */static final int ENDIAN_CONSTANT = 0x12345678;
     /* default */static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
@@ -70,21 +74,43 @@ public class DexFileReader {
     public static final int SKIP_DEBUG = 0x00000001;
     public static final int SKIP_CODE = 0x00000002;
 
+    private boolean odex = false;
+    private DataIn odex_in;
+    private int odex_depsOffset;
+
     /**
      * 
      * @param data
      * 
      */
     public DexFileReader(byte[] data) {
-        DataIn in = new EndianDataIn(data);
+        int base = 0;
+        DataIn in = new LittleEndianDataIn(data, base);
 
-        // { 0x64 0x65 0x78 0x0a 0x30 0x33 0x35 0x00 } = "dex\n035\0"
-        byte[] magic = in.readBytes(8);
+        byte[] magic = in.readBytes(3);
 
-        if (!Arrays.equals(magic, DEX_FILE_MAGIC)) {
+        if (Arrays.equals(magic, DEX_FILE_MAGIC)) {
+            //
+        } else if (Arrays.equals(data, ODEX_FILE_MAGIC)) {
+            odex = true;
+            odex_in = in;
+        } else {
             throw new DexException("not support magic.");
         }
+        in.skip(1);// 0x0A
+        byte[] version = in.readBytes(3);
+        if (!Arrays.equals(version, VERSION_035) && !Arrays.equals(version, VERSION_036)) {
+            throw new DexException("not support version.");
+        }
+        in.skip(1);// 0x00
 
+        if (odex) {
+            base = in.readIntx();// odex_dexOffset
+            in.skip(4);// odex_dexLength
+            odex_depsOffset = in.readIntx();
+            in = new LittleEndianDataIn(data, base);
+            in.skip(8);// skip head;
+        }
         // skip uint checksum
         // and 20 bytes signature
         // and uint file_size
@@ -93,7 +119,9 @@ public class DexFileReader {
 
         int endian_tag = in.readUIntx();
         if (endian_tag == REVERSE_ENDIAN_CONSTANT) {
-            in = new ReverseEndianDataIn(data, in.getCurrentPosition());
+            int position = in.getCurrentPosition();
+            in = new BigEndianDataIn(data, base);
+            in.move(position);
         } else if (endian_tag != ENDIAN_CONSTANT) {
             throw new DexException("not support endian_tag");
         }
@@ -139,6 +167,22 @@ public class DexFileReader {
      *            {@link #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_FIELD}, {@link #SKIP_METHOD}
      */
     public void accept(DexFileVisitor dv, int config) {
+        if (odex && dv instanceof OdexFileVisitor) {
+            DataIn in = this.odex_in;
+            OdexFileVisitor odv = (OdexFileVisitor) dv;
+            in.pushMove(odex_depsOffset);
+            try {
+                in.skip(4 * 3);// skip modificationTime,crc,dalvikBuild
+                int size = in.readIntx();
+                for (int i = 0; i < size; i++) {
+                    int length = in.readIntx();
+                    odv.visitDepedence(new String(in.readBytes(length), UTF8), in.readBytes(20));
+                }
+            } finally {
+                in.pop();
+            }
+        }
+
         DataIn in = this.in;
         for (int cid = 0; cid < class_defs_size; cid++) {
             int idxOffset = this.class_defs_off + cid * 32;
@@ -411,7 +455,7 @@ public class DexFileReader {
      * @param value
      * @return
      */
-    protected int acceptField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions,
+    /* default */int acceptField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions,
             Object value) {
         DataIn in = this.in;
         int diff = (int) in.readULeb128();
@@ -447,7 +491,7 @@ public class DexFileReader {
      * @param parameterAnnos
      * @return
      */
-    protected int acceptMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos,
+    /* default */int acceptMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos,
             Map<Integer, Integer> parameterAnnos, int config) {
         DataIn in = this.in;
         int diff = (int) in.readULeb128();
