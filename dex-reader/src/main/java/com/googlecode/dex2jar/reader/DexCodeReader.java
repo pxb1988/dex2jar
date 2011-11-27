@@ -324,7 +324,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                     opcode = uOpcodeL;
                 }
             }
-            OpcodeFormat format = OpcodeFormat.get(opcode, 13);
+            OpcodeFormat format = OpcodeFormat.get(opcode, dex.apiLevel);
 
             switch (format) {
             case F10t:

@@ -153,6 +153,12 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_SGET_BYTE_JUMBO:
         case OP_SGET_CHAR_JUMBO:
         case OP_SGET_SHORT_JUMBO:
+        case OP_SGET_VOLATILE:
+        case OP_SGET_WIDE_VOLATILE:
+        case OP_SGET_OBJECT_VOLATILE:
+        case OP_SGET_VOLATILE_JUMBO:
+        case OP_SGET_WIDE_VOLATILE_JUMBO:
+        case OP_SGET_OBJECT_VOLATILE_JUMBO:
             dcv.visitFieldStmt(OP_SGET, a, dex.getField(b));
             break;
         case OP_SPUT:
@@ -169,6 +175,12 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_SPUT_BYTE_JUMBO:
         case OP_SPUT_CHAR_JUMBO:
         case OP_SPUT_SHORT_JUMBO:
+        case OP_SPUT_VOLATILE:
+        case OP_SPUT_WIDE_VOLATILE:
+        case OP_SPUT_OBJECT_VOLATILE:
+        case OP_SPUT_VOLATILE_JUMBO:
+        case OP_SPUT_WIDE_VOLATILE_JUMBO:
+        case OP_SPUT_OBJECT_VOLATILE_JUMBO:
             dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b));
             break;
         default:
@@ -326,6 +338,12 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_IGET_BYTE_JUMBO:
         case OP_IGET_CHAR_JUMBO:
         case OP_IGET_SHORT_JUMBO:
+        case OP_IGET_VOLATILE:
+        case OP_IGET_OBJECT_VOLATILE:
+        case OP_IGET_WIDE_VOLATILE:
+        case OP_IGET_VOLATILE_JUMBO:
+        case OP_IGET_WIDE_VOLATILE_JUMBO:
+        case OP_IGET_OBJECT_VOLATILE_JUMBO:
             dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c));
             break;
         case OP_IPUT:
@@ -342,6 +360,12 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_IPUT_BYTE_JUMBO:
         case OP_IPUT_CHAR_JUMBO:
         case OP_IPUT_SHORT_JUMBO:
+        case OP_IPUT_VOLATILE:
+        case OP_IPUT_WIDE_VOLATILE:
+        case OP_IPUT_OBJECT_VOLATILE:
+        case OP_IPUT_VOLATILE_JUMBO:
+        case OP_IPUT_WIDE_VOLATILE_JUMBO:
+        case OP_IPUT_OBJECT_VOLATILE_JUMBO:
             dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c));
             break;
         default:
@@ -563,8 +587,13 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_INVOKE_DIRECT:
         case OP_INVOKE_STATIC:
         case OP_INVOKE_INTERFACE:
+        case OP_INVOKE_DIRECT_EMPTY:
             Method m = dex.getMethod(b);
-            reBuildArgs(opcode, args, m);
+            if (OP_INVOKE_DIRECT_EMPTY == opcode) {
+                reBuildArgs(OP_INVOKE_DIRECT, args, m);
+            } else {
+                reBuildArgs(opcode, args, m);
+            }
             break;
         default:
             throw new RuntimeException("");
@@ -591,8 +620,15 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_INVOKE_DIRECT_JUMBO:
         case OP_INVOKE_STATIC_JUMBO:
         case OP_INVOKE_INTERFACE_JUMBO:
-            int nOpcode = opcode
-                    - (((opcode >> 4 == 0xFF) ? OP_INVOKE_VIRTUAL_JUMBO : OP_INVOKE_VIRTUAL_RANGE) - OP_INVOKE_VIRTUAL);
+        case OP_INVOKE_OBJECT_INIT_RANGE:
+        case OP_INVOKE_OBJECT_INIT_JUMBO:
+            int nOpcode;
+            if (opcode == OP_INVOKE_OBJECT_INIT_RANGE || opcode == OP_INVOKE_OBJECT_INIT_JUMBO) {
+                nOpcode = OP_INVOKE_DIRECT;
+            } else {
+                nOpcode = opcode
+                        - (((opcode >> 4 == 0xFF) ? OP_INVOKE_VIRTUAL_JUMBO : OP_INVOKE_VIRTUAL_RANGE) - OP_INVOKE_VIRTUAL);
+            }
             Method m = dex.getMethod(b);
             reBuildArgs(nOpcode, args, m);
             break;
@@ -644,8 +680,16 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     }
 
     public void x2cs(int opcode, int a, int b, int c) {
-        // TODO Auto-generated method stub
-
+        switch (opcode) {
+        case OP_IGET_QUICK:
+        case OP_IGET_WIDE_QUICK:
+        case OP_IGET_OBJECT_QUICK:
+        case OP_IPUT_QUICK:
+        case OP_IPUT_WIDE_QUICK:
+        case OP_IPUT_OBJECT_QUICK:
+            ((OdexCodeVisitor) dcv).visitFieldStmt(opcode, a, b, c);
+            break;
+        }
     }
 
     public void x5mi(int opcode, int a, int c, int d, int e, int f, int g, int b) {
@@ -674,37 +718,55 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         }
         switch (opcode) {
         case OP_EXECUTE_INLINE:
-            Method m = getInlineMethod(b);
-            int parameterReCount = 0;
-            for (String type : m.getParameterTypes()) {
-                switch (type.charAt(0)) {
-                case 'D':
-                case 'J':
-                    parameterReCount += 2;
-                    break;
-                default:
-                    parameterReCount += 1;
-                }
-            }
-            int nOpcode = parameterReCount == a ? OP_INVOKE_STATIC : OP_INVOKE_VIRTUAL;
-            reBuildArgs(nOpcode, args, m);
+            ((OdexCodeVisitor) dcv).visitMethodStmt(opcode, args, b);
             break;
         }
     }
 
     public void x5ms(int opcode, int a, int c, int d, int e, int f, int g, int b) {
-        // TODO Auto-generated method stub
-
+        int args[];
+        switch (a) {
+        case 0:
+            args = new int[0];
+            break;
+        case 1:
+            args = new int[] { c };
+            break;
+        case 2:
+            args = new int[] { c, d };
+            break;
+        case 3:
+            args = new int[] { c, d, e };
+            break;
+        case 4:
+            args = new int[] { c, d, e, f };
+            break;
+        case 5:
+            args = new int[] { c, d, e, f, g };
+            break;
+        default:
+            throw new RuntimeException("");
+        }
+        switch (opcode) {
+        case OP_INVOKE_VIRTUAL_QUICK:
+        case OP_INVOKE_SUPER_QUICK:
+            ((OdexCodeVisitor) dcv).visitMethodStmt(opcode, args, b);
+            break;
+        }
     }
 
     public void xrms(int opcode, int a, int b, int c) {
-        // TODO Auto-generated method stub
-
-    }
-
-    Method getInlineMethod(int idx) {
-        // FIXME
-        return null;
+        int args[] = new int[a];
+        for (int i = 0; i < a; i++) {
+            args[i] = c + i;
+        }
+        switch (opcode) {
+        case OP_INVOKE_VIRTUAL_QUICK_RANGE:
+        case OP_INVOKE_SUPER_QUICK_RANGE:
+            ((OdexCodeVisitor) dcv).visitMethodStmt(opcode - (OP_INVOKE_SUPER_QUICK_RANGE - OP_INVOKE_SUPER_QUICK),
+                    args, b);
+            break;
+        }
     }
 
     public void xrmi(int opcode, int a, int b, int c) {
@@ -714,20 +776,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         }
         switch (opcode) {
         case OP_EXECUTE_INLINE_RANGE:
-            Method m = getInlineMethod(b);
-            int parameterReCount = 0;
-            for (String type : m.getParameterTypes()) {
-                switch (type.charAt(0)) {
-                case 'D':
-                case 'J':
-                    parameterReCount += 2;
-                    break;
-                default:
-                    parameterReCount += 1;
-                }
-            }
-            int nOpcode = parameterReCount == a ? OP_INVOKE_STATIC : OP_INVOKE_VIRTUAL;
-            reBuildArgs(nOpcode, args, m);
+            ((OdexCodeVisitor) dcv).visitMethodStmt(OP_EXECUTE_INLINE, args, b);
             break;
         }
     }
