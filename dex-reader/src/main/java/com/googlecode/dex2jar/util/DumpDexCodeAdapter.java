@@ -17,11 +17,12 @@ package com.googlecode.dex2jar.util;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodeDump;
-import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.EmptyVisitor;
@@ -30,7 +31,7 @@ import com.googlecode.dex2jar.visitors.EmptyVisitor;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
+public class DumpDexCodeAdapter extends EmptyVisitor {
     private static class TryCatch {
         public DexLabel end;
 
@@ -59,12 +60,14 @@ public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
 
     private List<TryCatch> trys = new ArrayList<TryCatch>();
 
+    private Map<DexLabel, Integer> lines = new HashMap<DexLabel, Integer>();
+
     private boolean isStatic;
 
     /**
      * @param dcv
      */
-    public DumpDexCodeAdapter( boolean isStatic, Method m, PrintWriter out) {
+    public DumpDexCodeAdapter(boolean isStatic, Method m, PrintWriter out) {
         this.method = m;
         this.out = out;
         this.isStatic = isStatic;
@@ -96,9 +99,21 @@ public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
     public void visitArrayStmt(int opcode, int value, int array, int index) {
         switch (opcode) {
         case OP_APUT:
+        case OP_APUT_BOOLEAN:
+        case OP_APUT_BYTE:
+        case OP_APUT_CHAR:
+        case OP_APUT_SHORT:
+        case OP_APUT_WIDE:
+        case OP_APUT_OBJECT:
             info(opcode, "v%d[v%d]=v%d", array, index, value);
             break;
         case OP_AGET:
+        case OP_AGET_BOOLEAN:
+        case OP_AGET_BYTE:
+        case OP_AGET_CHAR:
+        case OP_AGET_SHORT:
+        case OP_AGET_WIDE:
+        case OP_AGET_OBJECT:
             info(opcode, "v%d=v%d[v%d]", value, array, index);
             break;
         }
@@ -123,9 +138,21 @@ public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
     public void visitFieldStmt(int opcode, int regFromOrTo, int owner_reg, Field field) {
         switch (opcode) {
         case OP_IGET:
+        case OP_IGET_BOOLEAN:
+        case OP_IGET_BYTE:
+        case OP_IGET_CHAR:
+        case OP_IGET_SHORT:
+        case OP_IGET_WIDE:
+        case OP_IGET_OBJECT:
             info(opcode, "v%d=v%d.%s  //%s", regFromOrTo, owner_reg, field.getName(), field);
             break;
         case OP_IPUT:
+        case OP_IPUT_BOOLEAN:
+        case OP_IPUT_BYTE:
+        case OP_IPUT_CHAR:
+        case OP_IPUT_SHORT:
+        case OP_IPUT_WIDE:
+        case OP_IPUT_OBJECT:
             info(opcode, "v%d.%s=v%d  //%s", owner_reg, field.getName(), regFromOrTo, field);
             break;
         }
@@ -140,9 +167,21 @@ public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
     public void visitFieldStmt(int opcode, int fromOrToReg, Field field) {
         switch (opcode) {
         case OP_SPUT:
+        case OP_SPUT_BOOLEAN:
+        case OP_SPUT_BYTE:
+        case OP_SPUT_CHAR:
+        case OP_SPUT_SHORT:
+        case OP_SPUT_WIDE:
+        case OP_SPUT_OBJECT:
             info(opcode, "%s.%s=v%d  //%s", c(field.getOwner()), field.getName(), fromOrToReg, field);
             break;
         case OP_SGET:
+        case OP_SGET_BOOLEAN:
+        case OP_SGET_BYTE:
+        case OP_SGET_CHAR:
+        case OP_SGET_SHORT:
+        case OP_SGET_WIDE:
+        case OP_SGET_OBJECT:
             info(opcode, "v%d=%s.%s  //%s", fromOrToReg, c(field.getOwner()), field.getName(), field);
             break;
         }
@@ -367,9 +406,9 @@ public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
     @Override
     public void visitMoveStmt(int opcode, int toReg, int fromReg) {
         switch (opcode) {
-        case OP_MOVE_OBJECT:
         case OP_MOVE:
         case OP_MOVE_WIDE:
+        case OP_MOVE_OBJECT:
             info(opcode, "v%d = v%d", toReg, fromReg);
             break;
         }
@@ -480,7 +519,12 @@ public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
             }
 
         }
-        out.printf("%-20s|%5s:\n", "LABEL", "L" + labelIndex(label));
+        Integer line = lines.get(label);
+        if (line != null) {
+            out.printf("%-20s|%5s: line %d\n", "LABEL", "L" + labelIndex(label), line);
+        } else {
+            out.printf("%-20s|%5s:\n", "LABEL", "L" + labelIndex(label));
+        }
         if (!find) {
             for (TryCatch tc : trys) {
                 if (label.equals(tc.start)) {
@@ -665,9 +709,9 @@ public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
     @Override
     public void visitMoveStmt(int opcode, int reg) {
         switch (opcode) {
-        case OP_MOVE_RESULT_OBJECT:
         case OP_MOVE_RESULT:
         case OP_MOVE_RESULT_WIDE:
+        case OP_MOVE_RESULT_OBJECT:
         case OP_MOVE_EXCEPTION:
             info(opcode, "v%d=TEMP", reg);
             break;
@@ -683,12 +727,13 @@ public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
     public void visitReturnStmt(int opcode, int reg) {
         switch (opcode) {
         case OP_RETURN:
+        case OP_RETURN_WIDE:
+        case OP_RETURN_OBJECT:
             info(opcode, "return v%d", reg);
             break;
         case OP_THROW:
             info(opcode, "throw v%d", reg);
             break;
-
         }
     }
 
@@ -707,6 +752,62 @@ public class DumpDexCodeAdapter extends EmptyVisitor implements DexOpcodes {
             info(opcode, "unlock v%d", reg);
             break;
         }
+    }
+
+    static String[] causes = new String[] { "no-error", "generic-error", "no-such-class", "no-such-field",
+            "no-such-method", "illegal-class-access", "illegal-field-access", "illegal-method-access",
+            "class-change-error", "instantiation-error" };
+
+    @Override
+    public void visitReturnStmt(int opcode, int cause, Object ref) {
+        String c = cause >= causes.length ? "unknown" : causes[cause];
+        info(opcode, "Q+ throw new VerificationError(%s)", c);
+    }
+
+    @Override
+    public void visitMethodStmt(int opcode, int[] args, int a) {
+        StringBuilder sb = new StringBuilder();
+        for (int j = 0; j < args.length; j++) {
+            sb.append('v').append(args[j]).append(',');
+        }
+        if (sb.length() > 0) {
+            sb.setLength(sb.length() - 1);
+        }
+        switch (opcode) {
+        case OP_INVOKE_SUPER_QUICK:
+        case OP_INVOKE_VIRTUAL_QUICK:
+            info(opcode, "Q+ TEMP=taboff+%04x(%s)", a, sb.toString());
+            break;
+        case OP_EXECUTE_INLINE:
+            info(opcode, "Q+ TEMP=inline+%04x(%s)", a, sb.toString());
+            break;
+        }
+    }
+
+    @Override
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, int fieldoff) {
+        switch (opcode) {
+        case OP_IGET_QUICK:
+        case OP_IGET_WIDE_QUICK:
+        case OP_IGET_OBJECT_QUICK:
+            info(opcode, "Q+ v%d=v%d.fieldoff+%04x", fromOrToReg, objReg, fieldoff);
+            break;
+        case OP_IPUT_QUICK:
+        case OP_IPUT_WIDE_QUICK:
+        case OP_IPUT_OBJECT_QUICK:
+            info(opcode, "Q+ v%d.fieldoff+%04x=v%d", objReg, fieldoff, fromOrToReg);
+            break;
+        }
+    }
+
+    @Override
+    public void visitLineNumber(int line, DexLabel label) {
+        lines.put(label, line);
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
+        out.printf("LOCAL_VARIABLE L%s ~ L%s v%d -> %s // %s \n", labelIndex(start), labelIndex(end), reg, name, type);
     }
 
 }

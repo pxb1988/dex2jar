@@ -27,7 +27,19 @@ public interface DexCodeVisitor {
     /**
      * <pre>
      * OP_AGET
+     * OP_AGET_BOOLEAN
+     * OP_AGET_BYTE
+     * OP_AGET_CHAR
+     * OP_AGET_SHORT
+     * OP_AGET_WIDE
+     * OP_AGET_OBJECT
      * OP_APUT
+     * OP_APUT_BOOLEAN
+     * OP_APUT_BYTE
+     * OP_APUT_CHAR
+     * OP_APUT_SHORT
+     * OP_APUT_WIDE
+     * OP_APUT_OBJECT
      * </pre>
      * 
      * @param opcode
@@ -162,7 +174,19 @@ public interface DexCodeVisitor {
     /**
      * <pre>
      * OP_SGET
+     * OP_SGET_BOOLEAN
+     * OP_SGET_BYTE
+     * OP_SGET_CHAR
+     * OP_SGET_SHORT
+     * OP_SGET_WIDE
+     * OP_SGET_OBJECT
      * OP_SPUT
+     * OP_SPUT_BOOLEAN
+     * OP_SPUT_BYTE
+     * OP_SPUT_CHAR
+     * OP_SPUT_SHORT
+     * OP_SPUT_WIDE
+     * OP_SPUT_OBJECT
      * </pre>
      * 
      * @param opcode
@@ -174,7 +198,19 @@ public interface DexCodeVisitor {
     /**
      * <pre>
      * OP_IGET
+     * OP_IGET_BOOLEAN
+     * OP_IGET_BYTE
+     * OP_IGET_CHAR
+     * OP_IGET_SHORT
+     * OP_IGET_WIDE
+     * OP_IGET_OBJECT
      * OP_IPUT
+     * OP_IPUT_BOOLEAN
+     * OP_IPUT_BYTE
+     * OP_IPUT_CHAR
+     * OP_IPUT_SHORT
+     * OP_IPUT_WIDE
+     * OP_IPUT_OBJECT
      * </pre>
      * 
      * @param opcode
@@ -272,6 +308,8 @@ public interface DexCodeVisitor {
      * OP_MOVE_RESULT_WIDE
      * OP_MOVE_RESULT_OBJECT
      * OP_MOVE_EXCEPTION
+     * OP_MOVE_EXCEPTION_WIDE
+     * OP_MOVE_EXCEPTION_OBJECT
      * </pre>
      * 
      * @param opcode
@@ -302,6 +340,8 @@ public interface DexCodeVisitor {
     /**
      * <pre>
      * OP_RETURN
+     * OP_RETURN_WIDE
+     * OP_RETURN_OBJECT
      * OP_THROW
      * </pre>
      * 

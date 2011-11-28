@@ -15,16 +15,17 @@
  */
 package com.googlecode.dex2jar.visitors;
 
-import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.DexLabel;
+import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.OdexOpcodes;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor,
-        DexCodeVisitor, DexAnnotationVisitor {
+public class EmptyVisitor implements OdexFileVisitor, DexClassVisitor, DexMethodVisitor, DexFieldVisitor,
+        OdexCodeVisitor, DexAnnotationVisitor, OdexOpcodes {
 
     /*
      * (non-Javadoc)
@@ -282,6 +283,22 @@ public class EmptyVisitor implements DexFileVisitor, DexClassVisitor, DexMethodV
     @Override
     public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
 
+    }
+
+    @Override
+    public void visitReturnStmt(int opcode, int cause, Object ref) {
+    }
+
+    @Override
+    public void visitMethodStmt(int opcode, int[] args, int a) {
+    }
+
+    @Override
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, int fieldoff) {
+    }
+
+    @Override
+    public void visitDepedence(String name, byte[] checksum) {
     }
 
 }

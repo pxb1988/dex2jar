@@ -20,13 +20,13 @@ import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.visitors.DexCodeVisitor;
+import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
 
 /**
  * @author Panxiaobo <pxb1988 at gmail.com>
  * @version $Id$
  */
-public class ASMifierCodeV implements DexCodeVisitor, DexOpcodes {
+public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     Out m;
 
     public ASMifierCodeV(Out m) {
@@ -109,32 +109,7 @@ public class ASMifierCodeV implements DexCodeVisitor, DexOpcodes {
     }
 
     String op(int op) {
-        switch (op) {
-        case OP_ADD_INT_LIT_X:
-            return "OP_ADD_INT_LIT_X";
-        case OP_RSUB_INT_LIT_X:
-            return "OP_RSUB_INT_LIT_X";
-        case OP_MUL_INT_LIT_X:
-            return "OP_MUL_INT_LIT_X";
-        case OP_DIV_INT_LIT_X:
-            return "OP_DIV_INT_LIT_X";
-        case OP_REM_INT_LIT_X:
-            return "OP_REM_INT_LIT_X";
-        case OP_AND_INT_LIT_X:
-            return "OP_AND_INT_LIT_X";
-        case OP_OR_INT_LIT_X:
-            return "OP_OR_INT_LIT_X";
-        case OP_XOR_INT_LIT_X:
-            return "OP_XOR_INT_LIT_X";
-        case OP_SHL_INT_LIT_X:
-            return "OP_SHL_INT_LIT_X";
-        case OP_SHR_INT_LIT_X:
-            return "OP_SHR_INT_LIT_X";
-        case OP_USHR_INT_LIT_X:
-            return "OP_USHR_INT_LIT_X";
-        default:
-            return "OP_" + DexOpcodeDump.dump(op);
-        }
+        return "OP_" + DexOpcodeDump.dump(op);
     }
 
     @Override
@@ -250,6 +225,21 @@ public class ASMifierCodeV implements DexCodeVisitor, DexOpcodes {
     public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
         m.s("code.visitLocalVariable(%s,%s,%s,%s,%s,%s);", Escape.v(name), Escape.v(type), Escape.v(signature),
                 v(start), v(end), reg);
+    }
+
+    @Override
+    public void visitReturnStmt(int opcode, int cause, Object ref) {
+        m.s("((OdexCodeVisitor)code).visitReturnStmt(%s,%s,%s);", op(opcode), cause, Escape.v(ref));
+    }
+
+    @Override
+    public void visitMethodStmt(int opcode, int[] args, int a) {
+        m.s("((OdexCodeVisitor)code).visitMethodStmt(%s,%s,%s);", op(opcode), Escape.v(args), a);
+    }
+
+    @Override
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, int fieldoff) {
+        m.s("((OdexCodeVisitor)code).visitFieldStmt(%s,%s,%s,%s);", op(opcode), fromOrToReg, objReg, fieldoff);
     }
 
 }

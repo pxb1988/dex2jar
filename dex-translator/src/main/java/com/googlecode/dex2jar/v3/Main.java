@@ -15,7 +15,6 @@
  */
 package com.googlecode.dex2jar.v3;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -23,12 +22,10 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
@@ -179,7 +176,7 @@ public class Main {
     }
 
     public static void doFile(File srcDex, File distJar) throws IOException {
-        doData(readClasses(srcDex), distJar);
+        doData(DexFileReader.readDex(srcDex), distJar);
     }
 
     public static String getVersionString() {
@@ -239,21 +236,4 @@ public class Main {
             }
         }
     }
-
-    public static byte[] readClasses(File srcDex) throws IOException {
-        byte[] data = FileUtils.readFileToByteArray(srcDex);
-        // checkMagic
-        if ("dex".equals(new String(data, 0, 3))) {// dex
-            return data;
-        } else if ("PK".equals(new String(data, 0, 2))) {// ZIP
-            ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
-            for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-                if (entry.getName().equals("classes.dex")) {
-                    return IOUtils.toByteArray(zis);
-                }
-            }
-        }
-        throw new RuntimeException("the src file not a .dex file or a zip file");
-    }
-
 }

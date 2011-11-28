@@ -182,7 +182,8 @@ public final class Utf8Utils {
      *             always thrown
      */
     private static String throwBadUtf8(int value, int offset) {
-        throw new IllegalArgumentException("bad utf-8 byte " + Hex.u1(value) + " at offset " + Hex.u4(offset));
+        throw new IllegalArgumentException("bad utf-8 byte " + String.format("%02x", value) + " at offset "
+                + String.format("%08x", offset));
     }
 
     public static void writeEscapedChar(Writer writer, char c) throws IOException {

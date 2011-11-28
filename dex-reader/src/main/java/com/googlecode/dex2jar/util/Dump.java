@@ -16,17 +16,13 @@
 package com.googlecode.dex2jar.util;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ProxyOutputStream;
 
 import com.googlecode.dex2jar.DexOpcodes;
@@ -77,21 +73,7 @@ public class Dump extends EmptyVisitor {
     }
 
     public static void doFile(File srcDex, File destJar) throws IOException {
-        byte[] data = FileUtils.readFileToByteArray(srcDex);
-        // checkMagic
-        if ("dex".equals(new String(data, 0, 3))) {// dex
-            doData(data, destJar);
-        } else if ("PK".equals(new String(data, 0, 2))) {// ZIP
-            ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
-            for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-                if (entry.getName().equals("classes.dex")) {
-                    data = IOUtils.toByteArray(zis);
-                    doData(data, destJar);
-                }
-            }
-        } else {
-            throw new RuntimeException("the src file not a .dex file or a zip file");
-        }
+        doData(DexFileReader.readDex(srcDex), destJar);
     }
 
     public static String getAccDes(int acc) {
@@ -172,7 +154,7 @@ public class Dump extends EmptyVisitor {
     public static String toJavaClass(String desc) {
         switch (desc.charAt(0)) {
         case 'L':
-            return desc.substring(0, desc.length() - 1).replace('/', '.');
+            return desc.substring(1, desc.length() - 1).replace('/', '.');
         case 'B':
             return "byte";
         case 'S':
@@ -274,6 +256,11 @@ public class Dump extends EmptyVisitor {
                         return new DumpDexCodeAdapter((accesFlags & DexOpcodes.ACC_STATIC) != 0, method, out);
                     }
                 };
+            }
+
+            @Override
+            public void visitDepedence(String name, byte[] checksum) {
+                // out.printf("//dep:" + name);
             }
         };
     }

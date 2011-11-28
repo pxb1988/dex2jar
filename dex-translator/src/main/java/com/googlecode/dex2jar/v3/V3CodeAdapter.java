@@ -154,9 +154,21 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     public void visitArrayStmt(int opcode, int formOrToReg, int arrayReg, int indexReg) {
         switch (opcode) {
         case OP_APUT:
+        case OP_APUT_BOOLEAN:
+        case OP_APUT_BYTE:
+        case OP_APUT_CHAR:
+        case OP_APUT_SHORT:
+        case OP_APUT_WIDE:
+        case OP_APUT_OBJECT:
             list.add(nAssign(nArray(locals[arrayReg], locals[indexReg]), locals[formOrToReg]));
             break;
         case OP_AGET:
+        case OP_AGET_BOOLEAN:
+        case OP_AGET_BYTE:
+        case OP_AGET_CHAR:
+        case OP_AGET_SHORT:
+        case OP_AGET_WIDE:
+        case OP_AGET_OBJECT:
             list.add(nAssign(locals[formOrToReg], nArray(locals[arrayReg], locals[indexReg])));
             break;
         }
@@ -356,10 +368,22 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         switch (opcode) {
 
         case OP_SGET:
+        case OP_SGET_BOOLEAN:
+        case OP_SGET_BYTE:
+        case OP_SGET_CHAR:
+        case OP_SGET_SHORT:
+        case OP_SGET_WIDE:
+        case OP_SGET_OBJECT:
             list.add(nAssign(locals[fromOrToReg],
                     nStaticField(Type.getType(field.getOwner()), field.getName(), Type.getType(field.getType()))));
             break;
         case OP_SPUT:
+        case OP_SPUT_BOOLEAN:
+        case OP_SPUT_BYTE:
+        case OP_SPUT_CHAR:
+        case OP_SPUT_SHORT:
+        case OP_SPUT_WIDE:
+        case OP_SPUT_OBJECT:
             list.add(nAssign(
                     nStaticField(Type.getType(field.getOwner()), field.getName(), Type.getType(field.getType())),
                     locals[fromOrToReg]));
@@ -372,12 +396,24 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         switch (opcode) {
 
         case OP_IGET:
+        case OP_IGET_BOOLEAN:
+        case OP_IGET_BYTE:
+        case OP_IGET_CHAR:
+        case OP_IGET_SHORT:
+        case OP_IGET_WIDE:
+        case OP_IGET_OBJECT:
             list.add(nAssign(
                     locals[fromOrToReg],
                     nField(locals[objReg], Type.getType(field.getOwner()), field.getName(),
                             Type.getType(field.getType()))));
             break;
         case OP_IPUT:
+        case OP_IPUT_BOOLEAN:
+        case OP_IPUT_BYTE:
+        case OP_IPUT_CHAR:
+        case OP_IPUT_SHORT:
+        case OP_IPUT_WIDE:
+        case OP_IPUT_OBJECT:
             list.add(nAssign(
                     nField(locals[objReg], Type.getType(field.getOwner()), field.getName(),
                             Type.getType(field.getType())), locals[fromOrToReg]));
@@ -565,6 +601,8 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
             list.add(nThrow(locals[reg]));
             break;
         case OP_RETURN:
+        case OP_RETURN_WIDE:
+        case OP_RETURN_OBJECT:
             list.add(nReturn(locals[reg]));
             break;
         }

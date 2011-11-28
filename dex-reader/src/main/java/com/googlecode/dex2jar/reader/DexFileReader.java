@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar.reader;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +24,8 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -79,12 +82,45 @@ public class DexFileReader {
     private int odex_depsOffset;
     int apiLevel = 13;
 
+    public static byte[] readDex(byte[] data) throws IOException {
+        if ("de".equals(new String(data, 0, 2))) {// dex/y
+            return data;
+        } else if ("PK".equals(new String(data, 0, 2))) {// ZIP
+            ZipInputStream zis = null;
+            try {
+                zis = new ZipInputStream(new ByteArrayInputStream(data));
+                for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
+                    if (entry.getName().equals("classes.dex")) {
+                        return IOUtils.toByteArray(zis);
+                    }
+                }
+            } finally {
+                IOUtils.closeQuietly(zis);
+            }
+        }
+        throw new RuntimeException("the src file not a .dex, .odex or zip file");
+    }
+
+    public static byte[] readDex(File srcDex) throws IOException {
+        byte[] data = FileUtils.readFileToByteArray(srcDex);
+        // checkMagic
+        return readDex(data);
+    }
+
     /**
      * 
      * @param data
      * 
      */
     public DexFileReader(byte[] data) {
+        try {
+            data = readDex(data);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new DexException(e);
+        }
+
         int base = 0;
         DataIn in = new LittleEndianDataIn(data, base);
 
@@ -92,7 +128,7 @@ public class DexFileReader {
 
         if (Arrays.equals(magic, DEX_FILE_MAGIC)) {
             //
-        } else if (Arrays.equals(data, ODEX_FILE_MAGIC)) {
+        } else if (Arrays.equals(magic, ODEX_FILE_MAGIC)) {
             odex = true;
             odex_in = in;
         } else {
@@ -177,7 +213,7 @@ public class DexFileReader {
                 int size = in.readIntx();
                 for (int i = 0; i < size; i++) {
                     int length = in.readIntx();
-                    odv.visitDepedence(new String(in.readBytes(length), UTF8), in.readBytes(20));
+                    odv.visitDepedence(new String(in.readBytes(length), 0, length - 1, UTF8), in.readBytes(20));
                 }
             } finally {
                 in.pop();
@@ -434,6 +470,9 @@ public class DexFileReader {
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
     /* default */String getType(int id) {
+        if (id == -1) {
+            return null;
+        }
         if (id >= this.type_ids_size || id < 0)
             throw new IllegalArgumentException("Id out of bound");
         DataIn in = this.in;
@@ -570,4 +609,9 @@ public class DexFileReader {
 
         return method_id;
     }
+
+    public boolean isOdex() {
+        return odex;
+    }
+
 }

@@ -1,7 +1,5 @@
 package com.googlecode.dex2jar.visitors;
 
-import com.googlecode.dex2jar.Field;
-import com.googlecode.dex2jar.Method;
 
 public interface OdexCodeVisitor extends DexCodeVisitor {
 
@@ -34,15 +32,6 @@ public interface OdexCodeVisitor extends DexCodeVisitor {
      *            vtaboff,inline
      */
     void visitMethodStmt(int opcode, int[] args, int a);
-
-    /**
-     * s-quick
-     * 
-     * @param opcode
-     * @param fromOrToReg
-     * @param field
-     */
-    void visitFieldStmt(int opcode, int fromOrToReg, int fieldoff);
 
     /**
      * i-quick

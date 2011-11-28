@@ -18,10 +18,10 @@ package com.googlecode.dex2jar.test;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
+import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.util.Dump;
 import com.googlecode.dex2jar.v3.Main;
 
@@ -34,11 +34,10 @@ public class DumpTest {
     @Test
     public void test() throws Exception {
         try {
-            File file = new File("target/test-classes/dexes");
-            for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip", "apk" }, false)) {
+            for (File f : TestUtils.listTestDexFiles()) {
                 System.out.println("dump file " + f);
                 File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dump.jar");
-                doData(Main.readClasses(f), distDir);
+                doData(DexFileReader.readDex(f), distDir);
             }
         } catch (Exception e) {
             Main.niceExceptionMessage(e, 0);

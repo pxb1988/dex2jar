@@ -26,6 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
+import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.v3.Main;
 
 /**
@@ -56,7 +57,7 @@ public class ResTest {
             System.out.println("Testing res file " + name);
             File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
             File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
-            Main.doData(Main.readClasses(dex), distFile, null);
+            Main.doData(DexFileReader.readDex(dex), distFile, null);
             Main.doFile(dex, distFile);
             TestUtils.checkZipFile(distFile);
         }

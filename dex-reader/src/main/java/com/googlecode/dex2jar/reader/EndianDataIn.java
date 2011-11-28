@@ -31,6 +31,7 @@ import java.util.Stack;
 
     public EndianDataIn(byte[] data, int base) {
         super(data);
+        super.skip(base);
         this.base = base;
     }
 
@@ -51,7 +52,7 @@ import java.util.Stack;
     }
 
     public void pop() {
-        this.move(stack.pop());
+        super.pos = stack.pop();
     }
 
     public void push() {
