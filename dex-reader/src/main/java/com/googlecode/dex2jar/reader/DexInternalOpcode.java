@@ -38,6 +38,7 @@ package com.googlecode.dex2jar.reader;
     int OP_CONST_HIGH16 = 0x000015;
     int OP_CONST_WIDE_16 = 0x000016;
     int OP_CONST_WIDE_32 = 0x000017;
+    int OP_CONST_WIDE = 0x000018;
     int OP_CONST_WIDE_HIGH16 = 0x000019;
     int OP_CONST_STRING_JUMBO = 0x00001b;
     int OP_FILLED_NEW_ARRAY_RANGE = 0x000025;

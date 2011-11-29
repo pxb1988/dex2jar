@@ -26,8 +26,8 @@ import com.googlecode.dex2jar.visitors.EmptyVisitor;
  */
 public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
 
-    protected static final String[] causes = new String[] { "no-error", "generic-error", "no-such-class", "no-such-field",
-            "no-such-method", "illegal-class-access", "illegal-field-access", "illegal-method-access",
+    protected static final String[] causes = new String[] { "no-error", "generic-error", "no-such-class",
+            "no-such-field", "no-such-method", "illegal-class-access", "illegal-field-access", "illegal-method-access",
             "class-change-error", "instantiation-error" };
 
     protected static String toJavaClass(String type) {
@@ -180,11 +180,13 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
     public void visitConstStmt(int opcode, int reg, Object value, int xt) {
         switch (opcode) {
         case OP_CONST:
-            info(opcode, "v%d=0x%08x  // int:%d   float:%f", reg, value, value, Float.intBitsToFloat((Integer) value));
-            break;
-        case OP_CONST_WIDE:
-            info(opcode, "v%d=0x%016x  // long:%d   double:%f", reg, value, value,
-                    Double.longBitsToDouble((Long) value));
+            if (xt == TYPE_SINGLE) {
+                info(opcode, "v%d=0x%08x  // int:%d   float:%f", reg, value, value,
+                        Float.intBitsToFloat((Integer) value));
+            } else {
+                info(opcode, "v%d=0x%016x  // long:%d   double:%f", reg, value, value,
+                        Double.longBitsToDouble((Long) value));
+            }
             break;
         case OP_CONST_STRING:
             info(opcode, "v%d=\"%s\"", reg, value);

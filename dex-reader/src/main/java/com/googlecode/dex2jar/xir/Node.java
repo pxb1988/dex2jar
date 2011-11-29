@@ -227,7 +227,6 @@ public class Node implements OdexOpcodes {
             dcv.visitCmpStmt(opcode, a, b, c, d);
             break;
         case OP_CONST:
-        case OP_CONST_WIDE:
         case OP_CONST_STRING:
         case OP_CONST_CLASS:
             dcv.visitConstStmt(opcode, a, cst, b);

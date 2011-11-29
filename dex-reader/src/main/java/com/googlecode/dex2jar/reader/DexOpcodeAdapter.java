@@ -468,17 +468,17 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_MOVE:
         case OP_MOVE_FROM16:
         case OP_MOVE_16:
-            dcv.visitMoveStmt(OP_MOVE, a, b);
+            dcv.visitMoveStmt(OP_MOVE, a, b, TYPE_SINGLE);
             break;
         case OP_MOVE_WIDE:
         case OP_MOVE_WIDE_FROM16:
         case OP_MOVE_WIDE_16:
-            dcv.visitMoveStmt(OP_MOVE_WIDE, a, b);
+            dcv.visitMoveStmt(OP_MOVE, a, b, TYPE_WIDE);
             break;
         case OP_MOVE_OBJECT:
         case OP_MOVE_OBJECT_FROM16:
         case OP_MOVE_OBJECT_16:
-            dcv.visitMoveStmt(OP_MOVE_OBJECT, a, b);
+            dcv.visitMoveStmt(OP_MOVE, a, b, TYPE_OBJECT);
             break;
         case OP_ARRAY_LENGTH:
             dcv.visitUnopStmt(OP_ARRAY_LENGTH, a, b, TYPE_INT);
@@ -489,7 +489,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
             break;
         case OP_NEG_LONG:
         case OP_NOT_LONG:
-            dcv.visitUnopStmt(opcode - (OP_NEG_INT - OP_NEG), a, b, TYPE_LONG);
+            dcv.visitUnopStmt(opcode - (OP_NEG_LONG - OP_NEG), a, b, TYPE_LONG);
             break;
         case OP_NEG_FLOAT:
             dcv.visitUnopStmt(OP_NEG, a, b, TYPE_FLOAT);
@@ -827,12 +827,12 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
             break;
         case OP_IGET_WIDE_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_WIDE_QUICK, a, b, c, TYPE_WIDE);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_QUICK, a, b, c, TYPE_WIDE);
             }
             break;
         case OP_IGET_OBJECT_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_OBJECT_QUICK, a, b, c, TYPE_OBJECT);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_QUICK, a, b, c, TYPE_OBJECT);
             }
             break;
         case OP_IPUT_QUICK:
@@ -842,12 +842,12 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
             break;
         case OP_IPUT_WIDE_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_WIDE_QUICK, a, b, c, TYPE_WIDE);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_QUICK, a, b, c, TYPE_WIDE);
             }
             break;
         case OP_IPUT_OBJECT_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_OBJECT_QUICK, a, b, c, TYPE_OBJECT);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_QUICK, a, b, c, TYPE_OBJECT);
             }
             break;
         }

@@ -63,7 +63,6 @@ public abstract interface DexOpcodes {
     int OP_RETURN_VOID = 0x00000e;
     int OP_RETURN = 0x00000f;
     int OP_CONST = 0x000014;
-    int OP_CONST_WIDE = 0x000018;
     int OP_CONST_STRING = 0x00001a;
     int OP_CONST_CLASS = 0x00001c;
     int OP_MONITOR_ENTER = 0x00001d;
