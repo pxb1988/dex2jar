@@ -125,11 +125,11 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         switch (opcode) {
         case OP_CONST_STRING:
         case OP_CONST_STRING_JUMBO:
-            dcv.visitConstStmt(OP_CONST_STRING, a, dex.getString(b));
+            dcv.visitConstStmt(OP_CONST_STRING, a, dex.getString(b), TYPE_OBJECT);
             break;
         case OP_CONST_CLASS:
         case OP_CONST_CLASS_JUMBO:
-            dcv.visitConstStmt(OP_CONST_CLASS, a, dex.getType(b));
+            dcv.visitConstStmt(OP_CONST_CLASS, a, dex.getType(b), TYPE_OBJECT);
             break;
         case OP_CHECK_CAST:
         case OP_CHECK_CAST_JUMBO:
@@ -143,69 +143,69 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_SGET_JUMBO:
         case OP_SGET_VOLATILE:
         case OP_SGET_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b), TYPE_SIGNLE);
             break;
         case OP_SGET_WIDE:
         case OP_SGET_WIDE_JUMBO:
         case OP_SGET_WIDE_VOLATILE:
         case OP_SGET_WIDE_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_SGET_WIDE, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b), TYPE_WIDE);
             break;
         case OP_SGET_OBJECT:
         case OP_SGET_OBJECT_JUMBO:
         case OP_SGET_OBJECT_VOLATILE:
         case OP_SGET_OBJECT_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_SGET_OBJECT, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b), TYPE_OBJECT);
             break;
         case OP_SGET_BOOLEAN:
         case OP_SGET_BOOLEAN_JUMBO:
-            dcv.visitFieldStmt(OP_SGET_BOOLEAN, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b), TYPE_BOOLEAN);
             break;
         case OP_SGET_BYTE:
         case OP_SGET_BYTE_JUMBO:
-            dcv.visitFieldStmt(OP_SGET_BYTE, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b), TYPE_BYTE);
             break;
         case OP_SGET_CHAR:
         case OP_SGET_CHAR_JUMBO:
-            dcv.visitFieldStmt(OP_SGET_CHAR, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b), TYPE_CHAR);
             break;
         case OP_SGET_SHORT:
         case OP_SGET_SHORT_JUMBO:
-            dcv.visitFieldStmt(OP_SGET_SHORT, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b), TYPE_SHORT);
             break;
         case OP_SPUT:
         case OP_SPUT_JUMBO:
         case OP_SPUT_VOLATILE:
         case OP_SPUT_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b), TYPE_SIGNLE);
             break;
         case OP_SPUT_WIDE:
         case OP_SPUT_WIDE_JUMBO:
         case OP_SPUT_WIDE_VOLATILE:
         case OP_SPUT_WIDE_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_SPUT_WIDE, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b), TYPE_WIDE);
             break;
         case OP_SPUT_OBJECT:
         case OP_SPUT_OBJECT_JUMBO:
         case OP_SPUT_OBJECT_VOLATILE:
         case OP_SPUT_OBJECT_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_SPUT_OBJECT, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b), TYPE_OBJECT);
             break;
         case OP_SPUT_BOOLEAN:
         case OP_SPUT_BOOLEAN_JUMBO:
-            dcv.visitFieldStmt(OP_SPUT_BOOLEAN, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b), TYPE_BOOLEAN);
             break;
         case OP_SPUT_BYTE:
         case OP_SPUT_BYTE_JUMBO:
-            dcv.visitFieldStmt(OP_SPUT_BYTE, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b), TYPE_BYTE);
             break;
         case OP_SPUT_CHAR:
         case OP_SPUT_CHAR_JUMBO:
-            dcv.visitFieldStmt(OP_SPUT_CHAR, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b), TYPE_CHAR);
             break;
         case OP_SPUT_SHORT:
         case OP_SPUT_SHORT_JUMBO:
-            dcv.visitFieldStmt(OP_SPUT_SHORT, a, dex.getField(b));
+            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b), TYPE_SHORT);
             break;
         default:
             throw new RuntimeException("");
@@ -215,10 +215,10 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1h(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_HIGH16:
-            dcv.visitConstStmt(OP_CONST, a, b << 16);
+            dcv.visitConstStmt(OP_CONST, a, b << 16, TYPE_SIGNLE);
             break;
         case OP_CONST_WIDE_HIGH16:
-            dcv.visitConstStmt(OP_CONST_WIDE, a, ((long) b) << 48);
+            dcv.visitConstStmt(OP_CONST, a, ((long) b) << 48, TYPE_WIDE);
             break;
         default:
             throw new RuntimeException("");
@@ -228,10 +228,10 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1i(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST:
-            dcv.visitConstStmt(opcode, a, b);
+            dcv.visitConstStmt(opcode, a, b, TYPE_SIGNLE);
             break;
         case OP_CONST_WIDE_32:
-            dcv.visitConstStmt(OP_CONST_WIDE, a, (long) b);
+            dcv.visitConstStmt(OP_CONST, a, (long) b, TYPE_WIDE);
             break;
         default:
             throw new RuntimeException("");
@@ -241,7 +241,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1l(int opcode, int a, long b) {
         switch (opcode) {
         case OP_CONST_WIDE:
-            dcv.visitConstStmt(opcode, a, b);
+            dcv.visitConstStmt(OP_CONST, a, b, TYPE_WIDE);
             break;
         default:
             throw new RuntimeException("");
@@ -258,7 +258,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1n(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_4:
-            dcv.visitConstStmt(OP_CONST, a, b);
+            dcv.visitConstStmt(OP_CONST, a, b, TYPE_SIGNLE);
             break;
         default:
             throw new RuntimeException("");
@@ -268,10 +268,10 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1s(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_16:
-            dcv.visitConstStmt(OP_CONST, a, b);
+            dcv.visitConstStmt(OP_CONST, a, b, TYPE_SIGNLE);
             break;
         case OP_CONST_WIDE_16:
-            dcv.visitConstStmt(OP_CONST_WIDE, a, (long) b);
+            dcv.visitConstStmt(OP_CONST, a, (long) b, TYPE_WIDE);
             break;
         default:
             throw new RuntimeException("");
@@ -296,18 +296,28 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1x(int opcode, int a) {
         switch (opcode) {
         case OP_MOVE_RESULT:
+            dcv.visitMoveStmt(OP_MOVE_RESULT, a, TYPE_SIGNLE);
+            break;
         case OP_MOVE_RESULT_WIDE:
+            dcv.visitMoveStmt(OP_MOVE_RESULT, a, TYPE_WIDE);
+            break;
         case OP_MOVE_RESULT_OBJECT:
+            dcv.visitMoveStmt(OP_MOVE_RESULT, a, TYPE_OBJECT);
+            break;
         case OP_MOVE_EXCEPTION:
-            dcv.visitMoveStmt(opcode, a);
+            dcv.visitMoveStmt(OP_MOVE_EXCEPTION, a, TYPE_OBJECT);
             break;
         case OP_RETURN:
+            dcv.visitReturnStmt(OP_RETURN, a, TYPE_SIGNLE);
+            break;
         case OP_RETURN_WIDE:
+            dcv.visitReturnStmt(OP_RETURN, a, TYPE_WIDE);
+            break;
         case OP_RETURN_OBJECT:
-            dcv.visitReturnStmt(opcode, a);
+            dcv.visitReturnStmt(OP_RETURN, a, TYPE_OBJECT);
             break;
         case OP_THROW:
-            dcv.visitReturnStmt(opcode, a);
+            dcv.visitReturnStmt(opcode, a, TYPE_OBJECT);
             break;
         case OP_MONITOR_ENTER:
         case OP_MONITOR_EXIT:
@@ -352,69 +362,69 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_IGET_JUMBO:
         case OP_IGET_VOLATILE:
         case OP_IGET_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c), TYPE_SIGNLE);
             break;
         case OP_IGET_WIDE:
         case OP_IGET_WIDE_JUMBO:
         case OP_IGET_WIDE_VOLATILE:
         case OP_IGET_WIDE_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_IGET_WIDE, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c), TYPE_WIDE);
             break;
         case OP_IGET_OBJECT:
         case OP_IGET_OBJECT_JUMBO:
         case OP_IGET_OBJECT_VOLATILE:
         case OP_IGET_OBJECT_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_IGET_OBJECT, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c), TYPE_OBJECT);
             break;
         case OP_IGET_BOOLEAN:
         case OP_IGET_BOOLEAN_JUMBO:
-            dcv.visitFieldStmt(OP_IGET_BOOLEAN, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c), TYPE_BOOLEAN);
             break;
         case OP_IGET_BYTE:
         case OP_IGET_BYTE_JUMBO:
-            dcv.visitFieldStmt(OP_IGET_BYTE, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c), TYPE_BYTE);
             break;
         case OP_IGET_CHAR:
         case OP_IGET_CHAR_JUMBO:
-            dcv.visitFieldStmt(OP_IGET_CHAR, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c), TYPE_CHAR);
             break;
         case OP_IGET_SHORT:
         case OP_IGET_SHORT_JUMBO:
-            dcv.visitFieldStmt(OP_IGET_SHORT, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c), TYPE_SHORT);
             break;
         case OP_IPUT:
         case OP_IPUT_JUMBO:
         case OP_IPUT_VOLATILE:
         case OP_IPUT_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c), TYPE_SIGNLE);
             break;
         case OP_IPUT_WIDE:
         case OP_IPUT_WIDE_JUMBO:
         case OP_IPUT_WIDE_VOLATILE:
         case OP_IPUT_WIDE_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_IPUT_WIDE, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c), TYPE_WIDE);
             break;
         case OP_IPUT_OBJECT:
         case OP_IPUT_OBJECT_JUMBO:
         case OP_IPUT_OBJECT_VOLATILE:
         case OP_IPUT_OBJECT_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_IPUT_OBJECT, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c), TYPE_OBJECT);
             break;
         case OP_IPUT_BOOLEAN:
         case OP_IPUT_BOOLEAN_JUMBO:
-            dcv.visitFieldStmt(OP_IPUT_BOOLEAN, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c), TYPE_BOOLEAN);
             break;
         case OP_IPUT_BYTE:
         case OP_IPUT_BYTE_JUMBO:
-            dcv.visitFieldStmt(OP_IPUT_BYTE, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c), TYPE_BYTE);
             break;
         case OP_IPUT_CHAR:
         case OP_IPUT_CHAR_JUMBO:
-            dcv.visitFieldStmt(OP_IPUT_CHAR, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c), TYPE_CHAR);
             break;
         case OP_IPUT_SHORT:
         case OP_IPUT_SHORT_JUMBO:
-            dcv.visitFieldStmt(OP_IPUT_SHORT, a, b, dex.getField(c));
+            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c), TYPE_SHORT);
             break;
         default:
             throw new RuntimeException("");
@@ -471,30 +481,66 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
             dcv.visitMoveStmt(OP_MOVE_OBJECT, a, b);
             break;
         case OP_ARRAY_LENGTH:
-            dcv.visitUnopStmt(OP_ARRAY_LENGTH, a, b);
+            dcv.visitUnopStmt(OP_ARRAY_LENGTH, a, b, TYPE_INT);
             break;
         case OP_NEG_INT:
         case OP_NOT_INT:
+            dcv.visitUnopStmt(opcode - (OP_NEG_INT - OP_NEG), a, b, TYPE_INT);
+            break;
         case OP_NEG_LONG:
         case OP_NOT_LONG:
+            dcv.visitUnopStmt(opcode - (OP_NEG_INT - OP_NEG), a, b, TYPE_LONG);
+            break;
         case OP_NEG_FLOAT:
+            dcv.visitUnopStmt(OP_NEG, a, b, TYPE_FLOAT);
+            break;
         case OP_NEG_DOUBLE:
+            dcv.visitUnopStmt(OP_NEG, a, b, TYPE_DOUBLE);
+            break;
         case OP_INT_TO_LONG:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_INT, TYPE_LONG);
+            break;
         case OP_INT_TO_FLOAT:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_INT, TYPE_FLOAT);
+            break;
         case OP_INT_TO_DOUBLE:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_INT, TYPE_DOUBLE);
+            break;
         case OP_LONG_TO_INT:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_LONG, TYPE_INT);
+            break;
         case OP_LONG_TO_FLOAT:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_LONG, TYPE_FLOAT);
+            break;
         case OP_LONG_TO_DOUBLE:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_LONG, TYPE_DOUBLE);
+            break;
         case OP_FLOAT_TO_INT:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_FLOAT, TYPE_INT);
+            break;
         case OP_FLOAT_TO_LONG:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_FLOAT, TYPE_LONG);
+            break;
         case OP_FLOAT_TO_DOUBLE:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_FLOAT, TYPE_DOUBLE);
+            break;
         case OP_DOUBLE_TO_INT:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_DOUBLE, TYPE_INT);
+            break;
         case OP_DOUBLE_TO_LONG:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_DOUBLE, TYPE_LONG);
+            break;
         case OP_DOUBLE_TO_FLOAT:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_DOUBLE, TYPE_FLOAT);
+            break;
         case OP_INT_TO_BYTE:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_INT, TYPE_BYTE);
+            break;
         case OP_INT_TO_CHAR:
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_INT, TYPE_CHAR);
+            break;
         case OP_INT_TO_SHORT:
-            dcv.visitUnopStmt(opcode, a, b);
+            dcv.visitUnopStmt(OP_X_TO_Y, a, b, TYPE_INT, TYPE_SHORT);
             break;
         case OP_ADD_INT_2ADDR:
         case OP_SUB_INT_2ADDR:
@@ -507,6 +553,8 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_SHL_INT_2ADDR:
         case OP_SHR_INT_2ADDR:
         case OP_USHR_INT_2ADDR:
+            dcv.visitBinopStmt(opcode - (OP_ADD_INT_2ADDR - OP_ADD), a, a, b, TYPE_INT);
+            break;
         case OP_ADD_LONG_2ADDR:
         case OP_SUB_LONG_2ADDR:
         case OP_MUL_LONG_2ADDR:
@@ -518,17 +566,21 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_SHL_LONG_2ADDR:
         case OP_SHR_LONG_2ADDR:
         case OP_USHR_LONG_2ADDR:
+            dcv.visitBinopStmt(opcode - (OP_ADD_LONG_2ADDR - OP_ADD), a, a, b, TYPE_LONG);
+            break;
         case OP_ADD_FLOAT_2ADDR:
         case OP_SUB_FLOAT_2ADDR:
         case OP_MUL_FLOAT_2ADDR:
         case OP_DIV_FLOAT_2ADDR:
         case OP_REM_FLOAT_2ADDR:
+            dcv.visitBinopStmt(opcode - (OP_ADD_FLOAT_2ADDR - OP_ADD), a, a, b, TYPE_FLOAT);
+            break;
         case OP_ADD_DOUBLE_2ADDR:
         case OP_SUB_DOUBLE_2ADDR:
         case OP_MUL_DOUBLE_2ADDR:
         case OP_DIV_DOUBLE_2ADDR:
         case OP_REM_DOUBLE_2ADDR:
-            dcv.visitBinopStmt(opcode - (OP_ADD_INT_2ADDR - OP_ADD_INT), a, a, b);
+            dcv.visitBinopStmt(opcode - (OP_ADD_DOUBLE_2ADDR - OP_ADD), a, a, b, TYPE_DOUBLE);
             break;
         default:
             throw new RuntimeException("");
@@ -538,28 +590,61 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x3x(int opcode, int a, int b, int c) {
         switch (opcode) {
         case OP_CMPL_FLOAT:
-        case OP_CMPG_FLOAT:
-        case OP_CMPL_DOUBLE:
-        case OP_CMPG_DOUBLE:
-        case OP_CMP_LONG:
-            dcv.visitCmpStmt(opcode, a, b, c);
+            dcv.visitCmpStmt(OP_CMPL, a, b, c, TYPE_FLOAT);
             break;
-
+        case OP_CMPG_FLOAT:
+            dcv.visitCmpStmt(OP_CMPG, a, b, c, TYPE_FLOAT);
+            break;
+        case OP_CMPL_DOUBLE:
+            dcv.visitCmpStmt(OP_CMPL, a, b, c, TYPE_DOUBLE);
+            break;
+        case OP_CMPG_DOUBLE:
+            dcv.visitCmpStmt(OP_CMPG, a, b, c, TYPE_DOUBLE);
+            break;
+        case OP_CMP_LONG:
+            dcv.visitCmpStmt(OP_CMP, a, b, c, TYPE_LONG);
+            break;
         case OP_AGET:
+            dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_SIGNLE);
+            break;
         case OP_AGET_WIDE:
+            dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_WIDE);
+            break;
         case OP_AGET_OBJECT:
+            dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_OBJECT);
+            break;
         case OP_AGET_BOOLEAN:
+            dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_BOOLEAN);
+            break;
         case OP_AGET_BYTE:
+            dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_BYTE);
+            break;
         case OP_AGET_CHAR:
+            dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_CHAR);
+            break;
         case OP_AGET_SHORT:
+            dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_SHORT);
+            break;
         case OP_APUT:
+            dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_SIGNLE);
+            break;
         case OP_APUT_WIDE:
+            dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_WIDE);
+            break;
         case OP_APUT_OBJECT:
+            dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_OBJECT);
+            break;
         case OP_APUT_BOOLEAN:
+            dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_BOOLEAN);
+            break;
         case OP_APUT_BYTE:
+            dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_BYTE);
+            break;
         case OP_APUT_CHAR:
+            dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_CHAR);
+            break;
         case OP_APUT_SHORT:
-            dcv.visitArrayStmt(opcode, a, b, c);
+            dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_SHORT);
             break;
         case OP_ADD_INT:
         case OP_SUB_INT:
@@ -572,6 +657,8 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_SHL_INT:
         case OP_SHR_INT:
         case OP_USHR_INT:
+            dcv.visitBinopStmt(opcode - (OP_ADD_INT - OP_ADD), a, b, c, TYPE_INT);
+            break;
         case OP_ADD_LONG:
         case OP_SUB_LONG:
         case OP_MUL_LONG:
@@ -583,17 +670,21 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_SHL_LONG:
         case OP_SHR_LONG:
         case OP_USHR_LONG:
+            dcv.visitBinopStmt(opcode - (OP_ADD_LONG - OP_ADD), a, b, c, TYPE_LONG);
+            break;
         case OP_ADD_FLOAT:
         case OP_SUB_FLOAT:
         case OP_MUL_FLOAT:
         case OP_DIV_FLOAT:
         case OP_REM_FLOAT:
+            dcv.visitBinopStmt(opcode - (OP_ADD_FLOAT - OP_ADD), a, b, c, TYPE_FLOAT);
+            break;
         case OP_ADD_DOUBLE:
         case OP_SUB_DOUBLE:
         case OP_MUL_DOUBLE:
         case OP_DIV_DOUBLE:
         case OP_REM_DOUBLE:
-            dcv.visitBinopStmt(opcode, a, b, c);
+            dcv.visitBinopStmt(opcode - (OP_ADD_DOUBLE - OP_ADD), a, b, c, TYPE_DOUBLE);
             break;
         default:
             throw new RuntimeException("");
@@ -731,32 +822,32 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         switch (opcode) {
         case OP_IGET_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_QUICK, a, b, c);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_QUICK, a, b, c, TYPE_SIGNLE);
             }
             break;
         case OP_IGET_WIDE_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_WIDE_QUICK, a, b, c);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_WIDE_QUICK, a, b, c, TYPE_WIDE);
             }
             break;
         case OP_IGET_OBJECT_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_OBJECT_QUICK, a, b, c);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_OBJECT_QUICK, a, b, c, TYPE_OBJECT);
             }
             break;
         case OP_IPUT_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_QUICK, a, b, c);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_QUICK, a, b, c, TYPE_SIGNLE);
             }
             break;
         case OP_IPUT_WIDE_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_WIDE_QUICK, a, b, c);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_WIDE_QUICK, a, b, c, TYPE_WIDE);
             }
             break;
         case OP_IPUT_OBJECT_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_OBJECT_QUICK, a, b, c);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_OBJECT_QUICK, a, b, c, TYPE_OBJECT);
             }
             break;
         }

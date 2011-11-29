@@ -34,8 +34,8 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     }
 
     @Override
-    public void visitArrayStmt(int opcode, int formOrToReg, int arrayReg, int indexReg) {
-        m.s("code.visitArrayStmt(%s,%s,%s,%s);", op(opcode), formOrToReg, arrayReg, indexReg);
+    public void visitArrayStmt(int opcode, int formOrToReg, int arrayReg, int indexReg, int xt) {
+        m.s("code.visitArrayStmt(%s,%s,%s,%s,%s);", op(opcode), formOrToReg, arrayReg, indexReg, xt);
     }
 
     @Override
@@ -44,8 +44,8 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     }
 
     @Override
-    public void visitBinopStmt(int opcode, int toReg, int r1, int r2) {
-        m.s("code.visitBinopStmt(%s,%s,%s,%s);", op(opcode), toReg, r1, r2);
+    public void visitBinopStmt(int opcode, int toReg, int r1, int r2, int xt) {
+        m.s("code.visitBinopStmt(%s,%s,%s,%s,%s);", op(opcode), toReg, r1, r2, xt);
     }
 
     @Override
@@ -59,32 +59,32 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     }
 
     @Override
-    public void visitCmpStmt(int opcode, int distReg, int bB, int cC) {
-        m.s("code.visitCmpStmt(%s,%s,%s,%s);", op(opcode), distReg, bB, cC);
+    public void visitCmpStmt(int opcode, int distReg, int bB, int cC, int xt) {
+        m.s("code.visitCmpStmt(%s,%s,%s,%s,%s);", op(opcode), distReg, bB, cC, xt);
     }
 
     @Override
-    public void visitConstStmt(int opcode, int toReg, Object value) {
+    public void visitConstStmt(int opcode, int toReg, Object value, int xt) {
         if (value instanceof Integer) {
-            m.s("code.visitConstStmt(%s,%s,%s); // int: 0x%08x  float:%f", op(opcode), toReg, Escape.v(value), value,
-                    Float.intBitsToFloat((Integer) value));
+            m.s("code.visitConstStmt(%s,%s,%s,%s); // int: 0x%08x  float:%f", op(opcode), toReg, Escape.v(value), xt,
+                    value, Float.intBitsToFloat((Integer) value));
         } else if (value instanceof Long) {
-            m.s("code.visitConstStmt(%s,%s,%s); // long: 0x%016x  double:%f", op(opcode), toReg, Escape.v(value),
-                    value, Double.longBitsToDouble((Long) value));
+            m.s("code.visitConstStmt(%s,%s,%s,%s); // long: 0x%016x  double:%f", op(opcode), toReg, Escape.v(value),
+                    xt, value, Double.longBitsToDouble((Long) value));
         } else {
-            m.s("code.visitConstStmt(%s,%s,%s);", op(opcode), toReg, Escape.v(value));
+            m.s("code.visitConstStmt(%s,%s,%s,%s);", op(opcode), toReg, Escape.v(value), xt);
         }
 
     }
 
     @Override
-    public void visitFieldStmt(int opcode, int fromOrToReg, Field field) {
-        m.s("code.visitFieldStmt(%s,%s,%s);", op(opcode), fromOrToReg, Escape.v(field));
+    public void visitFieldStmt(int opcode, int fromOrToReg, Field field, int xt) {
+        m.s("code.visitFieldStmt(%s,%s,%s,%s);", op(opcode), fromOrToReg, Escape.v(field), xt);
     }
 
     @Override
-    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field) {
-        m.s("code.visitFieldStmt(%s,%s,%s,%s);", op(opcode), fromOrToReg, objReg, Escape.v(field));
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field, int xt) {
+        m.s("code.visitFieldStmt(%s,%s,%s,%s,%s);", op(opcode), fromOrToReg, objReg, Escape.v(field), xt);
     }
 
     @Override
@@ -155,13 +155,13 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     }
 
     @Override
-    public void visitMoveStmt(int opcode, int toReg) {
-        m.s("code.visitMoveStmt(%s,%s);", op(opcode), toReg);
+    public void visitMoveStmt(int opcode, int toReg, int xt) {
+        m.s("code.visitMoveStmt(%s,%s,%s);", op(opcode), toReg, xt);
     }
 
     @Override
-    public void visitMoveStmt(int opcode, int toReg, int fromReg) {
-        m.s("code.visitMoveStmt(%s,%s,%s);", op(opcode), toReg, fromReg);
+    public void visitMoveStmt(int opcode, int toReg, int fromReg, int xt) {
+        m.s("code.visitMoveStmt(%s,%s,%s,%s);", op(opcode), toReg, fromReg, xt);
     }
 
     @Override
@@ -170,8 +170,8 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     }
 
     @Override
-    public void visitReturnStmt(int opcode, int reg) {
-        m.s("code.visitReturnStmt(%s,%s);", op(opcode), reg);
+    public void visitReturnStmt(int opcode, int reg, int xt) {
+        m.s("code.visitReturnStmt(%s,%s,%s);", op(opcode), reg, xt);
     }
 
     @Override
@@ -192,8 +192,13 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     }
 
     @Override
-    public void visitUnopStmt(int opcode, int toReg, int fromReg) {
-        m.s("code.visitUnopStmt(%s,%s,%s);", op(opcode), toReg, fromReg);
+    public void visitUnopStmt(int opcode, int toReg, int fromReg, int xt) {
+        m.s("code.visitUnopStmt(%s,%s,%s,%s);", op(opcode), toReg, fromReg, xt);
+    }
+
+    @Override
+    public void visitUnopStmt(int opcode, int toReg, int fromReg, int xta, int xtb) {
+        m.s("code.visitUnopStmt(%s,%s,%s,%s,%s);", op(opcode), toReg, fromReg, xta, xtb);
     }
 
     @Override
@@ -238,8 +243,7 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     }
 
     @Override
-    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, int fieldoff) {
-        m.s("((OdexCodeVisitor)code).visitFieldStmt(%s,%s,%s,%s);", op(opcode), fromOrToReg, objReg, fieldoff);
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, int fieldoff, int xt) {
+        m.s("((OdexCodeVisitor)code).visitFieldStmt(%s,%s,%s,%s,%s);", op(opcode), fromOrToReg, objReg, fieldoff, xt);
     }
-
 }

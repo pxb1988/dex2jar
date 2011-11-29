@@ -1,6 +1,5 @@
 package com.googlecode.dex2jar.visitors;
 
-
 public interface OdexCodeVisitor extends DexCodeVisitor {
 
     int VerificatioError_None = 0;
@@ -15,6 +14,7 @@ public interface OdexCodeVisitor extends DexCodeVisitor {
     int VerificatioError_Instantiation = 9;
 
     /**
+     * OP_THROW_VERIFICATION_ERROR
      * 
      * @param opcode
      * @param cause
@@ -24,7 +24,12 @@ public interface OdexCodeVisitor extends DexCodeVisitor {
     void visitReturnStmt(int opcode, int cause, Object ref);
 
     /**
-     * quick or inline
+     * OP_EXECUTE_INLINE
+     * 
+     * OP_INVOKE_SUPER_QUICK
+     * 
+     * OP_INVOKE_VIRTUAL_QUICK
+     * 
      * 
      * @param opcode
      * @param args
@@ -34,13 +39,16 @@ public interface OdexCodeVisitor extends DexCodeVisitor {
     void visitMethodStmt(int opcode, int[] args, int a);
 
     /**
-     * i-quick
+     * OP_IGET_QUICK
+     * 
+     * OP_IPUT_QUICK
      * 
      * @param opcode
      * @param fromOrToReg
      * @param objReg
      * @param field
+     * @param xt
      */
-    void visitFieldStmt(int opcode, int fromOrToReg, int objReg, int fieldoff);
+    void visitFieldStmt(int opcode, int fromOrToReg, int objReg, int fieldoff, int xt);
 
 }

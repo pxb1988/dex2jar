@@ -24,7 +24,21 @@ package com.googlecode.dex2jar;
 public class DexLabel {
     public Object info;
 
+    private int offset = -1;
+
+    public DexLabel(int offset) {
+        super();
+        this.offset = offset;
+    }
+
+    public DexLabel() {
+        super();
+    }
+
     public String toString() {
+        if (offset >= 0) {
+            return String.format("L%x", offset);
+        }
         return String.format("L%08x", this.hashCode());
     }
 }
