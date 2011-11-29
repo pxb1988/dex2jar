@@ -44,7 +44,7 @@ public abstract interface DexOpcodes {
     int ACC_CONSTRUCTOR = 0x10000;// constructor method (class or instance initializer)
     int ACC_DECLARED_SYNCHRONIZED = 0x20000;
 
-    int TYPE_SIGNLE = 0;
+    int TYPE_SINGLE = 0;
     int TYPE_WIDE = 1;
     int TYPE_OBJECT = 2;
     int TYPE_BOOLEAN = 3;

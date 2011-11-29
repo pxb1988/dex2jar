@@ -302,7 +302,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     public void visitConstStmt(int opcode, int toReg, Object value, int xt) {
         switch (opcode) {
         case OP_CONST:
-            if (xt == TYPE_INT) {
+            if (xt == TYPE_SINGLE) {
                 list.add(nAssign(locals[toReg], nInt((Integer) value)));
             } else {
                 list.add(nAssign(locals[toReg], nLong((Long) value)));

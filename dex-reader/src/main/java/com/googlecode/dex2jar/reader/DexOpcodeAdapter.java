@@ -143,7 +143,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_SGET_JUMBO:
         case OP_SGET_VOLATILE:
         case OP_SGET_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b), TYPE_SIGNLE);
+            dcv.visitFieldStmt(OP_SGET, a, dex.getField(b), TYPE_SINGLE);
             break;
         case OP_SGET_WIDE:
         case OP_SGET_WIDE_JUMBO:
@@ -177,7 +177,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_SPUT_JUMBO:
         case OP_SPUT_VOLATILE:
         case OP_SPUT_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b), TYPE_SIGNLE);
+            dcv.visitFieldStmt(OP_SPUT, a, dex.getField(b), TYPE_SINGLE);
             break;
         case OP_SPUT_WIDE:
         case OP_SPUT_WIDE_JUMBO:
@@ -215,7 +215,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1h(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_HIGH16:
-            dcv.visitConstStmt(OP_CONST, a, b << 16, TYPE_SIGNLE);
+            dcv.visitConstStmt(OP_CONST, a, b << 16, TYPE_SINGLE);
             break;
         case OP_CONST_WIDE_HIGH16:
             dcv.visitConstStmt(OP_CONST, a, ((long) b) << 48, TYPE_WIDE);
@@ -228,7 +228,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1i(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST:
-            dcv.visitConstStmt(opcode, a, b, TYPE_SIGNLE);
+            dcv.visitConstStmt(opcode, a, b, TYPE_SINGLE);
             break;
         case OP_CONST_WIDE_32:
             dcv.visitConstStmt(OP_CONST, a, (long) b, TYPE_WIDE);
@@ -258,7 +258,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1n(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_4:
-            dcv.visitConstStmt(OP_CONST, a, b, TYPE_SIGNLE);
+            dcv.visitConstStmt(OP_CONST, a, b, TYPE_SINGLE);
             break;
         default:
             throw new RuntimeException("");
@@ -268,7 +268,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1s(int opcode, int a, int b) {
         switch (opcode) {
         case OP_CONST_16:
-            dcv.visitConstStmt(OP_CONST, a, b, TYPE_SIGNLE);
+            dcv.visitConstStmt(OP_CONST, a, b, TYPE_SINGLE);
             break;
         case OP_CONST_WIDE_16:
             dcv.visitConstStmt(OP_CONST, a, (long) b, TYPE_WIDE);
@@ -296,7 +296,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
     public void x1x(int opcode, int a) {
         switch (opcode) {
         case OP_MOVE_RESULT:
-            dcv.visitMoveStmt(OP_MOVE_RESULT, a, TYPE_SIGNLE);
+            dcv.visitMoveStmt(OP_MOVE_RESULT, a, TYPE_SINGLE);
             break;
         case OP_MOVE_RESULT_WIDE:
             dcv.visitMoveStmt(OP_MOVE_RESULT, a, TYPE_WIDE);
@@ -308,7 +308,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
             dcv.visitMoveStmt(OP_MOVE_EXCEPTION, a, TYPE_OBJECT);
             break;
         case OP_RETURN:
-            dcv.visitReturnStmt(OP_RETURN, a, TYPE_SIGNLE);
+            dcv.visitReturnStmt(OP_RETURN, a, TYPE_SINGLE);
             break;
         case OP_RETURN_WIDE:
             dcv.visitReturnStmt(OP_RETURN, a, TYPE_WIDE);
@@ -362,7 +362,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_IGET_JUMBO:
         case OP_IGET_VOLATILE:
         case OP_IGET_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c), TYPE_SIGNLE);
+            dcv.visitFieldStmt(OP_IGET, a, b, dex.getField(c), TYPE_SINGLE);
             break;
         case OP_IGET_WIDE:
         case OP_IGET_WIDE_JUMBO:
@@ -396,7 +396,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_IPUT_JUMBO:
         case OP_IPUT_VOLATILE:
         case OP_IPUT_VOLATILE_JUMBO:
-            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c), TYPE_SIGNLE);
+            dcv.visitFieldStmt(OP_IPUT, a, b, dex.getField(c), TYPE_SINGLE);
             break;
         case OP_IPUT_WIDE:
         case OP_IPUT_WIDE_JUMBO:
@@ -605,7 +605,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
             dcv.visitCmpStmt(OP_CMP, a, b, c, TYPE_LONG);
             break;
         case OP_AGET:
-            dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_SIGNLE);
+            dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_SINGLE);
             break;
         case OP_AGET_WIDE:
             dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_WIDE);
@@ -626,7 +626,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
             dcv.visitArrayStmt(OP_AGET, a, b, c, TYPE_SHORT);
             break;
         case OP_APUT:
-            dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_SIGNLE);
+            dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_SINGLE);
             break;
         case OP_APUT_WIDE:
             dcv.visitArrayStmt(OP_APUT, a, b, c, TYPE_WIDE);
@@ -822,7 +822,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         switch (opcode) {
         case OP_IGET_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_QUICK, a, b, c, TYPE_SIGNLE);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IGET_QUICK, a, b, c, TYPE_SINGLE);
             }
             break;
         case OP_IGET_WIDE_QUICK:
@@ -837,7 +837,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
             break;
         case OP_IPUT_QUICK:
             if (dcv instanceof OdexCodeVisitor) {
-                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_QUICK, a, b, c, TYPE_SIGNLE);
+                ((OdexCodeVisitor) dcv).visitFieldStmt(OP_IPUT_QUICK, a, b, c, TYPE_SINGLE);
             }
             break;
         case OP_IPUT_WIDE_QUICK:
