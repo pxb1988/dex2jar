@@ -34,7 +34,7 @@ public class DumpTest {
     @Test
     public void test() throws Exception {
         try {
-            for (File f : TestUtils.listTestDexFiles()) {
+            for (File f : TestUtils.listTestDexFiles(true)) {
                 System.out.println("dump file " + f);
                 File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dump.jar");
                 doData(DexFileReader.readDex(f), distDir);

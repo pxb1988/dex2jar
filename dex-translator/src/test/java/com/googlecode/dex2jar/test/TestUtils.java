@@ -130,8 +130,23 @@ public abstract class TestUtils {
     }
 
     public static Collection<File> listTestDexFiles() {
+        return listTestDexFiles(false);
+    }
+
+    public static Collection<File> listTestDexFiles(boolean withOdex) {
         File file = new File("target/test-classes/dexes");
-        return FileUtils.listFiles(file, new String[] { "dex", "zip", "apk", "odex" }, false);
+        List<File> list = new ArrayList<File>();
+        if (file.exists()) {
+            list.addAll(FileUtils.listFiles(file, new String[] { "dex", "zip", "apk", "odex" }, false));
+        }
+        if (withOdex) {
+            list = new ArrayList<File>();
+            file = new File("target/test-classes/odexes");
+            if (file.exists()) {
+                list.addAll(FileUtils.listFiles(file, new String[] { "odex" }, false));
+            }
+        }
+        return list;
     }
 
     static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)

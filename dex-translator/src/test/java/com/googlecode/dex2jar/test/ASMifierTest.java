@@ -34,7 +34,7 @@ public class ASMifierTest {
     @Test
     public void test() throws Exception {
         try {
-            for (File f : TestUtils.listTestDexFiles()) {
+            for (File f : TestUtils.listTestDexFiles(true)) {
                 System.out.println("asmifier file " + f);
                 File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_asmifier");
                 doData(DexFileReader.readDex(f), distDir);

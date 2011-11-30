@@ -176,6 +176,26 @@ public class Dump extends EmptyVisitor {
         return desc;
     }
 
+    StringBuilder deps = new StringBuilder();
+
+    @Override
+    public void visitDepedence(String name, byte[] checksum) {
+        deps.append("dep: " + name + ", checksum: ");
+        for (int i = 0; i < checksum.length; i++) {
+            deps.append(String.format("%02x", checksum[i]));
+        }
+        deps.append("\n");
+    }
+
+    public void visitEnd() {
+        if (deps.length() > 0) {
+            PrintWriter out = writerManager.get("depedence");
+            out.print(deps.toString());
+            out.flush();
+            out.close();
+        }
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -258,10 +278,6 @@ public class Dump extends EmptyVisitor {
                 };
             }
 
-            @Override
-            public void visitDepedence(String name, byte[] checksum) {
-                // out.printf("//dep:" + name);
-            }
         };
     }
 }
