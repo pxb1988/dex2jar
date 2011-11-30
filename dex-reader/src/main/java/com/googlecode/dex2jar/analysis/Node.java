@@ -1,4 +1,6 @@
-package com.googlecode.dex2jar.xir;
+package com.googlecode.dex2jar.analysis;
+
+import java.util.List;
 
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Field;
@@ -16,6 +18,12 @@ public class Node implements OdexOpcodes {
     public int args[];
     public DexLabel la, lb, lc;
     public DexLabel[] ls;
+
+    public Node next;
+    public Object frame;
+    public int _cfg_froms;
+    public List<Node> _cfg_tos;
+    public boolean _cfg_visited;
 
     public Node(int opcode, int a, int b, String type) {
         super();
@@ -158,11 +166,11 @@ public class Node implements OdexOpcodes {
         this.c = c;
     }
 
-    public Node(int opcode, int a, DexLabel la, int[] cst, DexLabel[] ls) {
+    public Node(int opcode, int a, DexLabel la, int[] args, DexLabel[] ls) {
         this.opcode = opcode;
         this.a = a;
         this.la = la;
-        this.cst = cst;
+        this.args = args;
         this.ls = ls;
     }
 
@@ -198,7 +206,7 @@ public class Node implements OdexOpcodes {
         case OP_SHL_INT_LIT_X:
         case OP_SHR_INT_LIT_X:
         case OP_USHR_INT_LIT_X:
-            dcv.visitBinopLitXStmt(opcode, a, a, c);
+            dcv.visitBinopLitXStmt(opcode, a, b, c);
             break;
         case OP_ADD:
         case OP_SUB:
@@ -213,12 +221,12 @@ public class Node implements OdexOpcodes {
         case OP_USHR:
             dcv.visitBinopStmt(opcode, a, b, c, d);
             break;
-        case OP_INSTANCE_OF:
-        case OP_NEW_ARRAY:
-            dcv.visitClassStmt(opcode, a, type);
-            break;
         case OP_CHECK_CAST:
         case OP_NEW_INSTANCE:
+            dcv.visitClassStmt(opcode, a, type);
+            break;
+        case OP_NEW_ARRAY:
+        case OP_INSTANCE_OF:
             dcv.visitClassStmt(opcode, a, b, type);
             break;
         case OP_CMPL:
@@ -275,7 +283,7 @@ public class Node implements OdexOpcodes {
         case OP_INVOKE_DIRECT:
         case OP_INVOKE_STATIC:
         case OP_INVOKE_INTERFACE:
-            dcv.visitMethodStmt(opcode, args, a);
+            dcv.visitMethodStmt(opcode, args, method);
             break;
         case OP_MONITOR_ENTER:
         case OP_MONITOR_EXIT:

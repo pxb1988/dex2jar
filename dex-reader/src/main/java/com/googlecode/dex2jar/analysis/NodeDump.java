@@ -1,4 +1,4 @@
-package com.googlecode.dex2jar.xir;
+package com.googlecode.dex2jar.analysis;
 
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodeDump;
@@ -20,6 +20,12 @@ public class NodeDump extends AbstractDumpDexCodeAdapter {
     @Override
     public void visitLabel(DexLabel label) {
         sb.append(String.format("%-20s|%5s:\n", "LABEL", labelToString(label)));
+    }
+
+    @Override
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
+        sb.append(String.format("TRY %s %s %s > %s\n", labelToString(start), labelToString(end), labelToString(handler),
+                type == null ? "ALL" : type));
     }
 
     @Override

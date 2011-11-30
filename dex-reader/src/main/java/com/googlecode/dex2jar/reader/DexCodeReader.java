@@ -648,7 +648,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
      */
     void order(int offset) {
         if (!labels.containsKey(offset)) {
-            labels.put(offset, new DexLabel());
+            labels.put(offset, new DexLabel(offset));
         }
     }
 }

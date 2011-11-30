@@ -278,7 +278,7 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
     public void visitJumpStmt(int opcode, DexLabel label) {
         switch (opcode) {
         case OP_GOTO:
-            info(opcode, "goto L%s", labelToString(label));
+            info(opcode, "goto %s", labelToString(label));
             break;
         }
     }
@@ -286,22 +286,22 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
     public void visitJumpStmt(int opcode, int reg, DexLabel label) {
         switch (opcode) {
         case OP_IF_EQZ:
-            info(opcode, "if v%d == 0 goto L%s", reg, labelToString(label));
+            info(opcode, "if v%d == 0 goto %s", reg, labelToString(label));
             break;
         case OP_IF_NEZ:
-            info(opcode, "if v%d != 0 goto L%s", reg, labelToString(label));
+            info(opcode, "if v%d != 0 goto %s", reg, labelToString(label));
             break;
         case OP_IF_LTZ:
-            info(opcode, "if v%d <  0 goto L%s", reg, labelToString(label));
+            info(opcode, "if v%d <  0 goto %s", reg, labelToString(label));
             break;
         case OP_IF_GEZ:
-            info(opcode, "if v%d >= 0 goto L%s", reg, labelToString(label));
+            info(opcode, "if v%d >= 0 goto %s", reg, labelToString(label));
             break;
         case OP_IF_GTZ:
-            info(opcode, "if v%d >  0 goto L%s", reg, labelToString(label));
+            info(opcode, "if v%d >  0 goto %s", reg, labelToString(label));
             break;
         case OP_IF_LEZ:
-            info(opcode, "if v%d <= 0 goto L%s", reg, labelToString(label));
+            info(opcode, "if v%d <= 0 goto %s", reg, labelToString(label));
             break;
         }
     }
@@ -315,22 +315,22 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
     public void visitJumpStmt(int opcode, int reg1, int reg2, DexLabel label) {
         switch (opcode) {
         case OP_IF_EQ:
-            info(opcode, "if v%d == v%d goto L%s", reg1, reg2, labelToString(label));
+            info(opcode, "if v%d == v%d goto %s", reg1, reg2, labelToString(label));
             break;
         case OP_IF_NE:
-            info(opcode, "if v%d != v%d goto L%s", reg1, reg2, labelToString(label));
+            info(opcode, "if v%d != v%d goto %s", reg1, reg2, labelToString(label));
             break;
         case OP_IF_LT:
-            info(opcode, "if v%d <  v%d goto L%s", reg1, reg2, labelToString(label));
+            info(opcode, "if v%d <  v%d goto %s", reg1, reg2, labelToString(label));
             break;
         case OP_IF_GE:
-            info(opcode, "if v%d >= v%d goto L%s", reg1, reg2, labelToString(label));
+            info(opcode, "if v%d >= v%d goto %s", reg1, reg2, labelToString(label));
             break;
         case OP_IF_GT:
-            info(opcode, "if v%d >  v%d goto L%s", reg1, reg2, labelToString(label));
+            info(opcode, "if v%d >  v%d goto %s", reg1, reg2, labelToString(label));
             break;
         case OP_IF_LE:
-            info(opcode, "if v%d <= v%d goto L%s", reg1, reg2, labelToString(label));
+            info(opcode, "if v%d <= v%d goto %s", reg1, reg2, labelToString(label));
             break;
         }
     }
@@ -344,9 +344,9 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
     public void visitLookupSwitchStmt(int opcode, int reg, DexLabel label, int[] cases, DexLabel[] label2) {
         info(opcode, "switch(v%d)", reg);
         for (int i = 0; i < cases.length; i++) {
-            info(-1, "case %d: goto L%s", cases[i], labelToString(label2[i]));
+            info(-1, "case %d: goto %s", cases[i], labelToString(label2[i]));
         }
-        info(-1, "default: goto L%s", labelToString(label));
+        info(-1, "default: goto %s", labelToString(label));
     }
 
     @Override
@@ -413,7 +413,6 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
                 info(opcode, "v%d.%s(%s)  //%s", regs[0], method.getName(), sb.toString(), method.toString());
             } else {
                 info(opcode, "TEMP=v%d.%s(%s)  //%s", regs[0], method.getName(), sb.toString(), method.toString());
-
             }
         }
             break;
@@ -441,8 +440,10 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
     public void visitMoveStmt(int opcode, int reg, int xt) {
         switch (opcode) {
         case OP_MOVE_RESULT:
-        case OP_MOVE_EXCEPTION:
             info(opcode, "v%d=TEMP", reg);
+            break;
+        case OP_MOVE_EXCEPTION:
+            info(opcode, "v%d=@Exception", reg);
             break;
         }
     }
@@ -497,9 +498,9 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
             DexLabel[] labels) {
         info(opcode, "switch(v%d)", reg);
         for (int i = 0; i < labels.length; i++) {
-            info(opcode, "case %d: goto L%s", first_case + i, labelToString(labels[i]));
+            info(opcode, "case %d: goto %s", first_case + i, labelToString(labels[i]));
         }
-        info(opcode, "default: goto L%s", labelToString(label));
+        info(opcode, "default: goto %s", labelToString(label));
     }
 
     @Override

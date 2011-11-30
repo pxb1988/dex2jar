@@ -37,7 +37,7 @@ public class DexLabel {
 
     public String toString() {
         if (offset >= 0) {
-            return String.format("L%x", offset);
+            return String.format("L%04x", offset);
         }
         return String.format("L%08x", this.hashCode());
     }
