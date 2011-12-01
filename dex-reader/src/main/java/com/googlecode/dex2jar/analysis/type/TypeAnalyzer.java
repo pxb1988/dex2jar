@@ -5,11 +5,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.analysis.Analyzer;
 import com.googlecode.dex2jar.analysis.CodeNode;
 import com.googlecode.dex2jar.analysis.Node;
 import com.googlecode.dex2jar.analysis.NodeDump;
+import com.googlecode.dex2jar.analysis.type.TypeAnalyzer.Pairs;
 
 public class TypeAnalyzer extends Analyzer {
     /**
@@ -33,7 +35,12 @@ public class TypeAnalyzer extends Analyzer {
             super(4);
         }
 
+        public Phi tag;
+
         public String toString() {
+            if (tag != null) {
+                return tag.toString();
+            }
             if (typs.size() == 0) {
                 return "?";
             }
@@ -200,6 +207,13 @@ public class TypeAnalyzer extends Analyzer {
         }
     }
 
+    Phi trim(Phi phi) {
+        while (phi.tag != null) {
+            phi = phi.tag;
+        }
+        return phi;
+    }
+
     @Override
     public void analyze() {
         super.analyze();
@@ -209,8 +223,37 @@ public class TypeAnalyzer extends Analyzer {
             doAddUsed(reg, used);
         }
         this.allRegs.clear();
-        this.allRegs.addAll(used);
 
+        for (Phi reg : used) {
+            Phi a = trim(reg);
+            if (a != reg) {
+                for (String t : reg.typs) {
+                    typeVisitor._type(a, t);
+                }
+                // a.typs.addAll(reg.typs);
+            }
+            if (reg.size() > 0) {
+                for (Phi r : reg) {
+                    Phi b = trim(r);
+                    if (a != b) {
+                        for (String t : r.typs) {
+                            typeVisitor._type(a, t);
+                        }
+                        // a.typs.addAll(r.typs);
+                        b.tag = a;
+                    }
+                }
+            }
+        }
+
+        for (Phi reg : used) {
+            if (reg.tag == null) {
+                this.allRegs.add(reg);
+            }
+        }
+
+        List<Pairs> same = new ArrayList<Pairs>();
+        List<Pairs> array = new ArrayList<Pairs>();
         for (Node p = cn.first; p != null; p = p.next) {
             Phi[] frame = (Phi[]) p.frame;
             if (frame != null) {
@@ -219,12 +262,89 @@ public class TypeAnalyzer extends Analyzer {
                     if (r != null) {
                         if (!r.used) {
                             frame[i] = null;
+                        } else {
+                            frame[i] = trim(r);
                         }
                     }
                 }
             }
+
+            switch (p.opcode) {
+            case OP_MOVE:
+                same.add(new Pairs(trim((Phi) p.cst), ((Phi[]) p.frame)[p.b]));
+                break;
+            case OP_MOVE_EXCEPTION:
+                same.add(new Pairs(trim((Phi) p.cst), ((Phi[]) p.frame)[totalReg + 1]));
+                break;
+            case OP_MOVE_RESULT:
+                same.add(new Pairs(trim((Phi) p.cst), ((Phi[]) p.frame)[totalReg]));
+                break;
+            case OP_AGET:
+                array.add(new Pairs(trim((Phi) p.cst), ((Phi[]) p.frame)[p.b]));
+                break;
+            case OP_APUT:
+                array.add(new Pairs(((Phi[]) p.frame)[p.a], ((Phi[]) p.frame)[p.b]));
+                break;
+            }
+
         }
+
+        // for (Node p = cn.first; p != null; p = p.next) {
+        // switch (p.opcode) {
+        // case OP_IGET_QUICK:
+        // case OP_IPUT_QUICK: {
+        // Phi[] frame = (Phi[]) p.frame;
+        // p.field = getField(frame[p.b], p.c, frame[p.a]);
+        // typeVisitor._type(frame[p.b], p.field.getOwner());
+        // typeVisitor._type(frame[p.a], p.field.getType());
+        // p.opcode = OP_IGET_QUICK == p.opcode ? OP_IGET : OP_IPUT;
+        // }
+        // break;
+        // case OP_INVOKE_VIRTUAL_QUICK:
+        // case OP_INVOKE_SUPER_QUICK: {
+        // Phi[] frame = (Phi[]) p.frame;
+        // List<Phi> args = new ArrayList();
+        // for (int i = 1; i < p.args.length; i++) {
+        // Phi phi = frame[p.args[i]];
+        // if (phi != null) {
+        // args.add(phi);
+        // }
+        // }
+        // Method m = getMethod(frame[p.args[0]], p.a, args);
+        // p.method = m;
+        // p.opcode = OP_INVOKE_VIRTUAL_QUICK == p.opcode ? OP_INVOKE_VIRTUAL : OP_INVOKE_SUPER;
+        // // TODO update p.args
+        // break;
+        // }
+        // case OP_EXECUTE_INLINE:
+        // // TODO
+        // }
+        // }
+
         System.out.println(method);
+    }
+
+    static class Pairs {
+        Pairs(Phi a, Phi b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        public String toString() {
+            return a + "<>" + b;
+        }
+
+        Phi a, b;
+    }
+
+    private Method getMethod(Phi phi, int a, List<Phi> args) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private Field getField(Phi phi, int c, Phi phi2) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     protected Object createExceptionHandlerFrame(Node handler, String type) {
@@ -250,6 +370,16 @@ public class TypeAnalyzer extends Analyzer {
             System.arraycopy(frame, 0, this.frame, 0, totalReg + 2);
         }
         p.accept(typeVisitor);
+        switch (p.opcode) {
+        case OP_MOVE:
+        case OP_MOVE_EXCEPTION:
+        case OP_MOVE_RESULT:
+            p.cst = this.frame[p.a];
+            break;
+        case OP_AGET:
+            p.cst = this.frame[p.a];
+            break;
+        }
         return this.frame;
     }
 
