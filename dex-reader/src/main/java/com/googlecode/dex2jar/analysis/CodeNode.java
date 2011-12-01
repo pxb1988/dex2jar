@@ -204,12 +204,17 @@ public class CodeNode implements OdexCodeVisitor {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         NodeDump nd = new NodeDump();
+        for (Node t : trys) {
+            t.accept(nd);
+        }
+        sb.append(nd.toString());
+        nd.sb.setLength(0);
+        sb.append('\n');
         for (Node p = first; p != null; p = p.next) {
             p.accept(nd);
         }
 
         sb.append(nd.toString());
-        // TODO add trys
         return sb.toString();
     }
 

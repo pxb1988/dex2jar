@@ -35,8 +35,6 @@ public abstract class TypeVisitor<T> implements OdexCodeVisitor, OdexOpcodes {
 
     public abstract void _type(T n, String desc);
 
-    public abstract int _size(int i);
-
     public static String IFL = "_1IFL";
     public static String IL = "_3IL";
     public static String JD = "_2JD";
@@ -65,9 +63,9 @@ public abstract class TypeVisitor<T> implements OdexCodeVisitor, OdexOpcodes {
 
     @Override
     public void visitBinopStmt(int opcode, int toReg, int r1, int r2, int xt) {
-        useAndType(r1, "I");
-        useAndType(r2, "I");
-        newAndType(toReg, "I");
+        useAndType(r1, descs[xt]);
+        useAndType(r2, descs[xt]);
+        newAndType(toReg, descs[xt]);
     }
 
     @Override
@@ -274,8 +272,15 @@ public abstract class TypeVisitor<T> implements OdexCodeVisitor, OdexOpcodes {
 
     @Override
     public void visitMethodStmt(int opcode, int[] args, int a) {
-        for (int i = 0; i < args.length; i += _size(args[i])) {
-            _use(args[i]);
+        if (opcode == OP_EXECUTE_INLINE) {
+            for (int i = 0; i < args.length; i++) {
+                _use(args[i]);
+            }
+        } else {
+            useAndType(args[0], "L");
+            for (int i = 1; i < args.length; i++) {
+                _use(args[i]);
+            }
         }
         _put(totalReg, _new());
     }

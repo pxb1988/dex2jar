@@ -19,7 +19,7 @@ public class TypeAnalyzerTest {
     @Test
     public void test() throws Exception {
         try {
-            for (File f : TestUtils.listTestDexFiles()) {
+            for (File f : TestUtils.listTestDexFiles(true)) {
                 System.out.println("tyep-analyze file " + f);
                 new DexFileReader(f).accept(new EmptyVisitor() {
 
@@ -44,7 +44,8 @@ public class TypeAnalyzerTest {
                         return new CodeNode() {
                             @Override
                             public void visitEnd() {
-                                new TypeAnalyzer(this, isStatic, method).analyze();
+                                TypeAnalyzer ta = new TypeAnalyzer(this, isStatic, method);
+                                ta.analyze();
                             }
                         };
                     }

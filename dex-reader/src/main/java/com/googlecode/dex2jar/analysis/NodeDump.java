@@ -5,7 +5,7 @@ import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.util.AbstractDumpDexCodeAdapter;
 
 public class NodeDump extends AbstractDumpDexCodeAdapter {
-    StringBuilder sb = new StringBuilder();
+    public StringBuilder sb = new StringBuilder();
 
     @Override
     protected void info(int opcode, String format, Object... args) {
@@ -24,8 +24,8 @@ public class NodeDump extends AbstractDumpDexCodeAdapter {
 
     @Override
     public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
-        sb.append(String.format("TRY %s %s %s > %s\n", labelToString(start), labelToString(end), labelToString(handler),
-                type == null ? "ALL" : type));
+        sb.append(String.format("TRY %s %s %s > %s\n", labelToString(start), labelToString(end),
+                labelToString(handler), type == null ? "ALL" : type));
     }
 
     @Override
