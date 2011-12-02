@@ -77,8 +77,10 @@ public class DexFileReader {
     private int type_ids_off;
     private int type_ids_size;
 
-    public static final int SKIP_DEBUG = 0x00000001;
-    public static final int SKIP_CODE = 0x00000002;
+    public static final int SKIP_DEBUG = 1;
+    public static final int SKIP_CODE = 1 << 2;
+    public static final int SKIP_ANNOTATION = 1 << 3;
+    public static final int SKIP_FIELD_CONSTANT = 1 << 4;
 
     private boolean odex = false;
     private DataIn odex_in;
@@ -268,19 +270,22 @@ public class DexFileReader {
 
     private void acceptClass(DexFileVisitor dv, DexClassVisitor dcv, String className, int config) {
         DataIn in = this.in;
-
-        // 获取源文件
-        {
-            int source_file_idx = in.readUIntx();
+        int source_file_idx = in.readUIntx();
+        if ((config & SKIP_DEBUG) == 0) {
+            // 获取源文件
             if (source_file_idx != -1)
                 dcv.visitSource(this.getString(source_file_idx));
         }
-        // 获取注解
-        Map<Integer, Integer> fieldAnnotationPositions = new HashMap<Integer, Integer>();
-        Map<Integer, Integer> methodAnnotationPositions = new HashMap<Integer, Integer>();
-        Map<Integer, Integer> paramAnnotationPositions = new HashMap<Integer, Integer>();
-        {
-            int annotations_off = in.readUIntx();
+
+        int annotations_off = in.readUIntx();
+        Map<Integer, Integer> fieldAnnotationPositions;
+        Map<Integer, Integer> methodAnnotationPositions;
+        Map<Integer, Integer> paramAnnotationPositions;
+        if ((config & SKIP_ANNOTATION) == 0) {
+            // 获取注解
+            fieldAnnotationPositions = new HashMap<Integer, Integer>();
+            methodAnnotationPositions = new HashMap<Integer, Integer>();
+            paramAnnotationPositions = new HashMap<Integer, Integer>();
             if (annotations_off != 0) {
                 in.pushMove(annotations_off);
                 try {
@@ -318,8 +323,11 @@ public class DexFileReader {
                     in.pop();
                 }
             }
+        } else {
+            fieldAnnotationPositions = null;
+            methodAnnotationPositions = null;
+            paramAnnotationPositions = null;
         }
-
         int class_data_off = in.readUIntx();
 
         int static_values_off = in.readUIntx();
@@ -335,7 +343,7 @@ public class DexFileReader {
                     int lastIndex = 0;
                     {
                         Object[] constant = null;
-                        {
+                        if ((config & SKIP_FIELD_CONSTANT) == 0) {
                             if (static_values_off != 0) {
                                 in.pushMove(static_values_off);
                                 try {
@@ -354,12 +362,12 @@ public class DexFileReader {
                             if (constant != null && i < constant.length) {
                                 value = constant[i];
                             }
-                            lastIndex = acceptField(lastIndex, dcv, fieldAnnotationPositions, value);
+                            lastIndex = acceptField(lastIndex, dcv, fieldAnnotationPositions, value, config);
                         }
                     }
                     lastIndex = 0;
                     for (int i = 0; i < instance_fields; i++) {
-                        lastIndex = acceptField(lastIndex, dcv, fieldAnnotationPositions, null);
+                        lastIndex = acceptField(lastIndex, dcv, fieldAnnotationPositions, null, config);
                     }
                     lastIndex = 0;
                     for (int i = 0; i < direct_methods; i++) {
@@ -507,7 +515,7 @@ public class DexFileReader {
      * @return
      */
     /* default */int acceptField(int lastIndex, DexClassVisitor dcv, Map<Integer, Integer> fieldAnnotationPositions,
-            Object value) {
+            Object value, int config) {
         DataIn in = this.in;
         int diff = (int) in.readULeb128();
         int field_id = lastIndex + diff;
@@ -516,15 +524,17 @@ public class DexFileReader {
         // //////////////////////////////////////////////////////////////
         DexFieldVisitor dfv = dcv.visitField(field_access_flags, field, value);
         if (dfv != null) {
-            Integer annotation_offset = fieldAnnotationPositions.get(field_id);
-            if (annotation_offset != null) {
-                in.pushMove(annotation_offset);
-                try {
-                    DexAnnotationReader.accept(this, in, dfv);
-                } catch (Exception e) {
-                    throw new DexException(e, "while accept annotation in field:%s.", field.toString());
-                } finally {
-                    in.pop();
+            if ((config & SKIP_ANNOTATION) == 0) {
+                Integer annotation_offset = fieldAnnotationPositions.get(field_id);
+                if (annotation_offset != null) {
+                    in.pushMove(annotation_offset);
+                    try {
+                        DexAnnotationReader.accept(this, in, dfv);
+                    } catch (Exception e) {
+                        throw new DexException(e, "while accept annotation in field:%s.", field.toString());
+                    } finally {
+                        in.pop();
+                    }
                 }
             }
             dfv.visitEnd();
@@ -553,7 +563,7 @@ public class DexFileReader {
         try {
             DexMethodVisitor dmv = cv.visitMethod(method_access_flags, method);
             if (dmv != null) {
-                {
+                if ((config & SKIP_ANNOTATION) == 0) {
                     Integer annotation_offset = methodAnnos.get(method_id);
                     if (annotation_offset != null) {
                         in.pushMove(annotation_offset);
@@ -565,8 +575,6 @@ public class DexFileReader {
                             in.pop();
                         }
                     }
-                }
-                {
                     Integer parameter_annotation_offset = parameterAnnos.get(method_id);
                     if (parameter_annotation_offset != null) {
                         in.pushMove(parameter_annotation_offset);

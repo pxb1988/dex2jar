@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar.reader.io;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -23,7 +24,7 @@ import java.util.Stack;
 
 import com.googlecode.dex2jar.DexException;
 
-public class BeRandomAccessFileInput implements DataIn {
+public class BeRandomAccessFileInput implements DataIn, Closeable {
     protected RandomAccessFile r;
 
     public BeRandomAccessFileInput(File file) {
@@ -166,6 +167,11 @@ public class BeRandomAccessFileInput implements DataIn {
         } catch (IOException e) {
             throw new DexException(e);
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        r.close();
     }
 
 }
