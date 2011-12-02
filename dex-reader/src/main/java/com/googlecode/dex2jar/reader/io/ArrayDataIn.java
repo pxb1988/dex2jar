@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.reader;
+package com.googlecode.dex2jar.reader.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -24,15 +24,12 @@ import java.util.Stack;
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-/* default */abstract class EndianDataIn extends ByteArrayInputStream implements DataIn {
+public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn {
 
     private Stack<Integer> stack = new Stack<Integer>();
-    private int base;
 
-    public EndianDataIn(byte[] data, int base) {
+    public ArrayDataIn(byte[] data) {
         super(data);
-        super.skip(base);
-        this.base = base;
     }
 
     public int readShortx() {
@@ -44,11 +41,11 @@ import java.util.Stack;
     }
 
     public int getCurrentPosition() {
-        return super.pos - base;
+        return super.pos;
     }
 
     public void move(int absOffset) {
-        super.pos = absOffset + base;
+        super.pos = absOffset;
     }
 
     public void pop() {
@@ -78,7 +75,7 @@ import java.util.Stack;
         int bitpos = 0;
         long vln = 0L;
         do {
-            int inp = super.read();
+            int inp = readUByte();
             vln |= ((long) (inp & 0x7F)) << bitpos;
             bitpos += 7;
             if ((inp & 0x80) == 0)
@@ -92,11 +89,11 @@ import java.util.Stack;
     public long readULeb128() {
         long value = 0;
         int count = 0;
-        int b = super.read();
+        int b = readUByte();
         while ((b & 0x80) != 0) {
             value |= (b & 0x7f) << count;
             count += 7;
-            b = super.read();
+            b = readUByte();
         }
         value |= (b & 0x7f) << count;
         return value;
@@ -115,47 +112,5 @@ import java.util.Stack;
             throw new RuntimeException("EOF");
         }
         return super.read();
-    }
-}
-
-/**
- * @see DexFileReader#REVERSE_ENDIAN_CONSTANT
- * @author Panxiaobo
- * 
- */
-class BigEndianDataIn extends EndianDataIn implements DataIn {
-
-    public BigEndianDataIn(byte[] data, int base) {
-        super(data, base);
-    }
-
-    @Override
-    public int readUShortx() {
-        return (readUByte() << 8) | readUByte();
-    }
-
-    public int readUIntx() {
-        return (readUByte() << 24) | (readUByte() << 16) | (readUByte() << 8) | readUByte();
-    }
-}
-
-/**
- * @see DexFileReader#ENDIAN_CONSTANT
- * @author Panxiaobo
- * 
- */
-class LittleEndianDataIn extends EndianDataIn implements DataIn {
-
-    public LittleEndianDataIn(byte[] data, int base) {
-        super(data, base);
-    }
-
-    public int readUShortx() {
-        return readUByte() | (readUByte() << 8);
-    }
-
-    public int readUIntx() {
-        return readUByte() | (readUByte() << 8) | (readUByte() << 16) | (readUByte() << 24);
-
     }
 }

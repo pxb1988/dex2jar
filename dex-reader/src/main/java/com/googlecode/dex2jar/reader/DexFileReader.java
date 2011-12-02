@@ -34,6 +34,9 @@ import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.reader.io.BeArrayDataIn;
+import com.googlecode.dex2jar.reader.io.DataIn;
+import com.googlecode.dex2jar.reader.io.LeArrayDataIn;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -107,23 +110,7 @@ public class DexFileReader {
         return readDex(data);
     }
 
-    /**
-     * 
-     * @param data
-     * 
-     */
-    public DexFileReader(byte[] data) {
-        try {
-            data = readDex(data);
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (IOException e) {
-            throw new DexException(e);
-        }
-
-        int base = 0;
-        DataIn in = new LittleEndianDataIn(data, base);
-
+    public DexFileReader(DataIn in) {
         byte[] magic = in.readBytes(3);
 
         if (Arrays.equals(magic, DEX_FILE_MAGIC)) {
@@ -142,10 +129,10 @@ public class DexFileReader {
         in.skip(1);// 0x00
 
         if (odex) {
-            base = in.readIntx();// odex_dexOffset
+            int base = in.readIntx();// odex_dexOffset
             in.skip(4);// odex_dexLength
             odex_depsOffset = in.readIntx();
-            in = new LittleEndianDataIn(data, base);
+            in = new OffsetedDataIn(in, base);
             in.skip(8);// skip head;
         }
         // skip uint checksum
@@ -155,16 +142,11 @@ public class DexFileReader {
         in.skip(4 + 20 + 4 + 4);
 
         int endian_tag = in.readUIntx();
-        if (endian_tag == REVERSE_ENDIAN_CONSTANT) {
-            int position = in.getCurrentPosition();
-            in = new BigEndianDataIn(data, base);
-            in.move(position);
-        } else if (endian_tag != ENDIAN_CONSTANT) {
+        if (endian_tag != ENDIAN_CONSTANT) {
             throw new DexException("not support endian_tag");
         }
 
         this.in = in;
-
         // skip uint link_size
         // and uint link_off
         // and uint map_off
@@ -183,6 +165,31 @@ public class DexFileReader {
         class_defs_size = in.readUIntx();
         class_defs_off = in.readUIntx();
         // skip uint data_size data_off
+    }
+
+    private static final boolean isLittleEndian = true;
+
+    static private DataIn opDataIn(byte[] data) {
+        try {
+            if (isLittleEndian) {
+                return new LeArrayDataIn(readDex(data));
+            } else {
+                return new BeArrayDataIn(readDex(data));
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DexException(e);
+        }
+    }
+
+    /**
+     * 
+     * @param data
+     * 
+     */
+    public DexFileReader(byte[] data) {
+        this(opDataIn(data));
     }
 
     public DexFileReader(File f) throws IOException {

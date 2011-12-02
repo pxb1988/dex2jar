@@ -24,6 +24,7 @@ import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.reader.DexDebugInfoReader.LocalVariable;
+import com.googlecode.dex2jar.reader.io.DataIn;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 
 /**
