@@ -119,6 +119,66 @@ public class Cfg {
         return false;
     }
 
+    /**
+     * make all stmt will throw exception
+     * 
+     * @param jm
+     */
+    public static void createCfgForLiveAnalyze(IrMethod jm) {
+
+        for (Stmt st : jm.stmts) {
+            if (st._cfg_froms == null) {
+                st._cfg_froms = new TreeSet<Stmt>(jm.stmts);
+            } else {
+                st._cfg_froms.clear();
+            }
+            if (st._cfg_tos == null) {
+                st._cfg_tos = new TreeSet<Stmt>(jm.stmts);
+            } else {
+                st._cfg_tos.clear();
+            }
+        }
+
+        for (Trap t : jm.traps) {
+            for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
+                link(s.getPre(), t.handler);
+            }
+        }
+
+        for (Stmt st : jm.stmts) {
+            switch (st.st) {
+            case GOTO:
+                link(st, ((JumpStmt) st).target);
+                break;
+            case IF:
+                link(st, ((JumpStmt) st).target);
+                link(st, st.getNext());
+                break;
+            case LOOKUP_SWITCH:
+                LookupSwitchStmt lss = (LookupSwitchStmt) st;
+                link(st, lss.defaultTarget);
+                for (LabelStmt ls : lss.targets) {
+                    link(st, ls);
+                }
+                break;
+            case TABLE_SWITCH:
+                TableSwitchStmt tss = (TableSwitchStmt) st;
+                link(st, tss.defaultTarget);
+                for (LabelStmt ls : tss.targets) {
+                    link(st, ls);
+                }
+                break;
+            case THROW:
+            case RETURN:
+            case RETURN_VOID:
+                break;
+            default:
+                link(st, st.getNext());
+                break;
+            }
+        }
+    }
+
     public static void createCFG(IrMethod jm) {
 
         for (Stmt st : jm.stmts) {

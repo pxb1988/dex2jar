@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -32,62 +30,48 @@ import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
 import com.googlecode.dex2jar.ir.expr.RefExpr;
 import com.googlecode.dex2jar.ir.expr.TypeExpr;
-import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.EnStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
-import com.googlecode.dex2jar.ir.ts.Cfg;
-import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
+import com.googlecode.dex2jar.ir.ts.LiveAnalyze;
+import com.googlecode.dex2jar.ir.ts.LiveAnalyze.Phi;
 import com.googlecode.dex2jar.ir.ts.LocalType;
 
 public class IrMethod2AsmMethod implements Opcodes {
 
-    @SuppressWarnings("serial")
-    static class Phi extends HashSet<Phi> {
-        Phi() {
-            super(3);
-        }
-
-        boolean used;
-        Phi tag;
-        Local local;
-
-        public String toString() {
-            if (tag != null) {
-                return tag.toString();
-            }
-            if (local != null) {
-                return local.toString();
-            }
-            return "?";
-        }
-
-        @Override
-        public int hashCode() {
-            return System.identityHashCode(this);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return this == obj;
-        }
-    }
-
-    static Phi trim(Phi phi) {
-        while (phi.tag != null) {
-            phi = phi.tag;
-        }
-        return phi;
-    }
+    private static final boolean DEBUG = false;
 
     private void reIndexLocal(IrMethod ir) {
+
+        if (DEBUG) {
+            int i = 0;
+            for (Stmt stmt = ir.stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
+                if (stmt.st == ST.LABEL) {
+                    LabelStmt ls = (LabelStmt) stmt;
+                    ls.displayName = "L" + i++;
+                }
+            }
+        }
+
+        // 1. live local analyze
+        LiveAnalyze la = new LiveAnalyze(ir);
+        List<Phi> phis = la.analyze();
+        if (DEBUG) {
+            for (Local local : ir.locals) {
+                if (local._ls_index >= 0) {
+                    local.name = "a" + local._ls_index;
+                } else {
+                    local.name = "ignore";
+                }
+            }
+        }
+
+        // 2.1. assign existing index
         int index = 0;
         if ((ir.access & ACC_STATIC) == 0) {
             index++;
@@ -99,177 +83,41 @@ public class IrMethod2AsmMethod implements Opcodes {
             index += ir.args[i].getSize();
         }
         int[] maps = new int[localSize];
-        index = 0;
-        for (Local local : ir.locals) {
-            local._ls_index = index++;
-            local.name = "a" + local._ls_index;
-        }
         for (int i = 0; i < localSize; i++) {
             maps[i] = -1;
         }
+        for (Stmt stmt = ir.stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
+            if (stmt.st == ST.IDENTITY || stmt.st == ST.ASSIGN) {
+                E2Stmt e2 = (E2Stmt) stmt;
+                switch (e2.op2.value.vt) {
+                case THIS_REF: {
+                    Local local = (Local) e2.op1.value;
+                    maps[local._ls_index] = 0;
+                }
+                    break;
+                case PARAMETER_REF: {
+                    Local local = (Local) e2.op1.value;
+                    maps[local._ls_index] = parameterIdx[((RefExpr) e2.op2.value).parameterIndex];
+                }
+                    break;
+                }
+            }
+        }
 
-        liveLocalAnalyze(localSize, ir, maps, parameterIdx);
+        // 2.2 assign other index
+        createGraph(ir, phis.size());
+        gradyColoring(phis, maps);
 
         for (Local local : ir.locals) {
             local._ls_index = maps[local._ls_index];
-            if (local._ls_index >= 0) {
-                local.name = "a" + local._ls_index;
-            } else {
-                local.name = "ignore";
-            }
-        }
-    }
-
-    private void liveLocalAnalyze(final int localSize, IrMethod ir, final int maps[], final int parameterIdx[]) {
-
-        final List<Phi> phis = new ArrayList<Phi>(30);
-
-        Cfg.createCFG(ir);
-        Cfg.Forward(ir, new FrameVisitor<Phi[]>() {
-
-            @Override
-            public Phi[] exec(Stmt stmt) {
-                Phi[] frame = (Phi[]) stmt._ls_forward_frame;
-                if (frame == null) {
-                    frame = new Phi[localSize];
-                    stmt._ls_forward_frame = frame;
-                }
-                Phi[] result = frame;
-                switch (stmt.et) {
-                case E0:
-                    break;
-                case E1:
-                    use(((E1Stmt) stmt).op, result);
-                    break;
-                case E2:
-                    E2Stmt e2 = (E2Stmt) stmt;
-                    if ((e2.st == ST.ASSIGN || e2.st == ST.IDENTITY) && (((AssignStmt) stmt).op1.value.vt == VT.LOCAL)) {
-                        Local local = (Local) ((AssignStmt) stmt).op1.value;
-                        Type localType = LocalType.typeOf(local);
-                        use(e2.op2, result);
-                        if (!Type.VOID_TYPE.equals(localType)) {
-                            result = new Phi[localSize];
-                            System.arraycopy(frame, 0, result, 0, localSize);
-                            Phi phi = new Phi();
-                            phis.add(phi);
-                            result[local._ls_index] = phi;
-                            Value ref = ((AssignStmt) stmt).op2.value;
-                            switch (ref.vt) {
-                            case THIS_REF:
-                                maps[local._ls_index] = 0;
-                                break;
-                            case PARAMETER_REF:
-                                maps[local._ls_index] = parameterIdx[((RefExpr) ref).parameterIndex];
-                                break;
-                            }
-                        }
-                    } else {
-                        use(e2.op1, result);
-                        use(e2.op2, result);
-                    }
-                    break;
-                case En:
-                    EnStmt en = (EnStmt) stmt;
-                    for (ValueBox vb : en.ops) {
-                        use(vb, result);
-                    }
-                    break;
-                }
-
-                return result;
-            }
-
-            private void use(ValueBox op, Phi[] frame) {
-                if (op == null) {
-                    return;
-                }
-                Value v = op.value;
-                switch (v.et) {
-                case E0:
-                    if (v.vt == VT.LOCAL) {
-                        Local local = (Local) v;
-                        frame[local._ls_index].used = true;
-                        frame[local._ls_index].local = local;
-                    }
-                    break;
-                case E1:
-                    use(((E1Expr) v).op, frame);
-                    break;
-                case E2:
-                    E2Expr e2 = (E2Expr) v;
-                    use(e2.op1, frame);
-                    use(e2.op2, frame);
-                    break;
-                case En:
-                    EnExpr en = (EnExpr) v;
-                    for (ValueBox vb : en.ops) {
-                        use(vb, frame);
-                    }
-                    break;
-                }
-            }
-
-            @Override
-            public void merge(Phi[] frame, Stmt dist) {
-                Phi[] distFrame = (Phi[]) dist._ls_forward_frame;
-                if (distFrame == null) {
-                    distFrame = new Phi[localSize];
-                    dist._ls_forward_frame = distFrame;
-                }
-
-                for (int i = 0; i < localSize; i++) {
-                    Phi srcPhi = frame[i];
-                    if (srcPhi != null) {
-                        Phi distPhi = distFrame[i];
-                        if (distPhi == null) {
-                            if (!dist._cfg_visited) {
-                                distPhi = new Phi();
-                                phis.add(distPhi);
-                                distFrame[i] = distPhi;
-                                distPhi.add(srcPhi);
-                            }
-                        } else {
-                            distPhi.add(srcPhi);
-                        }
-                    }
-                }
-            }
-        });
-
-        Set<Phi> used = new HashSet<Phi>(phis.size() / 2);
-        for (Phi reg : phis) {
-            doAddUsed(reg, used);
-        }
-        for (Phi reg : used) {
-            Phi a = trim(reg);
-            if (a != reg && reg.local != null) {
-                a.local = reg.local;
-            }
-            if (reg.size() > 0) {
-                for (Phi r : reg) {
-                    Phi b = trim(r);
-                    if (a != b) {
-                        b.tag = a;
-                        if (b.local != null) {
-                            a.local = b.local;
-                        }
-                    }
+            if (DEBUG) {
+                if (local._ls_index >= 0) {
+                    local.name = "a" + local._ls_index;
+                } else {
+                    local.name = "ignore";
                 }
             }
         }
-        phis.clear();
-        for (Phi r : used) {
-            if (r.used && r.tag == null) {
-                r.clear();
-                phis.add(r);
-            }
-        }
-        used.clear();
-
-        createGraph(ir, phis.size());
-
-        gradyColoring(phis, maps);
-
     }
 
     private int findNextColor(Phi v, int n, int max, int[] maps) {
@@ -328,7 +176,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
-    boolean doColor(int idx, BitSet toColor, List<Phi> phis, int size, int[] maps) {
+    private boolean doColor(int idx, BitSet toColor, List<Phi> phis, int size, int[] maps) {
         int x = toColor.nextSetBit(idx);
         if (x < 0) {
             return true;
@@ -344,7 +192,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         return false;
     }
 
-    static int sizeOf(Phi p) {
+    private static int sizeOf(Phi p) {
         return LocalType.typeOf(p.local).getSize();
     }
 
@@ -360,9 +208,7 @@ public class IrMethod2AsmMethod implements Opcodes {
                     for (int i = 0; i < frame.length; i++) {
                         Phi r = frame[i];
                         if (r != null) {
-                            if (r.used) {
-                                tmp.add(trim(r));
-                            }
+                            tmp.add(r);
                         }
                     }
                 }
@@ -379,18 +225,6 @@ public class IrMethod2AsmMethod implements Opcodes {
             }
         }
 
-    }
-
-    static void doAddUsed(Phi r, Set<Phi> regs) {
-        if (r.used) {
-            if (!regs.contains(r)) {
-                regs.add(r);
-                for (Phi p : r) {
-                    p.used = true;
-                    doAddUsed(p, regs);
-                }
-            }
-        }
     }
 
     public void convert(IrMethod ir, MethodVisitor asm) {
