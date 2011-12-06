@@ -104,8 +104,26 @@ public class IrMethod2AsmMethod implements Opcodes {
             }
         }
 
+        Phi _this = null;
+        if ((ir.access & ACC_STATIC) == 0) {
+            for (Phi phi : phis) {
+                if (phi.local._ls_index == 0) {
+                    _this = phi;
+                    break;
+                }
+            }
+        }
+
         // 2.2 assign other index
         createGraph(ir, phis.size());
+        if (_this != null) {// never reuse index 0
+            for (Phi phi : phis) {
+                if (phi != _this) {
+                    phi.add(_this);
+                    _this.add(phi);
+                }
+            }
+        }
         gradyColoring(phis, maps);
 
         for (Local local : ir.locals) {
@@ -630,9 +648,57 @@ public class IrMethod2AsmMethod implements Opcodes {
     }
 
     private static void reBuildE2Expression(E2Expr e2, MethodVisitor asm) {
-        accept(e2.op1.value, asm);
-        accept(e2.op2.value, asm);
         Type type = LocalType.typeOf(e2.op2.value);
+        accept(e2.op1.value, asm);
+        if ((e2.vt == VT.ADD || e2.vt == VT.SUB) && e2.op2.value.vt == VT.CONSTANT) {
+            // [x + (-1)] to [x - 1]
+            // [x - (-1)] to [x + 1]
+            Constant constant = (Constant) e2.op2.value;
+            Type t = LocalType.typeOf(constant);
+            switch (t.getSort()) {
+            case Type.SHORT:
+            case Type.BYTE:
+            case Type.INT: {
+                int s = (Integer) constant.value;
+                if (s < 0) {
+                    asm.visitLdcInsn((int) -s);
+                    asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
+                    return;
+                }
+            }
+                break;
+            case Type.FLOAT: {
+                float s = (Float) constant.value;
+                if (s < 0) {
+                    asm.visitLdcInsn((float) -s);
+                    asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
+                    return;
+                }
+            }
+                break;
+            case Type.LONG: {
+                long s = (Long) constant.value;
+                if (s < 0) {
+                    asm.visitLdcInsn((long) -s);
+                    asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
+                    return;
+                }
+            }
+                break;
+            case Type.DOUBLE: {
+                double s = (Double) constant.value;
+                if (s < 0) {
+                    asm.visitLdcInsn((double) -s);
+                    asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
+                    return;
+                }
+            }
+                break;
+            }
+        }
+
+        accept(e2.op2.value, asm);
+
         Type tp1 = LocalType.typeOf(e2.op1.value);
         switch (e2.vt) {
         case ARRAY:
