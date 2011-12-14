@@ -11,35 +11,23 @@ import com.googlecode.dex2jar.analysis.Analyzer;
 import com.googlecode.dex2jar.analysis.CodeNode;
 import com.googlecode.dex2jar.analysis.Node;
 import com.googlecode.dex2jar.analysis.NodeDump;
-import com.googlecode.dex2jar.analysis.type.TypeAnalyzer.Pairs;
 
 public class TypeAnalyzer extends Analyzer {
     /**
      * Phi
      */
-    @SuppressWarnings("serial")
-    public static class Phi extends ArrayList<Phi> {
+    public static class Phi {
 
-        public int hashCode() {
-            return System.identityHashCode(this);
-        }
-
-        public boolean equals(Object that) {
-            return this == that;
-        }
+        public List<Phi> parent = new ArrayList<Phi>(5);
 
         public Set<String> typs = new HashSet<String>();
         public boolean used;
 
-        public Phi() {
-            super(4);
-        }
-
         public Phi tag;
 
-        public String toString() {
+        public String toStringx() {
             if (tag != null) {
-                return tag.toString();
+                return tag.toStringx();
             }
             if (typs.size() == 0) {
                 return "?";
@@ -51,20 +39,19 @@ public class TypeAnalyzer extends Analyzer {
                 case 'L':
                     break;
                 case '_':
-                    switch (t.charAt(1)) {
-                    case '1':
-                        return "1";
-                    case '2':
-                        return "2";
-                    case '3':
-                        return "3";
-                    }
-                    throw new RuntimeException();
+                    return t.substring(1, 2);
                 default:
                     return t.substring(0, 1);
                 }
             }
             return "L";
+        }
+
+        public String toString() {
+            if (tag != null) {
+                return tag.toString();
+            }
+            return typs.toString();
         }
     }
 
@@ -72,6 +59,8 @@ public class TypeAnalyzer extends Analyzer {
 
     final boolean isStatic;
     final Method method;
+
+    boolean debug = true;
 
     final TypeVisitor<Phi> typeVisitor;
 
@@ -116,13 +105,25 @@ public class TypeAnalyzer extends Analyzer {
                     }
                     if (!f) {
                         switch (desc.charAt(1)) {
-                        case '1':
+                        case '1':// IFL
                             break;
-                        case '2':
+                        case '2':// JD
                             break;
-                        case '3':
+                        case '3':// IL
                             ts.remove(TypeVisitor.IFL);
-                            ts.add(desc);
+                            if (ts.remove(TypeVisitor.IF)) {
+                                ts.add("I");
+                            } else {
+                                ts.add(desc);
+                            }
+                            break;
+                        case '4':// IF
+                            ts.remove(TypeVisitor.IFL);
+                            if (ts.remove(TypeVisitor.IL)) {
+                                ts.add("I");
+                            } else {
+                                ts.add(desc);
+                            }
                             break;
                         }
                     }
@@ -176,6 +177,7 @@ public class TypeAnalyzer extends Analyzer {
                 default: {
                     ts.remove(TypeVisitor.IFL);
                     ts.remove(TypeVisitor.IL);
+                    ts.remove(TypeVisitor.IF);
                     ts.remove(TypeVisitor.JD);
                     ts.add(desc);
                 }
@@ -194,12 +196,12 @@ public class TypeAnalyzer extends Analyzer {
         frame = new Phi[totalReg + 2];
     }
 
-    static void doAddUsed(Phi r, Set<Phi> regs) {
+    private static void doAddUsed(Phi r, Set<Phi> regs) {
         if (r.used) {
             if (!regs.contains(r)) {
                 regs.add(r);
-                for (int i = 0; i < r.size(); i++) {
-                    Phi p = r.get(i);
+                for (int i = 0; i < r.parent.size(); i++) {
+                    Phi p = r.parent.get(i);
                     p.used = true;
                     doAddUsed(p, regs);
                 }
@@ -217,41 +219,45 @@ public class TypeAnalyzer extends Analyzer {
     @Override
     public void analyze() {
         super.analyze();
-        Set<Phi> used = new HashSet<Phi>(allRegs.size() / 2);
+        {
+            List<Phi> allRegs = this.allRegs;
+            Set<Phi> used = new HashSet<Phi>(allRegs.size() / 2);
 
-        for (Phi reg : allRegs) {
-            doAddUsed(reg, used);
-        }
-        this.allRegs.clear();
-
-        for (Phi reg : used) {
-            Phi a = trim(reg);
-            if (a != reg) {
-                for (String t : reg.typs) {
-                    typeVisitor._type(a, t);
-                }
-                // a.typs.addAll(reg.typs);
+            for (Phi reg : allRegs) {
+                doAddUsed(reg, used);
             }
-            if (reg.size() > 0) {
-                for (Phi r : reg) {
-                    Phi b = trim(r);
-                    if (a != b) {
-                        for (String t : r.typs) {
-                            typeVisitor._type(a, t);
+            allRegs.clear();
+
+            for (Phi reg : used) {
+                Phi a = trim(reg);
+                if (a != reg) {
+                    for (String t : reg.typs) {
+                        typeVisitor._type(a, t);
+                    }
+                    // a.typs.addAll(reg.typs);
+                }
+                if (reg.parent.size() > 0) {
+                    for (Phi r : reg.parent) {
+                        Phi b = trim(r);
+                        if (a != b) {
+                            for (String t : r.typs) {
+                                typeVisitor._type(a, t);
+                            }
+                            // a.typs.addAll(r.typs);
+                            b.tag = a;
                         }
-                        // a.typs.addAll(r.typs);
-                        b.tag = a;
                     }
                 }
             }
-        }
 
-        for (Phi reg : used) {
-            if (reg.tag == null) {
-                this.allRegs.add(reg);
+            for (Phi reg : used) {
+                if (reg.tag == null) {
+                    reg.parent = null;
+                    allRegs.add(reg);
+                }
             }
+            used.clear();
         }
-
         List<Pairs> same = new ArrayList<Pairs>();
         List<Pairs> array = new ArrayList<Pairs>();
         for (Node p = cn.first; p != null; p = p.next) {
@@ -289,37 +295,40 @@ public class TypeAnalyzer extends Analyzer {
 
         }
 
-        // for (Node p = cn.first; p != null; p = p.next) {
-        // switch (p.opcode) {
-        // case OP_IGET_QUICK:
-        // case OP_IPUT_QUICK: {
-        // Phi[] frame = (Phi[]) p.frame;
-        // p.field = getField(frame[p.b], p.c, frame[p.a]);
-        // typeVisitor._type(frame[p.b], p.field.getOwner());
-        // typeVisitor._type(frame[p.a], p.field.getType());
-        // p.opcode = OP_IGET_QUICK == p.opcode ? OP_IGET : OP_IPUT;
-        // }
-        // break;
-        // case OP_INVOKE_VIRTUAL_QUICK:
-        // case OP_INVOKE_SUPER_QUICK: {
-        // Phi[] frame = (Phi[]) p.frame;
-        // List<Phi> args = new ArrayList();
-        // for (int i = 1; i < p.args.length; i++) {
-        // Phi phi = frame[p.args[i]];
-        // if (phi != null) {
-        // args.add(phi);
-        // }
-        // }
-        // Method m = getMethod(frame[p.args[0]], p.a, args);
-        // p.method = m;
-        // p.opcode = OP_INVOKE_VIRTUAL_QUICK == p.opcode ? OP_INVOKE_VIRTUAL : OP_INVOKE_SUPER;
-        // // TODO update p.args
-        // break;
-        // }
-        // case OP_EXECUTE_INLINE:
-        // // TODO
-        // }
-        // }
+        List<Phi> argsCache = new ArrayList();
+        for (Node p = cn.first; p != null; p = p.next) {
+            switch (p.opcode) {
+            case OP_IGET_QUICK:
+            case OP_IPUT_QUICK: {
+                Phi[] frame = (Phi[]) p.frame;
+                Field field = getField(frame[p.b], p.c, frame[p.a]);
+                // typeVisitor._type(frame[p.b], field.getOwner());
+                // typeVisitor._type(frame[p.a], field.getType());
+                // p.opcode = OP_IGET_QUICK == p.opcode ? OP_IGET : OP_IPUT;
+                // p.field = field;
+            }
+                break;
+            case OP_INVOKE_VIRTUAL_QUICK:
+            case OP_INVOKE_SUPER_QUICK: {
+                Phi[] frame = (Phi[]) p.frame;
+
+                for (int i = 1; i < p.args.length; i++) {
+                    Phi phi = frame[p.args[i]];
+                    if (phi != null) {
+                        argsCache.add(phi);
+                    }
+                }
+                Method m = getMethod(frame[p.args[0]], p.a, argsCache);
+                // p.method = m;
+                // p.opcode = OP_INVOKE_VIRTUAL_QUICK == p.opcode ? OP_INVOKE_VIRTUAL : OP_INVOKE_SUPER;
+                // TODO update p.args
+                argsCache.clear();
+                break;
+            }
+            case OP_EXECUTE_INLINE:
+                // TODO
+            }
+        }
 
         System.out.println(method);
     }
@@ -401,7 +410,7 @@ public class TypeAnalyzer extends Analyzer {
 
     protected void merge(Object f, Node target) {
         Phi[] frame = (Phi[]) f;
-        if (target._cfg_froms == 1) {// only from one node, direct copy node
+        if (!debug && target._cfg_froms == 1) {// from one node, direct copy node
             if (target.frame == null) {
                 target.frame = new Phi[totalReg + 2];
                 System.arraycopy(frame, 0, target.frame, 0, totalReg + 2);
@@ -421,7 +430,7 @@ public class TypeAnalyzer extends Analyzer {
                     if (frame[i] != null) {
                         Phi reg = typeVisitor._new();
                         Phi src = (Phi) frame[i];
-                        reg.add(src);// add to phi
+                        reg.parent.add(src);// add to phi
                         targetFrame[i] = reg;
                     }
                 }
@@ -435,10 +444,10 @@ public class TypeAnalyzer extends Analyzer {
                             if (!target._cfg_visited) {
                                 reg = typeVisitor._new();
                                 targetFrame[i] = reg;
-                                reg.add(src);// add to phi
+                                reg.parent.add(src);// add to phi
                             }
                         } else {
-                            reg.add((Phi) frame[i]);// add to phi
+                            reg.parent.add((Phi) frame[i]);// add to phi
                         }
                     }
                 }
@@ -459,16 +468,16 @@ public class TypeAnalyzer extends Analyzer {
         for (Node p = cn.first; p != null; p = p.next) {
             Phi[] rs = (Phi[]) p.frame;
             if (p._cfg_visited) {
-                nd.sb.append("Y ");
+                nd.sb.append("y ");
             } else {
-                nd.sb.append("N ");
+                nd.sb.append("  ");
             }
             if (rs != null) {
                 for (int i = 0; i < rs.length; i++) {
                     if (rs[i] == null) {
                         tmp.append('.');
                     } else {
-                        tmp.append(rs[i]);
+                        tmp.append(rs[i].toStringx());
                     }
                 }
                 nd.sb.append(tmp).append(" |");

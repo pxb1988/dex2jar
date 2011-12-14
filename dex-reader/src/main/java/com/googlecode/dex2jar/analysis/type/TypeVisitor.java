@@ -37,6 +37,7 @@ public abstract class TypeVisitor<T> implements OdexCodeVisitor, OdexOpcodes {
 
     public static String IFL = "_1IFL";
     public static String IL = "_3IL";
+    public static String IF = "_4IF";
     public static String JD = "_2JD";
     public static String AIFL = "[_1IFL";
     public static String AJD = "[_2JD";
@@ -101,7 +102,16 @@ public abstract class TypeVisitor<T> implements OdexCodeVisitor, OdexOpcodes {
         } else if (opcode == OP_CONST_STRING) {
             newAndType(toReg, "Ljava/lang/String;");
         } else {
-            newAndType(toReg, descs[xt]);
+            if (xt == TYPE_SINGLE) {
+                int v = (Integer) value;
+                if (v == 0) {
+                    newAndType(toReg, descs[xt]);
+                } else {// not zero, an int or float
+                    newAndType(toReg, IF);
+                }
+            } else {
+                newAndType(toReg, descs[xt]);
+            }
         }
     }
 
