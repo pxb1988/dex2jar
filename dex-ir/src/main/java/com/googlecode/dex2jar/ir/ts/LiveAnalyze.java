@@ -42,9 +42,8 @@ public class LiveAnalyze {
     @SuppressWarnings("serial")
     public static class Phi extends HashSet<Phi> {
         public Local local;
-
-        private Phi tag;
-        private boolean used;
+        public Phi tag;
+        public boolean used;
 
         private Phi() {
             super(3);
