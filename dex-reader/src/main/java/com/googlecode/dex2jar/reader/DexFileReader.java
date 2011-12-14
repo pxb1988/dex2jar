@@ -24,6 +24,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -60,16 +61,17 @@ public class DexFileReader {
     /* default */static final int ENDIAN_CONSTANT = 0x12345678;
     /* default */static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
 
+    private static final int DEFAULT_API_LEVEL = 13;
+
+    private static final Logger log = Logger.getLogger(DexFileReader.class.getName());
+
     private int class_defs_off;
-
     private int class_defs_size;
-
     private int field_ids_off;
     private int field_ids_size;
     private DataIn in;
     private int method_ids_off;
     private int method_ids_size;
-
     private int proto_ids_off;
     private int proto_ids_size;
     private int string_ids_off;
@@ -82,10 +84,12 @@ public class DexFileReader {
     public static final int SKIP_ANNOTATION = 1 << 3;
     public static final int SKIP_FIELD_CONSTANT = 1 << 4;
 
-    private boolean odex = false;
+    private final boolean odex;
     private DataIn odex_in;
     private int odex_depsOffset;
-    int apiLevel = 13;
+    /* package */int apiLevel = DEFAULT_API_LEVEL;
+
+    private boolean apiLevelSetted = false;
 
     public static byte[] readDex(byte[] data) throws IOException {
         if ("de".equals(new String(data, 0, 2))) {// dex/y
@@ -116,7 +120,7 @@ public class DexFileReader {
         byte[] magic = in.readBytes(3);
 
         if (Arrays.equals(magic, DEX_FILE_MAGIC)) {
-            //
+            odex = false;
         } else if (Arrays.equals(magic, ODEX_FILE_MAGIC)) {
             odex = true;
             odex_in = in;
@@ -213,6 +217,10 @@ public class DexFileReader {
      *            {@link #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_FIELD}, {@link #SKIP_METHOD}
      */
     public void accept(DexFileVisitor dv, int config) {
+        if (odex && !apiLevelSetted) {
+            log.warning("read an odex file without setting the apiLevel, use " + DEFAULT_API_LEVEL + " as default.");
+        }
+
         if (odex && dv instanceof OdexFileVisitor) {
             DataIn in = this.odex_in;
             OdexFileVisitor odv = (OdexFileVisitor) dv;
@@ -501,7 +509,8 @@ public class DexFileReader {
         }
     }
 
-    public void setApiLevel(int apiLevel) {
+    public final void setApiLevel(int apiLevel) {
+        apiLevelSetted = true;
         this.apiLevel = apiLevel;
     }
 
@@ -625,7 +634,7 @@ public class DexFileReader {
         return method_id;
     }
 
-    public boolean isOdex() {
+    public final boolean isOdex() {
         return odex;
     }
 

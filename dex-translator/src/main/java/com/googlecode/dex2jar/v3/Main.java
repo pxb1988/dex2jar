@@ -54,6 +54,11 @@ public class Main {
     public static void doData(byte[] data, File destJar, final Map<Method, Exception> exceptions) throws IOException {
 
         DexFileReader reader = new DexFileReader(data);
+        if (reader.isOdex()) {
+            throw new DexException("dex-translator not support translate an odex file,"
+                    + " please refere smali http://code.google.com/p/smali/ to convert odex to dex");
+        }
+
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
         reader.accept(afa, DexFileReader.SKIP_CODE | DexFileReader.SKIP_DEBUG);
 
@@ -95,80 +100,95 @@ public class Main {
         }
 
         if (exceptions != null && exceptions.size() > 0) {
-
-            for (Map.Entry<Method, Exception> e : exceptions.entrySet()) {
-                System.err.println("Error:" + e.getKey().toString() + "->" + e.getValue().getMessage());
-            }
-            File errorFile = new File(destJar.getParentFile(), FilenameUtils.getBaseName(destJar.getName())
-                    + ".error.txt");
-            final PrintWriter fw = new PrintWriter(new OutputStreamWriter(FileUtils.openOutputStream(errorFile),
-                    "UTF-8"));
-            fw.println(getVersionString());
-            final Out out = new Out() {
-
-                @Override
-                public void s(String format, Object... arg) {
-                    fw.println(String.format(format, arg));
-                }
-
-                @Override
-                public void s(String s) {
-                    fw.println(s);
-                }
-
-                @Override
-                public void push() {
-
-                }
-
-                @Override
-                public void pop() {
-
-                }
-            };
-            reader.accept(new EmptyVisitor() {
-
-                @Override
-                public DexClassVisitor visit(int accessFlags, String className, String superClass,
-                        String[] interfaceNames) {
-                    return new EmptyVisitor() {
-
-                        @Override
-                        public DexMethodVisitor visitMethod(final int accessFlags, final Method method) {
-                            if (exceptions.containsKey(method)) {
-                                return new EmptyVisitor() {
-
-                                    @Override
-                                    public DexCodeVisitor visitCode() {
-                                        out.s("===========================================");
-                                        Exception exception = exceptions.get(method);
-                                        exception.printStackTrace(fw);
-                                        out.s("");
-                                        out.s("DexMethodVisitor mv=cv.visitMethod(%s, %s);",
-                                                Escape.methodAcc(accessFlags), Escape.v(method));
-                                        out.s("DexCodeVisitor code = mv.visitCode();");
-                                        return new ASMifierCodeV(out);
-                                    }
-
-                                    @Override
-                                    public void visitEnd() {
-                                        out.s("mv.visitEnd();");
-                                        fw.flush();
-                                    }
-                                };
-                            }
-                            return null;
-                        }
-
-                    };
-                }
-
-            }, DexFileReader.SKIP_DEBUG);
-
-            fw.close();
-            System.err.println("Detail Error Information in File " + errorFile);
-            System.err.println("Please report this file to http://code.google.com/p/dex2jar/issues/entry if possible.");
+            printErrorFile(reader, exceptions, destJar);
         }
+    }
+
+    static private void printErrorFile(DexFileReader reader, final Map<Method, Exception> exceptions, File destJar)
+            throws IOException {
+        for (Map.Entry<Method, Exception> e : exceptions.entrySet()) {
+            System.err.println("Error:" + e.getKey().toString() + "->" + e.getValue().getMessage());
+        }
+        File errorFile = new File(destJar.getParentFile(), FilenameUtils.getBaseName(destJar.getName()) + ".error.zip");
+        final ZipOutputStream errorZipOutputStream = new ZipOutputStream(FileUtils.openOutputStream(errorFile));
+        errorZipOutputStream.putNextEntry(new ZipEntry("summary.txt"));
+        final PrintWriter fw = new PrintWriter(new OutputStreamWriter(errorZipOutputStream, "UTF-8"));
+        fw.println(getVersionString());
+        fw.println("there are " + exceptions.size() + " error methods");
+        fw.flush();
+        errorZipOutputStream.closeEntry();
+        final Out out = new Out() {
+
+            @Override
+            public void s(String format, Object... arg) {
+                fw.println(String.format(format, arg));
+            }
+
+            @Override
+            public void s(String s) {
+                fw.println(s);
+            }
+
+            @Override
+            public void push() {
+
+            }
+
+            @Override
+            public void pop() {
+
+            }
+        };
+        final int[] count = new int[] { 0 };
+        reader.accept(new EmptyVisitor() {
+
+            @Override
+            public DexClassVisitor visit(int accessFlags, String className, String superClass, String[] interfaceNames) {
+                return new EmptyVisitor() {
+
+                    @Override
+                    public DexMethodVisitor visitMethod(final int accessFlags, final Method method) {
+                        if (exceptions.containsKey(method)) {
+                            return new EmptyVisitor() {
+
+                                @Override
+                                public DexCodeVisitor visitCode() {
+                                    try {
+                                        errorZipOutputStream.putNextEntry(new ZipEntry("t" + count[0]++ + ".txt"));
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                    Exception exception = exceptions.get(method);
+                                    exception.printStackTrace(fw);
+                                    out.s("");
+                                    out.s("DexMethodVisitor mv=cv.visitMethod(%s, %s);", Escape.methodAcc(accessFlags),
+                                            Escape.v(method));
+                                    out.s("DexCodeVisitor code = mv.visitCode();");
+                                    return new ASMifierCodeV(out);
+                                }
+
+                                @Override
+                                public void visitEnd() {
+                                    out.s("mv.visitEnd();");
+                                    fw.flush();
+                                    try {
+                                        errorZipOutputStream.closeEntry();
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                            };
+                        }
+                        return null;
+                    }
+
+                };
+            }
+
+        }, DexFileReader.SKIP_DEBUG);
+        errorZipOutputStream.close();
+        System.err.println("Detail Error Information in File " + errorFile);
+        System.err.println("Please report this file to http://code.google.com/p/dex2jar/issues/entry if possible.");
     }
 
     public static void doFile(File srcDex) throws IOException {

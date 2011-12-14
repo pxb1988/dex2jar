@@ -17,6 +17,7 @@ package com.googlecode.dex2jar.reader;
 
 import java.util.Map;
 
+import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.OdexOpcodes;
@@ -49,7 +50,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         return labels.get(this.offset + offset);
     }
 
-    public void offset(int currentOffset) {
+    /* package */void offset(int currentOffset) {
         this.offset = currentOffset;
         DexLabel label = getLabel(0);
         if (label != null) {
@@ -727,9 +728,18 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         case OP_INVOKE_DIRECT_EMPTY:
             Method m = dex.getMethod(b);
             if (OP_INVOKE_DIRECT_EMPTY == opcode) {
-                reBuildArgs(OP_INVOKE_DIRECT, args, m);
+                int[] nArgs;
+                try {
+                    nArgs = reBuildArgs(OP_INVOKE_DIRECT, args, m);
+                } catch (Exception ex) {
+                    throw new DexException(ex, "while rebuild argements for 0xF0 OP_INVOKE_DIRECT_EMPTY @0x%04x,"
+                            + " this is typically because of a wrong apiLevel. current apiLevel is %d.", this.offset,
+                            dex.apiLevel);
+                }
+                dcv.visitMethodStmt(OP_INVOKE_DIRECT, nArgs, m);
             } else {
-                reBuildArgs(opcode, args, m);
+                int[] nArgs = reBuildArgs(opcode, args, m);
+                dcv.visitMethodStmt(opcode, nArgs, m);
             }
             break;
         default:
@@ -737,7 +747,7 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
         }
     }
 
-    public void xrc(int opcode, int a, int b, int c) {
+    public void xrc(final int opcode, int a, int b, int c) {
         int args[] = new int[a];
         for (int i = 0; i < a; i++) {
             args[i] = c + i;
@@ -767,14 +777,27 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
                         - (((opcode >> 4 == 0xFF) ? OP_INVOKE_VIRTUAL_JUMBO : OP_INVOKE_VIRTUAL_RANGE) - OP_INVOKE_VIRTUAL);
             }
             Method m = dex.getMethod(b);
-            reBuildArgs(nOpcode, args, m);
+            if (opcode == OP_INVOKE_OBJECT_INIT_RANGE) {// print more detail error message for 0xF0
+                int[] nArgs;
+                try {
+                    nArgs = reBuildArgs(nOpcode, args, m);
+                } catch (Exception ex) {
+                    throw new DexException(ex, "while rebuild argements for 0xF0 OP_INVOKE_OBJECT_INIT_RANGE @0x%04x,"
+                            + " this is typically because of a wrong apiLevel. current apiLevel is %d.", this.offset,
+                            dex.apiLevel);
+                }
+                dcv.visitMethodStmt(nOpcode, nArgs, m);
+            } else {
+                int[] nArgs = reBuildArgs(nOpcode, args, m);
+                dcv.visitMethodStmt(nOpcode, nArgs, m);
+            }
             break;
         default:
             throw new RuntimeException("");
         }
     }
 
-    void reBuildArgs(int opcode, int[] args, Method m) {
+    private int[] reBuildArgs(int opcode, int[] args, Method m) {
         int realSize = m.getParameterTypes().length + (opcode == OP_INVOKE_STATIC ? 0 : 1);
         if (realSize != args.length) {// there are some double or float in args
             int[] nArgs = new int[realSize];
@@ -787,9 +810,9 @@ import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
                 nArgs[i++] = args[j];
                 j += "J".equals(t) || "D".equals(t) ? 2 : 1;
             }
-            dcv.visitMethodStmt(opcode, nArgs, m);
+            return nArgs;
         } else {
-            dcv.visitMethodStmt(opcode, args, m);
+            return args;
         }
     }
 
