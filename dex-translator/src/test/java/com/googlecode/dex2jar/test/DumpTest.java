@@ -16,12 +16,10 @@
 package com.googlecode.dex2jar.test;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
-import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.util.Dump;
 import com.googlecode.dex2jar.v3.Main;
 
@@ -37,16 +35,11 @@ public class DumpTest {
             for (File f : TestUtils.listTestDexFiles(true)) {
                 System.out.println("dump file " + f);
                 File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dump.jar");
-                doData(DexFileReader.readDex(f), distDir);
+                Dump.doData(TestUtils.initDexFileReader(f), distDir);
             }
         } catch (Exception e) {
             Main.niceExceptionMessage(e, 0);
             throw e;
         }
     }
-
-    public static void doData(byte[] data, final File destJar) throws IOException {
-        Dump.doData(data, destJar);
-    }
-
 }

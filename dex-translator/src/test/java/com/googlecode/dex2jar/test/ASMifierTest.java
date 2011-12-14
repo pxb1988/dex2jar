@@ -37,7 +37,7 @@ public class ASMifierTest {
             for (File f : TestUtils.listTestDexFiles(true)) {
                 System.out.println("asmifier file " + f);
                 File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_asmifier");
-                doData(DexFileReader.readDex(f), distDir);
+                doData(TestUtils.initDexFileReader(f), distDir);
             }
         } catch (Exception e) {
             Main.niceExceptionMessage(e, 0);
@@ -45,9 +45,7 @@ public class ASMifierTest {
         }
     }
 
-    public static void doData(byte[] data, final File destDir) throws IOException {
-
-        DexFileReader reader = new DexFileReader(data);
+    public static void doData(DexFileReader reader, final File destDir) throws IOException {
         reader.accept(new ASMifierFileV(destDir, null));
     }
 

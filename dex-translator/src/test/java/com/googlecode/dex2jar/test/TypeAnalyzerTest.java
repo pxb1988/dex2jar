@@ -21,7 +21,7 @@ public class TypeAnalyzerTest {
         try {
             for (File f : TestUtils.listTestDexFiles(true)) {
                 System.out.println("tyep-analyze file " + f);
-                new DexFileReader(f).accept(new EmptyVisitor() {
+                TestUtils.initDexFileReader(f).accept(new EmptyVisitor() {
 
                     @Override
                     public DexClassVisitor visit(int access_flags, String className, String superClass,

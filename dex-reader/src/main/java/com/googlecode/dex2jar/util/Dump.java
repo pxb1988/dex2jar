@@ -44,9 +44,9 @@ public class Dump extends EmptyVisitor {
         PrintWriter get(String name);
     }
 
-    public static void doData(byte[] data, File destJar) throws IOException {
+    public static void doData(DexFileReader dexFileReader, File destJar) throws IOException {
         final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
-        new DexFileReader(data).accept(new Dump(new WriterManager() {
+        dexFileReader.accept(new Dump(new WriterManager() {
 
             public PrintWriter get(String name) {
                 try {
@@ -66,6 +66,10 @@ public class Dump extends EmptyVisitor {
         }));
         zos.finish();
         zos.close();
+    }
+
+    public static void doData(byte[] data, File destJar) throws IOException {
+        doData(new DexFileReader(data), destJar);
     }
 
     public static void doFile(File srcDex) throws IOException {
