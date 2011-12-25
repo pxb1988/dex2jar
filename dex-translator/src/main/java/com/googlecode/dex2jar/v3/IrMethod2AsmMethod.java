@@ -86,6 +86,8 @@ public class IrMethod2AsmMethod implements Opcodes {
         for (int i = 0; i < localSize; i++) {
             maps[i] = -1;
         }
+        Local _thisLocal = null;
+        Local _parameterLocals[] = new Local[ir.args.length];
         for (Stmt stmt = ir.stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
             if (stmt.st == ST.IDENTITY || stmt.st == ST.ASSIGN) {
                 E2Stmt e2 = (E2Stmt) stmt;
@@ -93,22 +95,15 @@ public class IrMethod2AsmMethod implements Opcodes {
                 case THIS_REF: {
                     Local local = (Local) e2.op1.value;
                     maps[local._ls_index] = 0;
+                    _thisLocal = local;
                 }
                     break;
                 case PARAMETER_REF: {
                     Local local = (Local) e2.op1.value;
-                    maps[local._ls_index] = parameterIdx[((RefExpr) e2.op2.value).parameterIndex];
+                    int i = ((RefExpr) e2.op2.value).parameterIndex;
+                    maps[local._ls_index] = parameterIdx[i];
+                    _parameterLocals[i] = local;
                 }
-                    break;
-                }
-            }
-        }
-
-        Phi _this = null;
-        if ((ir.access & ACC_STATIC) == 0) {
-            for (Phi phi : phis) {
-                if (phi.local._ls_index == 0) {
-                    _this = phi;
                     break;
                 }
             }
@@ -116,11 +111,13 @@ public class IrMethod2AsmMethod implements Opcodes {
 
         // 2.2 assign other index
         createGraph(ir, phis.size());
-        if (_this != null) {// never reuse index 0
-            for (Phi phi : phis) {
-                if (phi != _this) {
-                    phi.add(_this);
-                    _this.add(phi);
+        {// never reuse `this` and parameters index
+            if ((ir.access & ACC_STATIC) == 0 && _thisLocal != null) {
+                markPhiNeverReuse(phis, _thisLocal);
+            }
+            for (Local local : _parameterLocals) {
+                if (local != null) {
+                    markPhiNeverReuse(phis, local);
                 }
             }
         }
@@ -138,10 +135,30 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
+    private void markPhiNeverReuse(List<Phi> phis, Local local) {
+        Phi nPhi = null;
+        for (Phi phi : phis) {
+            if (phi.local == local) {
+                nPhi = phi;
+                break;
+            }
+        }
+        if (nPhi == null) {
+            nPhi = new Phi();
+            nPhi.local = local;
+        }
+        for (Phi phi : phis) {
+            if (phi != nPhi) {
+                phi.sets.add(nPhi);
+                nPhi.sets.add(phi);
+            }
+        }
+    }
+
     private int findNextColor(Phi v, int n, int max, int[] maps) {
         BitSet bs = new BitSet(max);
         bs.set(0, max);
-        for (Phi one : v) {
+        for (Phi one : v.sets) {
             int x = maps[one.local._ls_index];
             if (x >= 0) {
                 bs.clear(x);
@@ -171,13 +188,13 @@ public class IrMethod2AsmMethod implements Opcodes {
         Collections.sort(phis, new Comparator<Phi>() {
             @Override
             public int compare(Phi o1, Phi o2) {
-                int r = o2.size() - o1.size();
+                int r = o2.sets.size() - o1.sets.size();
                 return r == 0 ? sizeOf(o2) - sizeOf(o1) : r;
             }
         });
         Phi first = phis.get(0);
         int size = sizeOf(first);
-        for (Phi p : first) {
+        for (Phi p : first.sets) {
             size += sizeOf(p);
         }
 
@@ -236,8 +253,8 @@ public class IrMethod2AsmMethod implements Opcodes {
                 for (int j = i + 1; j < tmp.size(); j++) {
                     Phi b = tmp.get(j);
                     if (a != b) {
-                        a.add(b);
-                        b.add(a);
+                        a.sets.add(b);
+                        b.sets.add(a);
                     }
                 }
             }

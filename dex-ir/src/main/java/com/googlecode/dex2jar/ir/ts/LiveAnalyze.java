@@ -39,25 +39,11 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
 
 public class LiveAnalyze {
-    @SuppressWarnings("serial")
-    public static class Phi extends HashSet<Phi> {
+    public static class Phi {
         public Local local;
         public Phi tag;
         public boolean used;
-
-        private Phi() {
-            super(3);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return this == obj;
-        }
-
-        @Override
-        public int hashCode() {
-            return System.identityHashCode(this);
-        }
+        public Set<Phi> sets = new HashSet<Phi>(3);
 
         public String toString() {
             if (tag != null) {
@@ -74,7 +60,7 @@ public class LiveAnalyze {
         if (r.used) {
             if (!regs.contains(r)) {
                 regs.add(r);
-                for (Phi p : r) {
+                for (Phi p : r.sets) {
                     p.used = true;
                     doAddUsed(p, regs);
                 }
@@ -167,10 +153,10 @@ public class LiveAnalyze {
                                 distPhi = new Phi();
                                 phis.add(distPhi);
                                 distFrame[i] = distPhi;
-                                distPhi.add(srcPhi);
+                                distPhi.sets.add(srcPhi);
                             }
                         } else {
-                            distPhi.add(srcPhi);
+                            distPhi.sets.add(srcPhi);
                         }
                     }
                 }
@@ -216,8 +202,8 @@ public class LiveAnalyze {
             if (a != reg && reg.local != null) {
                 a.local = reg.local;
             }
-            if (reg.size() > 0) {
-                for (Phi r : reg) {
+            if (reg.sets.size() > 0) {
+                for (Phi r : reg.sets) {
                     Phi b = trim(r);
                     if (a != b) {
                         b.tag = a;
@@ -248,7 +234,7 @@ public class LiveAnalyze {
         phis.clear();
         for (Phi r : used) {
             if (r.used && r.tag == null) {
-                r.clear();
+                r.sets.clear();
                 phis.add(r);
             }
         }
