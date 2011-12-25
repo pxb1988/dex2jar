@@ -12,6 +12,13 @@ import com.googlecode.dex2jar.analysis.CodeNode;
 import com.googlecode.dex2jar.analysis.Node;
 import com.googlecode.dex2jar.analysis.NodeDump;
 
+/**
+ * 
+ * @deprecated not completed
+ * @author Panxiaobo
+ * 
+ */
+@Deprecated
 public class TypeAnalyzer extends Analyzer {
     /**
      * Phi

@@ -6,6 +6,14 @@ import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.OdexOpcodes;
 import com.googlecode.dex2jar.visitors.OdexCodeVisitor;
 
+
+/**
+ * 
+ * @deprecated not completed
+ * @author Panxiaobo
+ * 
+ */
+@Deprecated
 public abstract class TypeVisitor<T> implements OdexCodeVisitor, OdexOpcodes {
 
     protected void useAndType(int reg, String desc) {
