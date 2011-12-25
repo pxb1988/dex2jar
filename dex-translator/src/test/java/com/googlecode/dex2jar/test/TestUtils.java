@@ -16,6 +16,7 @@
 package com.googlecode.dex2jar.test;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -25,14 +26,17 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -46,15 +50,57 @@ import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
 import com.googlecode.dex2jar.DexException;
+import com.googlecode.dex2jar.reader.DexFileReader;
 
 /**
  * @author Panxiaobo [pxb1988@gmail.com]
  * 
  */
+@Ignore
 public abstract class TestUtils {
+
+    static Field buf;
+
+    static {
+        try {
+            buf = AbstractVisitor.class.getDeclaredField("buf");
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+        buf.setAccessible(true);
+
+    }
+
+    public static void breakPoint() {
+    }
+
+    public static void checkZipFile(File zip) throws ZipException, Exception {
+        ZipFile zipFile = new ZipFile(zip);
+        for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
+            ZipEntry entry = e.nextElement();
+            if (entry.getName().endsWith(".class")) {
+                System.out.println("checking " + entry.getName());
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                InputStream is = zipFile.getInputStream(entry);
+                try {
+                    verify(new ClassReader(IOUtils.toByteArray(is)));
+                } finally {
+                    IOUtils.closeQuietly(is);
+                }
+                Assert.assertTrue(sw.toString(), sw.toString().length() == 0);
+            }
+        }
+    }
 
     public static File dex(File file, File distFile) throws Exception {
         return dex(new File[] { file }, distFile);
+    }
+
+    public static File dex(File[] files) throws Exception {
+        return dex(files, null);
     }
 
     public static File dex(File[] files, File distFile) throws Exception {
@@ -82,66 +128,47 @@ public abstract class TestUtils {
         return distFile;
     }
 
-    public static File dex(File[] files) throws Exception {
-        return dex(files, null);
+    private static String getShortName(final String name) {
+        int n = name.lastIndexOf('/');
+        return n == -1 ? name : "o";
     }
 
-    public static void checkZipFile(File zip) throws ZipException, Exception {
-        ZipFile zipFile = new ZipFile(zip);
-        for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
-            ZipEntry entry = e.nextElement();
-            if (entry.getName().endsWith(".class")) {
-                System.out.println("checking " + entry.getName());
-                StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
-                InputStream is = zipFile.getInputStream(entry);
-                try {
-                    verify(new ClassReader(IOUtils.toByteArray(is)));
-                } finally {
-                    IOUtils.closeQuietly(is);
-                }
-                Assert.assertTrue(sw.toString(), sw.toString().length() == 0);
-            }
-        }
+    public static Collection<File> listTestDexFiles() {
+        return listTestDexFiles(false);
     }
 
-    public static void verify(final ClassReader cr) throws AnalyzerException, IllegalArgumentException,
-            IllegalAccessException {
-        ClassNode cn = new ClassNode();
-        cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
-
-        List methods = cn.methods;
-
-        for (int i = 0; i < methods.size(); ++i) {
-            MethodNode method = (MethodNode) methods.get(i);
-            BasicVerifier verifier = new BasicVerifier();
-            Analyzer a = new Analyzer(verifier);
+    /**
+     * construct a DexFileReader and set apiLevel if possible
+     * 
+     * @param f
+     * @return
+     * @throws IOException
+     */
+    public static DexFileReader initDexFileReader(File f) throws IOException {
+        DexFileReader r = new DexFileReader(f);
+        if (r.isOdex()) {
             try {
-                a.analyze(cn.name, method);
-            } catch (Exception e) {
-                printAnalyzerResult(method, a, new PrintWriter(System.out));
-                try {
-                    PrintWriter out = new PrintWriter("target/error.log", "utf8");
-                    printAnalyzerResult(method, a, out);
-                    out.close();
-                } catch (Exception e2) {
-                }
-                throw new DexException("method " + method.name + " " + method.desc, e);
+                r.setApiLevel(Integer.parseInt(f.getParentFile().getName()));
+            } catch (Exception ignore) {
             }
         }
+        return r;
     }
 
-    static Field buf;
-    static {
-        try {
-            buf = AbstractVisitor.class.getDeclaredField("buf");
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (SecurityException e) {
-            e.printStackTrace();
+    public static Collection<File> listTestDexFiles(boolean withOdex) {
+        File file = new File("target/test-classes/dexes");
+        List<File> list = new ArrayList<File>();
+        if (file.exists()) {
+            list.addAll(FileUtils.listFiles(file, new String[] { "dex", "zip", "apk", "odex" }, false));
         }
-        buf.setAccessible(true);
-
+        if (withOdex) {
+            list = new ArrayList<File>();
+            file = new File("target/test-classes/odexes");
+            if (file.exists()) {
+                list.addAll(FileUtils.listFiles(file, new String[] { "odex" }, true));
+            }
+        }
+        return list;
     }
 
     static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)
@@ -175,12 +202,30 @@ public abstract class TestUtils {
         pw.flush();
     }
 
-    private static String getShortName(final String name) {
-        int n = name.lastIndexOf('/');
-        return n == -1 ? name : "o";
-    }
+    public static void verify(final ClassReader cr) throws AnalyzerException, IllegalArgumentException,
+            IllegalAccessException {
+        ClassNode cn = new ClassNode();
+        cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
 
-    public static void breakPoint() {
+        List methods = cn.methods;
+
+        for (int i = 0; i < methods.size(); ++i) {
+            MethodNode method = (MethodNode) methods.get(i);
+            BasicVerifier verifier = new BasicVerifier();
+            Analyzer a = new Analyzer(verifier);
+            try {
+                a.analyze(cn.name, method);
+            } catch (Exception e) {
+                printAnalyzerResult(method, a, new PrintWriter(System.out));
+                try {
+                    PrintWriter out = new PrintWriter("target/error.log", "utf8");
+                    printAnalyzerResult(method, a, out);
+                    out.close();
+                } catch (Exception e2) {
+                }
+                throw new DexException("method " + method.name + " " + method.desc, e);
+            }
+        }
     }
 
 }

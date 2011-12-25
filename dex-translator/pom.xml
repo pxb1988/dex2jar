@@ -36,6 +36,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.2</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -54,6 +55,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.2-beta-5</version>
 				<configuration>
 					<appendAssemblyId>false</appendAssemblyId>
 					<descriptors>

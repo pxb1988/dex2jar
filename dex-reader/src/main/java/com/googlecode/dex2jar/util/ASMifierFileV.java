@@ -15,20 +15,16 @@
  */
 package com.googlecode.dex2jar.util;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 
 import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
-import com.googlecode.dex2jar.visitors.DexFileVisitor;
+import com.googlecode.dex2jar.visitors.OdexFileVisitor;
 
 /**
  * similar with org.objectweb.asm.util.ASMifierClassVisitor
@@ -36,7 +32,7 @@ import com.googlecode.dex2jar.visitors.DexFileVisitor;
  * @author Panxiaobo <pxb1988 at gmail.com>
  * @version $Id$
  */
-public class ASMifierFileV implements DexFileVisitor {
+public class ASMifierFileV implements OdexFileVisitor {
 
     String pkgName = "dex2jar.gen";
     File dir;
@@ -51,21 +47,7 @@ public class ASMifierFileV implements DexFileVisitor {
     }
 
     public static void doFile(File srcDex, File destDir) throws IOException {
-        byte[] data = FileUtils.readFileToByteArray(srcDex);
-        // checkMagic
-        if ("dex".equals(new String(data, 0, 3))) {// dex
-            doData(data, destDir);
-        } else if ("PK".equals(new String(data, 0, 2))) {// ZIP
-            ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
-            for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-                if (entry.getName().equals("classes.dex")) {
-                    data = IOUtils.toByteArray(zis);
-                    doData(data, destDir);
-                }
-            }
-        } else {
-            throw new RuntimeException("the src file not a .dex file or a zip file");
-        }
+        doData(DexFileReader.readDex(srcDex), destDir);
     }
 
     public static void main(String... args) throws IOException {
@@ -140,6 +122,11 @@ public class ASMifierFileV implements DexFileVisitor {
         file.pop();
         file.s("}");
         write(file, new File(dir, pkgName.replace('.', '/') + "/Main.java"));
+    }
+
+    @Override
+    public void visitDepedence(String name, byte[] checksum) {
+        file.s("((OdexFileVisitor)v).visitDepedence(%s,%s);", Escape.v(name), Escape.v(checksum));
     }
 
 }

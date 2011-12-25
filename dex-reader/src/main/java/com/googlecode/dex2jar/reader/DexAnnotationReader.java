@@ -16,6 +16,7 @@
 package com.googlecode.dex2jar.reader;
 
 import com.googlecode.dex2jar.Field;
+import com.googlecode.dex2jar.reader.io.DataIn;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 

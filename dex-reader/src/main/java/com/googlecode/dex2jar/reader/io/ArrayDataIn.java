@@ -13,24 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.reader;
+package com.googlecode.dex2jar.reader.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Stack;
 
 /**
- * @see DexFileReader#ENDIAN_CONSTANT
  * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
-/* default */class DataInImpl extends ByteArrayInputStream implements DataIn {
+public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn {
 
     private Stack<Integer> stack = new Stack<Integer>();
 
-    public DataInImpl(byte[] data) {
+    public ArrayDataIn(byte[] data) {
         super(data);
+    }
+
+    public int readShortx() {
+        return (short) readUShortx();
+    }
+
+    public int readIntx() {
+        return readUIntx();
     }
 
     public int getCurrentPosition() {
@@ -42,7 +49,7 @@ import java.util.Stack;
     }
 
     public void pop() {
-        this.move(stack.pop());
+        super.pos = stack.pop();
     }
 
     public void push() {
@@ -52,10 +59,6 @@ import java.util.Stack;
     public void pushMove(int absOffset) {
         this.push();
         this.move(absOffset);
-    }
-
-    public int readByte() {
-        return (byte) super.read();
     }
 
     public byte[] readBytes(int size) {
@@ -68,15 +71,11 @@ import java.util.Stack;
         return data;
     }
 
-    public int readIntx() {
-        return super.read() | (super.read() << 8) | (super.read() << 16) | (super.read() << 24);
-    }
-
     public long readLeb128() {
         int bitpos = 0;
         long vln = 0L;
         do {
-            int inp = super.read();
+            int inp = readUByte();
             vln |= ((long) (inp & 0x7F)) << bitpos;
             bitpos += 7;
             if ((inp & 0x80) == 0)
@@ -87,41 +86,31 @@ import java.util.Stack;
         return vln;
     }
 
-    public long readLongx() {
-        return (readIntx() & 0x00000000FFFFFFFFL) | (((long) readIntx()) << 32);
-    }
-
-    public int readShortx() {
-        return (short) (readUByte() | (readUByte() << 8));
-    }
-
-    public int readUByte() {
-        return super.read();
-    }
-
-    public int readUIntx() {
-        return readIntx();
-    }
-
     public long readULeb128() {
         long value = 0;
         int count = 0;
-        int b = super.read();
+        int b = readUByte();
         while ((b & 0x80) != 0) {
             value |= (b & 0x7f) << count;
             count += 7;
-            b = super.read();
+            b = readUByte();
         }
         value |= (b & 0x7f) << count;
         return value;
     }
 
-    @Override
-    public int readUShortx() {
-        return readUByte() | (readUByte() << 8);
-    }
-
     public void skip(int bytes) {
         super.skip(bytes);
+    }
+
+    public int readByte() {
+        return (byte) readUByte();
+    }
+
+    public int readUByte() {
+        if (super.pos >= super.count) {
+            throw new RuntimeException("EOF");
+        }
+        return super.read();
     }
 }

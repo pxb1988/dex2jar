@@ -18,7 +18,6 @@ package com.googlecode.dex2jar.test;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
@@ -35,11 +34,10 @@ public class ASMifierTest {
     @Test
     public void test() throws Exception {
         try {
-            File file = new File("target/test-classes/dexes");
-            for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip", "apk" }, false)) {
+            for (File f : TestUtils.listTestDexFiles(true)) {
                 System.out.println("asmifier file " + f);
                 File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_asmifier");
-                doData(Main.readClasses(f), distDir);
+                doData(TestUtils.initDexFileReader(f), distDir);
             }
         } catch (Exception e) {
             Main.niceExceptionMessage(e, 0);
@@ -47,9 +45,7 @@ public class ASMifierTest {
         }
     }
 
-    public static void doData(byte[] data, final File destDir) throws IOException {
-
-        DexFileReader reader = new DexFileReader(data);
+    public static void doData(DexFileReader reader, final File destDir) throws IOException {
         reader.accept(new ASMifierFileV(destDir, null));
     }
 

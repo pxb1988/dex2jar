@@ -41,11 +41,10 @@ public class V3Test {
     @Test
     public void test() throws Exception {
         try {
-            File file = new File("target/test-classes/dexes");
-            for (File f : FileUtils.listFiles(file, new String[] { "dex", "zip", "apk" }, false)) {
+            for (File f : TestUtils.listTestDexFiles()) {
                 System.out.println("dex2jar file " + f);
                 File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dex2jar");
-                doData(Main.readClasses(f), distDir);
+                doData(DexFileReader.readDex(f), distDir);
             }
         } catch (Exception e) {
             Main.niceExceptionMessage(e, 0);
@@ -57,7 +56,7 @@ public class V3Test {
 
         DexFileReader reader = new DexFileReader(data);
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
-        reader.accept(afa);
+        reader.accept(afa, DexFileReader.SKIP_CODE | DexFileReader.SKIP_DEBUG);
         reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), null,
                 new ClassVisitorFactory() {
                     public ClassVisitor create(final String name) {

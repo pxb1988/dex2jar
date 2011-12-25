@@ -35,7 +35,7 @@ public interface DexCodeVisitor {
      * @param arrayReg
      * @param indexReg
      */
-    void visitArrayStmt(int opcode, int formOrToReg, int arrayReg, int indexReg);
+    void visitArrayStmt(int opcode, int formOrToReg, int arrayReg, int indexReg, int xt);
 
     /**
      * <pre>
@@ -62,38 +62,17 @@ public interface DexCodeVisitor {
     /**
      * <pre>
      * 
-     * OP_ADD_INT
-     * OP_SUB_INT
-     * OP_MUL_INT
-     * OP_DIV_INT
-     * OP_REM_INT
-     * OP_AND_INT
-     * OP_OR_INT
-     * OP_XOR_INT
-     * OP_SHL_INT
-     * OP_SHR_INT
-     * OP_USHR_INT
-     * OP_ADD_LONG
-     * OP_SUB_LONG
-     * OP_MUL_LONG
-     * OP_DIV_LONG
-     * OP_REM_LONG
-     * OP_AND_LONG
-     * OP_OR_LONG
-     * OP_XOR_LONG
-     * OP_SHL_LONG
-     * OP_SHR_LONG
-     * OP_USHR_LONG
-     * OP_ADD_FLOAT
-     * OP_SUB_FLOAT
-     * OP_MUL_FLOAT
-     * OP_DIV_FLOAT
-     * OP_REM_FLOAT
-     * OP_ADD_DOUBLE
-     * OP_SUB_DOUBLE
-     * OP_MUL_DOUBLE
-     * OP_DIV_DOUBLE
-     * OP_REM_DOUBLE
+     * OP_ADD
+     * OP_SUB
+     * OP_MUL
+     * OP_DIV
+     * OP_REM
+     * OP_AND
+     * OP_OR
+     * OP_XOR
+     * OP_SHL
+     * OP_SHR
+     * OP_USHR
      * 
      * </pre>
      * 
@@ -102,7 +81,7 @@ public interface DexCodeVisitor {
      * @param r1
      * @param r2
      */
-    void visitBinopStmt(int opcode, int toReg, int r1, int r2);
+    void visitBinopStmt(int opcode, int toReg, int r1, int r2, int xt);
 
     /**
      * <pre>
@@ -131,11 +110,9 @@ public interface DexCodeVisitor {
 
     /**
      * <pre>
-     * OP_CMPL_FLOAT
-     * OP_CMPG_FLOAT
-     * OP_CMPL_DOUBLE
-     * OP_CMPG_DOUBLE
-     * OP_CMP_LONG
+     * OP_CMPL
+     * OP_CMPG
+     * OP_CMP
      * </pre>
      * 
      * @param opcode
@@ -143,12 +120,11 @@ public interface DexCodeVisitor {
      * @param bB
      * @param cC
      */
-    void visitCmpStmt(int opcode, int distReg, int bB, int cC);
+    void visitCmpStmt(int opcode, int distReg, int bB, int cC, int xt);
 
     /**
      * <pre>
      * OP_CONST
-     * OP_CONST_WIDE
      * OP_CONST_STRING
      * OP_CONST_CLASS
      * </pre>
@@ -157,7 +133,7 @@ public interface DexCodeVisitor {
      * @param a
      * @param b
      */
-    void visitConstStmt(int opcode, int toReg, Object value);
+    void visitConstStmt(int opcode, int toReg, Object value, int xt);
 
     /**
      * <pre>
@@ -169,7 +145,7 @@ public interface DexCodeVisitor {
      * @param fromOrToReg
      * @param field
      */
-    void visitFieldStmt(int opcode, int fromOrToReg, Field field);
+    void visitFieldStmt(int opcode, int fromOrToReg, Field field, int xt);
 
     /**
      * <pre>
@@ -182,7 +158,7 @@ public interface DexCodeVisitor {
      * @param objReg
      * @param field
      */
-    void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field);
+    void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field, int xt);
 
     void visitFillArrayStmt(int opcode, int aA, int elemWidth, int initLength, Object[] values);
 
@@ -269,28 +245,24 @@ public interface DexCodeVisitor {
     /**
      * <pre>
      * OP_MOVE_RESULT
-     * OP_MOVE_RESULT_WIDE
-     * OP_MOVE_RESULT_OBJECT
      * OP_MOVE_EXCEPTION
      * </pre>
      * 
      * @param opcode
      * @param toReg
      */
-    void visitMoveStmt(int opcode, int toReg);
+    void visitMoveStmt(int opcode, int toReg, int xt);
 
     /**
      * <pre>
      * OP_MOVE
-     * OP_MOVE_WIDE
-     * OP_MOVE_OBJECT
      * </pre>
      * 
      * @param opcode
      * @param toReg
      * @param fromReg
      */
-    void visitMoveStmt(int opcode, int toReg, int fromReg);
+    void visitMoveStmt(int opcode, int toReg, int fromReg, int xt);
 
     /**
      * {@link #OP_RETURN_VOID}
@@ -308,41 +280,33 @@ public interface DexCodeVisitor {
      * @param opcode
      * @param reg
      */
-    void visitReturnStmt(int opcode, int reg);
+    void visitReturnStmt(int opcode, int reg, int xt);
 
     void visitTableSwitchStmt(int opcode, int aA, DexLabel label, int first_case, int last_case, DexLabel[] labels);
 
     /**
      * <pre>
      * OP_ARRAY_LENGTH
-     * OP_NEG_INT
-     * OP_NOT_INT
-     * OP_NEG_LONG
-     * OP_NOT_LONG
-     * OP_NEG_FLOAT
-     * OP_NEG_DOUBLE
-     * OP_INT_TO_LONG
-     * OP_INT_TO_FLOAT
-     * OP_INT_TO_DOUBLE
-     * OP_LONG_TO_INT
-     * OP_LONG_TO_FLOAT
-     * OP_LONG_TO_DOUBLE
-     * OP_FLOAT_TO_INT
-     * OP_FLOAT_TO_LONG
-     * OP_FLOAT_TO_DOUBLE
-     * OP_DOUBLE_TO_INT
-     * OP_DOUBLE_TO_LONG
-     * OP_DOUBLE_TO_FLOAT
-     * OP_INT_TO_BYTE
-     * OP_INT_TO_CHAR
-     * OP_INT_TO_SHORT
+     * OP_NOT
+     * OP_NEG
      * </pre>
      * 
      * @param opcode
      * @param toReg
      * @param fromReg
      */
-    void visitUnopStmt(int opcode, int toReg, int fromReg);
+    void visitUnopStmt(int opcode, int toReg, int fromReg, int xt);
+
+    /**
+     * <pre>
+     * OP_X_TO_Y
+     * </pre>
+     * 
+     * @param opcode
+     * @param toReg
+     * @param fromReg
+     */
+    void visitUnopStmt(int opcode, int toReg, int fromReg, int xta, int xtb);
 
     void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type);
 

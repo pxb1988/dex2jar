@@ -16,8 +16,8 @@ PRGDIR=`dirname "$PRG"`
 #
 
 _classpath="."
-for k in $PRGDIR/lib/*.jar
+for k in "$PRGDIR"/lib/*.jar
 do
  _classpath="${_classpath}:${k}"
 done
-java -Xms512m -Xmx1024m -classpath "${_classpath}" "com.googlecode.dex2jar.dump.Dump" $1 $2 $3 $4 $5 $6
+java -Xms512m -Xmx1024m -classpath "${_classpath}" "com.googlecode.dex2jar.util.Dump" $1 $2 $3 $4 $5 $6

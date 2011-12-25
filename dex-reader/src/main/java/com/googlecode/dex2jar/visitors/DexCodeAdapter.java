@@ -35,8 +35,8 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitArrayStmt(int opAget, int formOrToReg, int arrayReg, int indexReg) {
-        dcv.visitArrayStmt(opAget, formOrToReg, arrayReg, indexReg);
+    public void visitArrayStmt(int opAget, int formOrToReg, int arrayReg, int indexReg, int xt) {
+        dcv.visitArrayStmt(opAget, formOrToReg, arrayReg, indexReg, xt);
     }
 
     @Override
@@ -45,8 +45,8 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitBinopStmt(int opcode, int toReg, int r1, int r2) {
-        dcv.visitBinopStmt(opcode, toReg, r1, r2);
+    public void visitBinopStmt(int opcode, int toReg, int r1, int r2, int xt) {
+        dcv.visitBinopStmt(opcode, toReg, r1, r2, xt);
     }
 
     @Override
@@ -60,23 +60,23 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitCmpStmt(int opcode, int distReg, int bB, int cC) {
-        dcv.visitCmpStmt(opcode, distReg, bB, cC);
+    public void visitCmpStmt(int opcode, int distReg, int bB, int cC, int xt) {
+        dcv.visitCmpStmt(opcode, distReg, bB, cC, xt);
     }
 
     @Override
-    public void visitConstStmt(int opConst, int toReg, Object value) {
-        dcv.visitConstStmt(opConst, toReg, value);
+    public void visitConstStmt(int opConst, int toReg, Object value, int xt) {
+        dcv.visitConstStmt(opConst, toReg, value, xt);
     }
 
     @Override
-    public void visitFieldStmt(int opcode, int fromOrToReg, Field field) {
-        dcv.visitFieldStmt(opcode, fromOrToReg, field);
+    public void visitFieldStmt(int opcode, int fromOrToReg, Field field, int xt) {
+        dcv.visitFieldStmt(opcode, fromOrToReg, field, xt);
     }
 
     @Override
-    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field) {
-        dcv.visitFieldStmt(opcode, fromOrToReg, objReg, field);
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field, int xt) {
+        dcv.visitFieldStmt(opcode, fromOrToReg, objReg, field, xt);
     }
 
     @Override
@@ -120,13 +120,13 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitMoveStmt(int opConst, int toReg) {
-        dcv.visitMoveStmt(opConst, toReg);
+    public void visitMoveStmt(int opConst, int toReg, int xt) {
+        dcv.visitMoveStmt(opConst, toReg, xt);
     }
 
     @Override
-    public void visitMoveStmt(int opcode, int toReg, int fromReg) {
-        dcv.visitMoveStmt(opcode, toReg, fromReg);
+    public void visitMoveStmt(int opcode, int toReg, int fromReg, int xt) {
+        dcv.visitMoveStmt(opcode, toReg, fromReg, xt);
     }
 
     @Override
@@ -135,18 +135,19 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitReturnStmt(int opConst, int reg) {
-        dcv.visitReturnStmt(opConst, reg);
+    public void visitReturnStmt(int opConst, int reg, int xt) {
+        dcv.visitReturnStmt(opConst, reg, xt);
     }
 
     @Override
-    public void visitTableSwitchStmt(int opcode, int aA, DexLabel label, int first_case, int last_case, DexLabel[] labels) {
+    public void visitTableSwitchStmt(int opcode, int aA, DexLabel label, int first_case, int last_case,
+            DexLabel[] labels) {
         dcv.visitTableSwitchStmt(opcode, aA, label, first_case, last_case, labels);
     }
 
     @Override
-    public void visitUnopStmt(int opcode, int toReg, int fromReg) {
-        dcv.visitUnopStmt(opcode, toReg, fromReg);
+    public void visitUnopStmt(int opcode, int toReg, int fromReg, int xt) {
+        dcv.visitUnopStmt(opcode, toReg, fromReg, xt);
     }
 
     @Override
@@ -177,6 +178,11 @@ public class DexCodeAdapter implements DexCodeVisitor {
     @Override
     public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
         dcv.visitLocalVariable(name, type, signature, start, end, reg);
+    }
+
+    @Override
+    public void visitUnopStmt(int opcode, int toReg, int fromReg, int xta, int xtb) {
+        dcv.visitUnopStmt(opcode, toReg, fromReg, xta, xtb);
     }
 
 }

@@ -1,5 +1,11 @@
 package com.googlecode.dex2jar.v3;
 
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -24,71 +30,236 @@ import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
 import com.googlecode.dex2jar.ir.expr.RefExpr;
 import com.googlecode.dex2jar.ir.expr.TypeExpr;
-import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
-import com.googlecode.dex2jar.ir.ts.Cfg;
-import com.googlecode.dex2jar.ir.ts.Cfg.StmtVisitor;
+import com.googlecode.dex2jar.ir.ts.LiveAnalyze;
+import com.googlecode.dex2jar.ir.ts.LiveAnalyze.Phi;
 import com.googlecode.dex2jar.ir.ts.LocalType;
 
 public class IrMethod2AsmMethod implements Opcodes {
 
+    private static final boolean DEBUG = false;
+
     private void reIndexLocal(IrMethod ir) {
+
+        if (DEBUG) {
+            int i = 0;
+            for (Stmt stmt = ir.stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
+                if (stmt.st == ST.LABEL) {
+                    LabelStmt ls = (LabelStmt) stmt;
+                    ls.displayName = "L" + i++;
+                }
+            }
+        }
+
+        // 1. live local analyze
+        LiveAnalyze la = new LiveAnalyze(ir);
+        List<Phi> phis = la.analyze();
+        if (DEBUG) {
+            for (Local local : ir.locals) {
+                if (local._ls_index >= 0) {
+                    local.name = "a" + local._ls_index;
+                } else {
+                    local.name = "ignore";
+                }
+            }
+        }
+
+        // 2.1. assign existing index
         int index = 0;
         if ((ir.access & ACC_STATIC) == 0) {
             index++;
         }
-        final int ids[] = new int[ir.args.length];
+        final int localSize = ir.locals.size();
+        final int parameterIdx[] = new int[ir.args.length];
         for (int i = 0; i < ir.args.length; i++) {
-            ids[i] = index;
+            parameterIdx[i] = index;
             index += ir.args[i].getSize();
         }
-        for (Local local : ir.locals) {
-            local._ls_index = -1;
+        int[] maps = new int[localSize];
+        for (int i = 0; i < localSize; i++) {
+            maps[i] = -1;
         }
-
-        final int[] indexHolder = new int[] { index };
-        Cfg.createCFG(ir);//
-        Cfg.Forward(ir, new StmtVisitor<Object>() {
-            @Override
-            public Object exec(Stmt stmt) {
-                switch (stmt.st) {
-                case ASSIGN:
-                case IDENTITY:
-                    if (((AssignStmt) stmt).op1.value.vt == VT.LOCAL) {
-                        Local local = (Local) ((AssignStmt) stmt).op1.value;
-                        if (local._ls_index == -1) {
-                            Type localType = LocalType.typeOf(local);
-                            if (!Type.VOID_TYPE.equals(localType)) {// skip void type
-                                Value ref = (Value) ((AssignStmt) stmt).op2.value;
-                                switch (ref.vt) {
-                                case THIS_REF:
-                                    local._ls_index = 0;
-                                    break;
-                                case PARAMETER_REF:
-                                    local._ls_index = ids[((RefExpr) ref).parameterIndex];
-                                    break;
-                                case EXCEPTION_REF:
-                                    local._ls_index = indexHolder[0]++;
-                                    break;
-                                default:
-                                    local._ls_index = indexHolder[0];
-                                    indexHolder[0] += LocalType.typeOf(ref).getSize();
-                                    break;
-                                }
-                            }
-                        }
-                    }
+        Local _thisLocal = null;
+        Local _parameterLocals[] = new Local[ir.args.length];
+        for (Stmt stmt = ir.stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
+            if (stmt.st == ST.IDENTITY || stmt.st == ST.ASSIGN) {
+                E2Stmt e2 = (E2Stmt) stmt;
+                switch (e2.op2.value.vt) {
+                case THIS_REF: {
+                    Local local = (Local) e2.op1.value;
+                    maps[local._ls_index] = 0;
+                    _thisLocal = local;
+                }
+                    break;
+                case PARAMETER_REF: {
+                    Local local = (Local) e2.op1.value;
+                    int i = ((RefExpr) e2.op2.value).parameterIndex;
+                    maps[local._ls_index] = parameterIdx[i];
+                    _parameterLocals[i] = local;
+                }
                     break;
                 }
-                return null;
+            }
+        }
+
+        // 2.2 assign other index
+        createGraph(ir, phis.size());
+        {// never reuse `this` and parameters index
+            if ((ir.access & ACC_STATIC) == 0 && _thisLocal != null) {
+                markPhiNeverReuse(phis, _thisLocal);
+            }
+            for (Local local : _parameterLocals) {
+                if (local != null) {
+                    markPhiNeverReuse(phis, local);
+                }
+            }
+        }
+        gradyColoring(phis, maps);
+
+        for (Local local : ir.locals) {
+            local._ls_index = maps[local._ls_index];
+            if (DEBUG) {
+                if (local._ls_index >= 0) {
+                    local.name = "a" + local._ls_index;
+                } else {
+                    local.name = "ignore";
+                }
+            }
+        }
+    }
+
+    private void markPhiNeverReuse(List<Phi> phis, Local local) {
+        Phi nPhi = null;
+        for (Phi phi : phis) {
+            if (phi.local == local) {
+                nPhi = phi;
+                break;
+            }
+        }
+        if (nPhi == null) {
+            nPhi = new Phi();
+            nPhi.local = local;
+        }
+        for (Phi phi : phis) {
+            if (phi != nPhi) {
+                phi.sets.add(nPhi);
+                nPhi.sets.add(phi);
+            }
+        }
+    }
+
+    private int findNextColor(Phi v, int n, int max, int[] maps) {
+        BitSet bs = new BitSet(max);
+        bs.set(0, max);
+        for (Phi one : v.sets) {
+            int x = maps[one.local._ls_index];
+            if (x >= 0) {
+                bs.clear(x);
+                if (sizeOf(one) > 1) {
+                    bs.clear(x + 1);
+                }
+            }
+        }
+        boolean wide = sizeOf(v) > 1;
+        for (int i = bs.nextSetBit(n); i >= 0; i = bs.nextSetBit(i + 1)) {
+            if (wide) {
+                if (i + 1 < bs.length() && bs.get(i + 1)) {
+                    return i;
+                }
+            } else {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void gradyColoring(List<Phi> phis, int[] maps) {
+        if (phis.size() <= 0) {
+            return;
+        }
+        // sort
+        Collections.sort(phis, new Comparator<Phi>() {
+            @Override
+            public int compare(Phi o1, Phi o2) {
+                int r = o2.sets.size() - o1.sets.size();
+                return r == 0 ? sizeOf(o2) - sizeOf(o1) : r;
             }
         });
+        Phi first = phis.get(0);
+        int size = sizeOf(first);
+        for (Phi p : first.sets) {
+            size += sizeOf(p);
+        }
+
+        BitSet toColor = new BitSet(phis.size());
+        for (int i = 0; i < phis.size(); i++) {
+            Phi p = phis.get(i);
+            if (maps[p.local._ls_index] < 0) {
+                toColor.set(i);
+            }
+        }
+
+        while (!doColor(0, toColor, phis, size, maps)) {
+            size += 1;
+        }
+    }
+
+    private boolean doColor(int idx, BitSet toColor, List<Phi> phis, int size, int[] maps) {
+        int x = toColor.nextSetBit(idx);
+        if (x < 0) {
+            return true;
+        }
+        Phi phi = phis.get(x);
+        for (int i = findNextColor(phi, 0, size, maps); i >= 0; i = findNextColor(phi, i + 1, size, maps)) {
+            maps[phi.local._ls_index] = i;
+            if (doColor(x + 1, toColor, phis, size, maps)) {
+                return true;
+            }
+            maps[phi.local._ls_index] = -1;
+        }
+        return false;
+    }
+
+    private static int sizeOf(Phi p) {
+        return LocalType.typeOf(p.local).getSize();
+    }
+
+    private void createGraph(IrMethod ir, int localSize) {
+
+        List<Phi> tmp = new ArrayList<Phi>(localSize);
+        for (Stmt p = ir.stmts.getFirst(); p != null; p = p.getNext()) {
+            tmp.clear();
+            {
+                Phi[] frame = (Phi[]) p._ls_forward_frame;
+                p._ls_forward_frame = null;
+                if (frame != null) {
+                    for (int i = 0; i < frame.length; i++) {
+                        Phi r = frame[i];
+                        if (r != null) {
+                            tmp.add(r);
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < tmp.size() - 1; i++) {
+                Phi a = tmp.get(i);
+                for (int j = i + 1; j < tmp.size(); j++) {
+                    Phi b = tmp.get(j);
+                    if (a != b) {
+                        a.sets.add(b);
+                        b.sets.add(a);
+                    }
+                }
+            }
+        }
+
     }
 
     public void convert(IrMethod ir, MethodVisitor asm) {
@@ -147,8 +318,9 @@ public class IrMethod2AsmMethod implements Opcodes {
                             } else {
                                 asm.visitVarInsn(LocalType.typeOf(v1).getOpcode(ISTORE), i);
                             }
+                        } else if (!LocalType.typeOf(v1).equals(Type.VOID_TYPE)) {
+                            asm.visitInsn(LocalType.typeOf(v1).getSize() == 2 ? POP2 : POP);
                         }
-
                     }
                     break;
                 case FIELD:
@@ -183,7 +355,12 @@ public class IrMethod2AsmMethod implements Opcodes {
             case IDENTITY: {
                 E2Stmt e2 = (E2Stmt) st;
                 if (e2.op2.value.vt == VT.EXCEPTION_REF) {
-                    asm.visitVarInsn(ASTORE, ((Local) e2.op1.value)._ls_index);
+                    int index = ((Local) e2.op1.value)._ls_index;
+                    if (index >= 0) {
+                        asm.visitVarInsn(ASTORE, index);
+                    } else {
+                        asm.visitInsn(POP);
+                    }
                 }
             }
                 break;
@@ -488,9 +665,57 @@ public class IrMethod2AsmMethod implements Opcodes {
     }
 
     private static void reBuildE2Expression(E2Expr e2, MethodVisitor asm) {
-        accept(e2.op1.value, asm);
-        accept(e2.op2.value, asm);
         Type type = LocalType.typeOf(e2.op2.value);
+        accept(e2.op1.value, asm);
+        if ((e2.vt == VT.ADD || e2.vt == VT.SUB) && e2.op2.value.vt == VT.CONSTANT) {
+            // [x + (-1)] to [x - 1]
+            // [x - (-1)] to [x + 1]
+            Constant constant = (Constant) e2.op2.value;
+            Type t = LocalType.typeOf(constant);
+            switch (t.getSort()) {
+            case Type.SHORT:
+            case Type.BYTE:
+            case Type.INT: {
+                int s = (Integer) constant.value;
+                if (s < 0) {
+                    asm.visitLdcInsn((int) -s);
+                    asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
+                    return;
+                }
+            }
+                break;
+            case Type.FLOAT: {
+                float s = (Float) constant.value;
+                if (s < 0) {
+                    asm.visitLdcInsn((float) -s);
+                    asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
+                    return;
+                }
+            }
+                break;
+            case Type.LONG: {
+                long s = (Long) constant.value;
+                if (s < 0) {
+                    asm.visitLdcInsn((long) -s);
+                    asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
+                    return;
+                }
+            }
+                break;
+            case Type.DOUBLE: {
+                double s = (Double) constant.value;
+                if (s < 0) {
+                    asm.visitLdcInsn((double) -s);
+                    asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
+                    return;
+                }
+            }
+                break;
+            }
+        }
+
+        accept(e2.op2.value, asm);
+
         Type tp1 = LocalType.typeOf(e2.op1.value);
         switch (e2.vt) {
         case ARRAY:

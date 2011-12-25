@@ -13,32 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar;
+package com.googlecode.dex2jar.visitors;
 
 /**
- * a light weight version of org.objectweb.asm.Label
  * 
- * @author Pan
+ * @author Panxiaobo
  * 
  */
-public class DexLabel {
-    public Object info;
-
-    private int offset = -1;
-
-    public DexLabel(int offset) {
-        super();
-        this.offset = offset;
-    }
-
-    public DexLabel() {
-        super();
-    }
-
-    public String toString() {
-        if (offset >= 0) {
-            return String.format("L%04x", offset);
-        }
-        return String.format("L%08x", this.hashCode());
-    }
+public interface OdexFileVisitor extends DexFileVisitor {
+    public void visitDepedence(String name, byte[] checksum);
 }

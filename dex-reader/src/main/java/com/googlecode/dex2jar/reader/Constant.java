@@ -17,6 +17,7 @@ package com.googlecode.dex2jar.reader;
 
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexType;
+import com.googlecode.dex2jar.reader.io.DataIn;
 
 /**
  * 读取静态常量

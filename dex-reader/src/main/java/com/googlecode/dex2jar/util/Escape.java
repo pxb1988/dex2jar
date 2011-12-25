@@ -188,6 +188,20 @@ public class Escape implements DexOpcodes {
         return sb.append("}").toString();
     }
 
+    public static String v(byte[] vs) {
+        StringBuilder sb = new StringBuilder("new byte[]{ ");
+        boolean first = true;
+        for (byte obj : vs) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(",");
+            }
+            sb.append("(byte)").append(obj);
+        }
+        return sb.append("}").toString();
+    }
+
     public static String v(String[] vs) {
         if (vs == null)
             return "null";
@@ -228,6 +242,13 @@ public class Escape implements DexOpcodes {
 
         if (obj instanceof DexType) {
             return v((DexType) obj);
+        }
+        
+        if(obj instanceof Method){
+            return v((Method)obj);
+        }
+        if (obj instanceof Field) {
+            return v((Field) obj);
         }
 
         if (obj instanceof Integer) {

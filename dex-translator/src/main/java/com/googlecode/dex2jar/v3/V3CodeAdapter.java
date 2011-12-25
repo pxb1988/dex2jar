@@ -151,7 +151,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitArrayStmt(int opcode, int formOrToReg, int arrayReg, int indexReg) {
+    public void visitArrayStmt(int opcode, int formOrToReg, int arrayReg, int indexReg, int xt) {
         switch (opcode) {
         case OP_APUT:
             list.add(nAssign(nArray(locals[arrayReg], locals[indexReg]), locals[formOrToReg]));
@@ -206,63 +206,42 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitBinopStmt(int opcode, int toReg, int r1, int r2) {
+    public void visitBinopStmt(int opcode, int toReg, int r1, int r2, int xt) {
         Local dist = locals[toReg];
         Local a = locals[r1];
         Local b = locals[r2];
         switch (opcode) {
-        case OP_ADD_INT:
-        case OP_ADD_FLOAT:
-        case OP_ADD_DOUBLE:
-        case OP_ADD_LONG:
+        case OP_ADD:
             list.add(nAssign(dist, nAdd(a, b)));
             break;
-        case OP_SUB_INT:
-        case OP_SUB_FLOAT:
-        case OP_SUB_LONG:
-        case OP_SUB_DOUBLE:
+        case OP_SUB:
             list.add(nAssign(dist, nSub(a, b)));
             break;
-        case OP_MUL_INT:
-        case OP_MUL_LONG:
-        case OP_MUL_DOUBLE:
-        case OP_MUL_FLOAT:
+        case OP_MUL:
             list.add(nAssign(dist, nMul(a, b)));
             break;
-        case OP_DIV_INT:
-        case OP_DIV_DOUBLE:
-        case OP_DIV_LONG:
-        case OP_DIV_FLOAT:
+        case OP_DIV:
             list.add(nAssign(dist, nDiv(a, b)));
             break;
-        case OP_REM_INT:
-        case OP_REM_LONG:
-        case OP_REM_DOUBLE:
-        case OP_REM_FLOAT:
+        case OP_REM:
             list.add(nAssign(dist, nRem(a, b)));
             break;
-        case OP_AND_INT:
-        case OP_AND_LONG:
+        case OP_AND:
             list.add(nAssign(dist, nAnd(a, b)));
             break;
-        case OP_OR_INT:
-        case OP_OR_LONG:
+        case OP_OR:
             list.add(nAssign(dist, nOr(a, b)));
             break;
-        case OP_XOR_INT:
-        case OP_XOR_LONG:
+        case OP_XOR:
             list.add(nAssign(dist, nXor(a, b)));
             break;
-        case OP_SHL_INT:
-        case OP_SHL_LONG:
+        case OP_SHL:
             list.add(nAssign(dist, nShl(a, b)));
             break;
-        case OP_SHR_INT:
-        case OP_SHR_LONG:
+        case OP_SHR:
             list.add(nAssign(dist, nShr(a, b)));
             break;
-        case OP_USHR_INT:
-        case OP_USHR_LONG:
+        case OP_USHR:
             list.add(nAssign(dist, nUshr(a, b)));
             break;
         }
@@ -294,37 +273,40 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitCmpStmt(int opcode, int distReg, int bB, int cC) {
+    public void visitCmpStmt(int opcode, int distReg, int bB, int cC, int xt) {
         Local dist = locals[distReg];
         Local a = locals[bB];
         Local b = locals[cC];
         switch (opcode) {
-        case OP_CMPL_FLOAT:
-            list.add(nAssign(dist, nFCmpl(a, b)));
+        case OP_CMPL:
+            if (xt == TYPE_FLOAT) {
+                list.add(nAssign(dist, nFCmpl(a, b)));
+            } else {
+                list.add(nAssign(dist, nDCmpl(a, b)));
+            }
             break;
-        case OP_CMPL_DOUBLE:
-            list.add(nAssign(dist, nDCmpl(a, b)));
+        case OP_CMPG:
+            if (xt == TYPE_FLOAT) {
+                list.add(nAssign(dist, nFCmpg(a, b)));
+            } else {
+                list.add(nAssign(dist, nDCmpg(a, b)));
+            }
             break;
-        case OP_CMPG_FLOAT:
-            list.add(nAssign(dist, nFCmpg(a, b)));
-            break;
-        case OP_CMPG_DOUBLE:
-            list.add(nAssign(dist, nDCmpg(a, b)));
-            break;
-        case OP_CMP_LONG:
+        case OP_CMP:
             list.add(nAssign(dist, nLCmp(a, b)));
             break;
         }
     }
 
     @Override
-    public void visitConstStmt(int opcode, int toReg, Object value) {
+    public void visitConstStmt(int opcode, int toReg, Object value, int xt) {
         switch (opcode) {
         case OP_CONST:
-            list.add(nAssign(locals[toReg], nInt((Integer) value)));
-            break;
-        case OP_CONST_WIDE:
-            list.add(nAssign(locals[toReg], nLong((Long) value)));
+            if (xt == TYPE_SINGLE) {
+                list.add(nAssign(locals[toReg], nInt((Integer) value)));
+            } else {
+                list.add(nAssign(locals[toReg], nLong((Long) value)));
+            }
             break;
         case OP_CONST_STRING:
             list.add(nAssign(locals[toReg], nString((String) value)));
@@ -352,7 +334,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitFieldStmt(int opcode, int fromOrToReg, Field field) {
+    public void visitFieldStmt(int opcode, int fromOrToReg, Field field, int xt) {
         switch (opcode) {
 
         case OP_SGET:
@@ -368,7 +350,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field) {
+    public void visitFieldStmt(int opcode, int fromOrToReg, int objReg, Field field, int xt) {
         switch (opcode) {
 
         case OP_IGET:
@@ -535,11 +517,9 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitMoveStmt(int opcode, int toReg) {
+    public void visitMoveStmt(int opcode, int toReg, int xt) {
         switch (opcode) {
         case OP_MOVE_RESULT:
-        case OP_MOVE_RESULT_WIDE:
-        case OP_MOVE_RESULT_OBJECT:
             list.add(nAssign(locals[toReg], locals[tmp_reg]));
             break;
         case OP_MOVE_EXCEPTION:
@@ -549,7 +529,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitMoveStmt(int opcode, int toReg, int fromReg) {
+    public void visitMoveStmt(int opcode, int toReg, int fromReg, int xt) {
         list.add(nAssign(locals[toReg], locals[fromReg]));
     }
 
@@ -559,7 +539,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitReturnStmt(int opcode, int reg) {
+    public void visitReturnStmt(int opcode, int reg, int xt) {
         switch (opcode) {
         case OP_THROW:
             list.add(nThrow(locals[reg]));
@@ -589,95 +569,66 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitUnopStmt(int opcode, int toReg, int fromReg) {
+    public void visitUnopStmt(int opcode, int toReg, int fromReg, int xt) {
         Value dist = locals[toReg];
         Value src = locals[fromReg];
         switch (opcode) {
         case OP_ARRAY_LENGTH:
             list.add(nAssign(dist, nLength(src)));
             break;
-        case OP_NEG_INT:
-        case OP_NEG_LONG:
-        case OP_NEG_FLOAT:
-        case OP_NEG_DOUBLE:
+        case OP_NEG:
             list.add(nAssign(dist, nNeg(src)));
             break;
-        case OP_NOT_INT:
-        case OP_NOT_LONG:
+        case OP_NOT:
             list.add(nAssign(dist, nNot(src)));
             break;
-        case OP_INT_TO_LONG:
-        case OP_FLOAT_TO_LONG:
-        case OP_DOUBLE_TO_LONG:
-        case OP_INT_TO_FLOAT:
-        case OP_DOUBLE_TO_FLOAT:
-        case OP_LONG_TO_FLOAT:
-        case OP_INT_TO_DOUBLE:
-        case OP_FLOAT_TO_DOUBLE:
-        case OP_LONG_TO_DOUBLE:
-        case OP_LONG_TO_INT:
-        case OP_DOUBLE_TO_INT:
-        case OP_FLOAT_TO_INT:
-        case OP_INT_TO_BYTE:
-        case OP_INT_TO_CHAR:
-        case OP_INT_TO_SHORT:
+        }
+    }
+
+    @Override
+    public void visitUnopStmt(int opcode, int toReg, int fromReg, int xta, int xtb) {
+        Value dist = locals[toReg];
+        Value src = locals[fromReg];
+        switch (opcode) {
+        case OP_X_TO_Y:
             Type from;
-            switch (opcode) {
-            case OP_INT_TO_LONG:
-            case OP_INT_TO_BYTE:
-            case OP_INT_TO_CHAR:
-            case OP_INT_TO_SHORT:
-            case OP_INT_TO_FLOAT:
-            case OP_INT_TO_DOUBLE:
+            switch (xta) {
+            case TYPE_INT:
                 from = Type.INT_TYPE;
                 break;
-            case OP_FLOAT_TO_LONG:
-            case OP_FLOAT_TO_DOUBLE:
-            case OP_FLOAT_TO_INT:
+            case TYPE_FLOAT:
                 from = Type.FLOAT_TYPE;
                 break;
-            case OP_DOUBLE_TO_LONG:
-            case OP_DOUBLE_TO_FLOAT:
-            case OP_DOUBLE_TO_INT:
+            case TYPE_DOUBLE:
                 from = Type.DOUBLE_TYPE;
                 break;
-            case OP_LONG_TO_FLOAT:
-            case OP_LONG_TO_DOUBLE:
-            case OP_LONG_TO_INT:
+            case TYPE_LONG:
                 from = Type.LONG_TYPE;
                 break;
             default:
                 throw new RuntimeException();
             }
             Type to;
-            switch (opcode) {
-            case OP_INT_TO_LONG:
-            case OP_FLOAT_TO_LONG:
-            case OP_DOUBLE_TO_LONG:
+            switch (xtb) {
+            case TYPE_LONG:
                 to = Type.LONG_TYPE;
                 break;
-            case OP_INT_TO_FLOAT:
-            case OP_DOUBLE_TO_FLOAT:
-            case OP_LONG_TO_FLOAT:
+            case TYPE_FLOAT:
                 to = Type.FLOAT_TYPE;
                 break;
-            case OP_INT_TO_DOUBLE:
-            case OP_FLOAT_TO_DOUBLE:
-            case OP_LONG_TO_DOUBLE:
+            case TYPE_DOUBLE:
                 to = Type.DOUBLE_TYPE;
                 break;
-            case OP_LONG_TO_INT:
-            case OP_DOUBLE_TO_INT:
-            case OP_FLOAT_TO_INT:
+            case TYPE_INT:
                 to = Type.INT_TYPE;
                 break;
-            case OP_INT_TO_BYTE:
+            case TYPE_BYTE:
                 to = Type.BYTE_TYPE;
                 break;
-            case OP_INT_TO_CHAR:
+            case TYPE_CHAR:
                 to = Type.CHAR_TYPE;
                 break;
-            case OP_INT_TO_SHORT:
+            case TYPE_SHORT:
                 to = Type.SHORT_TYPE;
                 break;
             default:

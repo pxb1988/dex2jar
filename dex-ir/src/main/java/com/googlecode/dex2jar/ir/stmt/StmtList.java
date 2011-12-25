@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
@@ -70,7 +69,6 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         }
     }
 
-    public Set<Stmt> _cfg_tais;
     public List<AssignStmt> _ls_inits = new ArrayList<AssignStmt>();
     public List<Stmt> _ls_visit_order;
 
@@ -118,7 +116,7 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
     }
 
     public void insertAftre(Stmt position, Stmt stmt) {
-        if (position.list == this && stmt.list == null) {
+        if (position.list == this) {
             indexIt(stmt);
             stmt.list = this;
             size++;
@@ -134,7 +132,7 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
     }
 
     public void insertBefore(Stmt position, Stmt stmt) {
-        if (position.list == this && stmt.list == null) {
+        if (position.list == this) {
             indexIt(stmt);
             stmt.list = this;
             size++;
@@ -150,36 +148,32 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
     }
 
     public void insertFirst(Stmt stmt) {
-        if (stmt.list == null) {
-            indexIt(stmt);
-            stmt.list = this;
-            size++;
-            if (first == null) {// empty
-                first = last = stmt;
-                stmt.pre = stmt.next = null;
-            } else {
-                stmt.pre = null;
-                stmt.next = first;
-                first.pre = stmt;
-                first = stmt;
-            }
+        indexIt(stmt);
+        stmt.list = this;
+        size++;
+        if (first == null) {// empty
+            first = last = stmt;
+            stmt.pre = stmt.next = null;
+        } else {
+            stmt.pre = null;
+            stmt.next = first;
+            first.pre = stmt;
+            first = stmt;
         }
     }
 
     public void insertLast(Stmt stmt) {
-        if (stmt.list == null) {
-            indexIt(stmt);
-            stmt.list = this;
-            size++;
-            if (first == null) {// empty
-                first = last = stmt;
-                stmt.pre = stmt.next = null;
-            } else {
-                stmt.next = null;
-                stmt.pre = last;
-                last.next = stmt;
-                last = stmt;
-            }
+        indexIt(stmt);
+        stmt.list = this;
+        size++;
+        if (first == null) {// empty
+            first = last = stmt;
+            stmt.pre = stmt.next = null;
+        } else {
+            stmt.next = null;
+            stmt.pre = last;
+            last.next = stmt;
+            last = stmt;
         }
     }
 

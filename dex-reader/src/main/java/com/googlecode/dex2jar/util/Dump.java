@@ -16,17 +16,13 @@
 package com.googlecode.dex2jar.util;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ProxyOutputStream;
 
 import com.googlecode.dex2jar.DexOpcodes;
@@ -48,9 +44,9 @@ public class Dump extends EmptyVisitor {
         PrintWriter get(String name);
     }
 
-    public static void doData(byte[] data, File destJar) throws IOException {
+    public static void doData(DexFileReader dexFileReader, File destJar) throws IOException {
         final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
-        new DexFileReader(data).accept(new Dump(new WriterManager() {
+        dexFileReader.accept(new Dump(new WriterManager() {
 
             public PrintWriter get(String name) {
                 try {
@@ -72,26 +68,16 @@ public class Dump extends EmptyVisitor {
         zos.close();
     }
 
+    public static void doData(byte[] data, File destJar) throws IOException {
+        doData(new DexFileReader(data), destJar);
+    }
+
     public static void doFile(File srcDex) throws IOException {
         doFile(srcDex, new File(srcDex.getParentFile(), srcDex.getName() + "_dump.jar"));
     }
 
     public static void doFile(File srcDex, File destJar) throws IOException {
-        byte[] data = FileUtils.readFileToByteArray(srcDex);
-        // checkMagic
-        if ("dex".equals(new String(data, 0, 3))) {// dex
-            doData(data, destJar);
-        } else if ("PK".equals(new String(data, 0, 2))) {// ZIP
-            ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data));
-            for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-                if (entry.getName().equals("classes.dex")) {
-                    data = IOUtils.toByteArray(zis);
-                    doData(data, destJar);
-                }
-            }
-        } else {
-            throw new RuntimeException("the src file not a .dex file or a zip file");
-        }
+        doData(DexFileReader.readDex(srcDex), destJar);
     }
 
     public static String getAccDes(int acc) {
@@ -172,7 +158,7 @@ public class Dump extends EmptyVisitor {
     public static String toJavaClass(String desc) {
         switch (desc.charAt(0)) {
         case 'L':
-            return desc.substring(0, desc.length() - 1).replace('/', '.');
+            return desc.substring(1, desc.length() - 1).replace('/', '.');
         case 'B':
             return "byte";
         case 'S':
@@ -192,6 +178,26 @@ public class Dump extends EmptyVisitor {
             return toJavaClass(desc.substring(1)) + "[]";
         }
         return desc;
+    }
+
+    StringBuilder deps = new StringBuilder();
+
+    @Override
+    public void visitDepedence(String name, byte[] checksum) {
+        deps.append("dep: " + name + ", checksum: ");
+        for (int i = 0; i < checksum.length; i++) {
+            deps.append(String.format("%02x", checksum[i]));
+        }
+        deps.append("\n");
+    }
+
+    public void visitEnd() {
+        if (deps.length() > 0) {
+            PrintWriter out = writerManager.get("depedence");
+            out.print(deps.toString());
+            out.flush();
+            out.close();
+        }
     }
 
     /*
@@ -275,6 +281,7 @@ public class Dump extends EmptyVisitor {
                     }
                 };
             }
+
         };
     }
 }

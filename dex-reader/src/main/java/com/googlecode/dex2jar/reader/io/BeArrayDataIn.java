@@ -13,32 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar;
+package com.googlecode.dex2jar.reader.io;
 
 /**
- * a light weight version of org.objectweb.asm.Label
- * 
- * @author Pan
+ * @see DexFileReader#REVERSE_ENDIAN_CONSTANT
+ * @author Panxiaobo
  * 
  */
-public class DexLabel {
-    public Object info;
+public class BeArrayDataIn extends ArrayDataIn implements DataIn {
 
-    private int offset = -1;
-
-    public DexLabel(int offset) {
-        super();
-        this.offset = offset;
+    public BeArrayDataIn(byte[] data) {
+        super(data);
     }
 
-    public DexLabel() {
-        super();
+    @Override
+    public int readUShortx() {
+        return (readUByte() << 8) | readUByte();
     }
 
-    public String toString() {
-        if (offset >= 0) {
-            return String.format("L%04x", offset);
-        }
-        return String.format("L%08x", this.hashCode());
+    public int readUIntx() {
+        return (readUByte() << 24) | (readUByte() << 16) | (readUByte() << 8) | readUByte();
     }
 }
