@@ -240,13 +240,16 @@ public class LiveAnalyze {
         }
         used.clear();
 
-        Collections.sort(phis, new Comparator<Phi>() {
+        // reduce the size of nPhis
+        List<Phi> nPhis = new ArrayList<Phi>(phis);
+
+        Collections.sort(nPhis, new Comparator<Phi>() {
             @Override
             public int compare(Phi o1, Phi o2) {
                 return o1.local._ls_index - o2.local._ls_index;
             }
         });
-        return phis;
+        return nPhis;
     }
 
     protected void init() {
