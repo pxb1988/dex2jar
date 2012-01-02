@@ -235,7 +235,7 @@ public class ZeroTransformer implements Transformer {
         for (Stmt p = irMethod.stmts.getFirst(); p != null; p = p.getNext()) {
             Phi[] frame = (Phi[]) p._ls_forward_frame;
             p._ls_forward_frame = null;
-            if (frame == null) {// dead code ?
+            if (frame == null || !p._cfg_visited) {// dead code ?
                 continue;
             }
             switch (p.et) {
