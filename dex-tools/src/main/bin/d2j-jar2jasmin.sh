@@ -20,4 +20,4 @@ for k in "$PRGDIR"/lib/*.jar
 do
  _classpath="${_classpath}:${k}"
 done
-java -Xms512m -Xmx1024m -classpath "${_classpath}" "com.googlecode.dex2jar.tools.to.Do" $@
+java -Xms512m -Xmx1024m -classpath "${_classpath}" "com.googlecode.dex2jar.tools.Jar2Jasmin" $@

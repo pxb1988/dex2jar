@@ -1,12 +1,10 @@
 package com.googlecode.dex2jar.bin_gen;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 
 public class BinGen {
 
@@ -17,13 +15,16 @@ public class BinGen {
     public static void main(String[] args) throws IOException {
         Properties p = new Properties();
         p.load(BinGen.class.getResourceAsStream("class.cfg"));
-        String bat = IOUtils.toString(BinGen.class.getResourceAsStream("bat_template"), "UTF-8");
-        String sh = IOUtils.toString(BinGen.class.getResourceAsStream("sh_template"), "UTF-8");
+
+        String bat = FileUtils.readFileToString(new File(
+                "src/main/resources/com/googlecode/dex2jar/bin_gen/bat_template"), "UTF-8");
+        String sh = FileUtils.readFileToString(
+                new File("src/main/resources/com/googlecode/dex2jar/bin_gen/sh_template"), "UTF-8");
 
         File binDir = new File("src/main/bin");
-        FileOutputStream fos = FileUtils.openOutputStream(new File(binDir, "setclasspath.bat"));
-        IOUtils.copy(BinGen.class.getResourceAsStream("setclasspath.bat"), fos);
-        IOUtils.closeQuietly(fos);
+        String setclasspath = FileUtils.readFileToString(new File(
+                "src/main/resources/com/googlecode/dex2jar/bin_gen/setclasspath.bat"), "UTF-8");
+        FileUtils.writeStringToFile(new File(binDir, "setclasspath.bat"), setclasspath, "UTF-8");
         for (Object key : p.keySet()) {
             String name = key.toString();
             FileUtils.writeStringToFile(new File(binDir, key.toString() + ".sh"),
