@@ -106,9 +106,9 @@ public class AsmVerify {
                 usage();
                 return;
             }
+            System.out.println("Verify jar " + file);
             for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements();) {
                 ZipEntry zipEntry = e.nextElement();
-                System.out.println("Verify jar " + zipEntry.getName());
                 if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".class")) {
                     InputStream is = zip.getInputStream(zipEntry);
                     ClassReader cr = new ClassReader(is);
