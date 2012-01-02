@@ -43,7 +43,6 @@
 							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 						<manifestEntries>
-							<Main-Class>com.googlecode.dex2jar.v3.Main</Main-Class>
 							<Implementation-Build>${maven.build.timestamp}</Implementation-Build>
 						</manifestEntries>
 					</archive>
@@ -52,25 +51,6 @@
 						<exclude>*.sh</exclude>
 					</excludes>
 				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2-beta-5</version>
-				<configuration>
-					<appendAssemblyId>false</appendAssemblyId>
-					<descriptors>
-						<descriptor>src/main/assemble/package.xml</descriptor>
-					</descriptors>
-				</configuration>
-				<executions>
-					<execution>
-						<id>make-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>

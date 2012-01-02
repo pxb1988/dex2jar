@@ -13,6 +13,7 @@
         <module>dex-reader</module>
         <module>dex-translator</module>
         <module>dex-ir</module>
+        <module>dex-tools</module>
     </modules>
 
     <build>
@@ -51,6 +52,7 @@
         </plugins>
     </build>
     <properties>
+        <dex2jar.tools.version>0.0.0.1-SNAPSHOT</dex2jar.tools.version>
         <dex2jar.ir.version>1.3-SNAPSHOT</dex2jar.ir.version>
         <dex2jar.reader.version>1.6-SNAPSHOT</dex2jar.reader.version>
         <dex2jar.translator.version>0.0.9.5-SNAPSHOT</dex2jar.translator.version>
