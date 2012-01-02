@@ -59,7 +59,7 @@ public class Jar2Jasmin {
             return;
         }
         String[] remainingArgs = commandLine.getArgs();
-        if (remainingArgs.length < 1) {
+        if (remainingArgs.length != 1) {
             usage();
             return;
         }
