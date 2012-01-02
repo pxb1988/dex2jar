@@ -27,7 +27,7 @@ public class Jar2Jasmin {
     static {
         options.addOption(new Option("d", "debug", false, "disassemble debug info"));
         options.addOption(new Option("o", "output", true,
-                "output dir of .j files, default is $current_dir/[jar-name]-2jasmin"));
+                "output dir of .j files, default is $current_dir/[jar-name]-jar2jasmin/"));
         options.addOption(new Option("f", "force", false, "force overwrite"));
     }
 
@@ -95,7 +95,7 @@ public class Jar2Jasmin {
         }
 
         if (output == null) {
-            output = new File(FilenameUtils.getBaseName(jar.getName()) + "2jasmin/");
+            output = new File(FilenameUtils.getBaseName(jar.getName()) + "-jar2jasmin/");
         }
 
         if (output.exists() && !force) {
@@ -134,6 +134,5 @@ public class Jar2Jasmin {
                 }
             }
         }
-        System.out.println("Done.");
     }
 }

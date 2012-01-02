@@ -32,6 +32,5 @@ public class BinGen {
             FileUtils.writeStringToFile(new File(binDir, key.toString() + ".bat"),
                     bat.replaceAll("__@class_name@__", p.getProperty(name)), "UTF-8");
         }
-        System.out.println("Done.");
     }
 }

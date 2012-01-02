@@ -17,7 +17,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 public class Jasmin2Jar {
@@ -98,7 +97,7 @@ public class Jasmin2Jar {
             }
         }
         if (output == null) {
-            output = new File(FilenameUtils.getBaseName(dir.getName()) + "-jasmin2jar.jar");
+            output = new File(dir.getName() + "-jasmin2jar.jar");
         }
 
         if (output.exists() && !force) {
@@ -106,6 +105,9 @@ public class Jasmin2Jar {
             usage();
             return;
         }
+
+        System.out.println("assemble " + dir + " to " + output);
+
         Class<?> clz = Class.forName("jasmin.ClassFile");
         Method readJasmin = clz.getMethod("readJasmin", Reader.class, String.class, boolean.class);
         Method errorCount = clz.getMethod("errorCount");

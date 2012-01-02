@@ -52,7 +52,7 @@ public class ASMifierFileV implements OdexFileVisitor {
     }
 
     public static void main(String... args) throws IOException {
-        if (args.length < 2) {
+        if (args.length < 1) {
             System.out.println("ASMifier 1.dex 2.dex ... n.dex");
             return;
         }
