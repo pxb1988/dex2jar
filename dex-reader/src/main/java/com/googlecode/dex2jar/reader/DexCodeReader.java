@@ -424,7 +424,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                 break;
             }
             case F23x: {
-                int tmp = in.readShortx();
+                int tmp = in.readUShortx();
                 n.x3x(opcode, uOpcodeH, tmp & 0xFF, tmp >> 8);
                 break;
             }

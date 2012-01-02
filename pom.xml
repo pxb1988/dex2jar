@@ -13,6 +13,7 @@
         <module>dex-reader</module>
         <module>dex-translator</module>
         <module>dex-ir</module>
+        <module>dex-tools</module>
     </modules>
 
     <build>
@@ -51,9 +52,10 @@
         </plugins>
     </build>
     <properties>
-        <dex2jar.ir.version>1.2</dex2jar.ir.version>
-        <dex2jar.reader.version>1.5</dex2jar.reader.version>
-        <dex2jar.translator.version>0.0.9.4</dex2jar.translator.version>
+        <dex2jar.tools.version>0.0.0.1</dex2jar.tools.version>
+        <dex2jar.ir.version>1.3</dex2jar.ir.version>
+        <dex2jar.reader.version>1.6</dex2jar.reader.version>
+        <dex2jar.translator.version>0.0.9.5</dex2jar.translator.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 </project>

@@ -46,6 +46,7 @@ public class ASMifierClassV implements DexClassVisitor {
         out.s("import com.googlecode.dex2jar.*;");
         out.s("import com.googlecode.dex2jar.visitors.*;");
         out.s("import static com.googlecode.dex2jar.DexOpcodes.*;");
+        out.s("import static com.googlecode.dex2jar.util.Hex.*;");
         out.s("public class %s {", javaClassName);
         out.push();
         out.s("public static void accept(DexFileVisitor v) {");

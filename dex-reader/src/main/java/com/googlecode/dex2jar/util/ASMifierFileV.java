@@ -37,6 +37,7 @@ public class ASMifierFileV implements OdexFileVisitor {
     String pkgName = "dex2jar.gen";
     File dir;
     ArrayOut file = new ArrayOut();
+    int i = 0;
 
     public static void doData(byte[] data, File destdir) throws IOException {
         new DexFileReader(data).accept(new ASMifierFileV(destdir, null));
@@ -51,7 +52,7 @@ public class ASMifierFileV implements OdexFileVisitor {
     }
 
     public static void main(String... args) throws IOException {
-        if (args.length < 2) {
+        if (args.length < 1) {
             System.out.println("ASMifier 1.dex 2.dex ... n.dex");
             return;
         }
@@ -74,6 +75,7 @@ public class ASMifierFileV implements OdexFileVisitor {
         file.s("package %s;", this.pkgName);
         file.s("import com.googlecode.dex2jar.*;");
         file.s("import com.googlecode.dex2jar.visitors.*;");
+        file.s("import static com.googlecode.dex2jar.util.Hex.*;");
         file.s("public class Main {");
         file.push();
         file.s("public static void accept(DexFileVisitor v) {");
@@ -102,7 +104,8 @@ public class ASMifierFileV implements OdexFileVisitor {
 
     @Override
     public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
-        final String n = className.substring(1, className.length() - 1).replace('/', '_').replace('$', '_');
+        final String n = String.format("C%04d_", i++)
+                + className.substring(1, className.length() - 1).replace('/', '_').replace('$', '_');
         file.s("%s.accept(v);", n);
         return new ASMifierClassV(pkgName, n, access_flags, className, superClass, interfaceNames) {
 
@@ -126,7 +129,8 @@ public class ASMifierFileV implements OdexFileVisitor {
 
     @Override
     public void visitDepedence(String name, byte[] checksum) {
-        file.s("((OdexFileVisitor)v).visitDepedence(%s,%s);", Escape.v(name), Escape.v(checksum));
+        file.s("((OdexFileVisitor)v).visitDepedence(%s,decodeHex(%s.toCharArray()));", Escape.v(name),
+                Escape.v(new String(Hex.encodeHex(checksum))));
     }
 
 }
