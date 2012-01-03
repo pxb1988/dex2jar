@@ -140,8 +140,8 @@ public class Cfg {
         }
 
         for (Trap t : jm.traps) {
-            for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
-                link(s.getPre(), t.handler);
+            for (Stmt s = t.start; s != t.end; s = s.getNext()) {
+                link(s, t.handler);
             }
         }
 

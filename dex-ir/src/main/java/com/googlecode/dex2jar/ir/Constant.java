@@ -16,6 +16,7 @@
 package com.googlecode.dex2jar.ir;
 
 import org.objectweb.asm.Type;
+import org.objectweb.asm.util.AbstractVisitor;
 
 import com.googlecode.dex2jar.ir.Value.E0Expr;
 
@@ -110,7 +111,9 @@ public class Constant extends E0Expr {
             return value.toString();
         }
         if (value instanceof String) {
-            return "\"" + value + "\"";
+            StringBuffer buf = new StringBuffer();
+            AbstractVisitor.appendString(buf, (String) value);
+            return buf.toString();
         }
         if (type.equals(Type.getType(Class.class))) {
             return ToStringUtil.toShortClassName((Type) value) + ".class";
