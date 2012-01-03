@@ -123,8 +123,10 @@ public class AsmVerify {
                         try {
                             a.analyze(cn.name, method);
                         } catch (Exception ex) {
-                            System.err.println("Error verify method " + method.name + " " + method.desc);
+                            System.err.println("Error verify method " + cr.getClassName() + "." + method.name + " "
+                                    + method.desc);
                             if (detail) {
+                                ex.printStackTrace(System.err);
                                 printAnalyzerResult(method, a, new PrintWriter(System.err));
                             }
                         }

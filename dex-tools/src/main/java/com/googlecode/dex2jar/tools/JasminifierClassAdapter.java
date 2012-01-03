@@ -453,13 +453,23 @@ public class JasminifierClassAdapter extends ClassAdapter {
                         }
 
                         public void visitLdcInsn(Object cst) {
-                            pw.print("ldc ");
-                            if (cst instanceof Type) {
-                                pw.print(((Type) cst).getInternalName());
-                            } else {
+
+                            if (cst instanceof Integer || cst instanceof Float) {
+                                pw.print("ldc_w ");
                                 print(cst);
+                            } else if (cst instanceof Long || cst instanceof Double) {
+                                pw.print("ldc2_w ");
+                                print(cst);
+                            } else {
+                                pw.print("ldc ");
+                                if (cst instanceof Type) {
+                                    pw.print(((Type) cst).getInternalName());
+                                } else {
+                                    print(cst);
+                                }
                             }
                             pw.println();
+
                         }
 
                         public void visitIincInsn(int var, int increment) {
