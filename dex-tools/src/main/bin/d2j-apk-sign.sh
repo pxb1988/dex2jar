@@ -17,33 +17,24 @@
 # limitations under the License.
 #
 
-KS=~/.dex2jar.ks
-KPASS=android
+# copy from $Tomcat/bin/startup.sh
+# resolve links - $0 may be a softlink
+PRG="$0"
+while [ -h "$PRG" ] ; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`/"$link"
+  fi
+done
+PRGDIR=`dirname "$PRG"`
+#
 
-if [ $# -eq 0 ]; then
-#    echo "Sign an android apk file use a test certificate."
-    echo "Usage:  $0 /file/to.apk "
-    exit 1
-fi
-
-# check if there are more than 1 arguments
-if [ $# -ne 1 ]; then
-   echo  "only one argument to $0 is required"
-   exit 1
-fi
-
-if which jarsigner >/dev/null; then
-    if [ ! -f $KS ]; then
-       if which keytool >/dev/null; then
-           echo "keystore $KS not exist, try to create one."
-           keytool -genkeypair -alias androiddebugkey -keyalg RSA -keysize 2048 -dname "CN=android-debug" -validity 100000 -keystore $KS -storepass $KPASS -keypass $KPASS
-       else
-           echo "can't find keytool in your PATH"
-           exit 1
-       fi
-    fi
-    echo "sign apk using certificate in $KS"
-    jarsigner -keystore $KS -storepass $KPASS -keypass $KPASS $1 androiddebugkey
-else
-    echo "can't find jarsigner in your PATH"
-fi
+_classpath="."
+for k in "$PRGDIR"/lib/*.jar
+do
+ _classpath="${_classpath}:${k}"
+done
+java -Xms512m -Xmx1024m -classpath "${_classpath}" "com.googlecode.dex2jar.tools.ApkSign" $@

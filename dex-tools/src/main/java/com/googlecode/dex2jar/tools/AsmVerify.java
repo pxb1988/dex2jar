@@ -6,19 +6,11 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -30,110 +22,28 @@ import org.objectweb.asm.util.AbstractVisitor;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
-public class AsmVerify {
-    private static final Options options = new Options();;
+public class AsmVerify extends BaseCmd {
+    static Field buf;
+
     static {
-        options.addOption(new Option("d", "detail", false, "print detail error message"));
-    }
-
-    /**
-     * Prints the usage message.
-     */
-    private static void usage() {
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.setOptionComparator(new Comparator<Option>() {
-
-            @Override
-            public int compare(Option o1, Option o2) {
-
-                return o1.getOpt().compareTo(o2.getOpt());
-            }
-        });
-        formatter.printHelp("d2j-asm-verify [options] <jar0> [jar1 ... jarN]", "verify .class in jar", options, "");
-    }
-
-    /**
-     * @param args
-     * @throws IOException
-     * @throws IllegalAccessException
-     * @throws IllegalArgumentException
-     */
-    public static void main(String[] args) throws IOException, IllegalArgumentException, IllegalAccessException {
-        CommandLineParser parser = new PosixParser();
-        CommandLine commandLine;
-
         try {
-            commandLine = parser.parse(options, args);
-        } catch (ParseException ex) {
-            usage();
-            return;
+            buf = AbstractVisitor.class.getDeclaredField("buf");
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (SecurityException e) {
+            e.printStackTrace();
         }
-        String[] remainingArgs = commandLine.getArgs();
-        if (remainingArgs.length < 1) {
-            usage();
-            return;
-        }
+        buf.setAccessible(true);
 
-        List<File> files = new ArrayList<File>();
-        for (String fn : remainingArgs) {
-            File file = new File(fn);
-            if (!file.exists() || !file.isFile()) {
-                System.err.println(fn + " is not exists");
-                usage();
-                return;
-            }
-            files.add(file);
-        }
-        boolean detail = false;
-        for (Option option : commandLine.getOptions()) {
-            String opt = option.getOpt();
-            switch (opt.charAt(0)) {
-            case 'd':
-                detail = true;
-                break;
-            }
-        }
+    }
 
-        for (File file : files) {
-            ZipFile zip = null;
-            try {
-                zip = new ZipFile(file);
-            } catch (IOException e1) {
-                System.err.println(file + " is not a validate zip file");
-                if (detail) {
-                    e1.printStackTrace(System.err);
-                }
-                usage();
-                return;
-            }
-            System.out.println("Verify jar " + file);
-            for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements();) {
-                ZipEntry zipEntry = e.nextElement();
-                if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".class")) {
-                    InputStream is = zip.getInputStream(zipEntry);
-                    ClassReader cr = new ClassReader(is);
-                    ClassNode cn = new ClassNode();
-                    cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
+    private static String getShortName(final String name) {
+        int n = name.lastIndexOf('/');
+        return n == -1 ? name : "o";
+    }
 
-                    List methods = cn.methods;
-                    for (int i = 0; i < methods.size(); ++i) {
-                        MethodNode method = (MethodNode) methods.get(i);
-                        BasicVerifier verifier = new BasicVerifier();
-                        Analyzer a = new Analyzer(verifier);
-                        try {
-                            a.analyze(cn.name, method);
-                        } catch (Exception ex) {
-                            System.err.println("Error verify method " + cr.getClassName() + "." + method.name + " "
-                                    + method.desc);
-                            if (detail) {
-                                ex.printStackTrace(System.err);
-                                printAnalyzerResult(method, a, new PrintWriter(System.err));
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    public static void main(String[] args) {
+        new AsmVerify().doMain(args);
     }
 
     static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)
@@ -167,22 +77,70 @@ public class AsmVerify {
         pw.flush();
     }
 
-    private static String getShortName(final String name) {
-        int n = name.lastIndexOf('/');
-        return n == -1 ? name : "o";
+    @Opt(opt = "d", longOpt = "detail", hasArg = false, description = "Print detail error message")
+    boolean detail = false;
+
+    public AsmVerify() {
+        super("d2j-asm-verify [options] <jar0> [jar1 ... jarN]", "Verify .class in jar");
     }
 
-    static Field buf;
-
-    static {
-        try {
-            buf = AbstractVisitor.class.getDeclaredField("buf");
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (SecurityException e) {
-            e.printStackTrace();
+    @Override
+    protected void doCommandLine() throws Exception {
+        if (remainingArgs.length < 1) {
+            usage();
+            return;
         }
-        buf.setAccessible(true);
 
+        List<File> files = new ArrayList<File>();
+        for (String fn : remainingArgs) {
+            File file = new File(fn);
+            if (!file.exists() || !file.isFile()) {
+                System.err.println(fn + " is not exists");
+                usage();
+                return;
+            }
+            files.add(file);
+        }
+
+        for (File file : files) {
+            ZipFile zip = null;
+            try {
+                zip = new ZipFile(file);
+            } catch (IOException e1) {
+                System.err.println(file + " is not a validate zip file");
+                if (detail) {
+                    e1.printStackTrace(System.err);
+                }
+                usage();
+                return;
+            }
+            System.out.println("Verify jar " + file);
+            for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements();) {
+                ZipEntry zipEntry = e.nextElement();
+                if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".class")) {
+                    InputStream is = zip.getInputStream(zipEntry);
+                    ClassReader cr = new ClassReader(is);
+                    ClassNode cn = new ClassNode();
+                    cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
+
+                    List<?> methods = cn.methods;
+                    for (int i = 0; i < methods.size(); ++i) {
+                        MethodNode method = (MethodNode) methods.get(i);
+                        BasicVerifier verifier = new BasicVerifier();
+                        Analyzer a = new Analyzer(verifier);
+                        try {
+                            a.analyze(cn.name, method);
+                        } catch (Exception ex) {
+                            System.err.println("Error verify method " + cr.getClassName() + "." + method.name + " "
+                                    + method.desc);
+                            if (detail) {
+                                ex.printStackTrace(System.err);
+                                printAnalyzerResult(method, a, new PrintWriter(System.err));
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

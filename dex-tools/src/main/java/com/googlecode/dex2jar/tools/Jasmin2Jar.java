@@ -5,62 +5,30 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.lang.reflect.Method;
-import java.util.Comparator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-public class Jasmin2Jar {
-    private static final Options options = new Options();;
-    static {
-        options.addOption(new Option("o", "output", true,
-                "output .jar file, default is $current_dir/[jar-name]-jasmin2jar.jar"));
-        options.addOption(new Option("f", "force", false, "force overwrite"));
-        options.addOption(new Option("g", "autogenerate-linenumbers", false, "autogenerate-linenumbers"));
-    }
-
-    /**
-     * Prints the usage message.
-     */
-    private static void usage() {
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.setOptionComparator(new Comparator<Option>() {
-
-            @Override
-            public int compare(Option o1, Option o2) {
-
-                return o1.getOpt().compareTo(o2.getOpt());
-            }
-        });
-        formatter.printHelp("d2j-jasmin2jar [options] <dir>", "assemble .j files to .class file", options, "");
-    }
-
-    /**
-     * @param args
-     * @throws ClassNotFoundException
-     * @throws NoSuchMethodException
-     * @throws SecurityException
-     */
+public class Jasmin2Jar extends BaseCmd {
     public static void main(String[] args) throws ClassNotFoundException, SecurityException, NoSuchMethodException {
-        CommandLineParser parser = new PosixParser();
-        CommandLine commandLine;
+        new Jasmin2Jar().doMain(args);
+    }
 
-        try {
-            commandLine = parser.parse(options, args);
-        } catch (ParseException ex) {
-            usage();
-            return;
-        }
-        String[] remainingArgs = commandLine.getArgs();
+    @Opt(opt = "g", longOpt = "autogenerate-linenumbers", hasArg = false, description = "autogenerate-linenumbers")
+    boolean autogenLines = false;
+    @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
+    private boolean forceOverwrite = false;
+    @Opt(opt = "o", longOpt = "output", description = "output .jar file, default is $current_dir/[jar-name]-jasmin2jar.jar", argName = "out-jar-file")
+    private File output;
+
+    public Jasmin2Jar() {
+        super("d2j-jasmin2jar [options] <dir>", "d2j-jasmin2jar - assemble .j files to .class file");
+    }
+
+    @Override
+    protected void doCommandLine() throws Exception {
         if (remainingArgs.length != 1) {
             usage();
             return;
@@ -73,34 +41,11 @@ public class Jasmin2Jar {
             return;
         }
 
-        File output = null;
-        boolean force = false;
-        boolean autogenLines = false;
-        for (Option option : commandLine.getOptions()) {
-            String opt = option.getOpt();
-            switch (opt.charAt(0)) {
-            case 'o': {
-                String v = commandLine.getOptionValue("o");
-                if (v != null) {
-                    output = new File(v);
-                }
-            }
-                break;
-            case 'f': {
-                force = true;
-            }
-                break;
-            case 'g': {
-                autogenLines = true;
-            }
-                break;
-            }
-        }
         if (output == null) {
             output = new File(dir.getName() + "-jasmin2jar.jar");
         }
 
-        if (output.exists() && !force) {
+        if (output.exists() && !forceOverwrite) {
             System.err.println(output + " exists, use --force to overwrite");
             usage();
             return;
@@ -137,11 +82,9 @@ public class Jasmin2Jar {
                 write.invoke(classFile, zos);
                 zos.closeEntry();
             }
-        } catch (Exception ex) {
         } finally {
             IOUtils.closeQuietly(zos);
         }
-
     }
 
 }

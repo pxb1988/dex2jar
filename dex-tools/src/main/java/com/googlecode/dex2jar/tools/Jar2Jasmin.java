@@ -5,60 +5,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
 
-public class Jar2Jasmin {
-    private static final Options options = new Options();;
-    static {
-        options.addOption(new Option("d", "debug", false, "disassemble debug info"));
-        options.addOption(new Option("o", "output", true,
-                "output dir of .j files, default is $current_dir/[jar-name]-jar2jasmin/"));
-        options.addOption(new Option("f", "force", false, "force overwrite"));
-    }
-
-    /**
-     * Prints the usage message.
-     */
-    private static void usage() {
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.setOptionComparator(new Comparator<Option>() {
-
-            @Override
-            public int compare(Option o1, Option o2) {
-
-                return o1.getOpt().compareTo(o2.getOpt());
-            }
-        });
-        formatter.printHelp("d2j-jar2jasmin [options] <jar>", "disassemble .class in jar file to jasmin file", options,
-                "");
-    }
-
+public class Jar2Jasmin extends BaseCmd {
     public static void main(String[] args) {
-        CommandLineParser parser = new PosixParser();
-        CommandLine commandLine;
+        new Jar2Jasmin().doMain(args);
+    }
 
-        try {
-            commandLine = parser.parse(options, args);
-        } catch (ParseException ex) {
-            usage();
-            return;
-        }
-        String[] remainingArgs = commandLine.getArgs();
+    @Opt(opt = "d", longOpt = "debug", hasArg = false, description = "disassemble debug info")
+    private boolean debugInfo = false;
+    @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
+    private boolean forceOverwrite = false;
+    @Opt(opt = "o", longOpt = "output", description = "output dir of .j files, default is $current_dir/[jar-name]-jar2jasmin/", argName = "out-dir")
+    private File output;
+
+    public Jar2Jasmin() {
+        super("d2j-jar2jasmin [options] <jar>", "Disassemble .class in jar file to jasmin file");
+    }
+
+    @Override
+    protected void doCommandLine() throws Exception {
         if (remainingArgs.length != 1) {
             usage();
             return;
@@ -70,35 +43,12 @@ public class Jar2Jasmin {
             usage();
             return;
         }
-        File output = null;
-        boolean force = false;
-        boolean debug = false;
-        for (Option option : commandLine.getOptions()) {
-            String opt = option.getOpt();
-            switch (opt.charAt(0)) {
-            case 'o': {
-                String v = commandLine.getOptionValue("o");
-                if (v != null) {
-                    output = new File(v);
-                }
-            }
-                break;
-            case 'f': {
-                force = true;
-            }
-                break;
-            case 'd': {
-                debug = true;
-            }
-                break;
-            }
-        }
 
         if (output == null) {
             output = new File(FilenameUtils.getBaseName(jar.getName()) + "-jar2jasmin/");
         }
 
-        if (output.exists() && !force) {
+        if (output.exists() && !forceOverwrite) {
             System.err.println(output + " exists, use --force to overwrite");
             usage();
             return;
@@ -113,7 +63,7 @@ public class Jar2Jasmin {
             return;
         }
         System.out.println("disassemble " + jar + " to " + output);
-        int flags = debug ? 0 : ClassReader.SKIP_DEBUG;
+        int flags = debugInfo ? 0 : ClassReader.SKIP_DEBUG;
         for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements();) {
             ZipEntry zipEntry = e.nextElement();
             if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".class")) {
