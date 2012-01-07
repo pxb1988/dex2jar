@@ -16,7 +16,6 @@
 package com.googlecode.dex2jar.util;
 
 import com.googlecode.dex2jar.DexLabel;
-import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;

@@ -18,31 +18,31 @@ package com.googlecode.dex2jar;
 import java.util.Arrays;
 
 /**
- * 方法
+ * represent a method_id_item in dex file format
  * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
 public class Method {
     /**
-     * 描述
+     * descriptor of the method, this will build after {@link #getDesc()}.
      */
     private String desc;
     /**
-     * 方法名
+     * name of the method.
      */
     private String name;
     /**
-     * 方法所有者
+     * owner class of the method, in TypeDescriptor format.
      */
     private String owner;
     /**
-     * 参数类型
+     * parameter types of the method, in TypeDescriptor format.
      */
     private String[] parameterTypes;
 
     /**
-     * 返回类型
+     * return type of the method, in TypeDescriptor format.
      */
     private String returnType;
 

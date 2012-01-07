@@ -16,8 +16,9 @@
 package com.googlecode.dex2jar;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
  * 
+ * @author Panxiaobo [pxb1988@gmail.com]
+ * @version $Id$
  */
 public class DexException extends RuntimeException {
 
@@ -55,6 +56,9 @@ public class DexException extends RuntimeException {
     }
 
     /**
+     * this is equals to
+     * 
+     * <b> new DexException(String.format(messageFormat, args), cause); </b>
      * 
      * @param cause
      * @param messageFormat
@@ -65,6 +69,9 @@ public class DexException extends RuntimeException {
     }
 
     /**
+     * this is equals to
+     * 
+     * <b> new DexException(String.format(messageFormat, args)); </b>
      * 
      * @param messageFormat
      * @param args

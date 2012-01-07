@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.googlecode.dex2jar.DexLabel;
-import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.Method;
 
 /**

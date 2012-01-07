@@ -15,24 +15,23 @@
  */
 package com.googlecode.dex2jar;
 
-
 /**
- * 成员
+ * represent a field_id_item in dex file format
  * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
  */
 public class Field {
     /**
-     * 成员名
+     * name of the field.
      */
     private String name;
     /**
-     * 所有者
+     * owner class of the field, in TypeDescriptor format.
      */
     private String owner;
     /**
-     * 成员类型
+     * type of the field, in TypeDescriptor format.
      */
     private String type;
 

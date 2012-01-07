@@ -18,14 +18,22 @@ package com.googlecode.dex2jar;
 /**
  * a light weight version of org.objectweb.asm.Label
  * 
- * @author Pan
- * 
+ * @author Panxiaobo
+ * @version $Id$
  */
 public class DexLabel {
+    /**
+     * Field used to associate user information to a label. Warning: this field may used by others.
+     */
     public Object info;
 
     private int offset = -1;
 
+    /**
+     * 
+     * @param offset
+     *            the offset of the label
+     */
     public DexLabel(int offset) {
         super();
         this.offset = offset;

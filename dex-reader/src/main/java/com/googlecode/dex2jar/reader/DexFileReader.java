@@ -38,6 +38,7 @@ import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.reader.io.BeArrayDataIn;
 import com.googlecode.dex2jar.reader.io.DataIn;
 import com.googlecode.dex2jar.reader.io.LeArrayDataIn;
+import com.googlecode.dex2jar.reader.io.OffsetedDataIn;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -47,7 +48,13 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 import com.googlecode.dex2jar.visitors.OdexFileVisitor;
 
 /**
- * 读取dex文件
+ * Open and read a dex file.this is the entrance of dex-reader. to read a dex/odex, use the following code:
+ * 
+ * <pre>
+ * DexFileVisitor visitor = new xxxFileVisitor();
+ * DexFileReader reader = new DexFileReader(dexFile);
+ * reader.accept(reader);
+ * </pre>
  * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$
@@ -79,9 +86,21 @@ public class DexFileReader {
     private int type_ids_off;
     private int type_ids_size;
 
+    /**
+     * skip debug infos in dex file.
+     */
     public static final int SKIP_DEBUG = 1;
+    /**
+     * skip code info in dex file, this indicate {@link #SKIP_DEBUG}
+     */
     public static final int SKIP_CODE = 1 << 2;
+    /**
+     * skip annotation info in dex file.
+     */
     public static final int SKIP_ANNOTATION = 1 << 3;
+    /**
+     * skip field constant in dex file.
+     */
     public static final int SKIP_FIELD_CONSTANT = 1 << 4;
 
     private final boolean odex;
@@ -91,6 +110,14 @@ public class DexFileReader {
 
     private boolean apiLevelSetted = false;
 
+    /**
+     * read the dex file from byte array, if the byte array is a zip stream, it will return the content of classes.dex
+     * in the zip stream.
+     * 
+     * @param data
+     * @return
+     * @throws IOException
+     */
     public static byte[] readDex(byte[] data) throws IOException {
         if ("de".equals(new String(data, 0, 2))) {// dex/y
             return data;
@@ -110,13 +137,25 @@ public class DexFileReader {
         throw new RuntimeException("the src file not a .dex, .odex or zip file");
     }
 
-    public static byte[] readDex(File srcDex) throws IOException {
-        byte[] data = FileUtils.readFileToByteArray(srcDex);
-        // checkMagic
-        return readDex(data);
+    /**
+     * read the dex file from file, if the file is a zip file, it will return the content of classes.dex in the zip
+     * file.
+     * 
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    public static byte[] readDex(File file) throws IOException {
+        return readDex(FileUtils.readFileToByteArray(file));
     }
 
+    /**
+     * read dex from a {@link DataIn}.
+     * 
+     * @param in
+     */
     public DexFileReader(DataIn in) {
+        in.move(0);
         byte[] magic = in.readBytes(3);
 
         if (Arrays.equals(magic, DEX_FILE_MAGIC)) {
@@ -190,31 +229,55 @@ public class DexFileReader {
     }
 
     /**
+     * read dex from a byte array
      * 
      * @param data
+     *            a dex/odex file or a zip file contains classes.dex
      * 
      */
     public DexFileReader(byte[] data) {
         this(opDataIn(data));
     }
 
-    public DexFileReader(File f) throws IOException {
-        this(FileUtils.readFileToByteArray(f));
+    /**
+     * read dex from a file
+     * 
+     * @param file
+     *            a dex/odex file or a zip file contains classes.dex
+     * @throws IOException
+     */
+    public DexFileReader(File file) throws IOException {
+        this(FileUtils.readFileToByteArray(file));
     }
 
+    /**
+     * read dex from a {@link InputStream}
+     * 
+     * @param in
+     *            a dex/odex file or a zip file contains classes.dex
+     * @throws IOException
+     */
     public DexFileReader(InputStream in) throws IOException {
         this(IOUtils.toByteArray(in));
     }
 
+    /**
+     * equals to {@link #accept(DexFileVisitor, int)} with 0 as config
+     * 
+     * @param dv
+     */
     public void accept(DexFileVisitor dv) {
         this.accept(dv, 0);
     }
 
     /**
+     * Makes the given visitor visit the dex file.
      * 
      * @param dv
+     *            visitor
      * @param config
-     *            {@link #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_FIELD}, {@link #SKIP_METHOD}
+     *            config flags, {@link #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_ANNOTATION},
+     *            {@link #SKIP_FIELD_CONSTANT}
      */
     public void accept(DexFileVisitor dv, int config) {
         if (odex && !apiLevelSetted) {
@@ -509,6 +572,11 @@ public class DexFileReader {
         }
     }
 
+    /**
+     * set the apiLevel to read a dex file
+     * 
+     * @param apiLevel
+     */
     public final void setApiLevel(int apiLevel) {
         apiLevelSetted = true;
         this.apiLevel = apiLevel;
@@ -634,6 +702,10 @@ public class DexFileReader {
         return method_id;
     }
 
+    /**
+     * 
+     * @return true if try to read an odex file
+     */
     public final boolean isOdex() {
         return odex;
     }

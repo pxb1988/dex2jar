@@ -16,7 +16,7 @@
 package com.googlecode.dex2jar;
 
 /**
- * dex的指令
+ * dex2jar dex instruction set. This is different from the <b>dalvik instruction</b>
  * 
  * @author Panxiaobo [pxb1988@gmail.com]
  * @version $Id$

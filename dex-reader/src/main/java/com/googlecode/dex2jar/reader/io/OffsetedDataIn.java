@@ -13,26 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar;
+package com.googlecode.dex2jar.reader.io;
 
 /**
- * a light weight version of org.objectweb.asm.Type
  * 
  * @author Panxiaobo
  * @version $Id$
- * 
  */
-public class DexType {
-    public DexType(String desc) {
-        this.desc = desc;
+public class OffsetedDataIn extends DataInWrapper {
+
+    private int offset;
+
+    public OffsetedDataIn(DataIn in, int offset) {
+        super(in);
+        super.move(offset);
+        this.offset = offset;
     }
 
-    /**
-     * type descriptor, in TypeDescriptor format
-     */
-    final public String desc;
-
-    public String toString() {
-        return desc;
+    @Override
+    public int getCurrentPosition() {
+        return super.getCurrentPosition() - offset;
     }
+
+    @Override
+    public void move(int absOffset) {
+        super.move(absOffset + offset);
+    }
+
+    @Override
+    public void pushMove(int absOffset) {
+        super.pushMove(absOffset + offset);
+    }
+
 }
