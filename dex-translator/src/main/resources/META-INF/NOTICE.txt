@@ -1,2 +1,2 @@
-dex2jar
-Copyright 2009-2011 Panxiaobo
+dex2jar - A tool for converting Android .dex format to Java .class format 
+Copyright (c) 2009-2012 Panxiaobo

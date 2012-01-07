@@ -6,7 +6,7 @@
     <packaging>pom</packaging>
     <name>dex2jar</name>
     <version>1.0</version>
-    <description>A tool for converting Android's .dex format to Java's .class format</description>
+    <description>A tool for converting Android .dex format to Java .class format</description>
     <url>http://code.google.como/p/dex2jar/</url>
 
     <modules>
@@ -21,10 +21,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-				<version>2.0.2</version>
+				<version>2.3.2</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
+                    <optimize>true</optimize>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
