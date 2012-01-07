@@ -17,7 +17,26 @@ REM See the License for the specific language governing permissions and
 REM limitations under the License.
 REM
 
-set CLASSPATH=
-FOR %%i IN ("%~dp0lib\*.jar") DO CALL "%~dp0setclasspath.bat" %%i
+set KS=%HOMEPATH%\.dex2jar.ks
+set KPASS=android
 
-java -Xms512m -Xmx1024m -cp "%CLASSPATH%" "com.googlecode.dex2jar.v3.Main" %*
+if not exist "%1" goto apkNotFound
+if not exist "%KS%" goto generateKS
+goto sign
+
+:generateKS
+echo "key store %KS% not exist, try to create one."
+keytool -genkeypair -alias androiddebugkey -keyalg RSA -keysize 2048 -dname "CN=android-debug" -validity 100000 -keystore "%KS%" -storepass %KPASS% -keypass %KPASS%
+
+
+:sign
+echo "sign apk using certificate in %KS%"
+jarsigner -keystore "%KS%" -storepass %KPASS% -keypass %KPASS% %1 androiddebugkey
+goto end
+
+:apkNotFound
+echo "apk %1 not found"
+
+:end
+
+
