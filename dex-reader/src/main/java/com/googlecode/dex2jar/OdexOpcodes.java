@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.googlecode.dex2jar;
  * dex2jar odex instruction set
  * 
  * @author Panxiaobo
- * @version $Id$
+ * @version $Rev$
  */
 public interface OdexOpcodes extends DexOpcodes {
     int OP_THROW_VERIFICATION_ERROR = 0x0000ed;

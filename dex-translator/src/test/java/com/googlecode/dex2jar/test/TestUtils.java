@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.reader.DexFileReader;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * 
  */
 @Ignore
