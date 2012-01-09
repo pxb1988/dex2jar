@@ -1,4 +1,4 @@
-package com.googlecode.dex2jar.v3;
+package com.googlecode.dex2jar.ir.ts;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,8 +14,6 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
-import com.googlecode.dex2jar.ir.ts.Cfg;
-import com.googlecode.dex2jar.ir.ts.Transformer;
 
 public class EndRemover implements Transformer {
 

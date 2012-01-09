@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar.v3;
+package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
@@ -26,7 +26,6 @@ import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
-import com.googlecode.dex2jar.ir.ts.Transformer;
 
 /**
  * issue 63
@@ -55,7 +54,7 @@ import com.googlecode.dex2jar.ir.ts.Transformer;
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
-public class ExceptionHandlerCurrect implements Transformer {
+public class ExceptionHandlerCurrectTransformer implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
