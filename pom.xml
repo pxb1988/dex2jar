@@ -80,6 +80,52 @@
                     <nohelp>true</nohelp>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <configuration>
+                    <target>
+                        <taskdef
+                            resource="net/sf/antcontrib/antcontrib.properties"
+                            classpathref="maven.plugin.classpath" />
+                        <if>
+                            <available file=".hg/hgrc" />
+                            <then>
+                                <echo>call hg kwexpand</echo>
+                                <echo file=".hg/hgrc">
+<![CDATA[
+[paths]
+default = https://dex2jar.googlecode.com/hg
+[extensions]
+keyword =
+[keyword]
+**.java =
+[keywordmaps]
+Rev = {node|short}
+]]>
+                                </echo>
+                                <exec executable="hg">
+                                    <arg value="kwexpand" />
+                                </exec>
+                            </then>
+                        </if>
+                    </target>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>ant-contrib</groupId>
+                        <artifactId>ant-contrib</artifactId>
+                        <version>1.0b3</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>ant</groupId>
+                                <artifactId>ant</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
     <properties>
