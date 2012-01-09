@@ -81,7 +81,6 @@ public abstract class TestUtils {
         for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
             ZipEntry entry = e.nextElement();
             if (entry.getName().endsWith(".class")) {
-                System.out.println("checking " + entry.getName());
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 InputStream is = zipFile.getInputStream(entry);

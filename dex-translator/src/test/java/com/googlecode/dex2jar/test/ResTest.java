@@ -52,15 +52,32 @@ public class ResTest {
             files.add(f);
         }
 
+        List<Exception> exes = new ArrayList();
+        System.out.flush();
+        int count = 0;
         for (Entry<String, List<File>> e : m.entrySet()) {
             String name = e.getKey();
-            System.out.println("Testing res file " + name);
-            File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
-            File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
-            Main.doData(DexFileReader.readDex(dex), distFile, false);
-            Main.doFile(dex, distFile);
-            TestUtils.checkZipFile(distFile);
+            count++;
+            try {
+                File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
+                File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
+                Main.doData(DexFileReader.readDex(dex), distFile, false);
+                Main.doFile(dex, distFile);
+                TestUtils.checkZipFile(distFile);
+                System.out.write('.');
+            } catch (Exception ex) {
+                exes.add(ex);
+                System.out.write('X');
+            }
+            if (count % 5 == 0) {
+                System.out.write('\n');
+            }
+            System.out.flush();
         }
-        System.out.println("Done.");
+        System.out.flush();
+        System.out.println();
+        if (exes.size() > 0) {
+            throw new RuntimeException("there are " + exes.size() + " errors while translate");
+        }
     }
 }
