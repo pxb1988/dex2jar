@@ -61,6 +61,9 @@ public class Jar2Dex extends BaseCmd {
             usage();
             return;
         }
+
+        System.out.println("jar2dex " + jar + " -> " + output);
+
         Class<?> c = Class.forName("com.android.dx.command.Main");
         Method m = c.getMethod("main", String[].class);
 

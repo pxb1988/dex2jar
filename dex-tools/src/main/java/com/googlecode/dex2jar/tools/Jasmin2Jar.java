@@ -67,7 +67,7 @@ public class Jasmin2Jar extends BaseCmd {
             return;
         }
 
-        System.out.println("assemble " + dir + " to " + output);
+        System.out.println("assemble " + dir + " -> " + output);
 
         Class<?> clz = Class.forName("jasmin.ClassFile");
         Method readJasmin = clz.getMethod("readJasmin", Reader.class, String.class, boolean.class);

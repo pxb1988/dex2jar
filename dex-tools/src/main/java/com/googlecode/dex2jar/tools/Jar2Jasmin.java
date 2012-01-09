@@ -78,7 +78,7 @@ public class Jar2Jasmin extends BaseCmd {
             usage();
             return;
         }
-        System.out.println("disassemble " + jar + " to " + output);
+        System.out.println("disassemble " + jar + " -> " + output);
         int flags = debugInfo ? 0 : ClassReader.SKIP_DEBUG;
         for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements();) {
             ZipEntry zipEntry = e.nextElement();

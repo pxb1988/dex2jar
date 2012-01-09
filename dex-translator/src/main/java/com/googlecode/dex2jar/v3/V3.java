@@ -21,7 +21,6 @@ import java.util.Set;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Type;
 
-import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
 
@@ -34,41 +33,26 @@ public class V3 implements DexFileVisitor {
     protected Map<String, Integer> accessFlagsMap;
     protected Map<String, String> innerNameMap;
     protected Map<String, Set<String>> extraMemberClass;
-    protected Map<Method, Exception> exceptions;
+    protected DexExceptionHandler exceptionHandler;
 
-    /**
-     * @param innerAccessFlagsMap
-     * @param classVisitorFactory
-     */
     public V3(Map<String, Integer> innerAccessFlagsMap, Map<String, String> innerNameMap,
-            Map<String, Set<String>> extraMemberClass, Map<Method, Exception> exceptions,
+            Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler,
             ClassVisitorFactory classVisitorFactory) {
         this.accessFlagsMap = innerAccessFlagsMap;
         this.innerNameMap = innerNameMap;
         this.extraMemberClass = extraMemberClass;
-        this.exceptions = exceptions;
+        this.exceptionHandler = exceptionHandler;
         this.cvf = classVisitorFactory;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
-     * java.lang.String[])
-     */
     public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
         final ClassVisitor cv = cvf.create(Type.getType(className).getInternalName());
         if (cv == null)
             return null;
-        return new V3ClassAdapter(accessFlagsMap, innerNameMap, this.extraMemberClass, this.exceptions, cv,
+        return new V3ClassAdapter(accessFlagsMap, innerNameMap, this.extraMemberClass, this.exceptionHandler, cv,
                 access_flags, className, superClass, interfaceNames);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visitEnd()
-     */
     public void visitEnd() {
     }
 

@@ -38,7 +38,7 @@ public class ResTest {
     @Test
     public void test() throws Exception {
         File dir = new File("target/test-classes/res");
-        Map<String, List<File>> m = new HashMap();
+        Map<String, List<File>> m = new HashMap<String, List<File>>();
         for (File f : FileUtils.listFiles(dir, new String[] { "class" }, false)) {
             String name = FilenameUtils.getBaseName(f.getName());
 
@@ -57,7 +57,7 @@ public class ResTest {
             System.out.println("Testing res file " + name);
             File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
             File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
-            Main.doData(DexFileReader.readDex(dex), distFile, null);
+            Main.doData(DexFileReader.readDex(dex), distFile, false);
             Main.doFile(dex, distFile);
             TestUtils.checkZipFile(distFile);
         }
