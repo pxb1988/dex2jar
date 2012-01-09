@@ -130,7 +130,7 @@ public class AsmVerify extends BaseCmd {
                 usage();
                 return;
             }
-            System.out.println("Verify jar " + file);
+            System.out.println("verify " + file);
             for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements();) {
                 ZipEntry zipEntry = e.nextElement();
                 if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".class")) {

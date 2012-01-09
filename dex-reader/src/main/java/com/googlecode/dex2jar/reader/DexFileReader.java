@@ -710,4 +710,13 @@ public class DexFileReader {
         return odex;
     }
 
+    /**
+     * the size of class in dex file
+     * 
+     * @return class_defs_size
+     */
+    public final int getClassSize() {
+        return class_defs_size;
+    }
+
 }
