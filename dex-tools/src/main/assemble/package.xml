@@ -49,10 +49,5 @@
 			<scope>runtime</scope>
 			<fileMode>0444</fileMode>
 		</dependencySet>
-		<dependencySet>
-			<outputDirectory>/lib</outputDirectory>
-			<scope>provided</scope>
-			<fileMode>0444</fileMode>
-		</dependencySet>
 	</dependencySets>
 </assembly>

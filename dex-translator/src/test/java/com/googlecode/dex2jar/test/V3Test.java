@@ -84,7 +84,7 @@ public class V3Test {
                                     System.out.write('X');
                                     exes.add(e);
                                 }
-                                if (count % 80 == 0) {
+                                if (count % 50 == 0) {
                                     System.out.write('\n');
                                 }
                                 System.out.flush();

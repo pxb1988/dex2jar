@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.googlecode.dex2jar.util;
+package org.apache.commons.codec.binary;
 
 /**
  * Get from commons-codec-1.1, Converts hexadecimal Strings.

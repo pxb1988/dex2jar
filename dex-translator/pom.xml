@@ -1,57 +1,63 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.googlecode.dex2jar</groupId>
-		<artifactId>dex2jar</artifactId>
-		<version>1.0</version>
-	</parent>
+    <parent>
+        <groupId>com.googlecode.dex2jar</groupId>
+        <artifactId>dex2jar</artifactId>
+        <version>1.0</version>
+    </parent>
 
-	<artifactId>dex-translator</artifactId>
-	<version>${dex2jar.translator.version}</version>
-	<name>Dex Translator</name>
-	<description>A tool for converting Android's .dex format to Java's .class format</description>
-	<url>http://code.google.como/p/dex2jar/</url>
-	<dependencies>
-		<dependency>
-			<groupId>com.googlecode.dex2jar</groupId>
-			<artifactId>dex-reader</artifactId>
-			<version>${dex2jar.reader.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.googlecode.dex2jar</groupId>
-			<artifactId>dex-ir</artifactId>
-			<version>${dex2jar.ir.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.5</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.2</version>
-				<configuration>
-					<archive>
-						<manifest>
-							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-						</manifest>
-						<manifestEntries>
-							<Implementation-Build>${maven.build.timestamp}</Implementation-Build>
-						</manifestEntries>
-					</archive>
-					<excludes>
-						<exclude>*.bat</exclude>
-						<exclude>*.sh</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <artifactId>dex-translator</artifactId>
+    <version>${dex2jar.translator.version}</version>
+    <name>Dex Translator</name>
+    <description>A tool for converting Android's .dex format to Java's .class format</description>
+    <url>http://code.google.como/p/dex2jar/</url>
+    <dependencies>
+        <dependency>
+            <groupId>com.googlecode.dex2jar</groupId>
+            <artifactId>dex-reader</artifactId>
+            <version>${dex2jar.reader.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.dex2jar</groupId>
+            <artifactId>dex-ir</artifactId>
+            <version>${dex2jar.ir.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.dex2jar</groupId>
+            <artifactId>commons-lite</artifactId>
+            <version>${dex2jar.reader.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.5</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Implementation-Build>${maven.build.timestamp}</Implementation-Build>
+                        </manifestEntries>
+                    </archive>
+                    <excludes>
+                        <exclude>*.bat</exclude>
+                        <exclude>*.sh</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

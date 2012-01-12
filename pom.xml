@@ -14,6 +14,7 @@
         <module>dex-translator</module>
         <module>dex-ir</module>
         <module>dex-tools</module>
+        <module>commons-lite</module>
     </modules>
     <reporting>
         <plugins>

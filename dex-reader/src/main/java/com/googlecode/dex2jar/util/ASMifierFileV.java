@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 
 import com.googlecode.dex2jar.reader.DexFileReader;
@@ -75,7 +76,7 @@ public class ASMifierFileV implements OdexFileVisitor {
         file.s("package %s;", this.pkgName);
         file.s("import com.googlecode.dex2jar.*;");
         file.s("import com.googlecode.dex2jar.visitors.*;");
-        file.s("import static com.googlecode.dex2jar.util.Hex.*;");
+        file.s("import static org.apache.commons.codec.binary.Hex.*;");
         file.s("public class Main {");
         file.push();
         file.s("public static void accept(DexFileVisitor v) {");

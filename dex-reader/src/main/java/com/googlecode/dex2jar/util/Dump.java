@@ -23,8 +23,6 @@ import java.io.PrintWriter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.output.ProxyOutputStream;
-
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
@@ -53,12 +51,16 @@ public class Dump extends EmptyVisitor {
                     String s = name.replace('.', '/') + ".dump.txt";
                     ZipEntry zipEntry = new ZipEntry(s);
                     zos.putNextEntry(zipEntry);
-                    return new PrintWriter(new ProxyOutputStream(zos) {
+                    return new PrintWriter(zos) {
                         @Override
-                        public void close() throws IOException {
-                            zos.closeEntry();
+                        public void close() {
+                            try {
+                                zos.closeEntry();
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
                         }
-                    });
+                    };
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
