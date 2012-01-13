@@ -69,9 +69,11 @@ public class Dex2jarCmd extends BaseCmd {
         } else {
             for (String fileName : remainingArgs) {
                 File file = new File(FilenameUtils.getBaseName(fileName) + "-dex2jar.jar");
-                System.err.println(file + " exists, use --force to overwrite");
-                usage();
-                return;
+                if (file.exists() && !forceOverwrite) {
+                    System.err.println(file + " exists, use --force to overwrite");
+                    usage();
+                    return;
+                }
             }
         }
 
