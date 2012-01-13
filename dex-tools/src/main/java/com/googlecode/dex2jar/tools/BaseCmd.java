@@ -124,8 +124,12 @@ public abstract class BaseCmd {
         return "dex2jar dex-tool-" + BaseCmd.class.getPackage().getImplementationVersion() + ", Apache-2.0";
     }
 
-    protected void initOptions() {
-        Class<?> clz = getClass();
+    protected void initOptionFromClass(Class<?> clz) {
+        if (clz == null) {
+            return;
+        } else {
+            initOptionFromClass(clz.getSuperclass());
+        }
         Field[] fs = clz.getDeclaredFields();
         for (Field f : fs) {
             Opt opt = f.getAnnotation(Opt.class);
@@ -156,9 +160,12 @@ public abstract class BaseCmd {
                 }
                 options.addOption(option);
                 map.put(opt.opt(), f);
-
             }
         }
+    }
+
+    protected void initOptions() {
+        initOptionFromClass(this.getClass());
     }
 
     protected void usage() {
