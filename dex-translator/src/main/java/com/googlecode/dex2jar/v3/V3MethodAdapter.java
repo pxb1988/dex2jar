@@ -152,6 +152,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java .lang .String, boolean)
      */
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (name.equals("Ldalvik/annotation/Signature;")) {
             this.signatureAnnotation = new Annotation(name, visible);
@@ -173,6 +174,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitCode()
      */
+    @Override
     public DexCodeVisitor visitCode() {
         IrMethod irMethod = new IrMethod();
         irMethod.access = accessFlags;
@@ -189,6 +191,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         build();
         if (irMethod != null) {
@@ -217,8 +220,10 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParameterAnnotation (int)
      */
+    @Override
     public DexAnnotationAble visitParameterAnnotation(final int index) {
         return new DexAnnotationAble() {
+            @Override
             public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
                 AnnotationVisitor av = methodNode.visitParameterAnnotation(index, name, visible);
                 if (av != null) {

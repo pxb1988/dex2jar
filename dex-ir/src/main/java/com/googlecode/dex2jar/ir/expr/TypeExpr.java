@@ -48,6 +48,7 @@ public class TypeExpr extends E1Expr {
         return new TypeExpr(vt, op.value.clone(), type);
     }
 
+    @Override
     public String toString() {
         switch (super.vt) {
         case CHECK_CAST:

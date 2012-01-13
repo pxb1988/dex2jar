@@ -44,6 +44,7 @@ public class LocalType implements Transformer {
     static class TypeBox {
         XType xtype = new XType(this);
 
+        @Override
         public String toString() {
 
             return "" + trimTypeBox(this).xtype;
@@ -58,6 +59,7 @@ public class LocalType implements Transformer {
             this.tb = tb;
         }
 
+        @Override
         public String toString() {
             return "" + type;
         }
@@ -106,8 +108,9 @@ public class LocalType implements Transformer {
     }
 
     public TypeBox exec(Value v) {
-        if (v == null)
+        if (v == null) {
             return null;
+        }
         TypeBox tb = get(v);
         switch (v.et) {
         case E0:

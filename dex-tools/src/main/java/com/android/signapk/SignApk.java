@@ -100,8 +100,9 @@ class SignApk {
                 }
 
                 Attributes attr = null;
-                if (input != null)
+                if (input != null) {
                     attr = input.getAttributes(name);
+                }
                 attr = attr != null ? new Attributes(attr) : new Attributes();
                 attr.putValue("SHA1-Digest", base64.encode(md.digest()));
                 output.getEntries().put(name, attr);
@@ -362,10 +363,12 @@ class SignApk {
             }
         } finally {
             try {
-                if (inputJar != null)
+                if (inputJar != null) {
                     inputJar.close();
-                if (outputFile != null)
+                }
+                if (outputFile != null) {
                     outputFile.close();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }

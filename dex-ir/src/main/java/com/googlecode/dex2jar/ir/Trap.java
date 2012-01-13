@@ -47,6 +47,7 @@ public class Trap {
         return new Trap(start.clone(map), end.clone(map), handler.clone(map), type);
     }
 
+    @Override
     public String toString() {
         return new StringBuilder().append(start.getDisplayName()).append(" - ").append(end.getDisplayName())
                 .append(" > ").append(handler.getDisplayName()).append(" // ")

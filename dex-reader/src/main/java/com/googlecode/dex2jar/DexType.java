@@ -32,6 +32,7 @@ public class DexType {
      */
     final public String desc;
 
+    @Override
     public String toString() {
         return desc;
     }

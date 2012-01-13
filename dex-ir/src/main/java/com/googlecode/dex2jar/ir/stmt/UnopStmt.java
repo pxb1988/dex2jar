@@ -31,6 +31,7 @@ public class UnopStmt extends E1Stmt {
         return new UnopStmt(st, new ValueBox(op.value.clone()));
     }
 
+    @Override
     public String toString() {
         switch (super.st) {
         case LOCK:

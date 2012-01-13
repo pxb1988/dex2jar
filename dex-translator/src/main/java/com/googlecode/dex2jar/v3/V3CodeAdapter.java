@@ -322,6 +322,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         irMethod.locals.addAll(Arrays.asList(this.locals));
         this.locals = null;

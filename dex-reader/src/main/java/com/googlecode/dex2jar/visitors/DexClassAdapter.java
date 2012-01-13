@@ -38,6 +38,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, boolean)
      */
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         return dcv.visitAnnotation(name, visible);
     }
@@ -47,6 +48,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         dcv.visitEnd();
     }
@@ -57,6 +59,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitField(int, com.googlecode.dex2jar .Field,
      * java.lang.Object)
      */
+    @Override
     public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
         return dcv.visitField(accessFlags, field, value);
     }
@@ -66,6 +69,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitMethod(int, com.googlecode. dex2jar.Method)
      */
+    @Override
     public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         return dcv.visitMethod(accessFlags, method);
     }
@@ -75,6 +79,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitSource(java.lang.String )
      */
+    @Override
     public void visitSource(String file) {
         dcv.visitSource(file);
     }

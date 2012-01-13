@@ -46,6 +46,7 @@ public class Dump extends EmptyVisitor {
         final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destJar)));
         dexFileReader.accept(new Dump(new WriterManager() {
 
+            @Override
             public PrintWriter get(String name) {
                 try {
                     String s = name.replace('.', '/') + ".dump.txt";
@@ -187,12 +188,13 @@ public class Dump extends EmptyVisitor {
     @Override
     public void visitDepedence(String name, byte[] checksum) {
         deps.append("dep: " + name + ", checksum: ");
-        for (int i = 0; i < checksum.length; i++) {
-            deps.append(String.format("%02x", checksum[i]));
+        for (byte element : checksum) {
+            deps.append(String.format("%02x", element));
         }
         deps.append("\n");
     }
 
+    @Override
     public void visitEnd() {
         if (deps.length() > 0) {
             PrintWriter out = writerManager.get("depedence");
@@ -208,6 +210,7 @@ public class Dump extends EmptyVisitor {
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
+    @Override
     public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
 
         String javaClassName = toJavaClass(className);
@@ -248,6 +251,7 @@ public class Dump extends EmptyVisitor {
                 super.visitEnd();
             }
 
+            @Override
             public DexFieldVisitor visitField(int accesFlags, Field field, Object value) {
                 out.printf("//field:%04d  access:0x%04x\n", field_count++, accesFlags);
                 out.printf("//%s\n", field);
@@ -261,6 +265,7 @@ public class Dump extends EmptyVisitor {
                 return null;
             }
 
+            @Override
             public DexMethodVisitor visitMethod(final int accesFlags, final Method method) {
                 out.println();
                 out.printf("//method:%04d  access:0x%04x\n", method_count++, accesFlags);
@@ -278,6 +283,7 @@ public class Dump extends EmptyVisitor {
                 out.println(')');
 
                 return new EmptyVisitor() {
+                    @Override
                     public DexCodeVisitor visitCode() {
                         return new DumpDexCodeAdapter((accesFlags & DexOpcodes.ACC_STATIC) != 0, method, out);
                     }

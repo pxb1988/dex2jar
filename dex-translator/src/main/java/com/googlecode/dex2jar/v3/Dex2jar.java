@@ -89,6 +89,7 @@ public class Dex2jar {
         try {
             reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(),
                     exceptionHandler, new ClassVisitorFactory() {
+                        @Override
                         public ClassVisitor create(final String name) {
                             return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
                                 @Override

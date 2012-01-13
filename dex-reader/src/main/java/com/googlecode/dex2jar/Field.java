@@ -67,6 +67,7 @@ public class Field {
      * 
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
         return this.getOwner() + "." + this.getName() + " " + this.getType();
     }

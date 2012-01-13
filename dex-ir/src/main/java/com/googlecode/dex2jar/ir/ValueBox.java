@@ -28,6 +28,7 @@ public class ValueBox {
         this.value = value;
     }
 
+    @Override
     public String toString() {
         return value == null ? "[Null ValueBox]" : value.toString();
     }

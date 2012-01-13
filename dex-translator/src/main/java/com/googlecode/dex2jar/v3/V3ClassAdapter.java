@@ -200,6 +200,7 @@ public class V3ClassAdapter implements DexClassVisitor {
         }
     }
 
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (!isInnerClass) {
             isInnerClass = "Ldalvik/annotation/InnerClass;".equals(name);
@@ -229,11 +230,13 @@ public class V3ClassAdapter implements DexClassVisitor {
         }
     }
 
+    @Override
     public void visitEnd() {
         build();
         cv.visitEnd();
     }
 
+    @Override
     public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
         build();
         if (value instanceof DexType) {
@@ -242,6 +245,7 @@ public class V3ClassAdapter implements DexClassVisitor {
         return new V3FieldAdapter(cv, accessFlags, field, value);
     }
 
+    @Override
     public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         build();
         return new V3MethodAdapter(accessFlags, method, this.exceptionHandler) {
@@ -264,6 +268,7 @@ public class V3ClassAdapter implements DexClassVisitor {
         };
     }
 
+    @Override
     public void visitSource(String file) {
         this.file = file;
     }

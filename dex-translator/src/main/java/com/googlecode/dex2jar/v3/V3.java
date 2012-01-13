@@ -45,14 +45,17 @@ public class V3 implements DexFileVisitor {
         this.cvf = classVisitorFactory;
     }
 
+    @Override
     public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
         final ClassVisitor cv = cvf.create(Type.getType(className).getInternalName());
-        if (cv == null)
+        if (cv == null) {
             return null;
+        }
         return new V3ClassAdapter(accessFlagsMap, innerNameMap, this.extraMemberClass, this.exceptionHandler, cv,
                 access_flags, className, superClass, interfaceNames);
     }
 
+    @Override
     public void visitEnd() {
     }
 

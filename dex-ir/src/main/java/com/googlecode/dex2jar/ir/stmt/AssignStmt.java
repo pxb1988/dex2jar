@@ -36,10 +36,12 @@ public class AssignStmt extends E2Stmt {
         super(type, left, right);
     }
 
+    @Override
     public Stmt clone(Map<LabelStmt, LabelStmt> map) {
-        return new AssignStmt(st, new ValueBox((Value) op1.value.clone()), new ValueBox((Value) op2.value.clone()));
+        return new AssignStmt(st, new ValueBox(op1.value.clone()), new ValueBox(op2.value.clone()));
     }
 
+    @Override
     public String toString() {
         switch (st) {
         case ASSIGN:

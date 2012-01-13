@@ -105,30 +105,40 @@ public class Method {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         Method other = (Method) obj;
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false;
+        }
         if (owner == null) {
-            if (other.owner != null)
+            if (other.owner != null) {
                 return false;
-        } else if (!owner.equals(other.owner))
+            }
+        } else if (!owner.equals(other.owner)) {
             return false;
-        if (!Arrays.equals(parameterTypes, other.parameterTypes))
+        }
+        if (!Arrays.equals(parameterTypes, other.parameterTypes)) {
             return false;
+        }
         if (returnType == null) {
-            if (other.returnType != null)
+            if (other.returnType != null) {
                 return false;
-        } else if (!returnType.equals(other.returnType))
+            }
+        } else if (!returnType.equals(other.returnType)) {
             return false;
+        }
         return true;
     }
 
@@ -137,6 +147,7 @@ public class Method {
      * 
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
         return this.getOwner() + "." + this.getName() + this.getDesc();
     }

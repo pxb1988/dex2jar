@@ -66,6 +66,7 @@ public class DumpDexCodeAdapter extends AbstractDumpDexCodeAdapter {
         this.isStatic = isStatic;
     }
 
+    @Override
     protected void info(int opcode, String format, Object... args) {
         String s = String.format(format, args);
         if (opcode < 0) {
@@ -75,10 +76,12 @@ public class DumpDexCodeAdapter extends AbstractDumpDexCodeAdapter {
         }
     }
 
+    @Override
     protected String labelToString(DexLabel label) {
         int i = labels.indexOf(label);
-        if (i > -1)
+        if (i > -1) {
             return "L" + i;
+        }
         labels.add(label);
         return "L" + labels.indexOf(label);
     }

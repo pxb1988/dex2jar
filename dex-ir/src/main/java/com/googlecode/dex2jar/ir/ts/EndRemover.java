@@ -1,7 +1,6 @@
 package com.googlecode.dex2jar.ir.ts;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -136,9 +135,7 @@ public class EndRemover implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-        for (Iterator<Trap> it = irMethod.traps.iterator(); it.hasNext();) {
-            Trap trap = it.next();
-
+        for (Trap trap : irMethod.traps) {
             LabelStmt start = null;
 
             for (Stmt p = trap.start.getNext(); p != null && p != trap.end;) {

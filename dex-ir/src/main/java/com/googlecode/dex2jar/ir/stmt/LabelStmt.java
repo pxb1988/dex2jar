@@ -48,6 +48,7 @@ public class LabelStmt extends E0Stmt {
         return displayName == null ? label.toString() : displayName;
     }
 
+    @Override
     public String toString() {
         return getDisplayName() + ":";
     }

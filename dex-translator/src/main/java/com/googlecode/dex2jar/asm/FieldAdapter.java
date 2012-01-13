@@ -39,6 +39,7 @@ public class FieldAdapter implements FieldVisitor {
      * 
      * @see org.objectweb.asm.FieldVisitor#visitAnnotation(java.lang.String, boolean)
      */
+    @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         return fv.visitAnnotation(desc, visible);
     }
@@ -48,6 +49,7 @@ public class FieldAdapter implements FieldVisitor {
      * 
      * @see org.objectweb.asm.FieldVisitor#visitAttribute(org.objectweb.asm.Attribute )
      */
+    @Override
     public void visitAttribute(Attribute attr) {
         fv.visitAttribute(attr);
     }
@@ -57,6 +59,7 @@ public class FieldAdapter implements FieldVisitor {
      * 
      * @see org.objectweb.asm.FieldVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         fv.visitEnd();
     }

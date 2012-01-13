@@ -58,6 +58,7 @@ public class FieldExpr extends E1Expr {
         return new FieldExpr(op == null ? null : new ValueBox(op.value.clone()), fieldOwnerType, fieldName, fieldType);
     }
 
+    @Override
     public String toString() {
         return (op == null ? ToStringUtil.toShortClassName(fieldOwnerType) : op) + "." + fieldName;
     }

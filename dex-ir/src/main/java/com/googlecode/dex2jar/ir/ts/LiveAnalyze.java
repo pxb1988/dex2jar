@@ -45,6 +45,7 @@ public class LiveAnalyze {
         public boolean used;
         public Set<Phi> sets = new HashSet<Phi>(3);
 
+        @Override
         public String toString() {
             if (tag != null) {
                 return tag.toString();
@@ -259,6 +260,7 @@ public class LiveAnalyze {
         }
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (Stmt stmt = method.stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {

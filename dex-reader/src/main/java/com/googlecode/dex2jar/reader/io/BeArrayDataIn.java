@@ -31,6 +31,7 @@ public class BeArrayDataIn extends ArrayDataIn implements DataIn {
         return (readUByte() << 8) | readUByte();
     }
 
+    @Override
     public int readUIntx() {
         return (readUByte() << 24) | (readUByte() << 16) | (readUByte() << 8) | readUByte();
     }

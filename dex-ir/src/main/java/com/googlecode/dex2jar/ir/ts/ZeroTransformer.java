@@ -50,6 +50,7 @@ public class ZeroTransformer implements Transformer {
         // public Set<Phi> parents = new HashSet<Phi>();
         public Set<Phi> children = new HashSet<Phi>();
 
+        @Override
         public String toString() {
             if (isZero == null) {
                 return "?";
@@ -59,6 +60,7 @@ public class ZeroTransformer implements Transformer {
     }
 
     private static class ZeroAnalyze {
+        @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
             for (Stmt stmt = method.stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {

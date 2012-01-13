@@ -79,6 +79,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
      */
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         Annotation ann = new Annotation(name, visible);
         anns.add(ann);
@@ -102,10 +103,12 @@ public class V3FieldAdapter implements DexFieldVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFieldVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         build();
-        if (fv != null)
+        if (fv != null) {
             fv.visitEnd();
+        }
     }
 
 }

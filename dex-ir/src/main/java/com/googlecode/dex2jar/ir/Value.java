@@ -103,6 +103,7 @@ public abstract class Value implements Cloneable {
             this.name = name;
         }
 
+        @Override
         public String toString() {
             return name == null ? super.toString() : name;
         }
@@ -132,5 +133,6 @@ public abstract class Value implements Cloneable {
         this.et = et;
     }
 
+    @Override
     public abstract Value clone();
 }

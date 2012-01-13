@@ -59,6 +59,7 @@ public class BinopExpr extends E2Expr {
         return new BinopExpr(vt, op1.value.clone(), op2.value.clone());
     }
 
+    @Override
     public String toString() {
         return "(" + op1 + " " + super.vt + " " + op2 + ")";
     }

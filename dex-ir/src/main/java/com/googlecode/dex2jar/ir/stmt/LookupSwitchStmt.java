@@ -54,6 +54,7 @@ public class LookupSwitchStmt extends E1Stmt {
                 defaultTarget));
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("switch(").append(op).append(") {");
 

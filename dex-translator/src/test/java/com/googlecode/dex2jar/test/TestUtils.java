@@ -116,8 +116,9 @@ public abstract class TestUtils {
         Class<?> c = cl.loadClass("com.android.dx.command.Main");
         Method m = c.getMethod("main", String[].class);
 
-        if (distFile == null)
+        if (distFile == null) {
             distFile = File.createTempFile("dex", ".dex");
+        }
         List<String> args = new ArrayList<String>();
         args.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + distFile.getCanonicalPath()));
         for (File f : files) {

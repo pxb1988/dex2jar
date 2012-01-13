@@ -344,8 +344,9 @@ public class DexFileReader {
         int source_file_idx = in.readUIntx();
         if ((config & SKIP_DEBUG) == 0) {
             // 获取源文件
-            if (source_file_idx != -1)
+            if (source_file_idx != -1) {
                 dcv.visitSource(this.getString(source_file_idx));
+            }
         }
 
         int annotations_off = in.readUIntx();
@@ -459,8 +460,9 @@ public class DexFileReader {
     }
 
     /* default */Field getField(int id) {
-        if (id >= this.field_ids_size || id < 0)
+        if (id >= this.field_ids_size || id < 0) {
             throw new IllegalArgumentException("Id out of bound");
+        }
         DataIn in = this.in;
         int idxOffset = this.field_ids_off + id * 8;
         in.pushMove(idxOffset);
@@ -476,8 +478,9 @@ public class DexFileReader {
     }
 
     /* default */Method getMethod(int method_idx) {
-        if (method_idx >= this.method_ids_size || method_idx < 0)
+        if (method_idx >= this.method_ids_size || method_idx < 0) {
             throw new IllegalArgumentException("Id out of bound");
+        }
         DataIn in = this.in;
         int idxOffset = this.method_ids_off + method_idx * 8;
         in.pushMove(idxOffset);
@@ -530,8 +533,9 @@ public class DexFileReader {
      * 
      */
     /* default */String getString(int id) {
-        if (id >= this.string_ids_size || id < 0)
+        if (id >= this.string_ids_size || id < 0) {
             throw new IllegalArgumentException("Id out of bound");
+        }
         DataIn in = this.in;
         int idxOffset = this.string_ids_off + id * 4;
         in.pushMove(idxOffset);
@@ -559,8 +563,9 @@ public class DexFileReader {
         if (id == -1) {
             return null;
         }
-        if (id >= this.type_ids_size || id < 0)
+        if (id >= this.type_ids_size || id < 0) {
             throw new IllegalArgumentException("Id out of bound");
+        }
         DataIn in = this.in;
         int idxOffset = this.type_ids_off + id * 4;
         in.pushMove(idxOffset);
@@ -662,8 +667,9 @@ public class DexFileReader {
                                 in.pushMove(field_annotation_offset);
                                 try {
                                     DexAnnotationAble dpav = dmv.visitParameterAnnotation(j);
-                                    if (dpav != null)
+                                    if (dpav != null) {
                                         DexAnnotationReader.accept(this, in, dpav);
+                                    }
                                 } catch (Exception e) {
                                     throw new DexException(e,
                                             "while accept parameter annotation in method:[%s], parameter:[%d]",

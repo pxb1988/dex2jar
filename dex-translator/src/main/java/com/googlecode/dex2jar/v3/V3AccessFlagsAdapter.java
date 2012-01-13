@@ -61,6 +61,7 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
+    @Override
     public DexClassVisitor visit(int access_flags, final String className, String superClass, String[] interfaceNames) {
 
         return new EmptyVisitor() {
@@ -120,6 +121,7 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
     }
 

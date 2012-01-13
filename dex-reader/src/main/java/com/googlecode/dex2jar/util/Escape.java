@@ -31,8 +31,9 @@ public class Escape implements DexOpcodes {
     }
 
     public static String classAcc(int acc) {
-        if (acc == 0)
+        if (acc == 0) {
             return "0";
+        }
         StringBuilder sb = new StringBuilder();
         if (contain(acc, ACC_PUBLIC)) {
             sb.append("ACC_PUBLIC|");
@@ -71,8 +72,9 @@ public class Escape implements DexOpcodes {
     }
 
     public static String methodAcc(int acc) {
-        if (acc == 0)
+        if (acc == 0) {
             return "0";
+        }
         StringBuilder sb = new StringBuilder();
         if (contain(acc, ACC_PUBLIC)) {
             sb.append("ACC_PUBLIC|");
@@ -117,8 +119,9 @@ public class Escape implements DexOpcodes {
     }
 
     public static String fieldAcc(int acc) {
-        if (acc == 0)
+        if (acc == 0) {
             return "0";
+        }
         StringBuilder sb = new StringBuilder();
         if (contain(acc, ACC_PUBLIC)) {
             sb.append("ACC_PUBLIC|");
@@ -164,8 +167,9 @@ public class Escape implements DexOpcodes {
     }
 
     public static String v(String s) {
-        if (s == null)
+        if (s == null) {
             return "null";
+        }
         return "\"" + Utf8Utils.escapeString(s) + "\"";
     }
 
@@ -203,8 +207,9 @@ public class Escape implements DexOpcodes {
     }
 
     public static String v(String[] vs) {
-        if (vs == null)
+        if (vs == null) {
             return "null";
+        }
         StringBuilder sb = new StringBuilder("new String[]{ ");
         boolean first = true;
         for (String obj : vs) {

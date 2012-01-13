@@ -26,10 +26,12 @@ public class LeArrayDataIn extends ArrayDataIn implements DataIn {
         super(data);
     }
 
+    @Override
     public int readUShortx() {
         return readUByte() | (readUByte() << 8);
     }
 
+    @Override
     public int readUIntx() {
         return readUByte() | (readUByte() << 8) | (readUByte() << 16) | (readUByte() << 24);
 

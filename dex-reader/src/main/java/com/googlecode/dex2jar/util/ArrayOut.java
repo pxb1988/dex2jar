@@ -29,19 +29,23 @@ public class ArrayOut implements Out {
     public List<String> array = new ArrayList<String>();
     public List<Integer> is = new ArrayList<Integer>();
 
+    @Override
     public void push() {
         i++;
     }
 
+    @Override
     public void s(String s) {
         is.add(i);
         array.add(s);
     }
 
+    @Override
     public void s(String format, Object... arg) {
         s(String.format(format, arg));
     }
 
+    @Override
     public void pop() {
         i--;
     }

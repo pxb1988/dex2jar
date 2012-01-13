@@ -32,35 +32,43 @@ public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn
         super(data);
     }
 
+    @Override
     public int readShortx() {
         return (short) readUShortx();
     }
 
+    @Override
     public int readIntx() {
         return readUIntx();
     }
 
+    @Override
     public int getCurrentPosition() {
         return super.pos;
     }
 
+    @Override
     public void move(int absOffset) {
         super.pos = absOffset;
     }
 
+    @Override
     public void pop() {
         super.pos = stack.pop();
     }
 
+    @Override
     public void push() {
         stack.push(super.pos);
     }
 
+    @Override
     public void pushMove(int absOffset) {
         this.push();
         this.move(absOffset);
     }
 
+    @Override
     public byte[] readBytes(int size) {
         byte[] data = new byte[size];
         try {
@@ -71,6 +79,7 @@ public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn
         return data;
     }
 
+    @Override
     public long readLeb128() {
         int bitpos = 0;
         long vln = 0L;
@@ -78,14 +87,17 @@ public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn
             int inp = readUByte();
             vln |= ((long) (inp & 0x7F)) << bitpos;
             bitpos += 7;
-            if ((inp & 0x80) == 0)
+            if ((inp & 0x80) == 0) {
                 break;
+            }
         } while (true);
-        if (((1L << (bitpos - 1)) & vln) != 0)
+        if (((1L << (bitpos - 1)) & vln) != 0) {
             vln -= (1L << bitpos);
+        }
         return vln;
     }
 
+    @Override
     public long readULeb128() {
         long value = 0;
         int count = 0;
@@ -99,14 +111,17 @@ public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn
         return value;
     }
 
+    @Override
     public void skip(int bytes) {
         super.skip(bytes);
     }
 
+    @Override
     public int readByte() {
         return (byte) readUByte();
     }
 
+    @Override
     public int readUByte() {
         if (super.pos >= super.count) {
             throw new RuntimeException("EOF");

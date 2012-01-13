@@ -20,6 +20,7 @@ public class NewExpr extends E0Expr {
         return new NewExpr(type);
     }
 
+    @Override
     public String toString() {
         return "NEW " + ToStringUtil.toShortClassName(type);
     }

@@ -56,6 +56,7 @@ public class TableSwitchStmt extends E1Stmt {
         return new TableSwitchStmt(op.value.clone(), lowIndex, highIndex, nTargets, cloneLabel(map, defaultTarget));
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("switch(").append(op).append(") {");
 

@@ -42,6 +42,7 @@ public class IrMethod {
 
     public List<Trap> traps = new ArrayList<Trap>();
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("// ").append(this.owner == null ? null : this.owner.getClassName()).append("\n");

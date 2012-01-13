@@ -64,6 +64,7 @@ public class V3Test {
                 new ClassVisitorFactory() {
                     int count = 0;
 
+                    @Override
                     public ClassVisitor create(final String name) {
                         return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
                             /*
