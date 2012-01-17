@@ -11,7 +11,7 @@
     <artifactId>dex-translator</artifactId>
     <version>${dex2jar.translator.version}</version>
     <name>Dex Translator</name>
-    <description>A tool for converting Android's .dex format to Java's .class format</description>
+    <description>Tools to work with android .dex and java .class files</description>
     <url>http://code.google.como/p/dex2jar/</url>
     <dependencies>
         <dependency>

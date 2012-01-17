@@ -10,7 +10,7 @@
     <artifactId>dex-reader</artifactId>
     <version>${dex2jar.reader.version}</version>
     <name>Dex Reader</name>
-    <description>A tool for converting Android's .dex format to Java's .class format</description>
+    <description>Tools to work with android .dex and java .class files</description>
     <url>http://code.google.como/p/dex2jar/</url>
     <dependencies>
         <dependency>
