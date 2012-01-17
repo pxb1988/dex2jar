@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# dex2jar - A tool for converting Android .dex format to Java .class format 
+# dex2jar - Tools to work with android .dex and java .class files
 # Copyright (c) 2009-2012 Panxiaobo
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");

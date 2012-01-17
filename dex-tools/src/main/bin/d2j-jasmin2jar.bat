@@ -1,7 +1,7 @@
 @echo off
 
 REM
-REM dex2jar - A tool for converting Android .dex format to Java .class format 
+REM dex2jar - Tools to work with android .dex and java .class files
 REM Copyright (c) 2009-2012 Panxiaobo
 REM 
 REM Licensed under the Apache License, Version 2.0 (the "License");

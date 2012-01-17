@@ -8,6 +8,8 @@
     </parent>
     <artifactId>dex-tools</artifactId>
     <version>${dex2jar.tools.version}</version>
+    <name>Dex Tools</name>
+    <description>Tools to work with dex and class files</description>
     <dependencies>
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
