@@ -58,10 +58,18 @@ public class V3ClassAdapter implements DexClassVisitor {
     protected String[] interfaceNames;
     protected boolean isInnerClass = false;
     protected String superClass;
+    protected int config;
 
     public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap,
             Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler, ClassVisitor cv,
             int access_flags, String className, String superClass, String[] interfaceNames) {
+        this(accessFlagsMap, innerNameMap, extraMemberClass, exceptionHandler, cv, access_flags, className, superClass,
+                interfaceNames, 0);
+    }
+
+    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap,
+            Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler, ClassVisitor cv,
+            int access_flags, String className, String superClass, String[] interfaceNames, int config) {
         super();
         this.innerAccessFlagsMap = accessFlagsMap;
         this.innerNameMap = innerNameMap;
@@ -72,6 +80,7 @@ public class V3ClassAdapter implements DexClassVisitor {
         this.superClass = superClass;
         this.interfaceNames = interfaceNames;
         this.exceptionHandler = exceptionHandler;
+        this.config = config;
     }
 
     protected void build() {
@@ -248,7 +257,7 @@ public class V3ClassAdapter implements DexClassVisitor {
     @Override
     public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         build();
-        return new V3MethodAdapter(accessFlags, method, this.exceptionHandler) {
+        return new V3MethodAdapter(accessFlags, method, this.exceptionHandler, config) {
 
             @Override
             public void visitEnd() {

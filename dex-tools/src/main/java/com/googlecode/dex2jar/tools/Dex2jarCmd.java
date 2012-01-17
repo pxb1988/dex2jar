@@ -43,6 +43,9 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "o", longOpt = "output", description = "output .jar file, default is $current_dir/[file-name]-dex2jar.jar", argName = "out-jar-file")
     private File output;
 
+    @Opt(opt = "r", longOpt = "reuse-reg", hasArg = false, description = "reuse regiter while java .class file")
+    private boolean reuseReg = false;
+
     public Dex2jarCmd() {
         super("d2j-dex2jar [options] <file0> [file1 ... fileN]", "convert dex to jar");
     }
@@ -84,7 +87,7 @@ public class Dex2jarCmd extends BaseCmd {
             DexFileReader reader = new DexFileReader(new File(fileName));
             DexExceptionHandlerImpl handler = notHandleException ? null : new DexExceptionHandlerImpl();
 
-            Dex2jar.from(reader).withExceptionHandler(handler).to(file);
+            Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).to(file);
 
             if (!notHandleException) {
                 Map<Method, Exception> exceptions = handler.getExceptions();

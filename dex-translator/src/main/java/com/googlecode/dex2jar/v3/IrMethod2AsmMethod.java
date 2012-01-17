@@ -30,6 +30,7 @@ import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
 import com.googlecode.dex2jar.ir.expr.RefExpr;
 import com.googlecode.dex2jar.ir.expr.TypeExpr;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
@@ -38,6 +39,8 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
+import com.googlecode.dex2jar.ir.ts.Cfg;
+import com.googlecode.dex2jar.ir.ts.Cfg.StmtVisitor;
 import com.googlecode.dex2jar.ir.ts.LiveAnalyze;
 import com.googlecode.dex2jar.ir.ts.LiveAnalyze.Phi;
 import com.googlecode.dex2jar.ir.ts.LocalType;
@@ -46,7 +49,18 @@ public class IrMethod2AsmMethod implements Opcodes {
 
     private static final boolean DEBUG = false;
 
-    private void reIndexLocal(IrMethod ir) {
+    private boolean reuseReg = false;
+
+    public IrMethod2AsmMethod() {
+        super();
+    }
+
+    public IrMethod2AsmMethod(boolean reuseReg) {
+        super();
+        this.reuseReg = reuseReg;
+    }
+
+    private void reIndexLocalReuseReg(IrMethod ir) {
 
         if (DEBUG) {
             int i = 0;
@@ -258,7 +272,67 @@ public class IrMethod2AsmMethod implements Opcodes {
                 }
             }
         }
+    }
 
+    private void reIndexLocal(IrMethod ir) {
+        if (this.reuseReg) {
+            reIndexLocalReuseReg(ir);
+        } else {
+            reIndexLocalDirect(ir);
+        }
+    }
+
+    private void reIndexLocalDirect(IrMethod ir) {
+        int index = 0;
+        if ((ir.access & ACC_STATIC) == 0) {
+            index++;
+        }
+        final int ids[] = new int[ir.args.length];
+        for (int i = 0; i < ir.args.length; i++) {
+            ids[i] = index;
+            index += ir.args[i].getSize();
+        }
+        for (Local local : ir.locals) {
+            local._ls_index = -1;
+        }
+
+        final int[] indexHolder = new int[] { index };
+        Cfg.createCFG(ir);//
+        Cfg.Forward(ir, new StmtVisitor<Object>() {
+            @Override
+            public Object exec(Stmt stmt) {
+                switch (stmt.st) {
+                case ASSIGN:
+                case IDENTITY:
+                    if (((AssignStmt) stmt).op1.value.vt == VT.LOCAL) {
+                        Local local = (Local) ((AssignStmt) stmt).op1.value;
+                        if (local._ls_index == -1) {
+                            Type localType = LocalType.typeOf(local);
+                            if (!Type.VOID_TYPE.equals(localType)) {// skip void type
+                                Value ref = (Value) ((AssignStmt) stmt).op2.value;
+                                switch (ref.vt) {
+                                case THIS_REF:
+                                    local._ls_index = 0;
+                                    break;
+                                case PARAMETER_REF:
+                                    local._ls_index = ids[((RefExpr) ref).parameterIndex];
+                                    break;
+                                case EXCEPTION_REF:
+                                    local._ls_index = indexHolder[0]++;
+                                    break;
+                                default:
+                                    local._ls_index = indexHolder[0];
+                                    indexHolder[0] += LocalType.typeOf(ref).getSize();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                return null;
+            }
+        });
     }
 
     public void convert(IrMethod ir, MethodVisitor asm) {
