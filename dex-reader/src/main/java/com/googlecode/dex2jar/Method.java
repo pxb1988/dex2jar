@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,31 +18,31 @@ package com.googlecode.dex2jar;
 import java.util.Arrays;
 
 /**
- * 方法
+ * represent a method_id_item in dex file format
  * 
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class Method {
     /**
-     * 描述
+     * descriptor of the method, this will build after {@link #getDesc()}.
      */
     private String desc;
     /**
-     * 方法名
+     * name of the method.
      */
     private String name;
     /**
-     * 方法所有者
+     * owner class of the method, in TypeDescriptor format.
      */
     private String owner;
     /**
-     * 参数类型
+     * parameter types of the method, in TypeDescriptor format.
      */
     private String[] parameterTypes;
 
     /**
-     * 返回类型
+     * return type of the method, in TypeDescriptor format.
      */
     private String returnType;
 
@@ -105,30 +105,40 @@ public class Method {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         Method other = (Method) obj;
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false;
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false;
+        }
         if (owner == null) {
-            if (other.owner != null)
+            if (other.owner != null) {
                 return false;
-        } else if (!owner.equals(other.owner))
+            }
+        } else if (!owner.equals(other.owner)) {
             return false;
-        if (!Arrays.equals(parameterTypes, other.parameterTypes))
+        }
+        if (!Arrays.equals(parameterTypes, other.parameterTypes)) {
             return false;
+        }
         if (returnType == null) {
-            if (other.returnType != null)
+            if (other.returnType != null) {
                 return false;
-        } else if (!returnType.equals(other.returnType))
+            }
+        } else if (!returnType.equals(other.returnType)) {
             return false;
+        }
         return true;
     }
 
@@ -137,6 +147,7 @@ public class Method {
      * 
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
         return this.getOwner() + "." + this.getName() + this.getDesc();
     }

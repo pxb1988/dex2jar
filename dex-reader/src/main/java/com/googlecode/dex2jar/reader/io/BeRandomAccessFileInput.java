@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class BeRandomAccessFileInput implements DataIn, Closeable {
 
     @Override
     public int readIntx() {
-        return (int) readUIntx();
+        return readUIntx();
     }
 
     @Override
@@ -123,6 +123,7 @@ public class BeRandomAccessFileInput implements DataIn, Closeable {
         }
     }
 
+    @Override
     public long readLeb128() {
         int bitpos = 0;
         long vln = 0L;
@@ -130,14 +131,17 @@ public class BeRandomAccessFileInput implements DataIn, Closeable {
             int inp = readUByte();
             vln |= ((long) (inp & 0x7F)) << bitpos;
             bitpos += 7;
-            if ((inp & 0x80) == 0)
+            if ((inp & 0x80) == 0) {
                 break;
+            }
         } while (true);
-        if (((1L << (bitpos - 1)) & vln) != 0)
+        if (((1L << (bitpos - 1)) & vln) != 0) {
             vln -= (1L << bitpos);
+        }
         return vln;
     }
 
+    @Override
     public long readULeb128() {
         long value = 0;
         int count = 0;

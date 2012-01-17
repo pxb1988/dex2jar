@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,15 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 /**
  * TODO DOC
  * 
- * @author Panxiaobo <pxb1988 at gmail.com>
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class LocalType implements Transformer {
 
     static class TypeBox {
         XType xtype = new XType(this);
 
+        @Override
         public String toString() {
 
             return "" + trimTypeBox(this).xtype;
@@ -58,6 +59,7 @@ public class LocalType implements Transformer {
             this.tb = tb;
         }
 
+        @Override
         public String toString() {
             return "" + type;
         }
@@ -106,8 +108,9 @@ public class LocalType implements Transformer {
     }
 
     public TypeBox exec(Value v) {
-        if (v == null)
+        if (v == null) {
             return null;
+        }
         TypeBox tb = get(v);
         switch (v.et) {
         case E0:

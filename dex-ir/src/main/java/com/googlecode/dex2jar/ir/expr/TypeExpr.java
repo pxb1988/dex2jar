@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import com.googlecode.dex2jar.ir.ValueBox;
  * @see VT#INSTANCE_OF
  * @see VT#NEW_ARRAY
  * 
- * @author Panxiaobo <pxb1988 at gmail.com>
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class TypeExpr extends E1Expr {
 
@@ -48,6 +48,7 @@ public class TypeExpr extends E1Expr {
         return new TypeExpr(vt, op.value.clone(), type);
     }
 
+    @Override
     public String toString() {
         switch (super.vt) {
         case CHECK_CAST:

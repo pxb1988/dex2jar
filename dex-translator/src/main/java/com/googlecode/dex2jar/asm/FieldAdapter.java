@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import org.objectweb.asm.Attribute;
 import org.objectweb.asm.FieldVisitor;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class FieldAdapter implements FieldVisitor {
     protected FieldVisitor fv;
@@ -39,6 +39,7 @@ public class FieldAdapter implements FieldVisitor {
      * 
      * @see org.objectweb.asm.FieldVisitor#visitAnnotation(java.lang.String, boolean)
      */
+    @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         return fv.visitAnnotation(desc, visible);
     }
@@ -48,6 +49,7 @@ public class FieldAdapter implements FieldVisitor {
      * 
      * @see org.objectweb.asm.FieldVisitor#visitAttribute(org.objectweb.asm.Attribute )
      */
+    @Override
     public void visitAttribute(Attribute attr) {
         fv.visitAttribute(attr);
     }
@@ -57,6 +59,7 @@ public class FieldAdapter implements FieldVisitor {
      * 
      * @see org.objectweb.asm.FieldVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         fv.visitEnd();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,17 @@ import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class V3AnnAdapter implements DexAnnotationVisitor {
 
     protected Annotation ann;
 
     public static void accept(List<Item> items, AnnotationVisitor av) {
-        if (av == null)
+        if (av == null) {
             return;
+        }
         for (Item item : items) {
             Object v = item.value;
             if (v instanceof Annotation) {
@@ -81,6 +82,7 @@ public class V3AnnAdapter implements DexAnnotationVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visit(java.lang.String, java.lang.Object)
      */
+    @Override
     public void visit(String name, Object value) {
         if (value instanceof DexType) {
             value = Type.getType(((DexType) value).desc);
@@ -93,6 +95,7 @@ public class V3AnnAdapter implements DexAnnotationVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitAnnotation(java .lang.String, java.lang.String)
      */
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, String desc) {
         Annotation ann = new Annotation(desc, true);
         this.ann.items.add(new Item(name, ann));
@@ -104,6 +107,7 @@ public class V3AnnAdapter implements DexAnnotationVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitArray(java.lang .String)
      */
+    @Override
     public DexAnnotationVisitor visitArray(String name) {
         Annotation ann = new Annotation(null, true);
         this.ann.items.add(new Item(name, ann));
@@ -115,6 +119,7 @@ public class V3AnnAdapter implements DexAnnotationVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
     }
 
@@ -124,6 +129,7 @@ public class V3AnnAdapter implements DexAnnotationVisitor {
      * @see com.googlecode.dex2jar.visitors.DexAnnotationVisitor#visitEnum(java.lang .String, java.lang.String,
      * java.lang.String)
      */
+    @Override
     public void visitEnum(String name, String desc, String value) {
         ann.items.add(new Item(name, new Field(null, value, desc)));
     }

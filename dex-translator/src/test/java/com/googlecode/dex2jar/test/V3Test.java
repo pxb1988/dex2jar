@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.googlecode.dex2jar.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -25,7 +27,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
-import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.v3.ClassVisitorFactory;
 import com.googlecode.dex2jar.v3.Main;
@@ -33,7 +34,7 @@ import com.googlecode.dex2jar.v3.V3;
 import com.googlecode.dex2jar.v3.V3AccessFlagsAdapter;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * 
  */
 public class V3Test {
@@ -56,9 +57,14 @@ public class V3Test {
 
         DexFileReader reader = new DexFileReader(data);
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
+        final List<Exception> exes = new ArrayList();
         reader.accept(afa, DexFileReader.SKIP_CODE | DexFileReader.SKIP_DEBUG);
+        System.out.flush();
         reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), null,
                 new ClassVisitorFactory() {
+                    int count = 0;
+
+                    @Override
                     public ClassVisitor create(final String name) {
                         return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
                             /*
@@ -69,18 +75,29 @@ public class V3Test {
                             @Override
                             public void visitEnd() {
                                 super.visitEnd();
+                                count++;
                                 try {
                                     byte[] data = this.toByteArray();
                                     FileUtils.writeByteArrayToFile(new File(destDir, name + ".class"), data);
-                                    System.out.println("verify " + name);
                                     TestUtils.verify(new ClassReader(data));
+                                    System.out.write('.');
                                 } catch (Exception e) {
-                                    throw new DexException(e);
+                                    System.out.write('X');
+                                    exes.add(e);
                                 }
+                                if (count % 50 == 0) {
+                                    System.out.write('\n');
+                                }
+                                System.out.flush();
                             }
                         };
                     }
                 }), DexFileReader.SKIP_DEBUG);
+        System.out.flush();
+        System.out.println();
+        if (exes.size() > 0) {
+            throw new RuntimeException("there are " + exes.size() + " errors while translate");
+        }
     }
 
 }

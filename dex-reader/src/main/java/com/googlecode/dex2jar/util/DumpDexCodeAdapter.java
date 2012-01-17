@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.googlecode.dex2jar.DexLabel;
-import com.googlecode.dex2jar.DexOpcodeDump;
 import com.googlecode.dex2jar.Method;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class DumpDexCodeAdapter extends AbstractDumpDexCodeAdapter {
     private static class TryCatch {
@@ -67,6 +66,7 @@ public class DumpDexCodeAdapter extends AbstractDumpDexCodeAdapter {
         this.isStatic = isStatic;
     }
 
+    @Override
     protected void info(int opcode, String format, Object... args) {
         String s = String.format(format, args);
         if (opcode < 0) {
@@ -76,10 +76,12 @@ public class DumpDexCodeAdapter extends AbstractDumpDexCodeAdapter {
         }
     }
 
+    @Override
     protected String labelToString(DexLabel label) {
         int i = labels.indexOf(label);
-        if (i > -1)
+        if (i > -1) {
             return "L" + i;
+        }
         labels.add(label);
         return "L" + labels.indexOf(label);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,22 @@ package com.googlecode.dex2jar;
 /**
  * a light weight version of org.objectweb.asm.Label
  * 
- * @author Pan
- * 
+ * @author Panxiaobo
+ * @version $Rev$
  */
 public class DexLabel {
+    /**
+     * Field used to associate user information to a label. Warning: this field may used by others.
+     */
     public Object info;
 
     private int offset = -1;
 
+    /**
+     * 
+     * @param offset
+     *            the offset of the label
+     */
     public DexLabel(int offset) {
         super();
         this.offset = offset;
@@ -35,6 +43,7 @@ public class DexLabel {
         super();
     }
 
+    @Override
     public String toString() {
         if (offset >= 0) {
             return String.format("L%04x", offset);

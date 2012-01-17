@@ -1,47 +1,58 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.googlecode.dex2jar</groupId>
-		<artifactId>dex2jar</artifactId>
-		<version>1.0</version>
-	</parent>
-	<artifactId>dex-reader</artifactId>
-	<version>${dex2jar.reader.version}</version>
-	<name>Dex Reader</name>
-	<description>A tool for converting Android's .dex format to Java's .class format</description>
-	<url>http://code.google.como/p/dex2jar/</url>
-	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.5</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.0</version>
-		</dependency>
-	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.2</version>
-				<configuration>
-					<archive>
-						<manifest>
-							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-						</manifest>
-						<manifestEntries>
-							<Implementation-Build>${maven.build.timestamp}</Implementation-Build>
-						</manifestEntries>
-					</archive>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <parent>
+        <groupId>com.googlecode.dex2jar</groupId>
+        <artifactId>dex2jar</artifactId>
+        <version>1.0</version>
+    </parent>
+    <artifactId>dex-reader</artifactId>
+    <version>${dex2jar.reader.version}</version>
+    <name>Dex Reader</name>
+    <description>Tools to work with android .dex and java .class files</description>
+    <url>http://code.google.como/p/dex2jar/</url>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.5</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- <dependency> -->
+        <!-- <groupId>commons-io</groupId> -->
+        <!-- <artifactId>commons-io</artifactId> -->
+        <!-- <version>2.0</version> -->
+        <!-- </dependency> -->
+        <!-- <dependency> -->
+        <!-- <groupId>commons-codec</groupId> -->
+        <!-- <artifactId>commons-codec</artifactId> -->
+        <!-- <version>1.6</version> -->
+        <!-- </dependency> -->
+        <dependency>
+            <groupId>com.googlecode.dex2jar</groupId>
+            <artifactId>commons-lite</artifactId>
+            <version>${dex2jar.reader.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Implementation-Build>${maven.build.timestamp}</Implementation-Build>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

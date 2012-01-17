@@ -240,8 +240,7 @@ public class IrMethod2AsmMethod implements Opcodes {
                 Phi[] frame = (Phi[]) p._ls_forward_frame;
                 p._ls_forward_frame = null;
                 if (frame != null) {
-                    for (int i = 0; i < frame.length; i++) {
-                        Phi r = frame[i];
+                    for (Phi r : frame) {
                         if (r != null) {
                             tmp.add(r);
                         }
@@ -678,7 +677,7 @@ public class IrMethod2AsmMethod implements Opcodes {
             case Type.INT: {
                 int s = (Integer) constant.value;
                 if (s < 0) {
-                    asm.visitLdcInsn((int) -s);
+                    asm.visitLdcInsn(-s);
                     asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
                     return;
                 }
@@ -687,7 +686,7 @@ public class IrMethod2AsmMethod implements Opcodes {
             case Type.FLOAT: {
                 float s = (Float) constant.value;
                 if (s < 0) {
-                    asm.visitLdcInsn((float) -s);
+                    asm.visitLdcInsn(-s);
                     asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
                     return;
                 }
@@ -696,7 +695,7 @@ public class IrMethod2AsmMethod implements Opcodes {
             case Type.LONG: {
                 long s = (Long) constant.value;
                 if (s < 0) {
-                    asm.visitLdcInsn((long) -s);
+                    asm.visitLdcInsn(-s);
                     asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
                     return;
                 }
@@ -705,7 +704,7 @@ public class IrMethod2AsmMethod implements Opcodes {
             case Type.DOUBLE: {
                 double s = (Double) constant.value;
                 if (s < 0) {
-                    asm.visitLdcInsn((double) -s);
+                    asm.visitLdcInsn(-s);
                     asm.visitInsn(type.getOpcode(e2.vt == VT.ADD ? ISUB : IADD));
                     return;
                 }

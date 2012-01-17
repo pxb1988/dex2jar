@@ -30,11 +30,11 @@ public class TopologicalSortTest {
         list.add(ls);
         list.add(Stmts.nReturnVoid());
 
-        System.out.println("before========");
-        System.out.println(jm);
+        // System.out.println("before========");
+        // System.out.println(jm);
         new TopologicalSort().transform(jm);
-        System.out.println("after======");
-        System.out.println(jm);
+        // System.out.println("after======");
+        // System.out.println(jm);
     }
 
     @Test
@@ -53,11 +53,11 @@ public class TopologicalSortTest {
         list.add(ls);
         list.add(Stmts.nReturnVoid());
 
-        System.out.println("before========");
-        System.out.println(jm);
+        // System.out.println("before========");
+        // System.out.println(jm);
         new TopologicalSort().transform(jm);
-        System.out.println("after======");
-        System.out.println(jm);
+        // System.out.println("after======");
+        // System.out.println(jm);
     }
 
     @Test
@@ -79,11 +79,11 @@ public class TopologicalSortTest {
         list.add(L1);
         list.add(Stmts.nAssign(b, Constant.nInt(789)));
         list.add(Stmts.nGoto(L2));
-        System.out.println("before========");
-        System.out.println(jm);
+        // System.out.println("before========");
+        // System.out.println(jm);
         new TopologicalSort().transform(jm);
-        System.out.println("after======");
-        System.out.println(jm);
+        // System.out.println("after======");
+        // System.out.println(jm);
     }
 
     @Test
@@ -105,10 +105,10 @@ public class TopologicalSortTest {
         list.add(L1);
         list.add(Stmts.nAssign(b, Constant.nInt(789)));
         list.add(Stmts.nGoto(L2));
-        System.out.println("before========");
-        System.out.println(jm);
+        // System.out.println("before========");
+        // System.out.println(jm);
         new TopologicalSort().transform(jm);
-        System.out.println("after======");
-        System.out.println(jm);
+        // System.out.println("after======");
+        // System.out.println(jm);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Panxiaobo <pxb1988 at gmail.com>
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class ArrayOut implements Out {
 
@@ -29,19 +29,23 @@ public class ArrayOut implements Out {
     public List<String> array = new ArrayList<String>();
     public List<Integer> is = new ArrayList<Integer>();
 
+    @Override
     public void push() {
         i++;
     }
 
+    @Override
     public void s(String s) {
         is.add(i);
         array.add(s);
     }
 
+    @Override
     public void s(String format, Object... arg) {
         s(String.format(format, arg));
     }
 
+    @Override
     public void pop() {
         i--;
     }

@@ -170,6 +170,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
      */
     public JasminifierClassAdapter(final PrintWriter pw, final ClassVisitor cv) {
         super(new ClassNode() {
+            @Override
             public void visitEnd() {
                 if (cv != null) {
                     accept(cv);
@@ -180,6 +181,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
         labelNames = new HashMap();
     }
 
+    @Override
     public void visitEnd() {
         ClassNode cn = (ClassNode) cv;
         pw.print(".bytecode ");
@@ -199,8 +201,9 @@ public class JasminifierClassAdapter extends ClassAdapter {
         for (int i = 0; i < cn.interfaces.size(); ++i) {
             println(".implements ", (String) cn.interfaces.get(i));
         }
-        if (cn.signature != null)
+        if (cn.signature != null) {
             println(".signature ", '"' + cn.signature + '"');
+        }
         if (cn.outerClass != null) {
             pw.print(".enclosing method ");
             pw.print(cn.outerClass);
@@ -345,6 +348,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
                     AbstractInsnNode in = mn.instructions.get(j);
                     in.accept(new EmptyVisitor() {
 
+                        @Override
                         public void visitFrame(int type, int local, Object[] locals, int stack, Object[] stacks) {
                             if (type != Opcodes.F_FULL && type != Opcodes.F_NEW) {
                                 throw new RuntimeException("Compressed frames unsupported, use EXPAND_FRAMES option");
@@ -363,11 +367,13 @@ public class JasminifierClassAdapter extends ClassAdapter {
                             pw.println(".end stack");
                         }
 
+                        @Override
                         public void visitInsn(int opcode) {
                             print(opcode);
                             pw.println();
                         }
 
+                        @Override
                         public void visitIntInsn(int opcode, int operand) {
                             print(opcode);
                             if (opcode == Opcodes.NEWARRAY) {
@@ -404,18 +410,21 @@ public class JasminifierClassAdapter extends ClassAdapter {
                             }
                         }
 
+                        @Override
                         public void visitVarInsn(int opcode, int var) {
                             print(opcode);
                             pw.print(' ');
                             pw.println(var);
                         }
 
+                        @Override
                         public void visitTypeInsn(int opcode, String type) {
                             print(opcode);
                             pw.print(' ');
                             pw.println(type);
                         }
 
+                        @Override
                         public void visitFieldInsn(int opcode, String owner, String name, String desc) {
                             print(opcode);
                             pw.print(' ');
@@ -426,6 +435,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
                             pw.println(desc);
                         }
 
+                        @Override
                         public void visitMethodInsn(int opcode, String owner, String name, String desc) {
                             print(opcode);
                             pw.print(' ');
@@ -440,6 +450,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
                             pw.println();
                         }
 
+                        @Override
                         public void visitJumpInsn(int opcode, Label label) {
                             print(opcode);
                             pw.print(' ');
@@ -447,11 +458,13 @@ public class JasminifierClassAdapter extends ClassAdapter {
                             pw.println();
                         }
 
+                        @Override
                         public void visitLabel(Label label) {
                             print(label);
                             pw.println(':');
                         }
 
+                        @Override
                         public void visitLdcInsn(Object cst) {
 
                             if (cst instanceof Integer || cst instanceof Float) {
@@ -472,6 +485,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
 
                         }
 
+                        @Override
                         public void visitIincInsn(int var, int increment) {
                             pw.print("iinc ");
                             pw.print(var);
@@ -479,6 +493,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
                             pw.println(increment);
                         }
 
+                        @Override
                         public void visitTableSwitchInsn(int min, int max, Label dflt, Label[] labels) {
                             pw.print("tableswitch ");
                             pw.println(min);
@@ -491,6 +506,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
                             pw.println();
                         }
 
+                        @Override
                         public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
                             if (keys.length == 0) {
                                 pw.print("goto "); // TODO Jasmin bug
@@ -511,6 +527,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
                             pw.println();
                         }
 
+                        @Override
                         public void visitMultiANewArrayInsn(String desc, int dims) {
                             pw.print("multianewarray ");
                             pw.print(desc);
@@ -518,6 +535,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
                             pw.println(dims);
                         }
 
+                        @Override
                         public void visitLineNumber(int line, Label start) {
                             pw.print(".line ");
                             pw.println(line);
@@ -700,64 +718,64 @@ public class JasminifierClassAdapter extends ClassAdapter {
         } else if (value instanceof byte[]) {
             pw.print("[B = ");
             byte[] v = (byte[]) value;
-            for (int i = 0; i < v.length; i++) {
-                pw.print(v[i]);
+            for (byte element : v) {
+                pw.print(element);
                 pw.print(' ');
             }
             pw.println();
         } else if (value instanceof boolean[]) {
             pw.print("[Z = ");
             boolean[] v = (boolean[]) value;
-            for (int i = 0; i < v.length; i++) {
-                pw.print(v[i] ? '1' : '0');
+            for (boolean element : v) {
+                pw.print(element ? '1' : '0');
                 pw.print(' ');
             }
             pw.println();
         } else if (value instanceof short[]) {
             pw.print("[S = ");
             short[] v = (short[]) value;
-            for (int i = 0; i < v.length; i++) {
-                pw.print(v[i]);
+            for (short element : v) {
+                pw.print(element);
                 pw.print(' ');
             }
             pw.println();
         } else if (value instanceof char[]) {
             pw.print("[C = ");
             char[] v = (char[]) value;
-            for (int i = 0; i < v.length; i++) {
-                pw.print(new Integer(v[i]));
+            for (char element : v) {
+                pw.print(new Integer(element));
                 pw.print(' ');
             }
             pw.println();
         } else if (value instanceof int[]) {
             pw.print("[I = ");
             int[] v = (int[]) value;
-            for (int i = 0; i < v.length; i++) {
-                pw.print(v[i]);
+            for (int element : v) {
+                pw.print(element);
                 pw.print(' ');
             }
             pw.println();
         } else if (value instanceof long[]) {
             pw.print("[J = ");
             long[] v = (long[]) value;
-            for (int i = 0; i < v.length; i++) {
-                pw.print(v[i]);
+            for (long element : v) {
+                pw.print(element);
                 pw.print(' ');
             }
             pw.println();
         } else if (value instanceof float[]) {
             pw.print("[F = ");
             float[] v = (float[]) value;
-            for (int i = 0; i < v.length; i++) {
-                print(new Float(v[i]));
+            for (float element : v) {
+                print(new Float(element));
                 pw.print(' ');
             }
             pw.println();
         } else if (value instanceof double[]) {
             pw.print("[D = ");
             double[] v = (double[]) value;
-            for (int i = 0; i < v.length; i++) {
-                print(new Double(v[i]));
+            for (double element : v) {
+                print(new Double(element));
                 pw.print(' ');
             }
             pw.println();

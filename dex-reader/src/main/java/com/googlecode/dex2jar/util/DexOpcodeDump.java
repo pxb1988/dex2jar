@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.googlecode.dex2jar;
+package com.googlecode.dex2jar.util;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import com.googlecode.dex2jar.DexException;
+import com.googlecode.dex2jar.OdexOpcodes;
+
 /**
- * 输出指令信息
+ * a util to dump the name of opcode
  * 
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public final class DexOpcodeDump {
 
-    static final Map<Integer, String> map;
+    private static final Map<Integer, String> map;
     static {
         java.lang.reflect.Field[] fs = OdexOpcodes.class.getFields();
         map = new HashMap<Integer, String>(fs.length);
@@ -42,9 +45,11 @@ public final class DexOpcodeDump {
     }
 
     /**
-     * 输出
      * 
-     * @param 指令
+     * dump the name of a opcode
+     * 
+     * @param opcode
+     *            the opcode
      */
     public static final String dump(int opcode) {
         String s = map.get(opcode);

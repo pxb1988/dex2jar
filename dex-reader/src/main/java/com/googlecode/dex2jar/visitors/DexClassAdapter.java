@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class DexClassAdapter implements DexClassVisitor {
     protected DexClassVisitor dcv;
@@ -38,6 +38,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitAnnotation(java.lang .String, boolean)
      */
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         return dcv.visitAnnotation(name, visible);
     }
@@ -47,6 +48,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         dcv.visitEnd();
     }
@@ -57,6 +59,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitField(int, com.googlecode.dex2jar .Field,
      * java.lang.Object)
      */
+    @Override
     public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
         return dcv.visitField(accessFlags, field, value);
     }
@@ -66,6 +69,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitMethod(int, com.googlecode. dex2jar.Method)
      */
+    @Override
     public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         return dcv.visitMethod(accessFlags, method);
     }
@@ -75,6 +79,7 @@ public class DexClassAdapter implements DexClassVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexClassVisitor#visitSource(java.lang.String )
      */
+    @Override
     public void visitSource(String file) {
         dcv.visitSource(file);
     }

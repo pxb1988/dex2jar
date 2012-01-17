@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,35 +39,28 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class V3ClassAdapter implements DexClassVisitor {
 
     protected int access_flags;
-    protected Map<String, Integer> innerAccessFlagsMap;
-    protected Map<String, String> innerNameMap;
-    Map<String, Set<String>> extraMemberClass;
+    protected Map<String, Object> annotationDefaults;
     protected List<Annotation> anns = new ArrayList<Annotation>();
     protected boolean build = false;
     protected String className;
     protected ClassVisitor cv;
+    protected DexExceptionHandler exceptionHandler;
+    protected Map<String, Set<String>> extraMemberClass;
     protected String file;
+    protected Map<String, Integer> innerAccessFlagsMap;
+    protected Map<String, String> innerNameMap;
     protected String[] interfaceNames;
+    protected boolean isInnerClass = false;
     protected String superClass;
-    protected Map<Method, Exception> exceptions;
 
-    /**
-     * @param innerNameMap
-     * @param extraMemberClass
-     * @param cv
-     * @param access_flags
-     * @param className
-     * @param superClass
-     * @param interfaceNames
-     */
     public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap,
-            Map<String, Set<String>> extraMemberClass, Map<Method, Exception> exceptions, ClassVisitor cv,
+            Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler, ClassVisitor cv,
             int access_flags, String className, String superClass, String[] interfaceNames) {
         super();
         this.innerAccessFlagsMap = accessFlagsMap;
@@ -78,7 +71,7 @@ public class V3ClassAdapter implements DexClassVisitor {
         this.className = className;
         this.superClass = superClass;
         this.interfaceNames = interfaceNames;
-        this.exceptions = exceptions;
+        this.exceptionHandler = exceptionHandler;
     }
 
     protected void build() {
@@ -207,9 +200,7 @@ public class V3ClassAdapter implements DexClassVisitor {
         }
     }
 
-    Map<String, Object> annotationDefaults;
-    boolean isInnerClass = false;
-
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (!isInnerClass) {
             isInnerClass = "Ldalvik/annotation/InnerClass;".equals(name);
@@ -239,11 +230,13 @@ public class V3ClassAdapter implements DexClassVisitor {
         }
     }
 
+    @Override
     public void visitEnd() {
         build();
         cv.visitEnd();
     }
 
+    @Override
     public DexFieldVisitor visitField(int accessFlags, Field field, Object value) {
         build();
         if (value instanceof DexType) {
@@ -252,9 +245,10 @@ public class V3ClassAdapter implements DexClassVisitor {
         return new V3FieldAdapter(cv, accessFlags, field, value);
     }
 
+    @Override
     public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         build();
-        return new V3MethodAdapter(accessFlags, method, this.exceptions) {
+        return new V3MethodAdapter(accessFlags, method, this.exceptionHandler) {
 
             @Override
             public void visitEnd() {
@@ -274,6 +268,7 @@ public class V3ClassAdapter implements DexClassVisitor {
         };
     }
 
+    @Override
     public void visitSource(String file) {
         this.file = file;
     }

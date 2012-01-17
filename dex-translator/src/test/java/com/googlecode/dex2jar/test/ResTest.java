@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.v3.Main;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * 
  */
 public class ResTest {
@@ -38,7 +38,7 @@ public class ResTest {
     @Test
     public void test() throws Exception {
         File dir = new File("target/test-classes/res");
-        Map<String, List<File>> m = new HashMap();
+        Map<String, List<File>> m = new HashMap<String, List<File>>();
         for (File f : FileUtils.listFiles(dir, new String[] { "class" }, false)) {
             String name = FilenameUtils.getBaseName(f.getName());
 
@@ -52,15 +52,32 @@ public class ResTest {
             files.add(f);
         }
 
+        List<Exception> exes = new ArrayList();
+        System.out.flush();
+        int count = 0;
         for (Entry<String, List<File>> e : m.entrySet()) {
             String name = e.getKey();
-            System.out.println("Testing res file " + name);
-            File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
-            File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
-            Main.doData(DexFileReader.readDex(dex), distFile, null);
-            Main.doFile(dex, distFile);
-            TestUtils.checkZipFile(distFile);
+            count++;
+            try {
+                File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
+                File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
+                Main.doData(DexFileReader.readDex(dex), distFile, false);
+                Main.doFile(dex, distFile);
+                TestUtils.checkZipFile(distFile);
+                System.out.write('.');
+            } catch (Exception ex) {
+                exes.add(ex);
+                System.out.write('X');
+            }
+            if (count % 5 == 0) {
+                System.out.write('\n');
+            }
+            System.out.flush();
         }
-        System.out.println("Done.");
+        System.out.flush();
+        System.out.println();
+        if (exes.size() > 0) {
+            throw new RuntimeException("there are " + exes.size() + " errors while translate");
+        }
     }
 }

@@ -16,12 +16,12 @@ import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
+import com.googlecode.dex2jar.ir.ts.EndRemover;
+import com.googlecode.dex2jar.ir.ts.ExceptionHandlerCurrectTransformer;
 import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.LocalType;
 import com.googlecode.dex2jar.ir.ts.Transformer;
-import com.googlecode.dex2jar.v3.EndRemover;
-import com.googlecode.dex2jar.v3.ExceptionHandlerCurrect;
 import com.googlecode.dex2jar.v3.IrMethod2AsmMethod;
 import com.googlecode.dex2jar.v3.LocalCurrect;
 
@@ -47,7 +47,7 @@ public class I63Test {
 
         irMethod.traps.add(new Trap(L1, L2, L2, null));
 
-        Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrect(), new LocalSplit(), new LocalRemove(),
+        Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(), new LocalSplit(), new LocalRemove(),
                 new LocalType(), new LocalCurrect() };
         Transformer endremove = new EndRemover();
         endremove.transform(irMethod);

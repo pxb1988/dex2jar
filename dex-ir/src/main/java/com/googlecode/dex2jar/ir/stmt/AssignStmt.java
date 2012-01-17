@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
  * @see ST#ASSIGN
  * @see ST#IDENTITY
  * 
- * @author Panxiaobo <pxb1988 at gmail.com>
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class AssignStmt extends E2Stmt {
 
@@ -36,10 +36,12 @@ public class AssignStmt extends E2Stmt {
         super(type, left, right);
     }
 
+    @Override
     public Stmt clone(Map<LabelStmt, LabelStmt> map) {
-        return new AssignStmt(st, new ValueBox((Value) op1.value.clone()), new ValueBox((Value) op2.value.clone()));
+        return new AssignStmt(st, new ValueBox(op1.value.clone()), new ValueBox(op2.value.clone()));
     }
 
+    @Override
     public String toString() {
         switch (st) {
         case ASSIGN:

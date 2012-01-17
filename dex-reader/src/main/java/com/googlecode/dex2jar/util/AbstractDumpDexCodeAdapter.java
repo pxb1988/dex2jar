@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
 
@@ -283,6 +283,7 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
         }
     }
 
+    @Override
     public void visitJumpStmt(int opcode, int reg, DexLabel label) {
         switch (opcode) {
         case OP_IF_EQZ:
@@ -352,8 +353,8 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
     @Override
     public void visitMethodStmt(int opcode, int[] args, int a) {
         StringBuilder sb = new StringBuilder();
-        for (int j = 0; j < args.length; j++) {
-            sb.append('v').append(args[j]).append(',');
+        for (int arg : args) {
+            sb.append('v').append(arg).append(',');
         }
         if (sb.length() > 0) {
             sb.setLength(sb.length() - 1);
@@ -462,6 +463,7 @@ public abstract class AbstractDumpDexCodeAdapter extends EmptyVisitor {
         }
     }
 
+    @Override
     public void visitReturnStmt(int opcode) {
         switch (opcode) {
         case OP_RETURN_VOID:

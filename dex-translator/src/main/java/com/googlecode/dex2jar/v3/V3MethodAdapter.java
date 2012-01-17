@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,8 @@
  */
 package com.googlecode.dex2jar.v3;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,15 +31,13 @@ import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.asm.LdcOptimizeAdapter;
-import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.stmt.Stmts;
+import com.googlecode.dex2jar.ir.ts.EndRemover;
+import com.googlecode.dex2jar.ir.ts.ExceptionHandlerCurrectTransformer;
 import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.LocalType;
@@ -55,13 +50,13 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
-    private static Transformer endremove = new EndRemover();
+    protected static Transformer endremove = new EndRemover();
     private static final Logger log = Logger.getLogger(V3MethodAdapter.class.getName());
-    private static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrect(), new ZeroTransformer(),
+    protected static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(), new ZeroTransformer(),
             new LocalSplit(), new LocalRemove(), new LocalType(), new LocalCurrect(), new TopologicalSort() };
     static {
         log.log(Level.CONFIG, "InsnList.check=false");
@@ -74,7 +69,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @param list
      */
-    public static void indexLabelStmt4Debug(StmtList list) {
+    protected static void indexLabelStmt4Debug(StmtList list) {
         int labelIndex = 0;
         for (Stmt stmt : list) {
             if (stmt.st == ST.LABEL) {
@@ -83,31 +78,30 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         }
     }
 
+    protected int accessFlags;
+    protected DexExceptionHandler exceptionHandler;
+    protected IrMethod irMethod;
     final protected Method method;
-
     final protected MethodNode methodNode = new MethodNode();
-
-    final protected int accessFlags;
-    Map<Method, Exception> exceptions;
+    protected Annotation signatureAnnotation;
+    protected Annotation throwsAnnotation;
 
     /**
+     * 
      * @param accessFlags
      * @param method
+     * @param exceptionHandler
      */
-    public V3MethodAdapter(int accessFlags, Method method, Map<Method, Exception> exceptions) {
+    public V3MethodAdapter(int accessFlags, Method method, DexExceptionHandler exceptionHandler) {
         super();
         this.method = method;
         this.accessFlags = accessFlags;
-        this.exceptions = exceptions;
+        this.exceptionHandler = exceptionHandler;
         // issue 88, the desc must set before visitParameterAnnotation
         methodNode.desc = method.getDesc();
     }
 
-    Annotation throwsAnnotation;
-    Annotation signatureAnnotation;
-    IrMethod irMethod;
-
-    private void build() {
+    protected void build() {
         List<String> exceptions = new ArrayList<String>();
         String signature = null;
         if (this.throwsAnnotation != null) {
@@ -142,7 +136,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         methodNode.tryCatchBlocks = new ArrayList<Object>();
     }
 
-    void dump(MethodNode methodNode) {
+    protected void debug_dump(MethodNode methodNode) {
         TraceMethodVisitor tmv = new TraceMethodVisitor();
         methodNode.instructions.accept(tmv);
         StringBuilder sb = new StringBuilder();
@@ -158,6 +152,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitAnnotation(java .lang .String, boolean)
      */
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (name.equals("Ldalvik/annotation/Signature;")) {
             this.signatureAnnotation = new Annotation(name, visible);
@@ -179,6 +174,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitCode()
      */
+    @Override
     public DexCodeVisitor visitCode() {
         IrMethod irMethod = new IrMethod();
         irMethod.access = accessFlags;
@@ -195,6 +191,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         build();
         if (irMethod != null) {
@@ -209,24 +206,11 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
                 }
                 new IrMethod2AsmMethod().convert(irMethod, new LdcOptimizeAdapter(methodNode));
             } catch (Exception e) {
-                if (this.exceptions == null) {
+                if (this.exceptionHandler == null) {
                     throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
+                } else {
+                    this.exceptionHandler.handleMethodTranslateException(method, irMethod, methodNode, e);
                 }
-                this.exceptions.put(method, e);// record the exception
-
-                // replace the generated code with
-                // 'return new RuntimeException("Generated by Dex2jar, and Some Exception Caught : xxxxxxxxxxxxx");'
-                StringWriter s = new StringWriter();
-                e.printStackTrace(new PrintWriter(s));
-                String msg = s.toString();
-                methodNode.instructions.clear();
-                methodNode.tryCatchBlocks.clear();
-                irMethod.traps.clear();
-                irMethod.stmts.clear();
-                irMethod.stmts.add(Stmts.nThrow(Exprs.nInvokeNew(
-                        new Value[] { Constant.nString("Generated by Dex2jar, and Some Exception Caught :" + msg), },
-                        new Type[] { Type.getType(String.class) }, Type.getType(RuntimeException.class))));
-                new IrMethod2AsmMethod().convert(irMethod, methodNode);
             }
         }
     }
@@ -236,8 +220,10 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParameterAnnotation (int)
      */
+    @Override
     public DexAnnotationAble visitParameterAnnotation(final int index) {
         return new DexAnnotationAble() {
+            @Override
             public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
                 AnnotationVisitor av = methodNode.visitParameterAnnotation(index, name, visible);
                 if (av != null) {

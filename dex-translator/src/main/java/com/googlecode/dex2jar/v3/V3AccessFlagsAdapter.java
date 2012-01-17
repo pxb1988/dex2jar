@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import com.googlecode.dex2jar.visitors.DexFileVisitor;
 import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class V3AccessFlagsAdapter implements DexFileVisitor {
     private Map<String, Integer> map = new HashMap<String, Integer>();
@@ -61,6 +61,7 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
+    @Override
     public DexClassVisitor visit(int access_flags, final String className, String superClass, String[] interfaceNames) {
 
         return new EmptyVisitor() {
@@ -120,6 +121,7 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
     }
 

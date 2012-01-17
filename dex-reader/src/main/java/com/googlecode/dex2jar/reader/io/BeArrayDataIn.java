@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class BeArrayDataIn extends ArrayDataIn implements DataIn {
         return (readUByte() << 8) | readUByte();
     }
 
+    @Override
     public int readUIntx() {
         return (readUByte() << 24) | (readUByte() << 16) | (readUByte() << 8) | readUByte();
     }

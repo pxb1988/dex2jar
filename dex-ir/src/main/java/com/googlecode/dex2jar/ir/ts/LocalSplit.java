@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,14 +42,15 @@ import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
 /**
  * TODO DOC
  * 
- * @author Panxiaobo <pxb1988 at gmail.com>
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class LocalSplit implements Transformer {
 
     static ValueBox exec(ValueBox vb, Phi[] currentFrame) {
-        if (vb == null)
+        if (vb == null) {
             return null;
+        }
         Value v = vb.value;
         switch (v.et) {
         case E0:
@@ -116,6 +117,7 @@ public class LocalSplit implements Transformer {
         }
     }
 
+    @Override
     public void transform(final IrMethod jm) {
         final int orgLocalSize = jm.locals.size();
         final StmtList list = jm.stmts;
@@ -132,8 +134,9 @@ public class LocalSplit implements Transformer {
         Cfg.Forward(jm, new FrameVisitor<Phi[]>() {
 
             private void doLocalRef(ValueBox vb, Phi[] frame) {
-                if (vb == null)
+                if (vb == null) {
                     return;
+                }
                 Value v = vb.value;
                 switch (v.et) {
                 case E0:
@@ -158,8 +161,8 @@ public class LocalSplit implements Transformer {
                     break;
                 case En:
                     EnExpr en = (EnExpr) v;
-                    for (int i = 0; i < en.ops.length; i++) {
-                        doLocalRef(en.ops[i], frame);
+                    for (ValueBox op : en.ops) {
+                        doLocalRef(op, frame);
                     }
                     break;
                 }
@@ -202,8 +205,8 @@ public class LocalSplit implements Transformer {
                     break;
                 case En:
                     EnStmt en = (EnStmt) stmt;
-                    for (int i = 0; i < en.ops.length; i++) {
-                        doLocalRef(en.ops[i], tmp);
+                    for (ValueBox op : en.ops) {
+                        doLocalRef(op, tmp);
                     }
                     break;
                 }
@@ -267,7 +270,7 @@ public class LocalSplit implements Transformer {
                 case ASSIGN:
                 case IDENTITY:
                     if (e2.op1 instanceof Phi) {
-                        Local local = (Local) trim(e2.op1);
+                        Local local = trim(e2.op1);
                         if (local == null) {
                             local = new Local("unRef" + unRef++);
                             local._ls_vb = new ValueBox(local);

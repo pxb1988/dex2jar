@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 
 import com.googlecode.dex2jar.reader.DexFileReader;
@@ -29,8 +30,8 @@ import com.googlecode.dex2jar.visitors.OdexFileVisitor;
 /**
  * similar with org.objectweb.asm.util.ASMifierClassVisitor
  * 
- * @author Panxiaobo <pxb1988 at gmail.com>
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class ASMifierFileV implements OdexFileVisitor {
 
@@ -75,7 +76,7 @@ public class ASMifierFileV implements OdexFileVisitor {
         file.s("package %s;", this.pkgName);
         file.s("import com.googlecode.dex2jar.*;");
         file.s("import com.googlecode.dex2jar.visitors.*;");
-        file.s("import static com.googlecode.dex2jar.util.Hex.*;");
+        file.s("import static org.apache.commons.codec.binary.Hex.*;");
         file.s("public class Main {");
         file.push();
         file.s("public static void accept(DexFileVisitor v) {");

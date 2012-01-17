@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@ public class LeRandomAccessFileInput extends BeRandomAccessFileInput {
         super(file);
     }
 
+    @Override
     public int readUShortx() {
         return readUByte() | (readUByte() << 8);
     }
 
+    @Override
     public int readUIntx() {
         return readUByte() | (readUByte() << 8) | (readUByte() << 16) | (readUByte() << 24);
 

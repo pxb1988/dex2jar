@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class V3FieldAdapter implements DexFieldVisitor {
     protected List<Annotation> anns = new ArrayList<Annotation>();
@@ -79,6 +79,7 @@ public class V3FieldAdapter implements DexFieldVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFieldVisitor#visitAnnotation(java.lang .String, boolean)
      */
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         Annotation ann = new Annotation(name, visible);
         anns.add(ann);
@@ -102,10 +103,12 @@ public class V3FieldAdapter implements DexFieldVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFieldVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         build();
-        if (fv != null)
+        if (fv != null) {
             fv.visitEnd();
+        }
     }
 
 }

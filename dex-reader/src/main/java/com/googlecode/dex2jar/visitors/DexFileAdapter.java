@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.googlecode.dex2jar.visitors;
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class DexFileAdapter implements DexFileVisitor {
     protected DexFileVisitor dfv;
@@ -28,6 +28,7 @@ public class DexFileAdapter implements DexFileVisitor {
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visit(int, java.lang.String, java.lang.String,
      * java.lang.String[])
      */
+    @Override
     public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
         return dfv.visit(access_flags, className, superClass, interfaceNames);
     }
@@ -37,6 +38,7 @@ public class DexFileAdapter implements DexFileVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexFileVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         dfv.visitEnd();
     }

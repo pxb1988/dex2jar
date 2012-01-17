@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package com.googlecode.dex2jar;
 /**
  * a light weight version of org.objectweb.asm.Type
  * 
- * @author Pan
+ * @author Panxiaobo
+ * @version $Rev$
  * 
  */
 public class DexType {
@@ -26,8 +27,12 @@ public class DexType {
         this.desc = desc;
     }
 
+    /**
+     * type descriptor, in TypeDescriptor format
+     */
     final public String desc;
 
+    @Override
     public String toString() {
         return desc;
     }

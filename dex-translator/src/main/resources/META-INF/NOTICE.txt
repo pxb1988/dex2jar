@@ -1,2 +1,2 @@
-dex2jar
-Copyright 2009-2011 Panxiaobo
+dex2jar - Tools to work with android .dex and java .class files
+Copyright (c) 2009-2012 Panxiaobo

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.googlecode.dex2jar.visitors;
 
 
 /**
- * @author Panxiaobo [pxb1988@gmail.com]
- * @version $Id$
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev$
  */
 public class DexMethodAdapter implements DexMethodVisitor {
     protected DexMethodVisitor mv;
@@ -36,6 +36,7 @@ public class DexMethodAdapter implements DexMethodVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexAnnotationAble#visitAnnotation(java.lang.String, boolean)
      */
+    @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         return mv.visitAnnotation(name, visible);
     }
@@ -45,6 +46,7 @@ public class DexMethodAdapter implements DexMethodVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitCode()
      */
+    @Override
     public DexCodeVisitor visitCode() {
         return mv.visitCode();
     }
@@ -54,6 +56,7 @@ public class DexMethodAdapter implements DexMethodVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitEnd()
      */
+    @Override
     public void visitEnd() {
         mv.visitEnd();
     }
@@ -63,6 +66,7 @@ public class DexMethodAdapter implements DexMethodVisitor {
      * 
      * @see com.googlecode.dex2jar.visitors.DexMethodVisitor#visitParameterAnnotation (int)
      */
+    @Override
     public DexAnnotationAble visitParameterAnnotation(int index) {
         return mv.visitParameterAnnotation(index);
     }
