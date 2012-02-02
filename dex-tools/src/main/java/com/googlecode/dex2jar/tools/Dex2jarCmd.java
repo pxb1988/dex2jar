@@ -43,7 +43,7 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "o", longOpt = "output", description = "output .jar file, default is $current_dir/[file-name]-dex2jar.jar", argName = "out-jar-file")
     private File output;
 
-    @Opt(opt = "r", longOpt = "reuse-reg", hasArg = false, description = "reuse regiter while java .class file")
+    @Opt(opt = "r", longOpt = "reuse-reg", hasArg = false, description = "reuse regiter while generate java .class file")
     private boolean reuseReg = false;
 
     public Dex2jarCmd() {

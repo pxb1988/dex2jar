@@ -67,8 +67,6 @@ public class ApkSign extends BaseCmd {
             return;
         }
 
-        // TODO check sun JVM
-
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
         X509Certificate cert = (X509Certificate) certificateFactory.generateCertificate(ApkSign.class
                 .getResourceAsStream("ApkSign.cer"));
@@ -76,7 +74,13 @@ public class ApkSign extends BaseCmd {
         PrivateKey privateKey = rSAKeyFactory.generatePrivate(new PKCS8EncodedKeySpec(IOUtils.toByteArray(ApkSign.class
                 .getResourceAsStream("ApkSign.private"))));
 
-        Class<?> clz = Class.forName("com.android.signapk.SignApk");
+        Class<?> clz;
+        try {
+            clz = Class.forName("com.android.signapk.SignApk");
+        } catch (ClassNotFoundException cnfe) {
+            System.err.println("please run d2j-apk-sign in a sun compatible JRE (contains sun.security.*)");
+            return;
+        }
         Method m = clz
                 .getMethod("sign", X509Certificate.class, PrivateKey.class, boolean.class, File.class, File.class);
         m.setAccessible(true);
