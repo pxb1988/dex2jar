@@ -46,6 +46,9 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "r", longOpt = "reuse-reg", hasArg = false, description = "reuse regiter while generate java .class file")
     private boolean reuseReg = false;
 
+    @Opt(opt = "s", longOpt = "topological-sort", hasArg = false, description = "sort block by topological, that will generate more readable code")
+    private boolean topologicalSort = false;
+
     public Dex2jarCmd() {
         super("d2j-dex2jar [options] <file0> [file1 ... fileN]", "convert dex to jar");
     }
@@ -87,7 +90,8 @@ public class Dex2jarCmd extends BaseCmd {
             DexFileReader reader = new DexFileReader(new File(fileName));
             DexExceptionHandlerImpl handler = notHandleException ? null : new DexExceptionHandlerImpl();
 
-            Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).to(file);
+            Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort(topologicalSort)
+                    .to(file);
 
             if (!notHandleException) {
                 Map<Method, Exception> exceptions = handler.getExceptions();

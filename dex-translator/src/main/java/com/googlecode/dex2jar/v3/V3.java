@@ -30,8 +30,8 @@ import com.googlecode.dex2jar.visitors.DexFileVisitor;
  */
 public class V3 implements DexFileVisitor {
 
-    public static final int REUSE_REGISTER = 1;
-
+    public static final int REUSE_REGISTER = 1 << 0;
+    public static final int TOPOLOGICAL_SORT = 1 << 1;
     protected ClassVisitorFactory cvf;
     protected Map<String, Integer> accessFlagsMap;
     protected Map<String, String> innerNameMap;

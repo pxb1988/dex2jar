@@ -55,10 +55,10 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  */
 public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     protected static Transformer endremove = new EndRemover();
+    protected static Transformer topologicalSort = new TopologicalSort();
     private static final Logger log = Logger.getLogger(V3MethodAdapter.class.getName());
     protected static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(),
-            new ZeroTransformer(), new LocalSplit(), new LocalRemove(), new LocalType(), new LocalCurrect(),
-            new TopologicalSort() };
+            new ZeroTransformer(), new LocalSplit(), new LocalRemove(), new LocalType(), new LocalCurrect() };
     static {
         log.log(Level.CONFIG, "InsnList.check=false");
         // Optimize Tree Analyzer
@@ -203,6 +203,9 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
 
                     for (Transformer ts : tses) {
                         ts.transform(irMethod);
+                    }
+                    if (0 != (config & V3.TOPOLOGICAL_SORT)) {
+                        topologicalSort.transform(irMethod);
                     }
                 }
                 new IrMethod2AsmMethod(0 != (config & V3.REUSE_REGISTER)).convert(irMethod, new LdcOptimizeAdapter(

@@ -123,8 +123,22 @@ public class Dex2jar {
         return this;
     }
 
+    public Dex2jar topoLogicalSort(boolean b) {
+        if (b) {
+            this.v3Config |= V3.TOPOLOGICAL_SORT;
+        } else {
+            this.v3Config &= ~V3.TOPOLOGICAL_SORT;
+        }
+        return this;
+    }
+
     public Dex2jar reUseReg() {
         this.v3Config |= V3.REUSE_REGISTER;
+        return this;
+    }
+
+    public Dex2jar topoLogicalSort() {
+        this.v3Config |= V3.TOPOLOGICAL_SORT;
         return this;
     }
 
