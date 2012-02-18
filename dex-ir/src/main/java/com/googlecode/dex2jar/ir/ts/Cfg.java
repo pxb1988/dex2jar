@@ -100,6 +100,8 @@ public class Cfg {
     public static boolean notThrow(Stmt s) {
         switch (s.st) {
         case LABEL:
+        case LINENUMBER:
+        case LOCALVARIABLE:
         case RETURN:
         case RETURN_VOID:
         case GOTO:
@@ -168,6 +170,9 @@ public class Cfg {
                     link(st, ls);
                 }
                 break;
+            case LOCALVARIABLE:
+                relinkLV(st);
+                break;
             case THROW:
             case RETURN:
             case RETURN_VOID:
@@ -234,6 +239,9 @@ public class Cfg {
                     link(st, ls);
                 }
                 break;
+            case LOCALVARIABLE:
+                relinkLV(st);
+                break;
             case THROW:
             case RETURN:
             case RETURN_VOID:
@@ -284,6 +292,20 @@ public class Cfg {
         }
         from._cfg_tos.add(to);
         to._cfg_froms.add(from);
+    }
+
+    private static void relinkLV(Stmt st) {
+        Stmt pre = st.getPre();
+        Stmt next = st.getNext();
+        
+        if (pre != null) {
+            pre._cfg_tos.remove(st);
+            st._cfg_froms.remove(pre);
+            if(next != null) {
+                link(pre, next);
+                link(pre, st);
+            }
+        }
     }
 
 }

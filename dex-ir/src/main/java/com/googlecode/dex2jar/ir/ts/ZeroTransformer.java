@@ -245,7 +245,8 @@ public class ZeroTransformer implements Transformer {
                 break;
             case E1:
                 E1Stmt e1 = (E1Stmt) p;
-                replace(e1.op, frame);
+                if(e1.st != ST.LOCALVARIABLE)
+                    replace(e1.op, frame);
                 break;
             case E2:
                 E2Stmt e2 = (E2Stmt) p;

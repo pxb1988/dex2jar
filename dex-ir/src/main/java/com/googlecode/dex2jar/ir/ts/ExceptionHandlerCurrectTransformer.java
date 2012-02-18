@@ -63,10 +63,10 @@ public class ExceptionHandlerCurrectTransformer implements Transformer {
             LabelStmt handler = t.handler;
             Stmt st = handler.getNext();
             Stmt pre = handler.getPre();
-            while (st.st == ST.LABEL) {
+            while (st.st == ST.LABEL || st.st == ST.LINENUMBER) {
                 st = st.getNext();
             }
-            while (pre.st == ST.LABEL) {
+            while (pre.st == ST.LABEL || pre.st == ST.LINENUMBER) {
                 pre = pre.getPre();
             }
             if (needInsertMoveExceptionRef(st) && needInsertGoto(pre)) {

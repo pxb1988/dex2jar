@@ -251,7 +251,7 @@ public class LocalSplit implements Transformer {
         for (Iterator<Stmt> it = list.iterator(); it.hasNext();) {
             Stmt st = it.next();
             if (st._ls_forward_frame == null) {// dead code
-                if (st.st != ST.LABEL) {// not remove label
+                if (st.st != ST.LABEL) {// not remove label// do should remove dead linenumber (switch table)
                     it.remove();
                     continue;
                 }
@@ -263,6 +263,10 @@ public class LocalSplit implements Transformer {
             case E1:
                 E1Stmt e1 = (E1Stmt) st;
                 e1.op = exec(e1.op, currentFrame);
+                if (e1.st == ST.LOCALVARIABLE) {
+                    Local local = trim(e1.op);
+                    local._ls_write_count += 2;// 阻止LOCALVARIABLE引用的值被移除
+                }
                 break;
             case E2:
                 E2Stmt e2 = (E2Stmt) st;

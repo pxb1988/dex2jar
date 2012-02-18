@@ -33,12 +33,14 @@ import com.googlecode.dex2jar.ir.expr.TypeExpr;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.LineNumStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
+import com.googlecode.dex2jar.ir.stmt.LocVarStmt;
 import com.googlecode.dex2jar.ir.ts.Cfg;
 import com.googlecode.dex2jar.ir.ts.Cfg.StmtVisitor;
 import com.googlecode.dex2jar.ir.ts.LiveAnalyze;
@@ -337,6 +339,7 @@ public class IrMethod2AsmMethod implements Opcodes {
 
     public void convert(IrMethod ir, MethodVisitor asm) {
         reIndexLocal(ir);
+        reIndexStmts(ir);
         reBuildInstructions(ir, asm);
         reBuildTryCatchBlocks(ir, asm);
     }
@@ -347,12 +350,32 @@ public class IrMethod2AsmMethod implements Opcodes {
                     : trap.type.getInternalName());
         }
     }
-
+    private void reIndexStmts(IrMethod ir) {
+        int count = 0;
+        for (Stmt st : ir.stmts) {
+            st.id = count;
+            count ++;
+        }
+    }
     private void reBuildInstructions(IrMethod ir, MethodVisitor asm) {
         for (Stmt st : ir.stmts) {
             switch (st.st) {
             case LABEL:
                 asm.visitLabel(((LabelStmt) st).label);
+                break;
+            case LINENUMBER:
+                LineNumStmt ls = (LineNumStmt) st;
+                asm.visitLineNumber(ls.line, ls.label.label);
+                break;
+            case LOCALVARIABLE:
+                LocVarStmt vs = (LocVarStmt) st;
+                if(vs.start.id <= vs.end.id){
+                    asm.visitLocalVariable(vs.name, vs.type, 
+                            vs.signature, vs.start.label, vs.end.label, ((Local)vs.op.value)._ls_index);
+                }else{
+                    asm.visitLocalVariable(vs.name, vs.type, 
+                            vs.signature, vs.end.label, vs.start.label, ((Local)vs.op.value)._ls_index);
+                }
                 break;
             case ASSIGN: {
                 E2Stmt e2 = (E2Stmt) st;

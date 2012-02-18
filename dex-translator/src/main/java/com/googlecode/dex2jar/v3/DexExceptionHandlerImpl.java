@@ -48,6 +48,8 @@ import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 public class DexExceptionHandlerImpl implements DexExceptionHandler {
 
+    private int readerConfig = DexFileReader.SKIP_DEBUG;
+
     private Map<Method, Exception> exceptions = new HashMap<Method, Exception>();
 
     public Map<Method, Exception> getExceptions() {
@@ -84,6 +86,20 @@ public class DexExceptionHandlerImpl implements DexExceptionHandler {
                 + ET.class.getPackage().getImplementationVersion();
     }
 
+    public DexExceptionHandlerImpl skipDebug(boolean b) {
+        if (b) {
+            this.readerConfig |= DexFileReader.SKIP_DEBUG;
+        } else {
+            this.readerConfig &= ~DexFileReader.SKIP_DEBUG;
+        }
+        return this;
+    }
+
+    public DexExceptionHandlerImpl skipDebug() {
+        this.readerConfig |= DexFileReader.SKIP_DEBUG;
+        return this;
+    }
+
     public void dumpException(DexFileReader reader, File errorFile) throws IOException {
         for (Map.Entry<Method, Exception> e : exceptions.entrySet()) {
             System.err.println("Error:" + e.getKey().toString() + "->" + e.getValue().getMessage());
@@ -94,6 +110,11 @@ public class DexExceptionHandlerImpl implements DexExceptionHandler {
         final PrintWriter fw = new PrintWriter(new OutputStreamWriter(errorZipOutputStream, "UTF-8"));
         fw.println(getVersionString());
         fw.println("there are " + exceptions.size() + " error methods");
+        fw.print("options: ");
+        if((readerConfig & DexFileReader.SKIP_DEBUG) == 0){
+            fw.print(" -d");
+        }
+        fw.println();
         fw.flush();
         errorZipOutputStream.closeEntry();
         final Out out = new Out() {
@@ -164,7 +185,7 @@ public class DexExceptionHandlerImpl implements DexExceptionHandler {
                 };
             }
 
-        }, DexFileReader.SKIP_DEBUG);
+        }, readerConfig);
         errorZipOutputStream.close();
 
     }

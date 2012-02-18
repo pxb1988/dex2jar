@@ -49,6 +49,9 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "s", longOpt = "topological-sort", hasArg = false, description = "sort block by topological, that will generate more readable code")
     private boolean topologicalSort = false;
 
+    @Opt(opt = "d", longOpt = "debug-info", hasArg = false, description = "translate debug info")
+    private boolean debugInfo = false;
+
     public Dex2jarCmd() {
         super("d2j-dex2jar [options] <file0> [file1 ... fileN]", "convert dex to jar");
     }
@@ -88,10 +91,10 @@ public class Dex2jarCmd extends BaseCmd {
             System.out.println("dex2jar " + fileName + " -> " + file);
 
             DexFileReader reader = new DexFileReader(new File(fileName));
-            DexExceptionHandlerImpl handler = notHandleException ? null : new DexExceptionHandlerImpl();
+            DexExceptionHandlerImpl handler = notHandleException ? null : new DexExceptionHandlerImpl().skipDebug(!debugInfo);
 
             Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort(topologicalSort)
-                    .to(file);
+                    .skipDebug(!debugInfo).to(file);
 
             if (!notHandleException) {
                 Map<Method, Exception> exceptions = handler.getExceptions();

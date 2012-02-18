@@ -35,6 +35,7 @@ import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
@@ -252,6 +253,8 @@ public class LocalRemove implements Transformer {
                 switch (st.st) {
                 case RETURN_VOID:
                 case LABEL:
+                case LINENUMBER:
+                case LOCALVARIABLE:
                 case GOTO:
                 case NOP:
                 case IDENTITY:
@@ -259,6 +262,9 @@ public class LocalRemove implements Transformer {
                 }
 
                 Stmt pre = st.getPre();
+                while(pre != null && pre.st == ST.LOCALVARIABLE){
+                    pre = pre.getPre();//IGNORE ALL LOCALVARIABLE
+                }
                 if (pre == null) {
                     continue;
                 }
