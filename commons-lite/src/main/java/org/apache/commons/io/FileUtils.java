@@ -1,11 +1,13 @@
 package org.apache.commons.io;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -93,6 +95,7 @@ public class FileUtils {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static Collection<File> listFiles(File dir, String[] exts, boolean r) {
         if (exts.length == 0) {
             return Collections.EMPTY_LIST;
@@ -138,5 +141,20 @@ public class FileUtils {
 
     public static String readFileToString(File file, String charset) throws IOException {
         return new String(readFileToByteArray(file), charset);
+    }
+
+    public static List<String> readLines(File file, String encoding) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(openInputStream(file), encoding));
+        try {
+            List<String> list = new ArrayList<String>();
+            String line = reader.readLine();
+            while (line != null) {
+                list.add(line);
+                line = reader.readLine();
+            }
+            return list;
+        } finally {
+            IOUtils.closeQuietly(reader);
+        }
     }
 }

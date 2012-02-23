@@ -44,6 +44,8 @@ public abstract class BaseCmd {
 
         boolean hasArg() default true;
 
+        boolean required() default false;
+
         String longOpt() default "";
 
         String opt();
@@ -152,6 +154,7 @@ public abstract class BaseCmd {
                     }
                 }
                 Option option = new Option(opt.opt(), opt.hasArg(), opt.description());
+                option.setRequired(opt.required());
                 if (!"".equals(opt.longOpt())) {
                     option.setLongOpt(opt.longOpt());
                 }

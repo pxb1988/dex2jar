@@ -19,16 +19,19 @@ package com.googlecode.dex2jar.tools;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
+
+import p.rn.util.FileOut;
+import p.rn.util.FileOut.OutHandler;
+import p.rn.util.FileWalker;
+import p.rn.util.FileWalker.StreamHandler;
+import p.rn.util.FileWalker.StreamOpener;
 
 public class Jar2Jasmin extends BaseCmd {
     public static void main(String[] args) {
@@ -41,6 +44,8 @@ public class Jar2Jasmin extends BaseCmd {
     private boolean forceOverwrite = false;
     @Opt(opt = "o", longOpt = "output", description = "output dir of .j files, default is $current_dir/[jar-name]-jar2jasmin/", argName = "out-dir")
     private File output;
+    @Opt(opt = "e", longOpt = "encoding", description = "encoding for .j files, default is UTF-8", argName = "enc")
+    private String encoding = "UTF-8";
 
     public Jar2Jasmin() {
         super("d2j-jar2jasmin [options] <jar>", "Disassemble .class in jar file to jasmin file");
@@ -54,14 +59,18 @@ public class Jar2Jasmin extends BaseCmd {
         }
 
         File jar = new File(remainingArgs[0]);
-        if (!jar.exists() || !jar.isFile()) {
+        if (!jar.exists()) {
             System.err.println(jar + " is not exists");
             usage();
             return;
         }
 
         if (output == null) {
-            output = new File(FilenameUtils.getBaseName(jar.getName()) + "-jar2jasmin/");
+            if (jar.isDirectory()) {
+                output = new File(jar.getName() + "-jar2jasmin/");
+            } else {
+                output = new File(FilenameUtils.getBaseName(jar.getName()) + "-jar2jasmin/");
+            }
         }
 
         if (output.exists() && !forceOverwrite) {
@@ -69,36 +78,39 @@ public class Jar2Jasmin extends BaseCmd {
             usage();
             return;
         }
-        ZipFile zip;
-        try {
-            zip = new ZipFile(jar);
-        } catch (IOException e) {
-            System.err.println(jar + " is not a validate zip file");
-            e.printStackTrace(System.err);
-            usage();
-            return;
-        }
+
         System.out.println("disassemble " + jar + " -> " + output);
-        int flags = debugInfo ? 0 : ClassReader.SKIP_DEBUG;
-        for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements();) {
-            ZipEntry zipEntry = e.nextElement();
-            if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".class")) {
-                InputStream is = null;
-                PrintWriter out = null;
-                try {
-                    is = zip.getInputStream(zipEntry);
-                    ClassReader r = new ClassReader(is);
-                    out = new PrintWriter(new OutputStreamWriter(FileUtils.openOutputStream(new File(output, r
-                            .getClassName().replace('.', '/') + ".j")), "UTF-8"));
-                    r.accept(new JasminifierClassAdapter(out, null), flags | ClassReader.EXPAND_FRAMES);
-                } catch (IOException ioe) {
-                    System.err.println("error in " + zipEntry.getName());
-                    ioe.printStackTrace(System.err);
-                } finally {
-                    IOUtils.closeQuietly(is);
-                    IOUtils.closeQuietly(out);
+        final int flags = debugInfo ? 0 : ClassReader.SKIP_DEBUG;
+        final OutHandler fo = FileOut.create(output, false);
+        try {
+            new FileWalker().withStreamHandler(new StreamHandler() {
+
+                @Override
+                public void handle(boolean isDir, String name, StreamOpener current, Object nameObject)
+                        throws IOException {
+                    if (isDir || !name.endsWith(".class")) {
+                        return;
+                    }
+
+                    OutputStream os = null;
+                    PrintWriter out = null;
+                    try {
+                        InputStream is = current.get();
+                        ClassReader r = new ClassReader(is);
+                        os = fo.openOutput(r.getClassName().replace('.', '/') + ".j", nameObject);
+                        out = new PrintWriter(new OutputStreamWriter(os, encoding));
+                        r.accept(new JasminifierClassAdapter(out, null), flags | ClassReader.EXPAND_FRAMES);
+                    } catch (IOException ioe) {
+                        System.err.println("error in " + name);
+                        ioe.printStackTrace(System.err);
+                    } finally {
+                        IOUtils.closeQuietly(out);
+                        IOUtils.closeQuietly(os);
+                    }
                 }
-            }
+            }).walk(jar);
+        } finally {
+            IOUtils.closeQuietly(fo);
         }
     }
 }

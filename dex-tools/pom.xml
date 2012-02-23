@@ -31,6 +31,11 @@
             <artifactId>jasmin</artifactId>
             <version>p2.5</version>
         </dependency>
+        <dependency>
+            <groupId>pxb.bc</groupId>
+            <artifactId>p-rename</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -81,6 +86,10 @@
         <repository>
             <id>GoogleCode jasmin Repo</id>
             <url>http://maven.jasmin.googlecode.com/hg</url>
+        </repository>
+        <repository>
+            <id>GoogleCode p-libs Repo</id>
+            <url>http://maven.p-libs.googlecode.com/hg</url>
         </repository>
     </repositories>
 </project>
