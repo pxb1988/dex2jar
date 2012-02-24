@@ -38,6 +38,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.ts.EndRemover;
 import com.googlecode.dex2jar.ir.ts.ExceptionHandlerCurrectTransformer;
+import com.googlecode.dex2jar.ir.ts.FixVar;
 import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.LocalType;
@@ -58,7 +59,8 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     protected static Transformer topologicalSort = new TopologicalSort();
     private static final Logger log = Logger.getLogger(V3MethodAdapter.class.getName());
     protected static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(),
-            new ZeroTransformer(), new LocalSplit(), new LocalRemove(), new LocalType(), new LocalCurrect() };
+            new ZeroTransformer(), new FixVar(), new LocalSplit(), new LocalRemove(), new LocalType(),
+            new LocalCurrect() };
     static {
         log.log(Level.CONFIG, "InsnList.check=false");
         // Optimize Tree Analyzer
@@ -135,6 +137,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         methodNode.signature = signature;
         methodNode.exceptions = exceptions;
         methodNode.tryCatchBlocks = new ArrayList<Object>();
+        methodNode.localVariables = new ArrayList<Object>();
     }
 
     protected void debug_dump(MethodNode methodNode) {

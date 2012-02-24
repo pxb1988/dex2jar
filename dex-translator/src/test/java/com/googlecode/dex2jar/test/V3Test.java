@@ -97,7 +97,7 @@ public class V3Test {
                             }
                         };
                     }
-                }), DexFileReader.SKIP_DEBUG);
+                }), 0);
         System.out.flush();
         System.out.println();
         if (exes.size() > 0) {

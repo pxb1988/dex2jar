@@ -14,6 +14,7 @@ import org.objectweb.asm.Type;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
@@ -335,8 +336,10 @@ public class IrMethod2AsmMethod implements Opcodes {
 
     public void convert(IrMethod ir, MethodVisitor asm) {
         reIndexLocal(ir);
+        reIndexStmts(ir);
         reBuildInstructions(ir, asm);
         reBuildTryCatchBlocks(ir, asm);
+        reBuildLocalVar(ir, asm);
     }
 
     private void reBuildTryCatchBlocks(IrMethod ir, MethodVisitor asm) {
@@ -346,11 +349,23 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
+    private void reIndexStmts(IrMethod ir) {
+        int count = 0;
+        for (Stmt st : ir.stmts) {
+            st.id = count;
+            count++;
+        }
+    }
+
     private void reBuildInstructions(IrMethod ir, MethodVisitor asm) {
         for (Stmt st : ir.stmts) {
             switch (st.st) {
             case LABEL:
-                asm.visitLabel(((LabelStmt) st).label);
+                LabelStmt labelStmt = (LabelStmt) st;
+                asm.visitLabel(labelStmt.label);
+                if (labelStmt.lineNumber >= 0) {
+                    asm.visitLineNumber(labelStmt.lineNumber, labelStmt.label);
+                }
                 break;
             case ASSIGN: {
                 E2Stmt e2 = (E2Stmt) st;
@@ -577,6 +592,21 @@ public class IrMethod2AsmMethod implements Opcodes {
                 asm.visitJumpInsn(v.vt == VT.EQ ? IF_ACMPEQ : IF_ACMPNE, target);
             }
             break;
+        }
+    }
+
+    private void reBuildLocalVar(IrMethod ir, MethodVisitor asm) {
+        for (LocalVar vs : ir.vars) {
+            if (vs.reg.value.vt != VT.LOCAL) {
+                throw new DexException("the reg in LocalVar is not a Local");
+            }
+            if (vs.start.id <= vs.end.id) {
+                asm.visitLocalVariable(vs.name, vs.type, vs.signature, vs.start.label, vs.end.label,
+                        ((Local) vs.reg.value)._ls_index);
+            } else {
+                asm.visitLocalVariable(vs.name, vs.type, vs.signature, vs.end.label, vs.start.label,
+                        ((Local) vs.reg.value)._ls_index);
+            }
         }
     }
 

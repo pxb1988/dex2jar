@@ -17,7 +17,6 @@ package com.googlecode.dex2jar.ir.stmt;
 
 import java.util.Map;
 
-import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 

@@ -285,5 +285,4 @@ public class Cfg {
         from._cfg_tos.add(to);
         to._cfg_froms.add(from);
     }
-
 }
