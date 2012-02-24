@@ -29,20 +29,37 @@ import com.googlecode.dex2jar.visitors.DexFileVisitor;
  * @version $Rev$
  */
 public class V3 implements DexFileVisitor {
+
+    public static final int REUSE_REGISTER = 1 << 0;
+    public static final int TOPOLOGICAL_SORT = 1 << 1;
     protected ClassVisitorFactory cvf;
     protected Map<String, Integer> accessFlagsMap;
     protected Map<String, String> innerNameMap;
     protected Map<String, Set<String>> extraMemberClass;
     protected DexExceptionHandler exceptionHandler;
+    protected int config;
+
+    /**
+     * debug mode for dex-translator, enable this if you want to debug dex-translator.
+     */
+    /* package */
+    static final boolean DEBUG = false;
 
     public V3(Map<String, Integer> innerAccessFlagsMap, Map<String, String> innerNameMap,
             Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler,
             ClassVisitorFactory classVisitorFactory) {
+        this(innerAccessFlagsMap, innerNameMap, extraMemberClass, exceptionHandler, classVisitorFactory, 0);
+    }
+
+    public V3(Map<String, Integer> innerAccessFlagsMap, Map<String, String> innerNameMap,
+            Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler,
+            ClassVisitorFactory classVisitorFactory, int config) {
         this.accessFlagsMap = innerAccessFlagsMap;
         this.innerNameMap = innerNameMap;
         this.extraMemberClass = extraMemberClass;
         this.exceptionHandler = exceptionHandler;
         this.cvf = classVisitorFactory;
+        this.config = config;
     }
 
     @Override
@@ -52,7 +69,7 @@ public class V3 implements DexFileVisitor {
             return null;
         }
         return new V3ClassAdapter(accessFlagsMap, innerNameMap, this.extraMemberClass, this.exceptionHandler, cv,
-                access_flags, className, superClass, interfaceNames);
+                access_flags, className, superClass, interfaceNames, config);
     }
 
     @Override

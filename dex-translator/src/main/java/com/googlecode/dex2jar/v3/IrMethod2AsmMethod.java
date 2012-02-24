@@ -14,6 +14,7 @@ import org.objectweb.asm.Type;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
@@ -30,6 +31,7 @@ import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
 import com.googlecode.dex2jar.ir.expr.RefExpr;
 import com.googlecode.dex2jar.ir.expr.TypeExpr;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
@@ -38,17 +40,28 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
+import com.googlecode.dex2jar.ir.ts.Cfg;
+import com.googlecode.dex2jar.ir.ts.Cfg.StmtVisitor;
 import com.googlecode.dex2jar.ir.ts.LiveAnalyze;
 import com.googlecode.dex2jar.ir.ts.LiveAnalyze.Phi;
 import com.googlecode.dex2jar.ir.ts.LocalType;
 
 public class IrMethod2AsmMethod implements Opcodes {
 
-    private static final boolean DEBUG = false;
+    private boolean reuseReg = false;
 
-    private void reIndexLocal(IrMethod ir) {
+    public IrMethod2AsmMethod() {
+        super();
+    }
 
-        if (DEBUG) {
+    public IrMethod2AsmMethod(boolean reuseReg) {
+        super();
+        this.reuseReg = reuseReg;
+    }
+
+    private void reIndexLocalReuseReg(IrMethod ir) {
+
+        if (V3.DEBUG) {
             int i = 0;
             for (Stmt stmt = ir.stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
                 if (stmt.st == ST.LABEL) {
@@ -61,7 +74,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         // 1. live local analyze
         LiveAnalyze la = new LiveAnalyze(ir);
         List<Phi> phis = la.analyze();
-        if (DEBUG) {
+        if (V3.DEBUG) {
             for (Local local : ir.locals) {
                 if (local._ls_index >= 0) {
                     local.name = "a" + local._ls_index;
@@ -125,7 +138,7 @@ public class IrMethod2AsmMethod implements Opcodes {
 
         for (Local local : ir.locals) {
             local._ls_index = maps[local._ls_index];
-            if (DEBUG) {
+            if (V3.DEBUG) {
                 if (local._ls_index >= 0) {
                     local.name = "a" + local._ls_index;
                 } else {
@@ -258,13 +271,75 @@ public class IrMethod2AsmMethod implements Opcodes {
                 }
             }
         }
+    }
 
+    private void reIndexLocal(IrMethod ir) {
+        if (this.reuseReg) {
+            reIndexLocalReuseReg(ir);
+        } else {
+            reIndexLocalDirect(ir);
+        }
+    }
+
+    private void reIndexLocalDirect(IrMethod ir) {
+        int index = 0;
+        if ((ir.access & ACC_STATIC) == 0) {
+            index++;
+        }
+        final int ids[] = new int[ir.args.length];
+        for (int i = 0; i < ir.args.length; i++) {
+            ids[i] = index;
+            index += ir.args[i].getSize();
+        }
+        for (Local local : ir.locals) {
+            local._ls_index = -1;
+        }
+
+        final int[] indexHolder = new int[] { index };
+        Cfg.createCFG(ir);//
+        Cfg.Forward(ir, new StmtVisitor<Object>() {
+            @Override
+            public Object exec(Stmt stmt) {
+                switch (stmt.st) {
+                case ASSIGN:
+                case IDENTITY:
+                    if (((AssignStmt) stmt).op1.value.vt == VT.LOCAL) {
+                        Local local = (Local) ((AssignStmt) stmt).op1.value;
+                        if (local._ls_index == -1) {
+                            Type localType = LocalType.typeOf(local);
+                            if (!Type.VOID_TYPE.equals(localType)) {// skip void type
+                                Value ref = (Value) ((AssignStmt) stmt).op2.value;
+                                switch (ref.vt) {
+                                case THIS_REF:
+                                    local._ls_index = 0;
+                                    break;
+                                case PARAMETER_REF:
+                                    local._ls_index = ids[((RefExpr) ref).parameterIndex];
+                                    break;
+                                case EXCEPTION_REF:
+                                    local._ls_index = indexHolder[0]++;
+                                    break;
+                                default:
+                                    local._ls_index = indexHolder[0];
+                                    indexHolder[0] += LocalType.typeOf(ref).getSize();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                return null;
+            }
+        });
     }
 
     public void convert(IrMethod ir, MethodVisitor asm) {
         reIndexLocal(ir);
+        reIndexStmts(ir);
         reBuildInstructions(ir, asm);
         reBuildTryCatchBlocks(ir, asm);
+        reBuildLocalVar(ir, asm);
     }
 
     private void reBuildTryCatchBlocks(IrMethod ir, MethodVisitor asm) {
@@ -274,11 +349,23 @@ public class IrMethod2AsmMethod implements Opcodes {
         }
     }
 
+    private void reIndexStmts(IrMethod ir) {
+        int count = 0;
+        for (Stmt st : ir.stmts) {
+            st.id = count;
+            count++;
+        }
+    }
+
     private void reBuildInstructions(IrMethod ir, MethodVisitor asm) {
         for (Stmt st : ir.stmts) {
             switch (st.st) {
             case LABEL:
-                asm.visitLabel(((LabelStmt) st).label);
+                LabelStmt labelStmt = (LabelStmt) st;
+                asm.visitLabel(labelStmt.label);
+                if (labelStmt.lineNumber >= 0) {
+                    asm.visitLineNumber(labelStmt.lineNumber, labelStmt.label);
+                }
                 break;
             case ASSIGN: {
                 E2Stmt e2 = (E2Stmt) st;
@@ -505,6 +592,21 @@ public class IrMethod2AsmMethod implements Opcodes {
                 asm.visitJumpInsn(v.vt == VT.EQ ? IF_ACMPEQ : IF_ACMPNE, target);
             }
             break;
+        }
+    }
+
+    private void reBuildLocalVar(IrMethod ir, MethodVisitor asm) {
+        for (LocalVar vs : ir.vars) {
+            if (vs.reg.value.vt != VT.LOCAL) {
+                throw new DexException("the reg in LocalVar is not a Local");
+            }
+            if (vs.start.id <= vs.end.id) {
+                asm.visitLocalVariable(vs.name, vs.type, vs.signature, vs.start.label, vs.end.label,
+                        ((Local) vs.reg.value)._ls_index);
+            } else {
+                asm.visitLocalVariable(vs.name, vs.type, vs.signature, vs.end.label, vs.start.label,
+                        ((Local) vs.reg.value)._ls_index);
+            }
         }
     }
 

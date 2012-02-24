@@ -193,9 +193,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
         pw.print(access(cn.access));
         pw.print(' ');
         pw.println(cn.name);
-        if (cn.superName == null) { // TODO Jasmin bug workaround
-            println(".super ", "java/lang/Object");
-        } else {
+        if (cn.superName != null) {
             println(".super ", cn.superName);
         }
         for (int i = 0; i < cn.interfaces.size(); ++i) {
@@ -508,13 +506,6 @@ public class JasminifierClassAdapter extends ClassAdapter {
 
                         @Override
                         public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
-                            if (keys.length == 0) {
-                                pw.print("goto "); // TODO Jasmin bug
-                                                   // workaround
-                                print(dflt);
-                                pw.println();
-                                return;
-                            }
                             pw.println("lookupswitch");
                             for (int i = 0; i < keys.length; ++i) {
                                 pw.print(keys[i]);
@@ -637,18 +628,35 @@ public class JasminifierClassAdapter extends ClassAdapter {
             pw.print(buf.toString());
         } else if (cst instanceof Float) {
             Float f = (Float) cst;
-            if (f.isNaN() || f.isInfinite()) {
-                pw.print("0.0"); // TODO Jasmin bug workaround
+            if (!f.isNaN() && !f.isInfinite()) {
+                pw.print(cst + "F");
+            } else if (f.isNaN()) {
+                pw.print("0NAN_F");
             } else {
-                pw.print(f);
+                double v = f;
+                if ((v == Float.POSITIVE_INFINITY)) {
+                    pw.print("0POS_INFI_F");
+                } else {
+                    pw.print("0NEG_INFI_F");
+                }
             }
         } else if (cst instanceof Double) {
             Double d = (Double) cst;
-            if (d.isNaN() || d.isInfinite()) {
-                pw.print("0.0"); // TODO Jasmin bug workaround
+
+            if (!d.isNaN() && !d.isInfinite()) {
+                pw.print(cst + "D");
+            } else if (d.isNaN()) {
+                pw.print("0NAN_D");
             } else {
-                pw.print(d);
+                double v = d;
+                if ((v == Double.POSITIVE_INFINITY)) {
+                    pw.print("0POS_INFI_D");
+                } else {
+                    pw.print("0NEG_INFI_D");
+                }
             }
+        } else if (cst instanceof Long) {
+            pw.print(cst + "L");
         } else {
             pw.print(cst);
         }

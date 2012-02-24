@@ -19,6 +19,7 @@ import static com.googlecode.dex2jar.ir.Constant.nClass;
 import static com.googlecode.dex2jar.ir.Constant.nInt;
 import static com.googlecode.dex2jar.ir.Constant.nLong;
 import static com.googlecode.dex2jar.ir.Constant.nString;
+import static com.googlecode.dex2jar.ir.expr.Exprs.box;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nAdd;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nAnd;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
@@ -85,6 +86,7 @@ import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
+import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
@@ -643,11 +645,11 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
     @Override
     public void visitLineNumber(int line, DexLabel label) {
-        // TODO
+        toLabelStmt(label).lineNumber = line;
     }
 
     @Override
     public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
-        // TODO
+        irMethod.vars.add(new LocalVar(name, type, signature, toLabelStmt(start), toLabelStmt(end), box(locals[reg])));
     }
 }

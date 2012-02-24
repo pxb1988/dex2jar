@@ -20,12 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
@@ -34,24 +30,14 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.BasicVerifier;
 import org.objectweb.asm.tree.analysis.Frame;
-import org.objectweb.asm.util.AbstractVisitor;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
+import p.rn.util.FileWalker;
+import p.rn.util.FileWalker.StreamHandler;
+import p.rn.util.FileWalker.StreamOpener;
+
 public class AsmVerify extends BaseCmd {
-    static Field buf;
-
-    static {
-        try {
-            buf = AbstractVisitor.class.getDeclaredField("buf");
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        }
-        buf.setAccessible(true);
-
-    }
 
     private static String getShortName(final String name) {
         int n = name.lastIndexOf('/');
@@ -62,10 +48,16 @@ public class AsmVerify extends BaseCmd {
         new AsmVerify().doMain(args);
     }
 
+    static class XTraceMethodVisitor extends TraceMethodVisitor {
+        public StringBuffer getBuf() {
+            return buf;
+        }
+    }
+
     static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)
-            throws IllegalArgumentException, IllegalAccessException {
+            throws IllegalArgumentException {
         Frame[] frames = a.getFrames();
-        TraceMethodVisitor mv = new TraceMethodVisitor();
+        XTraceMethodVisitor mv = new XTraceMethodVisitor();
         String format = "%05d %-" + (method.maxStack + method.maxLocals + 6) + "s|%s";
         for (int j = 0; j < method.instructions.size(); ++j) {
             method.instructions.get(j).accept(mv);
@@ -83,11 +75,11 @@ public class AsmVerify extends BaseCmd {
                     s.append(getShortName(f.getStack(k).toString()));
                 }
             }
-            pw.printf(format, j, s, buf.get(mv)); // mv.text.get(j));
+            pw.printf(format, j, s, mv.getBuf()); // mv.text.get(j));
         }
         for (int j = 0; j < method.tryCatchBlocks.size(); ++j) {
             ((TryCatchBlockNode) method.tryCatchBlocks.get(j)).accept(mv);
-            pw.print(" " + buf.get(mv));
+            pw.print(" " + mv.getBuf());
         }
         pw.println();
         pw.flush();
@@ -110,7 +102,7 @@ public class AsmVerify extends BaseCmd {
         List<File> files = new ArrayList<File>();
         for (String fn : remainingArgs) {
             File file = new File(fn);
-            if (!file.exists() || !file.isFile()) {
+            if (!file.exists()) {
                 System.err.println(fn + " is not exists");
                 usage();
                 return;
@@ -119,22 +111,16 @@ public class AsmVerify extends BaseCmd {
         }
 
         for (File file : files) {
-            ZipFile zip = null;
-            try {
-                zip = new ZipFile(file);
-            } catch (IOException e1) {
-                System.err.println(file + " is not a validate zip file");
-                if (detail) {
-                    e1.printStackTrace(System.err);
-                }
-                usage();
-                return;
-            }
             System.out.println("verify " + file);
-            for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements();) {
-                ZipEntry zipEntry = e.nextElement();
-                if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".class")) {
-                    InputStream is = zip.getInputStream(zipEntry);
+            new FileWalker().withStreamHandler(new StreamHandler() {
+
+                @Override
+                public void handle(boolean isDir, String name, StreamOpener current, Object nameObject)
+                        throws IOException {
+                    if (isDir || !name.endsWith(".class")) {
+                        return;
+                    }
+                    InputStream is = current.get();
                     ClassReader cr = new ClassReader(is);
                     ClassNode cn = new ClassNode();
                     cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
@@ -156,7 +142,7 @@ public class AsmVerify extends BaseCmd {
                         }
                     }
                 }
-            }
+            }).walk(file);
         }
     }
 }

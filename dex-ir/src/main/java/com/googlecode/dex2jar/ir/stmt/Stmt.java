@@ -133,8 +133,7 @@ public abstract class Stmt {
     /**
      * Used in ordering statements in a {@link TreeSet}, id of the {@link Stmt} in its {@link StmtList}
      */
-    /* default */
-    int id;
+    public int id;
 
     /**
      * Owner of the statement

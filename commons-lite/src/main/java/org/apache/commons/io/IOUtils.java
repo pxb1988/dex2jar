@@ -20,6 +20,10 @@ public class IOUtils {
         return count;
     }
 
+    public static int copy(InputStream input, OutputStream output) throws IOException {
+        return (int) copyLarge(input, output);
+    }
+
     public static byte[] toByteArray(InputStream input) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream(50 * 1024);
         copyLarge(input, output);
@@ -27,6 +31,26 @@ public class IOUtils {
     }
 
     public static void closeQuietly(Closeable closeable) {
+        try {
+            if (closeable != null) {
+                closeable.close();
+            }
+        } catch (IOException ioe) {
+            // ignore
+        }
+    }
+
+    public static void closeQuietly(OutputStream closeable) {
+        try {
+            if (closeable != null) {
+                closeable.close();
+            }
+        } catch (IOException ioe) {
+            // ignore
+        }
+    }
+
+    public static void closeQuietly(InputStream closeable) {
         try {
             if (closeable != null) {
                 closeable.close();

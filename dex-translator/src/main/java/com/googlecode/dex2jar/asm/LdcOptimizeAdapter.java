@@ -52,6 +52,33 @@ public class LdcOptimizeAdapter extends MethodAdapter implements Opcodes {
             } else {
                 super.visitLdcInsn(cst);
             }
+        } else if (cst instanceof Long) {
+            long value = (Long) cst;
+            if (value == 0L || value == 1L) {
+                super.visitInsn(LCONST_0 + ((int) value));
+            } else {
+                super.visitLdcInsn(cst);
+            }
+        } else if (cst instanceof Float) {
+            float value = (Float) cst;
+            if (value == 0.0F) {
+                super.visitInsn(FCONST_0);
+            } else if (value == 1.0F) {
+                super.visitInsn(FCONST_1);
+            } else if (value == 2.0F) {
+                super.visitInsn(FCONST_2);
+            } else {
+                super.visitLdcInsn(cst);
+            }
+        } else if (cst instanceof Double) {
+            double value = (Double) cst;
+            if (value == 0.0D) {
+                super.visitInsn(DCONST_0);
+            } else if (value == 1.0D) {
+                super.visitInsn(DCONST_1);
+            } else {
+                super.visitLdcInsn(cst);
+            }
         } else {
             super.visitLdcInsn(cst);
         }

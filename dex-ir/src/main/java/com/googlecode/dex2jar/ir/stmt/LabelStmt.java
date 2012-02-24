@@ -33,6 +33,7 @@ public class LabelStmt extends E0Stmt {
 
     public String displayName;
     public Label label;
+    public int lineNumber = -1;
 
     public LabelStmt(Label label) {
         super(ST.LABEL);
@@ -50,7 +51,11 @@ public class LabelStmt extends E0Stmt {
 
     @Override
     public String toString() {
-        return getDisplayName() + ":";
+        if (lineNumber >= 0) {
+            return getDisplayName() + ": // line " + lineNumber;
+        } else {
+            return getDisplayName() + ":";
+        }
     }
 
 }

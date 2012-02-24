@@ -17,6 +17,7 @@ package com.googlecode.dex2jar.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,13 +54,18 @@ public class V3Test {
         }
     }
 
+    private static final Charset UTF8 = Charset.forName("UTF-8");
+
     public static void doData(byte[] data, final File destDir) throws IOException {
+
+        final int lineCount = 50;
 
         DexFileReader reader = new DexFileReader(data);
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
-        final List<Exception> exes = new ArrayList();
+        final List<String> exes = new ArrayList();
         reader.accept(afa, DexFileReader.SKIP_CODE | DexFileReader.SKIP_DEBUG);
         System.out.flush();
+        System.out.write(String.format("%05d ", 0).getBytes(UTF8));
         reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), null,
                 new ClassVisitorFactory() {
                     int count = 0;
@@ -67,37 +73,40 @@ public class V3Test {
                     @Override
                     public ClassVisitor create(final String name) {
                         return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
-                            /*
-                             * (non-Javadoc)
-                             * 
-                             * @see org.objectweb.asm.ClassWriter#visitEnd()
-                             */
                             @Override
                             public void visitEnd() {
-                                super.visitEnd();
                                 count++;
                                 try {
+                                    super.visitEnd();
                                     byte[] data = this.toByteArray();
                                     FileUtils.writeByteArrayToFile(new File(destDir, name + ".class"), data);
                                     TestUtils.verify(new ClassReader(data));
                                     System.out.write('.');
-                                } catch (Exception e) {
+                                } catch (Throwable e) {
                                     System.out.write('X');
-                                    exes.add(e);
+                                    exes.add(String.format("%05d %s - %s", count - 1, name, e.getMessage()));
                                 }
-                                if (count % 50 == 0) {
-                                    System.out.write('\n');
+                                if (count % lineCount == 0) {
+                                    try {
+                                        System.out.write(String.format("\n%05d ", count).getBytes(UTF8));
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
                                 }
                                 System.out.flush();
                             }
                         };
                     }
-                }), DexFileReader.SKIP_DEBUG);
+                }), 0);
         System.out.flush();
         System.out.println();
         if (exes.size() > 0) {
-            throw new RuntimeException("there are " + exes.size() + " errors while translate");
+            StringBuilder sb = new StringBuilder("there are ").append(exes.size())
+                    .append(" error(s) while translate\n");
+            for (String ln : exes) {
+                sb.append(ln).append("\n");
+            }
+            throw new RuntimeException(sb.toString());
         }
     }
-
 }

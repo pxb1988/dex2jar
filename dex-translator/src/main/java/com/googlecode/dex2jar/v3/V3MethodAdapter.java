@@ -38,6 +38,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.ts.EndRemover;
 import com.googlecode.dex2jar.ir.ts.ExceptionHandlerCurrectTransformer;
+import com.googlecode.dex2jar.ir.ts.FixVar;
 import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.LocalType;
@@ -55,9 +56,11 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  */
 public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     protected static Transformer endremove = new EndRemover();
+    protected static Transformer topologicalSort = new TopologicalSort();
     private static final Logger log = Logger.getLogger(V3MethodAdapter.class.getName());
-    protected static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(), new ZeroTransformer(),
-            new LocalSplit(), new LocalRemove(), new LocalType(), new LocalCurrect(), new TopologicalSort() };
+    protected static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(),
+            new ZeroTransformer(), new FixVar(), new LocalSplit(), new LocalRemove(), new LocalType(),
+            new LocalCurrect() };
     static {
         log.log(Level.CONFIG, "InsnList.check=false");
         // Optimize Tree Analyzer
@@ -85,18 +88,18 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     final protected MethodNode methodNode = new MethodNode();
     protected Annotation signatureAnnotation;
     protected Annotation throwsAnnotation;
+    protected int config;
 
-    /**
-     * 
-     * @param accessFlags
-     * @param method
-     * @param exceptionHandler
-     */
     public V3MethodAdapter(int accessFlags, Method method, DexExceptionHandler exceptionHandler) {
+        this(accessFlags, method, exceptionHandler, 0);
+    }
+
+    public V3MethodAdapter(int accessFlags, Method method, DexExceptionHandler exceptionHandler, int config) {
         super();
         this.method = method;
         this.accessFlags = accessFlags;
         this.exceptionHandler = exceptionHandler;
+        this.config = config;
         // issue 88, the desc must set before visitParameterAnnotation
         methodNode.desc = method.getDesc();
     }
@@ -134,6 +137,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         methodNode.signature = signature;
         methodNode.exceptions = exceptions;
         methodNode.tryCatchBlocks = new ArrayList<Object>();
+        methodNode.localVariables = new ArrayList<Object>();
     }
 
     protected void debug_dump(MethodNode methodNode) {
@@ -197,14 +201,25 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         if (irMethod != null) {
             try {
                 if (irMethod.stmts.getSize() > 1) {
-                    // indexLabelStmt4Debug(irMethod.stmts);
-                    endremove.transform(irMethod);
 
+                    if (V3.DEBUG) {
+                        indexLabelStmt4Debug(irMethod.stmts);
+                    }
+
+                    endremove.transform(irMethod);
                     for (Transformer ts : tses) {
                         ts.transform(irMethod);
                     }
+                    if (0 != (config & V3.TOPOLOGICAL_SORT)) {
+                        topologicalSort.transform(irMethod);
+                    }
+
+                    if (V3.DEBUG) {
+                        indexLabelStmt4Debug(irMethod.stmts);
+                    }
                 }
-                new IrMethod2AsmMethod().convert(irMethod, new LdcOptimizeAdapter(methodNode));
+                new IrMethod2AsmMethod(0 != (config & V3.REUSE_REGISTER)).convert(irMethod, new LdcOptimizeAdapter(
+                        methodNode));
             } catch (Exception e) {
                 if (this.exceptionHandler == null) {
                     throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);

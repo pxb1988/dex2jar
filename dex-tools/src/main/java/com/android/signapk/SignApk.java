@@ -69,10 +69,9 @@ class SignApk {
         Attributes main = output.getMainAttributes();
         if (input != null) {
             main.putAll(input.getMainAttributes());
-        } else {
-            main.putValue("Manifest-Version", "1.0");
-            main.putValue("Created-By", "1.0 (Android SignApk)");
         }
+        main.putValue("Manifest-Version", "1.0");
+        main.putValue("Created-By", "d2j-apk-sign " + SignApk.class.getPackage().getImplementationVersion());
 
         BASE64Encoder base64 = new BASE64Encoder();
         MessageDigest md = MessageDigest.getInstance("SHA1");

@@ -27,6 +27,11 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
+import p.rn.util.FileOut;
+import p.rn.util.FileWalker;
+import p.rn.util.FileOut.OutHandler;
+import p.rn.util.FileWalker.OutAdapter;
+
 public class ApkSign extends BaseCmd {
     public static void main(String[] args) {
         new ApkSign().doMain(args);
@@ -40,7 +45,7 @@ public class ApkSign extends BaseCmd {
     private boolean signWhole = false;
 
     public ApkSign() {
-        super("d2j-apk-sign <apk>", "Sign an android apk file use a test certificate.");
+        super("d2j-apk-sign [options] <apk>", "Sign an android apk file use a test certificate.");
     }
 
     @Override
@@ -51,14 +56,18 @@ public class ApkSign extends BaseCmd {
         }
 
         File apkIn = new File(remainingArgs[0]);
-        if (!apkIn.exists() || !apkIn.isFile()) {
+        if (!apkIn.exists()) {
             System.err.println(apkIn + " is not exists");
             usage();
             return;
         }
 
         if (output == null) {
-            output = new File(FilenameUtils.getBaseName(apkIn.getName()) + "-signed.apk");
+            if (apkIn.isDirectory()) {
+                output = new File(apkIn.getName() + "-signed.apk");
+            } else {
+                output = new File(FilenameUtils.getBaseName(apkIn.getName()) + "-signed.apk");
+            }
         }
 
         if (output.exists() && !forceOverwrite) {
@@ -66,8 +75,20 @@ public class ApkSign extends BaseCmd {
             usage();
             return;
         }
-
-        // TODO check sun JVM
+        File realJar;
+        if (apkIn.isDirectory()) {
+            realJar = File.createTempFile("d2j", ".jar");
+            realJar.deleteOnExit();
+            System.out.println("zipping " + apkIn + " -> " + realJar);
+            OutHandler out = FileOut.create(realJar, true);
+            try {
+                new FileWalker().withStreamHandler(new OutAdapter(out)).walk(apkIn);
+            } finally {
+                IOUtils.closeQuietly(out);
+            }
+        } else {
+            realJar = apkIn;
+        }
 
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
         X509Certificate cert = (X509Certificate) certificateFactory.generateCertificate(ApkSign.class
@@ -76,12 +97,18 @@ public class ApkSign extends BaseCmd {
         PrivateKey privateKey = rSAKeyFactory.generatePrivate(new PKCS8EncodedKeySpec(IOUtils.toByteArray(ApkSign.class
                 .getResourceAsStream("ApkSign.private"))));
 
-        Class<?> clz = Class.forName("com.android.signapk.SignApk");
+        Class<?> clz;
+        try {
+            clz = Class.forName("com.android.signapk.SignApk");
+        } catch (ClassNotFoundException cnfe) {
+            System.err.println("please run d2j-apk-sign in a sun compatible JRE (contains sun.security.*)");
+            return;
+        }
         Method m = clz
                 .getMethod("sign", X509Certificate.class, PrivateKey.class, boolean.class, File.class, File.class);
         m.setAccessible(true);
 
-        System.out.println("sign " + apkIn + " -> " + output);
-        m.invoke(null, cert, privateKey, this.signWhole, apkIn, output);
+        System.out.println("sign " + realJar + " -> " + output);
+        m.invoke(null, cert, privateKey, this.signWhole, realJar, output);
     }
 }

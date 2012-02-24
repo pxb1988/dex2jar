@@ -23,6 +23,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+
+import p.rn.util.FileOut;
+import p.rn.util.FileOut.OutHandler;
+import p.rn.util.FileWalker;
+import p.rn.util.FileWalker.OutAdapter;
 
 public class Jar2Dex extends BaseCmd {
     public static void main(String[] args) {
@@ -46,14 +52,18 @@ public class Jar2Dex extends BaseCmd {
         }
 
         File jar = new File(remainingArgs[0]);
-        if (!jar.exists() || !jar.isFile()) {
+        if (!jar.exists()) {
             System.err.println(jar + " is not exists");
             usage();
             return;
         }
 
         if (output == null) {
-            output = new File(FilenameUtils.getBaseName(jar.getName()) + "-jar2dex.dex");
+            if (jar.isDirectory()) {
+                output = new File(jar.getName() + "-jar2dex.dex");
+            } else {
+                output = new File(FilenameUtils.getBaseName(jar.getName()) + "-jar2dex.dex");
+            }
         }
 
         if (output.exists() && !forceOverwrite) {
@@ -62,13 +72,29 @@ public class Jar2Dex extends BaseCmd {
             return;
         }
 
-        System.out.println("jar2dex " + jar + " -> " + output);
+        File realJar;
+        if (jar.isDirectory()) {
+            realJar = File.createTempFile("d2j", ".jar");
+            realJar.deleteOnExit();
+            System.out.println("zipping " + jar + " -> " + realJar);
+            OutHandler out = FileOut.create(realJar, true);
+            try {
+                new FileWalker().withStreamHandler(new OutAdapter(out)).walk(jar);
+            } finally {
+                IOUtils.closeQuietly(out);
+            }
+        } else {
+            realJar = jar;
+        }
+
+        System.out.println("jar2dex " + realJar + " -> " + output);
 
         Class<?> c = Class.forName("com.android.dx.command.Main");
         Method m = c.getMethod("main", String[].class);
 
         List<String> ps = new ArrayList<String>();
-        ps.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + output.getCanonicalPath(), jar.getCanonicalPath()));
+        ps.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + output.getCanonicalPath(),
+                realJar.getCanonicalPath()));
         System.out.println("call com.android.dx.command.Main.main" + ps);
         m.invoke(null, new Object[] { ps.toArray(new String[0]) });
     }

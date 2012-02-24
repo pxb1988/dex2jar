@@ -59,23 +59,15 @@ public class Dex2jar {
 
     private DexExceptionHandler exceptionHandler;
 
-    private int flags = DexFileReader.SKIP_DEBUG;
-
     final private DexFileReader reader;
+    private int readerConfig;
+
+    private int v3Config;
 
     private Dex2jar(DexFileReader reader) {
         super();
         this.reader = reader;
-    }
-
-    public Dex2jar withExceptionHandler(DexExceptionHandler exceptionHandler) {
-        this.exceptionHandler = exceptionHandler;
-        return this;
-    }
-
-    public Dex2jar withFlags(int flags) {
-        this.flags = flags;
-        return this;
+        readerConfig |= DexFileReader.SKIP_DEBUG;
     }
 
     private void doTranslate(final Object dist) throws IOException {
@@ -104,7 +96,7 @@ public class Dex2jar {
                                 }
                             };
                         }
-                    }), flags);
+                    }, v3Config), readerConfig);
         } catch (Exception e) {
             if (exceptionHandler == null) {
                 throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
@@ -112,6 +104,42 @@ public class Dex2jar {
                 exceptionHandler.handleFileException(e);
             }
         }
+    }
+
+    public DexExceptionHandler getExceptionHandler() {
+        return exceptionHandler;
+    }
+
+    public DexFileReader getReader() {
+        return reader;
+    }
+
+    public Dex2jar reUseReg(boolean b) {
+        if (b) {
+            this.v3Config |= V3.REUSE_REGISTER;
+        } else {
+            this.v3Config &= ~V3.REUSE_REGISTER;
+        }
+        return this;
+    }
+
+    public Dex2jar topoLogicalSort(boolean b) {
+        if (b) {
+            this.v3Config |= V3.TOPOLOGICAL_SORT;
+        } else {
+            this.v3Config &= ~V3.TOPOLOGICAL_SORT;
+        }
+        return this;
+    }
+
+    public Dex2jar reUseReg() {
+        this.v3Config |= V3.REUSE_REGISTER;
+        return this;
+    }
+
+    public Dex2jar topoLogicalSort() {
+        this.v3Config |= V3.TOPOLOGICAL_SORT;
+        return this;
     }
 
     private void saveTo(byte[] data, String name, Object dist) throws IOException {
@@ -125,6 +153,24 @@ public class Dex2jar {
             File dir = (File) dist;
             FileUtils.writeByteArrayToFile(new File(dir, name + ".class"), data);
         }
+    }
+
+    public void setExceptionHandler(DexExceptionHandler exceptionHandler) {
+        this.exceptionHandler = exceptionHandler;
+    }
+
+    public Dex2jar skipDebug(boolean b) {
+        if (b) {
+            this.readerConfig |= DexFileReader.SKIP_DEBUG;
+        } else {
+            this.readerConfig &= ~DexFileReader.SKIP_DEBUG;
+        }
+        return this;
+    }
+
+    public Dex2jar skipDebug() {
+        this.readerConfig |= DexFileReader.SKIP_DEBUG;
+        return this;
     }
 
     public void to(File file) throws IOException {
@@ -150,23 +196,8 @@ public class Dex2jar {
         to(new File(file));
     }
 
-    public DexExceptionHandler getExceptionHandler() {
-        return exceptionHandler;
-    }
-
-    public void setExceptionHandler(DexExceptionHandler exceptionHandler) {
+    public Dex2jar withExceptionHandler(DexExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-
-    public DexFileReader getReader() {
-        return reader;
+        return this;
     }
 }
