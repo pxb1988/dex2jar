@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
+import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.E1Expr;
 import com.googlecode.dex2jar.ir.Value.E2Expr;
@@ -130,7 +131,7 @@ public class LocalSplit implements Transformer {
         Cfg.createCFG(jm);
 
         final ArrayList<Stmt> _ls_visit_order = new ArrayList<Stmt>(list.getSize());
-
+        final int[] localId = { 0 };
         Cfg.Forward(jm, new FrameVisitor<Phi[]>() {
 
             private void doLocalRef(ValueBox vb, Phi[] frame) {
@@ -143,7 +144,7 @@ public class LocalSplit implements Transformer {
                     if (v.vt == VT.LOCAL) {
                         Phi p = frame[((Local) v)._ls_index];
                         if (p.value == null) {
-                            Local local = new Local("a_" + localId++);
+                            Local local = new Local("a_" + localId[0]++);
                             ValueBox nvb = new ValueBox(local);
                             local._ls_vb = nvb;
                             p.setLocal(local);
@@ -168,7 +169,6 @@ public class LocalSplit implements Transformer {
                 }
             }
 
-            int localId = 0;
             Phi[] tmp = new Phi[orgLocalSize];
 
             @Override
@@ -245,13 +245,33 @@ public class LocalSplit implements Transformer {
             }
         });
 
+        for (LocalVar var : jm.vars) {
+            Stmt stmt = var.start.getNext();
+            int index = ((Local) var.reg.value)._ls_index;
+            while (stmt.st == ST.LABEL) {
+                stmt = stmt.getNext();
+            }
+            Phi[] targetF = (Phi[]) stmt._ls_forward_frame;
+            Phi p = targetF[index];
+
+            if (p.value == null) {
+                Local local = new Local("a_" + localId[0]++);
+                ValueBox nvb = new ValueBox(local);
+                local._ls_vb = nvb;
+                p.setLocal(local);
+            }
+            Local local2 = trim(p);
+            var.reg = local2._ls_vb;
+            local2._ls_write_count += 2;
+        }
+
         int unRef = 0;
         Set<Local> locals = new HashSet<Local>();
         // reassign valuebox
         for (Iterator<Stmt> it = list.iterator(); it.hasNext();) {
             Stmt st = it.next();
             if (st._ls_forward_frame == null) {// dead code
-                if (st.st != ST.LABEL) {// not remove label// do should remove dead linenumber (switch table)
+                if (st.st != ST.LABEL) {// not remove label
                     it.remove();
                     continue;
                 }
@@ -263,10 +283,6 @@ public class LocalSplit implements Transformer {
             case E1:
                 E1Stmt e1 = (E1Stmt) st;
                 e1.op = exec(e1.op, currentFrame);
-                if (e1.st == ST.LOCALVARIABLE) {
-                    Local local = trim(e1.op);
-                    local._ls_write_count += 2;// 阻止LOCALVARIABLE引用的值被移除
-                }
                 break;
             case E2:
                 E2Stmt e2 = (E2Stmt) st;

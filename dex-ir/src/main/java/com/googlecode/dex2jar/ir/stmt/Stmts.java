@@ -86,11 +86,6 @@ public final class Stmts {
         return new UnopStmt(ST.UNLOCK, box(op));
     }
 
-    public static LocVarStmt nLocVar(String name, String type, String signature,
-            LabelStmt start, LabelStmt end, Value reg) {
-        return new LocVarStmt(name, type, signature, start, end, box(reg));
-    }
-
     private Stmts() {
     }
 }

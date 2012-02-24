@@ -112,29 +112,6 @@ public class TopologicalSort implements Transformer {
                 }
             }
         }
-
-        //Try to found all LOCALVARIABLE block( and end label) and add them to the end of out.
-        Stmt label = stmts.getLast();
-        while(label != null){//found end label
-            switch(label.st){
-            case LABEL:
-                out.add(label);
-                label = null;
-                break;
-            case LOCALVARIABLE:
-                label = label.getPre();
-                break;
-            default:
-                label = null;
-                break;
-            }
-        }
-        for(Stmt st:stmts){
-            if(st.st == ST.LOCALVARIABLE){
-                out.add(st);
-            }
-        }
-
         return out;
     }
 

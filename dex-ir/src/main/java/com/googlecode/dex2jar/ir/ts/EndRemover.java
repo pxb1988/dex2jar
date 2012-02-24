@@ -34,7 +34,6 @@ public class EndRemover implements Transformer {
                 }
                 break;
             case LABEL:
-            case LOCALVARIABLE:
             case NOP:
             case UNLOCK:
                 break;

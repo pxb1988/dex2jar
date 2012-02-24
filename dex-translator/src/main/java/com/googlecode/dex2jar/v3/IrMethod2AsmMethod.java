@@ -14,6 +14,7 @@ import org.objectweb.asm.Type;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
@@ -33,7 +34,6 @@ import com.googlecode.dex2jar.ir.expr.TypeExpr;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.LocVarStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
@@ -341,6 +341,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         reIndexStmts(ir);
         reBuildInstructions(ir, asm);
         reBuildTryCatchBlocks(ir, asm);
+        reBuildLocalVar(ir, asm);
     }
 
     private void reBuildTryCatchBlocks(IrMethod ir, MethodVisitor asm) {
@@ -366,16 +367,6 @@ public class IrMethod2AsmMethod implements Opcodes {
                 asm.visitLabel(labelStmt.label);
                 if (labelStmt.lineNumber >= 0) {
                     asm.visitLineNumber(labelStmt.lineNumber, labelStmt.label);
-                }
-                break;
-            case LOCALVARIABLE:
-                LocVarStmt vs = (LocVarStmt) st;
-                if (vs.start.id <= vs.end.id) {
-                    asm.visitLocalVariable(vs.name, vs.type, vs.signature, vs.start.label, vs.end.label,
-                            ((Local) vs.op.value)._ls_index);
-                } else {
-                    asm.visitLocalVariable(vs.name, vs.type, vs.signature, vs.end.label, vs.start.label,
-                            ((Local) vs.op.value)._ls_index);
                 }
                 break;
             case ASSIGN: {
@@ -603,6 +594,21 @@ public class IrMethod2AsmMethod implements Opcodes {
                 asm.visitJumpInsn(v.vt == VT.EQ ? IF_ACMPEQ : IF_ACMPNE, target);
             }
             break;
+        }
+    }
+
+    private void reBuildLocalVar(IrMethod ir, MethodVisitor asm) {
+        for (LocalVar vs : ir.vars) {
+            if (vs.reg.value.vt != VT.LOCAL) {
+                throw new DexException("the reg in LocalVar is not a Local");
+            }
+            if (vs.start.id <= vs.end.id) {
+                asm.visitLocalVariable(vs.name, vs.type, vs.signature, vs.start.label, vs.end.label,
+                        ((Local) vs.reg.value)._ls_index);
+            } else {
+                asm.visitLocalVariable(vs.name, vs.type, vs.signature, vs.end.label, vs.start.label,
+                        ((Local) vs.reg.value)._ls_index);
+            }
         }
     }
 

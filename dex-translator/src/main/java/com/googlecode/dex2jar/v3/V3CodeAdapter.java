@@ -19,6 +19,7 @@ import static com.googlecode.dex2jar.ir.Constant.nClass;
 import static com.googlecode.dex2jar.ir.Constant.nInt;
 import static com.googlecode.dex2jar.ir.Constant.nLong;
 import static com.googlecode.dex2jar.ir.Constant.nString;
+import static com.googlecode.dex2jar.ir.expr.Exprs.box;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nAdd;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nAnd;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
@@ -64,7 +65,6 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nLocVar;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLock;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLookupSwitch;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
@@ -86,6 +86,7 @@ import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
+import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
@@ -649,6 +650,6 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
     @Override
     public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
-        list.add(nLocVar(name, type, signature, toLabelStmt(start), toLabelStmt(end), locals[reg]));
+        irMethod.vars.add(new LocalVar(name, type, signature, toLabelStmt(start), toLabelStmt(end), box(locals[reg])));
     }
 }

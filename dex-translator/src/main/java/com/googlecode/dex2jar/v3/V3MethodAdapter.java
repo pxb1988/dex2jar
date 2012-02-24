@@ -38,8 +38,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.ts.EndRemover;
 import com.googlecode.dex2jar.ir.ts.ExceptionHandlerCurrectTransformer;
-import com.googlecode.dex2jar.ir.ts.InfoMove2Code;
-import com.googlecode.dex2jar.ir.ts.LocVarMove2End;
+import com.googlecode.dex2jar.ir.ts.FixVar;
 import com.googlecode.dex2jar.ir.ts.LocalRemove;
 import com.googlecode.dex2jar.ir.ts.LocalSplit;
 import com.googlecode.dex2jar.ir.ts.LocalType;
@@ -58,11 +57,10 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     protected static Transformer endremove = new EndRemover();
     protected static Transformer topologicalSort = new TopologicalSort();
-    protected static Transformer infoMove2Code = new InfoMove2Code();
-    protected static Transformer locVarMove2End = new LocVarMove2End();
     private static final Logger log = Logger.getLogger(V3MethodAdapter.class.getName());
     protected static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(),
-            new ZeroTransformer(), new LocalSplit(), new LocalRemove(), new LocalType(), new LocalCurrect() };
+            new ZeroTransformer(), new FixVar(), new LocalSplit(), new LocalRemove(), new LocalType(),
+            new LocalCurrect() };
     static {
         log.log(Level.CONFIG, "InsnList.check=false");
         // Optimize Tree Analyzer
@@ -203,14 +201,12 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         if (irMethod != null) {
             try {
                 if (irMethod.stmts.getSize() > 1) {
-                    infoMove2Code.transform(irMethod);
                     // indexLabelStmt4Debug(irMethod.stmts);
                     endremove.transform(irMethod);
 
                     for (Transformer ts : tses) {
                         ts.transform(irMethod);
                     }
-                    locVarMove2End.transform(irMethod);
                     if (0 != (config & V3.TOPOLOGICAL_SORT)) {
                         topologicalSort.transform(irMethod);
                     }
