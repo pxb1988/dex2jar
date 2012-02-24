@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.stmt.LineNumStmt;
 import com.googlecode.dex2jar.ir.stmt.LocVarStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
@@ -19,7 +18,7 @@ public class InfoMove2Code implements Transformer {
         //Try to found all LOCALVARIABLE block and move them to the code before it's end label.
         //And all LINENUMBER block and move them after it's label
         for(Stmt st:stmts){
-            if(st.st == ST.LOCALVARIABLE || st.st == ST.LINENUMBER){
+            if(st.st == ST.LOCALVARIABLE){
                 lvs.add(st);
             }
         }
@@ -43,7 +42,6 @@ public class InfoMove2Code implements Transformer {
                         dist = dist.getPre();
                         break;
                     case LABEL:
-                    case LINENUMBER:
                         if(skip){//SKIP EMPTY LINE
                             dist = dist.getPre();
                         }else{
@@ -57,8 +55,6 @@ public class InfoMove2Code implements Transformer {
                         break;
                     }
                 }
-            } else if(st.st == ST.LINENUMBER){
-                dist = ((LineNumStmt)st).label;
             }
             if(dist != null){
                 stmts.move(st, st, dist);

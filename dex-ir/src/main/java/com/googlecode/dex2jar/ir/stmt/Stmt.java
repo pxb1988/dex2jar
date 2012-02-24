@@ -100,8 +100,7 @@ public abstract class Stmt {
     public static enum ST {
 
         ASSIGN, GOTO, IDENTITY, IF, LABEL, LOCK, LOOKUP_SWITCH, //
-        NOP, RETURN, RETURN_VOID, TABLE_SWITCH, THROW, UNLOCK, 
-        LINENUMBER, LOCALVARIABLE
+        NOP, RETURN, RETURN_VOID, TABLE_SWITCH, THROW, UNLOCK, LOCALVARIABLE
     }
 
     /**

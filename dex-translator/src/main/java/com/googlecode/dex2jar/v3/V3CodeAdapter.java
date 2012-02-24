@@ -64,6 +64,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nLocVar;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLock;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLookupSwitch;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
@@ -71,8 +72,6 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nTableSwitch;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nThrow;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nUnLock;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nLocVar;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nLineNum;
 
 import java.util.Arrays;
 
@@ -645,7 +644,7 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
 
     @Override
     public void visitLineNumber(int line, DexLabel label) {
-        list.add(nLineNum(line, toLabelStmt(label)));
+        toLabelStmt(label).lineNumber = line;
     }
 
     @Override

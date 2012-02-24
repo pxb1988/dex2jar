@@ -253,7 +253,6 @@ public class LocalRemove implements Transformer {
                 switch (st.st) {
                 case RETURN_VOID:
                 case LABEL:
-                case LINENUMBER:
                 case LOCALVARIABLE:
                 case GOTO:
                 case NOP:

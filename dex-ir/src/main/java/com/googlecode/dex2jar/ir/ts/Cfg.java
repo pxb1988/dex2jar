@@ -100,7 +100,6 @@ public class Cfg {
     public static boolean notThrow(Stmt s) {
         switch (s.st) {
         case LABEL:
-        case LINENUMBER:
         case LOCALVARIABLE:
         case RETURN:
         case RETURN_VOID:
