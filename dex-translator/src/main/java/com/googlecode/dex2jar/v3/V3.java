@@ -39,6 +39,12 @@ public class V3 implements DexFileVisitor {
     protected DexExceptionHandler exceptionHandler;
     protected int config;
 
+    /**
+     * debug mode for dex-translator, enable this if you want to debug dex-translator.
+     */
+    /* package */
+    static final boolean DEBUG = false;
+
     public V3(Map<String, Integer> innerAccessFlagsMap, Map<String, String> innerNameMap,
             Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler,
             ClassVisitorFactory classVisitorFactory) {

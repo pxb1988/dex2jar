@@ -47,8 +47,6 @@ import com.googlecode.dex2jar.ir.ts.LocalType;
 
 public class IrMethod2AsmMethod implements Opcodes {
 
-    private static final boolean DEBUG = false;
-
     private boolean reuseReg = false;
 
     public IrMethod2AsmMethod() {
@@ -62,7 +60,7 @@ public class IrMethod2AsmMethod implements Opcodes {
 
     private void reIndexLocalReuseReg(IrMethod ir) {
 
-        if (DEBUG) {
+        if (V3.DEBUG) {
             int i = 0;
             for (Stmt stmt = ir.stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
                 if (stmt.st == ST.LABEL) {
@@ -75,7 +73,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         // 1. live local analyze
         LiveAnalyze la = new LiveAnalyze(ir);
         List<Phi> phis = la.analyze();
-        if (DEBUG) {
+        if (V3.DEBUG) {
             for (Local local : ir.locals) {
                 if (local._ls_index >= 0) {
                     local.name = "a" + local._ls_index;
@@ -139,7 +137,7 @@ public class IrMethod2AsmMethod implements Opcodes {
 
         for (Local local : ir.locals) {
             local._ls_index = maps[local._ls_index];
-            if (DEBUG) {
+            if (V3.DEBUG) {
                 if (local._ls_index >= 0) {
                     local.name = "a" + local._ls_index;
                 } else {

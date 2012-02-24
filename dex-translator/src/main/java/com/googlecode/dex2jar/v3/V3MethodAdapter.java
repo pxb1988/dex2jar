@@ -198,14 +198,21 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         if (irMethod != null) {
             try {
                 if (irMethod.stmts.getSize() > 1) {
-                    // indexLabelStmt4Debug(irMethod.stmts);
-                    endremove.transform(irMethod);
 
+                    if (V3.DEBUG) {
+                        indexLabelStmt4Debug(irMethod.stmts);
+                    }
+
+                    endremove.transform(irMethod);
                     for (Transformer ts : tses) {
                         ts.transform(irMethod);
                     }
                     if (0 != (config & V3.TOPOLOGICAL_SORT)) {
                         topologicalSort.transform(irMethod);
+                    }
+
+                    if (V3.DEBUG) {
+                        indexLabelStmt4Debug(irMethod.stmts);
                     }
                 }
                 new IrMethod2AsmMethod(0 != (config & V3.REUSE_REGISTER)).convert(irMethod, new LdcOptimizeAdapter(
