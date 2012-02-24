@@ -68,6 +68,11 @@ public class Dex2jarCmd extends BaseCmd {
             usage();
             return;
         }
+        if (debugInfo && reuseReg) {
+            System.err.println("-d/-r can not use together");
+            usage();
+            return;
+        }
 
         if (output != null) {
             if (output.exists() && !forceOverwrite) {
@@ -91,7 +96,8 @@ public class Dex2jarCmd extends BaseCmd {
             System.out.println("dex2jar " + fileName + " -> " + file);
 
             DexFileReader reader = new DexFileReader(new File(fileName));
-            DexExceptionHandlerImpl handler = notHandleException ? null : new DexExceptionHandlerImpl().skipDebug(!debugInfo);
+            DexExceptionHandlerImpl handler = notHandleException ? null : new DexExceptionHandlerImpl()
+                    .skipDebug(!debugInfo);
 
             Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort(topologicalSort)
                     .skipDebug(!debugInfo).to(file);
