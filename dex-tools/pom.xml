@@ -34,7 +34,7 @@
         <dependency>
             <groupId>pxb.bc</groupId>
             <artifactId>p-rename</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
         </dependency>
     </dependencies>
     <build>
