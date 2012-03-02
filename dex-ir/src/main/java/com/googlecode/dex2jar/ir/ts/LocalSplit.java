@@ -144,7 +144,7 @@ public class LocalSplit implements Transformer {
                     if (v.vt == VT.LOCAL) {
                         Phi p = frame[((Local) v)._ls_index];
                         if (p.value == null) {
-                            Local local = new Local("a_" + localId[0]++);
+                            Local local = new Local("a" + localId[0]++);
                             ValueBox nvb = new ValueBox(local);
                             local._ls_vb = nvb;
                             p.setLocal(local);
@@ -255,7 +255,7 @@ public class LocalSplit implements Transformer {
             Phi p = targetF[index];
 
             if (p.value == null) {
-                Local local = new Local("a_" + localId[0]++);
+                Local local = new Local("a" + localId[0]++);
                 ValueBox nvb = new ValueBox(local);
                 local._ls_vb = nvb;
                 p.setLocal(local);

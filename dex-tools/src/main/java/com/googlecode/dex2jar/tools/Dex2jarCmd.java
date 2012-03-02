@@ -52,6 +52,9 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "d", longOpt = "debug-info", hasArg = false, description = "translate debug info")
     private boolean debugInfo = false;
 
+    @Opt(opt = "p", longOpt = "print-ir", hasArg = false, description = "print ir to Syste.out")
+    private boolean printIR = false;
+
     public Dex2jarCmd() {
         super("d2j-dex2jar [options] <file0> [file1 ... fileN]", "convert dex to jar");
     }
@@ -100,7 +103,7 @@ public class Dex2jarCmd extends BaseCmd {
                     .skipDebug(!debugInfo);
 
             Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort(topologicalSort)
-                    .skipDebug(!debugInfo).to(file);
+                    .skipDebug(!debugInfo).printIR(printIR).to(file);
 
             if (!notHandleException) {
                 Map<Method, Exception> exceptions = handler.getExceptions();
