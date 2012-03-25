@@ -55,6 +55,9 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "p", longOpt = "print-ir", hasArg = false, description = "print ir to Syste.out")
     private boolean printIR = false;
 
+    @Opt(opt = "os", longOpt = "optmize-synchronized", hasArg = false, description = "optmize-synchronized")
+    private boolean optmizeSynchronized = false;
+
     public Dex2jarCmd() {
         super("d2j-dex2jar [options] <file0> [file1 ... fileN]", "convert dex to jar");
     }
@@ -103,7 +106,7 @@ public class Dex2jarCmd extends BaseCmd {
                     .skipDebug(!debugInfo);
 
             Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort(topologicalSort)
-                    .skipDebug(!debugInfo).printIR(printIR).to(file);
+                    .skipDebug(!debugInfo).optimizeSynchronized(this.optmizeSynchronized).printIR(printIR).to(file);
 
             if (!notHandleException) {
                 Map<Method, Exception> exceptions = handler.getExceptions();

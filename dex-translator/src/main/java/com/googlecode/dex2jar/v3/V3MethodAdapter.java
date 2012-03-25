@@ -222,8 +222,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
                     indexLabelStmt4Debug(irMethod.stmts);
                     System.out.println(irMethod);
                 }
-                new IrMethod2AsmMethod(0 != (config & V3.REUSE_REGISTER)).convert(irMethod, new LdcOptimizeAdapter(
-                        methodNode));
+                new IrMethod2AsmMethod(config).convert(irMethod, new LdcOptimizeAdapter(methodNode));
             } catch (Exception e) {
                 if (this.exceptionHandler == null) {
                     throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);

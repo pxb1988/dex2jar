@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -14,8 +16,8 @@ import org.objectweb.asm.Type;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Local;
+import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.E1Expr;
@@ -49,14 +51,26 @@ import com.googlecode.dex2jar.ir.ts.LocalType;
 public class IrMethod2AsmMethod implements Opcodes {
 
     private boolean reuseReg = false;
+    private boolean optimizeSynchronized = false;
 
     public IrMethod2AsmMethod() {
         super();
     }
 
+    /**
+     * @deprecated use {@link #IrMethod2AsmMethod(int)} instead
+     * 
+     * @param reuseReg
+     */
     public IrMethod2AsmMethod(boolean reuseReg) {
         super();
         this.reuseReg = reuseReg;
+    }
+
+    public IrMethod2AsmMethod(int config) {
+        super();
+        this.reuseReg = 0 != (config & V3.REUSE_REGISTER);
+        this.optimizeSynchronized = 0 != (config & V3.OPTIMIZE_SYNCHRONIZED);
     }
 
     private void reIndexLocalReuseReg(IrMethod ir) {
@@ -358,6 +372,18 @@ public class IrMethod2AsmMethod implements Opcodes {
     }
 
     private void reBuildInstructions(IrMethod ir, MethodVisitor asm) {
+        Map<String, Integer> lockMap = new HashMap<String, Integer>();
+        int maxLocalIndex;
+        {
+            Local maxLoale = Collections.max(ir.locals, new Comparator<Local>() {
+
+                @Override
+                public int compare(Local o1, Local o2) {
+                    return o1._ls_index - o2._ls_index;
+                }
+            });
+            maxLocalIndex = (maxLoale == null || maxLoale._ls_index < 0) ? 0 : maxLoale._ls_index;
+        }
         for (Stmt st : ir.stmts) {
             switch (st.st) {
             case LABEL:
@@ -456,13 +482,63 @@ public class IrMethod2AsmMethod implements Opcodes {
             case IF:
                 reBuildJumpInstructions((JumpStmt) st, asm);
                 break;
-            case LOCK:
-                accept(((UnopStmt) st).op.value, asm);
+            case LOCK: {
+                Value v = ((UnopStmt) st).op.value;
+                accept(v, asm);
+                if (optimizeSynchronized) {
+                    switch (v.vt) {
+                    case LOCAL:
+                    case CONSTANT: {
+                        String key;
+                        if (v.vt == VT.LOCAL) {
+                            key = "L" + ((Local) v)._ls_index;
+                        } else {
+                            key = "C" + ((Constant) v).value;
+                        }
+                        Integer integer = lockMap.get(key);
+                        int nIndex = integer != null ? integer : ++maxLocalIndex;
+                        asm.visitInsn(DUP);
+                        asm.visitVarInsn(LocalType.typeOf(v).getOpcode(ISTORE), nIndex);
+                        lockMap.put(key, nIndex);
+                    }
+                        break;
+                    // TODO other
+                    }
+                }
                 asm.visitInsn(MONITORENTER);
+            }
                 break;
-            case UNLOCK:
-                accept(((UnopStmt) st).op.value, asm);
+            case UNLOCK: {
+                Value v = ((UnopStmt) st).op.value;
+                if (optimizeSynchronized) {
+                    switch (v.vt) {
+                    case LOCAL:
+                    case CONSTANT: {
+                        String key;
+                        if (v.vt == VT.LOCAL) {
+                            key = "L" + ((Local) v)._ls_index;
+                        } else {
+                            key = "C" + ((Constant) v).value;
+                        }
+                        Integer integer = lockMap.get(key);
+                        if (integer != null) {
+                            asm.visitVarInsn(LocalType.typeOf(v).getOpcode(ILOAD), integer);
+                        } else {
+                            accept(v, asm);
+                        }
+                    }
+                        break;
+                    // TODO other
+                    default: {
+                        accept(v, asm);
+                        break;
+                    }
+                    }
+                } else {
+                    accept(v, asm);
+                }
                 asm.visitInsn(MONITOREXIT);
+            }
                 break;
             case NOP:
                 break;
