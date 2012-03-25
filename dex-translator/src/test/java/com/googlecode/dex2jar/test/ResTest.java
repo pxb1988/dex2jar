@@ -27,6 +27,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
 import com.googlecode.dex2jar.reader.DexFileReader;
+import com.googlecode.dex2jar.v3.Dex2jar;
 import com.googlecode.dex2jar.v3.Main;
 
 /**
@@ -61,8 +62,7 @@ public class ResTest {
             try {
                 File dex = TestUtils.dex(e.getValue(), new File(dir, name + ".dex"));
                 File distFile = new File(dex.getParentFile(), FilenameUtils.getBaseName(dex.getName()) + "_dex2jar.jar");
-                Main.doData(DexFileReader.readDex(dex), distFile, false);
-                Main.doFile(dex, distFile);
+                Dex2jar.from(dex).reUseReg().skipDebug().optimizeSynchronized().topoLogicalSort().to(distFile);
                 TestUtils.checkZipFile(distFile);
                 System.out.write('.');
             } catch (Exception ex) {
@@ -77,6 +77,9 @@ public class ResTest {
         System.out.flush();
         System.out.println();
         if (exes.size() > 0) {
+            for (Exception ex : exes) {
+                ex.printStackTrace(System.err);
+            }
             throw new RuntimeException("there are " + exes.size() + " errors while translate");
         }
     }

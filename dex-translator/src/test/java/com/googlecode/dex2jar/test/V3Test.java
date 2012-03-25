@@ -97,7 +97,7 @@ public class V3Test {
                             }
                         };
                     }
-                }), 0);
+                }), V3.REUSE_REGISTER | V3.TOPOLOGICAL_SORT | V3.OPTIMIZE_SYNCHRONIZED);
         System.out.flush();
         System.out.println();
         if (exes.size() > 0) {

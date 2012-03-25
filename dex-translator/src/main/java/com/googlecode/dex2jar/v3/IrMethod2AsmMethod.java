@@ -375,14 +375,18 @@ public class IrMethod2AsmMethod implements Opcodes {
         Map<String, Integer> lockMap = new HashMap<String, Integer>();
         int maxLocalIndex;
         {
-            Local maxLoale = Collections.max(ir.locals, new Comparator<Local>() {
+            if (ir.locals.size() == 0) {
+                maxLocalIndex = 0;
+            } else {
+                Local maxLoale = Collections.max(ir.locals, new Comparator<Local>() {
 
-                @Override
-                public int compare(Local o1, Local o2) {
-                    return o1._ls_index - o2._ls_index;
-                }
-            });
-            maxLocalIndex = (maxLoale == null || maxLoale._ls_index < 0) ? 0 : maxLoale._ls_index;
+                    @Override
+                    public int compare(Local o1, Local o2) {
+                        return o1._ls_index - o2._ls_index;
+                    }
+                });
+                maxLocalIndex = (maxLoale == null || maxLoale._ls_index < 0) ? 0 : maxLoale._ls_index;
+            }
         }
         for (Stmt st : ir.stmts) {
             switch (st.st) {
