@@ -99,7 +99,7 @@ public class Dex2jarCmd extends BaseCmd {
 
         for (String fileName : remainingArgs) {
             File file = output == null ? new File(FilenameUtils.getBaseName(fileName) + "-dex2jar.jar") : output;
-            System.out.println("dex2jar " + fileName + " -> " + file);
+            System.err.println("dex2jar " + fileName + " -> " + file);
 
             DexFileReader reader = new DexFileReader(new File(fileName));
             DexExceptionHandlerImpl handler = notHandleException ? null : new DexExceptionHandlerImpl()
