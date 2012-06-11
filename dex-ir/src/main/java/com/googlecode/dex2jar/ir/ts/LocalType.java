@@ -172,6 +172,7 @@ public class LocalType implements Transformer {
             case LENGTH: {
                 UnopExpr te = (UnopExpr) v;
                 exec(te.op.value);
+                type(te.op.value, Type.getType(Object.class));
                 type(tb, Type.INT_TYPE);
             }
                 break;

@@ -22,10 +22,10 @@ public class I120Test {
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "b", new String[] {}, "V"));
         DexCodeVisitor code = mv.visitCode();
         code.visitArguments(3, new int[] {});
-        code.visitConstStmt(OP_CONST, 0, Integer.valueOf(0), TYPE_SINGLE); // int: 0xffffffff float:NaN
+        code.visitConstStmt(OP_CONST, 0, Integer.valueOf(0), TYPE_SINGLE);
         code.visitMethodStmt(OP_INVOKE_VIRTUAL, new int[] { 0 }, new Method("Ljava/lang/String;", "toString",
                 new String[] {}, "Ljava/lang/String;"));
-        code.visitConstStmt(OP_CONST, 1, Integer.valueOf(0), TYPE_SINGLE); // int: 0xffffffff float:NaN
+        code.visitConstStmt(OP_CONST, 1, Integer.valueOf(0), TYPE_SINGLE);
         code.visitUnopStmt(OP_ARRAY_LENGTH, 2, 1, TYPE_INT);
         code.visitReturnStmt(OP_RETURN_VOID);
         code.visitEnd();
