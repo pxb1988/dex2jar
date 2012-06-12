@@ -1,21 +1,30 @@
 package com.googlecode.dex2jar.test;
 
-import com.googlecode.dex2jar.DexLabel;
-import static com.googlecode.dex2jar.DexOpcodes.*;
+import static com.googlecode.dex2jar.DexOpcodes.ACC_PUBLIC;
+import static com.googlecode.dex2jar.DexOpcodes.ACC_STATIC;
+import static com.googlecode.dex2jar.DexOpcodes.OP_CONST_STRING;
+import static com.googlecode.dex2jar.DexOpcodes.OP_GOTO;
+import static com.googlecode.dex2jar.DexOpcodes.OP_IF_EQZ;
+import static com.googlecode.dex2jar.DexOpcodes.OP_INVOKE_DIRECT;
+import static com.googlecode.dex2jar.DexOpcodes.OP_INVOKE_STATIC;
+import static com.googlecode.dex2jar.DexOpcodes.OP_MOVE_EXCEPTION;
+import static com.googlecode.dex2jar.DexOpcodes.OP_MOVE_RESULT;
+import static com.googlecode.dex2jar.DexOpcodes.OP_NEW_INSTANCE;
+import static com.googlecode.dex2jar.DexOpcodes.OP_RETURN;
+import static com.googlecode.dex2jar.DexOpcodes.OP_THROW;
+import static com.googlecode.dex2jar.DexOpcodes.TYPE_INT;
+import static com.googlecode.dex2jar.DexOpcodes.TYPE_OBJECT;
 
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.v3.V3;
-import com.googlecode.dex2jar.v3.V3MethodAdapter;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
-import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 public class I121Test {
 
@@ -64,21 +73,9 @@ public class I121Test {
 
     @Test
     public void test() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
-        final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        cw.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, "a", null, "java/lang/Object", null);
-        a(new EmptyVisitor() {
-            @Override
-            public DexMethodVisitor visitMethod(int accessFlags, Method method) {
-                return new V3MethodAdapter(accessFlags, method, null, V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT) {
-                    @Override
-                    public void visitEnd() {
-                        super.visitEnd();
-                        methodNode.accept(cw);
-                    }
-                };
-            }
-        });
-        ClassReader cr = new ClassReader(cw.toByteArray());
+        TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
+        a(cv);
+        ClassReader cr = new ClassReader(cv.toByteArray());
         TestUtils.verify(cr);
     }
 }
