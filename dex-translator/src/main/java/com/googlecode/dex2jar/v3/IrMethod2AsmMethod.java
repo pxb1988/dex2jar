@@ -382,10 +382,26 @@ public class IrMethod2AsmMethod implements Opcodes {
 
                     @Override
                     public int compare(Local o1, Local o2) {
-                        return o1._ls_index - o2._ls_index;
+                        int i = o1._ls_index - o2._ls_index;
+                        if (i != 0) {
+                            return i;
+                        }
+                        Type t1 = LocalType.typeOf(o1);
+                        if (t1 == null) {
+                            return -1;
+                        }
+                        Type t2 = LocalType.typeOf(o2);
+                        if (t2 == null) {
+                            return 1;
+                        }
+                        return t1.getSize() - t2.getSize();
                     }
                 });
-                maxLocalIndex = (maxLoale == null || maxLoale._ls_index < 0) ? 0 : maxLoale._ls_index;
+                if (maxLoale == null || maxLoale._ls_index < 0) {
+                    maxLocalIndex = 0;
+                } else {
+                    maxLocalIndex = maxLoale._ls_index + LocalType.typeOf(maxLoale).getSize() - 1;
+                }
             }
         }
         for (Stmt st : ir.stmts) {
