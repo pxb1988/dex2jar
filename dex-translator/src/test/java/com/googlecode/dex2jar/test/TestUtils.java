@@ -18,8 +18,10 @@ package com.googlecode.dex2jar.test;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -204,6 +206,15 @@ public abstract class TestUtils {
 
     public static void verify(final ClassReader cr) throws AnalyzerException, IllegalArgumentException,
             IllegalAccessException {
+        try {
+            verify(cr, new PrintWriter(new OutputStreamWriter(System.out, "UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void verify(final ClassReader cr, PrintWriter out) throws AnalyzerException,
+            IllegalArgumentException, IllegalAccessException {
         ClassNode cn = new ClassNode();
         cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
 
@@ -216,13 +227,10 @@ public abstract class TestUtils {
             try {
                 a.analyze(cn.name, method);
             } catch (Exception e) {
-                printAnalyzerResult(method, a, new PrintWriter(System.out));
-                try {
-                    PrintWriter out = new PrintWriter("target/error.log", "utf8");
-                    printAnalyzerResult(method, a, out);
-                    out.close();
-                } catch (Exception e2) {
-                }
+                out.println(cr.getClassName() + "." + method.name + method.desc);
+                printAnalyzerResult(method, a, out);
+                e.printStackTrace(out);
+                out.flush();
                 throw new DexException("method " + method.name + " " + method.desc, e);
             }
         }
