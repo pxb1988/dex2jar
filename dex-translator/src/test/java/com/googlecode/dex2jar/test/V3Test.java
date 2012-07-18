@@ -17,6 +17,7 @@ package com.googlecode.dex2jar.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,9 +63,11 @@ public class V3Test {
 
         DexFileReader reader = new DexFileReader(data);
         V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
-        final List<String> exes = new ArrayList();
+        final List<String> exes = new ArrayList<String>();
         reader.accept(afa, DexFileReader.SKIP_CODE | DexFileReader.SKIP_DEBUG);
         System.out.flush();
+        String logFileName = "target/v3.log." + System.currentTimeMillis();
+        final PrintWriter log = new PrintWriter(logFileName, "UTF-8");
         System.out.write(String.format("%05d ", 0).getBytes(UTF8));
         reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), null,
                 new ClassVisitorFactory() {
@@ -80,7 +83,7 @@ public class V3Test {
                                     super.visitEnd();
                                     byte[] data = this.toByteArray();
                                     FileUtils.writeByteArrayToFile(new File(destDir, name + ".class"), data);
-                                    TestUtils.verify(new ClassReader(data));
+                                    TestUtils.verify(new ClassReader(data), log);
                                     System.out.write('.');
                                 } catch (Throwable e) {
                                     System.out.write('X');
@@ -97,15 +100,17 @@ public class V3Test {
                             }
                         };
                     }
-                }), 0);
+                }, V3.REUSE_REGISTER | V3.TOPOLOGICAL_SORT | V3.OPTIMIZE_SYNCHRONIZED), DexFileReader.SKIP_DEBUG);
         System.out.flush();
         System.out.println();
+        log.close();
         if (exes.size() > 0) {
             StringBuilder sb = new StringBuilder("there are ").append(exes.size())
                     .append(" error(s) while translate\n");
             for (String ln : exes) {
                 sb.append(ln).append("\n");
             }
+            sb.append("details: ").append(logFileName).append("\n");
             throw new RuntimeException(sb.toString());
         }
     }

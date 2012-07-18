@@ -132,8 +132,36 @@ public class Dex2jar {
         return this;
     }
 
+    public Dex2jar optimizeSynchronized(boolean b) {
+        if (b) {
+            this.v3Config |= V3.OPTIMIZE_SYNCHRONIZED;
+        } else {
+            this.v3Config &= ~V3.OPTIMIZE_SYNCHRONIZED;
+        }
+        return this;
+    }
+
+    public Dex2jar printIR(boolean b) {
+        if (b) {
+            this.v3Config |= V3.PRINT_IR;
+        } else {
+            this.v3Config &= ~V3.PRINT_IR;
+        }
+        return this;
+    }
+
     public Dex2jar reUseReg() {
         this.v3Config |= V3.REUSE_REGISTER;
+        return this;
+    }
+
+    public Dex2jar optimizeSynchronized() {
+        this.v3Config |= V3.OPTIMIZE_SYNCHRONIZED;
+        return this;
+    }
+
+    public Dex2jar printIR() {
+        this.v3Config |= V3.PRINT_IR;
         return this;
     }
 

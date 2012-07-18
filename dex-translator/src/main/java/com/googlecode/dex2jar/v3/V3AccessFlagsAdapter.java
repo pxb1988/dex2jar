@@ -95,20 +95,24 @@ public class V3AccessFlagsAdapter implements DexFileVisitor {
                 }
                 for (Annotation ann : anns) {
                     if ("Ldalvik/annotation/InnerClass;".equals(ann.type)) {
+                        Integer acc = null;
+                        String name = null;
                         for (Item it : ann.items) {
                             if ("accessFlags".equals(it.name)) {
-                                map.put(className, (Integer) it.value);
+                                acc = (Integer) it.value;
                             } else if ("name".equals(it.name)) {
-                                innerNameMap.put(className, (String) it.value);
-                                if (it.value == null) {
-                                    Set<String> set = extraMember.get(enclosingClass);
-                                    if (set == null) {
-                                        set = new TreeSet<String>();
-                                        extraMember.put(enclosingClass, set);
-                                    }
-                                    set.add(className);
-                                }
+                                name = (String) it.value;
                             }
+                        }
+                        map.put(className, acc);
+                        innerNameMap.put(className, name);
+                        if (name == null) {
+                            Set<String> set = extraMember.get(enclosingClass);
+                            if (set == null) {
+                                set = new TreeSet<String>();
+                                extraMember.put(enclosingClass, set);
+                            }
+                            set.add(className);
                         }
                     }
                 }

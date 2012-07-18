@@ -333,7 +333,7 @@ public class JasminifierClassAdapter extends ClassAdapter {
                 for (int j = 0; j < mn.tryCatchBlocks.size(); ++j) {
                     TryCatchBlockNode tcb = (TryCatchBlockNode) mn.tryCatchBlocks.get(j);
                     pw.print(".catch ");
-                    pw.print(tcb.type);
+                    pw.print(tcb.type == null ? "all" : tcb.type);
                     pw.print(" from ");
                     print(tcb.start);
                     pw.print(" to ");

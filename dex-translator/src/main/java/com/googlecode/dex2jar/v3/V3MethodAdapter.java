@@ -29,6 +29,7 @@ import org.objectweb.asm.util.TraceMethodVisitor;
 
 import com.googlecode.dex2jar.Annotation;
 import com.googlecode.dex2jar.Annotation.Item;
+import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.asm.LdcOptimizeAdapter;
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -97,7 +98,9 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     public V3MethodAdapter(int accessFlags, Method method, DexExceptionHandler exceptionHandler, int config) {
         super();
         this.method = method;
-        this.accessFlags = accessFlags;
+        // clear ACC_DECLARED_SYNCHRONIZED and ACC_CONSTRUCTOR from method flags
+        final int cleanFlag = ~((DexOpcodes.ACC_DECLARED_SYNCHRONIZED | DexOpcodes.ACC_CONSTRUCTOR));
+        this.accessFlags = accessFlags & cleanFlag;
         this.exceptionHandler = exceptionHandler;
         this.config = config;
         // issue 88, the desc must set before visitParameterAnnotation
@@ -218,8 +221,11 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
                         indexLabelStmt4Debug(irMethod.stmts);
                     }
                 }
-                new IrMethod2AsmMethod(0 != (config & V3.REUSE_REGISTER)).convert(irMethod, new LdcOptimizeAdapter(
-                        methodNode));
+                if (0 != (config & V3.PRINT_IR)) {
+                    indexLabelStmt4Debug(irMethod.stmts);
+                    System.out.println(irMethod);
+                }
+                new IrMethod2AsmMethod(config).convert(irMethod, new LdcOptimizeAdapter(methodNode));
             } catch (Exception e) {
                 if (this.exceptionHandler == null) {
                     throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);

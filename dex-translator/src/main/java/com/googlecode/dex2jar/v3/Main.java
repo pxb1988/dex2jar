@@ -64,6 +64,7 @@ public class Main {
     }
 
     public static void main(String... args) {
+        System.err.println("this cmd is deprecated, use the d2j-dex2jar if possible");
         System.out.println("dex2jar version: translator-" + Main.class.getPackage().getImplementationVersion());
         if (args.length == 0) {
             System.err.println("dex2jar file1.dexORapk file2.dexORapk ...");

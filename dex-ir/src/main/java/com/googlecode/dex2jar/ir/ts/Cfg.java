@@ -100,7 +100,6 @@ public class Cfg {
     public static boolean notThrow(Stmt s) {
         switch (s.st) {
         case LABEL:
-        case RETURN:
         case RETURN_VOID:
         case GOTO:
         case NOP:
@@ -111,8 +110,7 @@ public class Cfg {
             return notThrow(e2.op1.value) && notThrow(e2.op2.value);
         case TABLE_SWITCH:
         case LOOKUP_SWITCH:
-            E1Stmt s1 = (E1Stmt) s;
-            return notThrow(s1.op.value);
+        case RETURN:
         case IF:
             return notThrow(((E1Stmt) s).op.value);
         }

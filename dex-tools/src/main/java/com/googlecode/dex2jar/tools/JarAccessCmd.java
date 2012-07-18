@@ -1,0 +1,235 @@
+/*
+ * dex2jar - Tools to work with android .dex and java .class files
+ * Copyright (c) 2009-2012 Panxiaobo
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.googlecode.dex2jar.tools;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.objectweb.asm.ClassAdapter;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+
+import p.rn.util.FileOut;
+import p.rn.util.FileOut.OutHandler;
+import p.rn.util.FileWalker;
+import p.rn.util.FileWalker.StreamHandler;
+import p.rn.util.FileWalker.StreamOpener;
+
+public class JarAccessCmd extends BaseCmd {
+    public static void main(String[] args) {
+        new JarAccessCmd().doMain(args);
+    }
+
+    public JarAccessCmd() {
+        super("d2j-jar-access [options] <jar>", "add or remove class/method/field access in jar file");
+    }
+
+    @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
+    private boolean forceOverwrite = false;
+    @Opt(opt = "o", longOpt = "output", description = "output dir of .j files, default is $current_dir/[jar-name]-access.jar", argName = "out-dir")
+    private File output;
+
+    @Opt(opt = "rd", longOpt = "remove-debug", hasArg = false, description = "remove debug info")
+    private boolean removeDebug = false;
+
+    @Opt(opt = "rf", longOpt = "remove-field-access", description = "remove access from field", argName = "ACC")
+    private String removeFieldAccess;
+    @Opt(opt = "rm", longOpt = "remove-method-access", description = "remove access from method", argName = "ACC")
+    private String removeMethodAccess;
+    @Opt(opt = "rc", longOpt = "remove-class-access", description = "remove access from class", argName = "ACC")
+    private String removeClassAccess;
+    @Opt(opt = "af", longOpt = "add-field-access", description = "add access from field", argName = "ACC")
+    private String addFieldAccess;
+    @Opt(opt = "am", longOpt = "add-method-access", description = "add access from method", argName = "ACC")
+    private String addMethodAccess;
+    @Opt(opt = "ac", longOpt = "add-class-access", description = "add access from class", argName = "ACC")
+    private String addClassAccess;
+
+    static int str2acc(String s) {
+        if (s == null) {
+            return 0;
+        }
+        int result = 0;
+        s = s.toLowerCase();
+        if (s.contains("public")) {
+            result |= Opcodes.ACC_PUBLIC;
+        }
+        if (s.contains("private")) {
+            result |= Opcodes.ACC_PRIVATE;
+        }
+        if (s.contains("protected")) {
+            result |= Opcodes.ACC_PROTECTED;
+        }
+        if (s.contains("final")) {
+            result |= Opcodes.ACC_FINAL;
+        }
+        if (s.contains("static")) {
+            result |= Opcodes.ACC_STATIC;
+        }
+        if (s.contains("super")) {
+            result |= Opcodes.ACC_SUPER;
+        }
+        if (s.contains("synchronized")) {
+            result |= Opcodes.ACC_SYNCHRONIZED;
+        }
+        if (s.contains("volatile")) {
+            result |= Opcodes.ACC_VOLATILE;
+        }
+        if (s.contains("bridge")) {
+            result |= Opcodes.ACC_BRIDGE;
+        }
+        if (s.contains("transient")) {
+            result |= Opcodes.ACC_TRANSIENT;
+        }
+        if (s.contains("varargs")) {
+            result |= Opcodes.ACC_VARARGS;
+        }
+        if (s.contains("native")) {
+            result |= Opcodes.ACC_NATIVE;
+        }
+        if (s.contains("strict")) {
+            result |= Opcodes.ACC_STRICT;
+        }
+        if (s.contains("interface")) {
+            result |= Opcodes.ACC_INTERFACE;
+        }
+        if (s.contains("abstract")) {
+            result |= Opcodes.ACC_ABSTRACT;
+        }
+        if (s.contains("synthetic")) {
+            result |= Opcodes.ACC_SYNTHETIC;
+        }
+        if (s.contains("annotation")) {
+            result |= Opcodes.ACC_ANNOTATION;
+        }
+        if (s.contains("enum")) {
+            result |= Opcodes.ACC_ENUM;
+        }
+        if (s.contains("deprecated")) {
+            result |= Opcodes.ACC_DEPRECATED;
+        }
+        return result;
+    }
+
+    @Override
+    protected void doCommandLine() throws Exception {
+        if (remainingArgs.length != 1) {
+            usage();
+            return;
+        }
+
+        File jar = new File(remainingArgs[0]);
+        if (!jar.exists()) {
+            System.err.println(jar + " is not exists");
+            usage();
+            return;
+        }
+
+        if (output == null) {
+            if (jar.isDirectory()) {
+                output = new File(jar.getName() + "-access.jar");
+            } else {
+                output = new File(FilenameUtils.getBaseName(jar.getName()) + "-access.jar");
+            }
+        }
+
+        if (output.exists() && !forceOverwrite) {
+            System.err.println(output + " exists, use --force to overwrite");
+            usage();
+            return;
+        }
+
+        final int rf = ~str2acc(removeFieldAccess);
+        final int rm = ~str2acc(removeMethodAccess);
+        final int rc = ~str2acc(removeClassAccess);
+
+        final int af = str2acc(addFieldAccess);
+        final int am = str2acc(addMethodAccess);
+        final int ac = str2acc(addClassAccess);
+
+        final int flags = removeDebug ? ClassReader.SKIP_DEBUG : 0;
+        final OutHandler fo = FileOut.create(output, true);
+        try {
+            new FileWalker().withStreamHandler(new StreamHandler() {
+
+                @Override
+                public void handle(boolean isDir, String name, StreamOpener current, Object nameObject)
+                        throws IOException {
+                    if (isDir || !name.endsWith(".class")) {
+                        fo.write(isDir, name, current == null ? null : current.get(), nameObject);
+                        return;
+                    }
+
+                    OutputStream os = null;
+                    try {
+                        InputStream is = current.get();
+                        final ClassReader r = new ClassReader(is);
+                        ClassWriter cr = new ClassWriter(0);
+                        r.accept(new ClassAdapter(cr) {
+
+                            @Override
+                            public void visit(int version, int access, String name, String signature, String superName,
+                                    String[] interfaces) {
+                                int na = (access & rc) | ac;
+                                if (access != na) {
+                                    System.out.println("c " + name);
+                                }
+                                super.visit(version, na, name, signature, superName, interfaces);
+                            }
+
+                            @Override
+                            public FieldVisitor visitField(int access, String name, String desc, String signature,
+                                    Object value) {
+                                int na = (access & rf) | af;
+                                if (na != access) {
+                                    System.out.println("f " + r.getClassName() + "." + name);
+                                }
+                                return super.visitField(na, name, desc, signature, value);
+                            }
+
+                            @Override
+                            public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+                                    String[] exceptions) {
+                                int na = (access & rm) | am;
+                                if (na != access) {
+                                    System.out.println("m " + r.getClassName() + "." + name + desc);
+                                }
+                                return super.visitMethod(na, name, desc, signature, exceptions);
+                            }
+
+                        }, flags | ClassReader.EXPAND_FRAMES);
+                        fo.write(isDir, name, cr.toByteArray(), nameObject);
+                    } catch (IOException ioe) {
+                        System.err.println("error in " + name);
+                        ioe.printStackTrace(System.err);
+                    } finally {
+                        IOUtils.closeQuietly(os);
+                    }
+                }
+            }).walk(jar);
+        } finally {
+            IOUtils.closeQuietly(fo);
+        }
+    }
+}
