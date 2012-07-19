@@ -35,9 +35,8 @@ import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.reader.io.BeArrayDataIn;
+import com.googlecode.dex2jar.reader.io.ArrayDataIn;
 import com.googlecode.dex2jar.reader.io.DataIn;
-import com.googlecode.dex2jar.reader.io.LeArrayDataIn;
 import com.googlecode.dex2jar.reader.io.OffsetedDataIn;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
@@ -216,11 +215,7 @@ public class DexFileReader {
 
     static private DataIn opDataIn(byte[] data) {
         try {
-            if (isLittleEndian) {
-                return new LeArrayDataIn(readDex(data));
-            } else {
-                return new BeArrayDataIn(readDex(data));
-            }
+            return new ArrayDataIn(readDex(data), isLittleEndian);
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {

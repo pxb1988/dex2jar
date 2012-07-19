@@ -24,22 +24,22 @@ import java.util.Stack;
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
-public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn {
+public class ArrayDataIn extends ByteArrayInputStream implements DataIn {
+    public static ArrayDataIn be(byte[] data) {
+        return new ArrayDataIn(data, false);
+    }
+
+    public static ArrayDataIn le(byte[] data) {
+        return new ArrayDataIn(data, true);
+    }
+
+    private boolean isLE;
 
     private Stack<Integer> stack = new Stack<Integer>();
 
-    public ArrayDataIn(byte[] data) {
+    public ArrayDataIn(byte[] data, boolean isLE) {
         super(data);
-    }
-
-    @Override
-    public int readShortx() {
-        return (short) readUShortx();
-    }
-
-    @Override
-    public int readIntx() {
-        return readUIntx();
+        this.isLE = isLE;
     }
 
     @Override
@@ -69,6 +69,11 @@ public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn
     }
 
     @Override
+    public int readByte() {
+        return (byte) readUByte();
+    }
+
+    @Override
     public byte[] readBytes(int size) {
         byte[] data = new byte[size];
         try {
@@ -77,6 +82,11 @@ public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn
             throw new RuntimeException(e);
         }
         return data;
+    }
+
+    @Override
+    public int readIntx() {
+        return readUIntx();
     }
 
     @Override
@@ -98,6 +108,28 @@ public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn
     }
 
     @Override
+    public int readShortx() {
+        return (short) readUShortx();
+    }
+
+    @Override
+    public int readUByte() {
+        if (super.pos >= super.count) {
+            throw new RuntimeException("EOF");
+        }
+        return super.read();
+    }
+
+    @Override
+    public int readUIntx() {
+        if (isLE) {
+            return readUByte() | (readUByte() << 8) | (readUByte() << 16) | (readUByte() << 24);
+        } else {
+            return (readUByte() << 24) | (readUByte() << 16) | (readUByte() << 8) | readUByte();
+        }
+    }
+
+    @Override
     public long readULeb128() {
         long value = 0;
         int count = 0;
@@ -112,20 +144,16 @@ public abstract class ArrayDataIn extends ByteArrayInputStream implements DataIn
     }
 
     @Override
+    public int readUShortx() {
+        if (isLE) {
+            return readUByte() | (readUByte() << 8);
+        } else {
+            return (readUByte() << 8) | readUByte();
+        }
+    }
+
+    @Override
     public void skip(int bytes) {
         super.skip(bytes);
-    }
-
-    @Override
-    public int readByte() {
-        return (byte) readUByte();
-    }
-
-    @Override
-    public int readUByte() {
-        if (super.pos >= super.count) {
-            throw new RuntimeException("EOF");
-        }
-        return super.read();
     }
 }
