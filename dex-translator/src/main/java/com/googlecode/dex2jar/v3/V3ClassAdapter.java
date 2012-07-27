@@ -116,6 +116,9 @@ public class V3ClassAdapter implements DexClassVisitor {
                     for (Item i : ann.items) {
                         if ("value".equals(i.name)) {
                             enclosingMethod = (Method) i.value;
+                            if (enclosingClass == null) {
+                                enclosingClass = enclosingMethod.getOwner();
+                            }
                         }
                     }
                 }
