@@ -27,7 +27,9 @@ import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.ArrayExpr;
 import com.googlecode.dex2jar.ir.expr.CastExpr;
+import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
@@ -740,6 +742,26 @@ public class IrMethod2AsmMethod implements Opcodes {
     }
 
     private static void reBuildEnExpression(EnExpr value, MethodVisitor asm) {
+        if (value.vt == VT.FILLED_ARRAY) {
+            FilledArrayExpr fae = (FilledArrayExpr) value;
+            TypeExpr te = Exprs.nNewArray(fae.type, Constant.nInt(fae.ops.length));
+            reBuildE1Expression(te, asm);
+            Type tp1 = LocalType.typeOf(fae);
+            for (int i=0; i<fae.ops.length; i++) {
+                if (fae.ops[i].value == null)
+                    continue;
+                asm.visitInsn(DUP);
+                asm.visitLdcInsn(i);
+                accept(fae.ops[i].value, asm);
+                Type tp2 = LocalType.typeOf(fae.ops[i].value);
+                if (tp1.getSort() == Type.ARRAY) {
+                    asm.visitInsn(Type.getType(tp1.getDescriptor().substring(1)).getOpcode(IASTORE));
+                } else {
+                    asm.visitInsn(tp2.getOpcode(IASTORE));
+                }
+            }
+            return;
+        }
         if (value.vt == VT.INVOKE_NEW) {
             asm.visitTypeInsn(NEW, ((InvokeExpr) value).methodOwnerType.getInternalName());
             asm.visitInsn(DUP);

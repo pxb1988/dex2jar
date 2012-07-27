@@ -24,6 +24,7 @@ import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.expr.CastExpr;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.RefExpr;
@@ -237,6 +238,13 @@ public class LocalType implements Transformer {
             }
         case En:
             switch (v.vt) {
+            case FILLED_ARRAY:
+                FilledArrayExpr fae = (FilledArrayExpr) v;
+                type(fae, Type.getType("[" + fae.type.getDescriptor()));
+                for (int i = 0; i < fae.ops.length; i++) {
+                    exec(fae.ops[i].value);
+                }
+                break;
             case INVOKE_NEW:
             case INVOKE_STATIC: {
                 InvokeExpr ie = (InvokeExpr) v;
