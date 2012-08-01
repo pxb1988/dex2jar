@@ -289,10 +289,12 @@ public class LocalType implements Transformer {
             tb2.xtype = tb1.xtype;
             return;
         }
-        Type nt = merge(tb1.xtype.type, tb2.xtype.type);
-        tb1.xtype.tb = tb2;
-        tb1.xtype = tb2.xtype;
-        tb2.xtype.type = nt;
+        //FIXME:merge type when both not null
+        //      disable now for Issue 124
+        //Type nt = merge(tb1.xtype.type, tb2.xtype.type);
+        //tb1.xtype.tb = tb2;
+        //tb1.xtype = tb2.xtype;
+        //tb2.xtype.type = nt;
     }
 
     @Override
