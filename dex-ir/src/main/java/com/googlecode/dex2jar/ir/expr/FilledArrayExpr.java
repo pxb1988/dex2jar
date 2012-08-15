@@ -48,11 +48,13 @@ public class FilledArrayExpr extends EnExpr {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder().append('{');
-        for (int i = 0; i < ops.length - 1; i++) {
+        for (int i = 0; i < ops.length; i++) {
             sb.append(ops[i]).append(", ");
         }
-        sb.append(ops[ops.length - 1]).append('}');
+        if (ops.length > 0) {
+            sb.setLength(sb.length() - 2); // remove tail ", "
+        }
+        sb.append('}');
         return sb.toString();
     }
-
 }
