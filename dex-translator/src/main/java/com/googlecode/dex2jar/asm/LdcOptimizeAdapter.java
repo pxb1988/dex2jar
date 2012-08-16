@@ -43,7 +43,7 @@ public class LdcOptimizeAdapter extends MethodAdapter implements Opcodes {
             this.visitInsn(ACONST_NULL);
         } else if (cst instanceof Integer) {
             int value = (Integer) cst;
-            if (value >= 0 && value <= 5) {
+            if (value >= -1 && value <= 5) {
                 super.visitInsn(ICONST_0 + value);
             } else if (value <= Byte.MAX_VALUE && value >= Byte.MIN_VALUE) {
                 super.visitIntInsn(BIPUSH, value);
