@@ -29,8 +29,16 @@ public class ArrayDataIn extends ByteArrayInputStream implements DataIn {
         return new ArrayDataIn(data, false);
     }
 
+    public static ArrayDataIn be(byte[] data, int offset, int length) {
+        return new ArrayDataIn(data, offset, length, false);
+    }
+
     public static ArrayDataIn le(byte[] data) {
         return new ArrayDataIn(data, true);
+    }
+
+    public static ArrayDataIn le(byte[] data, int offset, int length) {
+        return new ArrayDataIn(data, offset, length, true);
     }
 
     private boolean isLE;
@@ -42,14 +50,19 @@ public class ArrayDataIn extends ByteArrayInputStream implements DataIn {
         this.isLE = isLE;
     }
 
+    public ArrayDataIn(byte[] buf, int offset, int length, boolean isLE) {
+        super(buf, offset, length);
+        this.isLE = isLE;
+    }
+
     @Override
     public int getCurrentPosition() {
-        return super.pos;
+        return super.pos - super.mark;
     }
 
     @Override
     public void move(int absOffset) {
-        super.pos = absOffset;
+        super.pos = absOffset + super.mark;
     }
 
     @Override
