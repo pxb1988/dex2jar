@@ -16,10 +16,10 @@
 package com.googlecode.dex2jar.reader;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UTFDataFormatException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -539,11 +539,10 @@ public class DexFileReader {
             in.pushMove(offset);
             try {
                 int length = (int) in.readULeb128();
-                ByteArrayOutputStream baos = new ByteArrayOutputStream(length);
-                for (int b = in.readByte(); b != 0; b = in.readByte()) {
-                    baos.write(b);
-                }
-                return new String(baos.toByteArray(), UTF8);
+                StringBuilder buff = new StringBuilder((int) (length * 1.5));
+                return Mutf8.decode(in, buff);
+            } catch (UTFDataFormatException e) {
+                throw new DexException(e, "fail to load string %d@%08x", id, offset);
             } finally {
                 in.pop();
             }
