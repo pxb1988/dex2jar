@@ -83,6 +83,14 @@ public class LocalType implements Transformer {
         return t2;
     }
 
+    public static boolean needMerge(Type t1, Type t2) {
+        if ((t1.getSort() == Type.ARRAY && t2.getSort() == Type.OBJECT) || 
+        		(t2.getSort() == Type.ARRAY && t1.getSort() == Type.OBJECT)) {
+            return true;
+        }
+        return false;
+    }
+
     static TypeBox trimTypeBox(TypeBox tb) {
         while (tb != tb.xtype.tb) {
             tb = tb.xtype.tb;
@@ -190,6 +198,7 @@ public class LocalType implements Transformer {
             switch (v.vt) {
             case ARRAY:
                 // TODO associate array expr types
+                type(tb1, Type.getType(Object.class));
                 type(tb2, Type.INT_TYPE);
                 break;
             case ADD:
@@ -236,6 +245,7 @@ public class LocalType implements Transformer {
                 type(tb, Type.BOOLEAN_TYPE);
                 break;
             }
+            break;
         case En:
             switch (v.vt) {
             case FILLED_ARRAY:
@@ -289,12 +299,13 @@ public class LocalType implements Transformer {
             tb2.xtype = tb1.xtype;
             return;
         }
-        //FIXME:merge type when both not null
-        //      disable now for Issue 124
-        //Type nt = merge(tb1.xtype.type, tb2.xtype.type);
-        //tb1.xtype.tb = tb2;
-        //tb1.xtype = tb2.xtype;
-        //tb2.xtype.type = nt;
+        //Only merge for special case
+        if (needMerge(tb1.xtype.type, tb2.xtype.type)) {
+        	Type nt = merge(tb1.xtype.type, tb2.xtype.type);
+        	tb1.xtype.tb = tb2;
+        	tb1.xtype = tb2.xtype;
+        	tb2.xtype.type = nt;
+        }
     }
 
     @Override
