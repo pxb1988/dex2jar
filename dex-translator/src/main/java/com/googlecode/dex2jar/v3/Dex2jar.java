@@ -76,27 +76,26 @@ public class Dex2jar {
                     + " please refere smali http://code.google.com/p/smali/ to convert odex to dex");
         }
 
-        V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
+        V3InnerClzGather afa = new V3InnerClzGather();
         reader.accept(afa, DexFileReader.SKIP_CODE | DexFileReader.SKIP_DEBUG);
         try {
-            reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(),
-                    exceptionHandler, new ClassVisitorFactory() {
+            reader.accept(new V3(afa.getClasses(), exceptionHandler, new ClassVisitorFactory() {
+                @Override
+                public ClassVisitor create(final String name) {
+                    return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
                         @Override
-                        public ClassVisitor create(final String name) {
-                            return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
-                                @Override
-                                public void visitEnd() {
-                                    super.visitEnd();
-                                    try {
-                                        byte[] data = this.toByteArray();
-                                        saveTo(data, name, dist);
-                                    } catch (IOException e) {
-                                        e.printStackTrace(System.err);
-                                    }
-                                }
-                            };
+                        public void visitEnd() {
+                            super.visitEnd();
+                            try {
+                                byte[] data = this.toByteArray();
+                                saveTo(data, name, dist);
+                            } catch (IOException e) {
+                                e.printStackTrace(System.err);
+                            }
                         }
-                    }, v3Config), readerConfig);
+                    };
+                }
+            }, v3Config), readerConfig);
         } catch (Exception e) {
             if (exceptionHandler == null) {
                 throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);

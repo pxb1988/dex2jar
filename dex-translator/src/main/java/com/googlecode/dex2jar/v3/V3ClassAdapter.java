@@ -17,12 +17,9 @@ package com.googlecode.dex2jar.v3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -34,6 +31,7 @@ import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.v3.V3InnerClzGather.Clz;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFieldVisitor;
@@ -51,31 +49,23 @@ public class V3ClassAdapter implements DexClassVisitor {
     protected List<Annotation> anns = new ArrayList<Annotation>();
     protected boolean build = false;
     protected String className;
+    protected Clz clz;
+    protected int config;
     protected ClassVisitor cv;
     protected DexExceptionHandler exceptionHandler;
-    protected Map<String, Set<String>> extraMemberClass;
     protected String file;
-    protected Map<String, Integer> innerAccessFlagsMap;
-    protected Map<String, String> innerNameMap;
     protected String[] interfaceNames;
-    protected boolean isInnerClass = false;
     protected String superClass;
-    protected int config;
 
-    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap,
-            Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler, ClassVisitor cv,
-            int access_flags, String className, String superClass, String[] interfaceNames) {
-        this(accessFlagsMap, innerNameMap, extraMemberClass, exceptionHandler, cv, access_flags, className, superClass,
-                interfaceNames, 0);
+    public V3ClassAdapter(Clz clz, DexExceptionHandler exceptionHandler, ClassVisitor cv, int access_flags,
+            String className, String superClass, String[] interfaceNames) {
+        this(clz, exceptionHandler, cv, access_flags, className, superClass, interfaceNames, 0);
     }
 
-    public V3ClassAdapter(Map<String, Integer> accessFlagsMap, Map<String, String> innerNameMap,
-            Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler, ClassVisitor cv,
-            int access_flags, String className, String superClass, String[] interfaceNames, int config) {
+    public V3ClassAdapter(Clz clz, DexExceptionHandler exceptionHandler, ClassVisitor cv, int access_flags,
+            String className, String superClass, String[] interfaceNames, int config) {
         super();
-        this.innerAccessFlagsMap = accessFlagsMap;
-        this.innerNameMap = innerNameMap;
-        this.extraMemberClass = extraMemberClass;
+        this.clz = clz;
         this.cv = cv;
         this.access_flags = access_flags;
         this.className = className;
@@ -88,8 +78,6 @@ public class V3ClassAdapter implements DexClassVisitor {
     protected void build() {
         if (!build) {
             String signature = null;
-            String enclosingClass = null;
-            Method enclosingMethod = null;
             for (Iterator<Annotation> it = anns.iterator(); it.hasNext();) {
                 Annotation ann = it.next();
                 if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
@@ -104,45 +92,12 @@ public class V3ClassAdapter implements DexClassVisitor {
                             signature = sb.toString();
                         }
                     }
-                } else if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
-                    it.remove();
-                    for (Item i : ann.items) {
-                        if (i.name.equals("value")) {
-                            enclosingClass = i.value.toString();
-                        }
-                    }
-                } else if (ann.type.equals("Ldalvik/annotation/EnclosingMethod;")) {
-                    it.remove();
-                    for (Item i : ann.items) {
-                        if ("value".equals(i.name)) {
-                            enclosingMethod = (Method) i.value;
-                            if (enclosingClass == null) {
-                                enclosingClass = enclosingMethod.getOwner();
-                            }
-                        }
-                    }
                 }
             }
 
-            if (isInnerClass) {
-                Integer i = innerAccessFlagsMap.get(className);
-                if (i != null) {
-                    access_flags = i;
-                }
-            }
-            int accessInClass = access_flags;
-            if ((access_flags & Opcodes.ACC_INTERFACE) == 0) { // issue 55
-                accessInClass |= Opcodes.ACC_SUPER;// 解决生成的class文件使用dx重新转换时使用的指令与原始指令不同的问题
-            }
-
-            // access in class has no acc_static or acc_private
-            accessInClass &= ~(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE);
-
-            if (isInnerClass && (access_flags & Opcodes.ACC_PROTECTED) != 0) {
-                accessInClass &= ~Opcodes.ACC_PROTECTED;
-                accessInClass |= Opcodes.ACC_PUBLIC;
-            }
-
+            int access = clz.access;
+            boolean isInnerClass = clz.enclosingClass != null || clz.enclosingMethod != null;
+            int accessInClass = clearClassAccess(isInnerClass, access);
             String[] nInterfaceNames = null;
             if (interfaceNames != null) {
                 nInterfaceNames = new String[interfaceNames.length];
@@ -152,52 +107,43 @@ public class V3ClassAdapter implements DexClassVisitor {
             }
             cv.visit(Opcodes.V1_6, accessInClass, Type.getType(className).getInternalName(), signature,
                     superClass == null ? null : Type.getType(superClass).getInternalName(), nInterfaceNames);
-
-            for (Annotation ann : anns) {
-                if (ann.type.equals("Ldalvik/annotation/MemberClasses;")) {
-                    Set<String> extraMember = extraMemberClass.get(className);
-                    extraMember = extraMember == null ? new TreeSet<String>() : new TreeSet<String>(extraMember);
-                    for (Item i : ann.items) {
-                        if (i.name.equals("value")) {
-                            for (Item j : ((Annotation) i.value).items) {
-                                String name = j.value.toString();
-                                extraMember.add(name);
-                            }
-                        }
+            if (clz.inners != null) {
+                for (Clz inner : clz.inners) {
+                    if (inner.innerName == null) {// anonymous Innerclass
+                        cv.visitInnerClass(Type.getType(inner.name).getInternalName(), null, null,
+                                clearInnerAccess(inner.access));
+                    } else {// non-anonymous Innerclass
+                        cv.visitInnerClass(Type.getType(inner.name).getInternalName(), Type.getType(className)
+                                .getInternalName(), inner.innerName, clearInnerAccess(inner.access));
                     }
-                    for (String name : extraMember) {
-                        Integer access = innerAccessFlagsMap.get(name);
-                        String innerName = innerNameMap.get(name);
-                        cv.visitInnerClass(Type.getType(name).getInternalName(), Type.getType(className)
-                                .getInternalName(), innerName, access == null ? 0 : access);
-                    }
-                    continue;
-                } else if (ann.type.equals("Ldalvik/annotation/InnerClass;")) {
-                    String name = null;
-                    for (Item i : ann.items) {
-                        if (i.name.equals("name")) {
-                            name = (String) i.value;
-                        }
-                    }
-                    int accessInInnerClassAttr = access_flags & (~Opcodes.ACC_SUPER);// inner class attr has no
-                                                                                     // acc_super
-                    if (enclosingMethod != null) {
-                        cv.visitOuterClass(Type.getType(enclosingMethod.getOwner()).getInternalName(),
-                                enclosingMethod.getName(), enclosingMethod.getDesc());
-                    }
-
-                    if (name == null) {
-                        if (enclosingMethod == null) {
-                            cv.visitOuterClass(Type.getType(enclosingClass).getInternalName(), null, null);
-                        }
-                        cv.visitInnerClass(Type.getType(className).getInternalName(), null, null,
-                                accessInInnerClassAttr);
-                    } else {
-                        cv.visitInnerClass(Type.getType(className).getInternalName(), Type.getType(enclosingClass)
-                                .getInternalName(), name, accessInInnerClassAttr);
-                    }
-                    continue;
                 }
+            }
+            if (isInnerClass) {
+                for (Clz p = clz; p != null; p = p.enclosingClass) {
+                    Clz enclosingClass = p.enclosingClass;
+                    if (enclosingClass == null) {
+                        break;
+                    }
+                    Method enclosingMethod = p.enclosingMethod;
+                    int accessInInner = clearInnerAccess(access);
+
+                    if (p.innerName != null) {// non-anonymous Innerclass
+                        String enclosingClassDesc = enclosingClass != null ? enclosingClass.name
+                                : enclosingMethod != null ? enclosingMethod.getOwner() : null;
+                        cv.visitInnerClass(Type.getType(p.name).getInternalName(), Type.getType(enclosingClassDesc)
+                                .getInternalName(), p.innerName, accessInInner);
+                    } else {// anonymous Innerclass
+                        if (enclosingMethod != null) {
+                            cv.visitOuterClass(Type.getType(enclosingMethod.getOwner()).getInternalName(),
+                                    enclosingMethod.getName(), enclosingMethod.getDesc());
+                        } else {
+                            cv.visitOuterClass(Type.getType(enclosingClass.name).getInternalName(), null, null);
+                        }
+                        cv.visitInnerClass(Type.getType(p.name).getInternalName(), null, null, accessInInner);
+                    }
+                }
+            }
+            for (Annotation ann : anns) {
                 AnnotationVisitor av = cv.visitAnnotation(ann.type, ann.visible);
                 V3AnnAdapter.accept(ann.items, av);
                 av.visitEnd();
@@ -209,10 +155,34 @@ public class V3ClassAdapter implements DexClassVisitor {
         }
     }
 
+    private int clearClassAccess(boolean isInner, int access) {
+        if ((access & Opcodes.ACC_INTERFACE) == 0) { // issue 55
+            access |= Opcodes.ACC_SUPER;// 解决生成的class文件使用dx重新转换时使用的指令与原始指令不同的问题
+        }
+        // access in class has no acc_static or acc_private
+        access &= ~(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE);
+        if (isInner && (access & Opcodes.ACC_PROTECTED) != 0) {// protected inner class are public
+            access &= ~Opcodes.ACC_PROTECTED;
+            access |= Opcodes.ACC_PUBLIC;
+        }
+        return access;
+    }
+
+    private int clearInnerAccess(int access) {
+        access &= (~Opcodes.ACC_SUPER);// inner class attr has no acc_super
+        if (0 != (access & Opcodes.ACC_PRIVATE)) {// clear public/protected if it is private
+            access &= ~(Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED);
+        } else if (0 != (access & Opcodes.ACC_PROTECTED)) {// clear public if it is protected
+            access &= ~(Opcodes.ACC_PUBLIC);
+        }
+        return access;
+    }
+
     @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
-        if (!isInnerClass) {
-            isInnerClass = "Ldalvik/annotation/InnerClass;".equals(name);
+        if (name.equals("Ldalvik/annotation/EnclosingClass;") || name.equals("Ldalvik/annotation/EnclosingMethod;")
+                || "Ldalvik/annotation/InnerClass;".equals(name) || "Ldalvik/annotation/MemberClasses;".equals(name)) {
+            return null;
         }
         if (name.equals("Ldalvik/annotation/AnnotationDefault;")) {
             return new EmptyVisitor() {

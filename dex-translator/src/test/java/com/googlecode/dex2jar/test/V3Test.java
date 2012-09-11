@@ -33,7 +33,7 @@ import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.v3.ClassVisitorFactory;
 import com.googlecode.dex2jar.v3.Main;
 import com.googlecode.dex2jar.v3.V3;
-import com.googlecode.dex2jar.v3.V3AccessFlagsAdapter;
+import com.googlecode.dex2jar.v3.V3InnerClzGather;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
@@ -62,45 +62,44 @@ public class V3Test {
         final int lineCount = 50;
 
         DexFileReader reader = new DexFileReader(data);
-        V3AccessFlagsAdapter afa = new V3AccessFlagsAdapter();
+        V3InnerClzGather afa = new V3InnerClzGather();
         final List<String> exes = new ArrayList<String>();
         reader.accept(afa, DexFileReader.SKIP_CODE | DexFileReader.SKIP_DEBUG);
         System.out.flush();
         String logFileName = "target/v3.log." + System.currentTimeMillis();
         final PrintWriter log = new PrintWriter(logFileName, "UTF-8");
         System.out.write(String.format("%05d ", 0).getBytes(UTF8));
-        reader.accept(new V3(afa.getAccessFlagsMap(), afa.getInnerNameMap(), afa.getExtraMember(), null,
-                new ClassVisitorFactory() {
-                    int count = 0;
+        reader.accept(new V3(afa.getClasses(), null, new ClassVisitorFactory() {
+            int count = 0;
 
+            @Override
+            public ClassVisitor create(final String name) {
+                return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
                     @Override
-                    public ClassVisitor create(final String name) {
-                        return new ClassWriter(ClassWriter.COMPUTE_MAXS) {
-                            @Override
-                            public void visitEnd() {
-                                count++;
-                                try {
-                                    super.visitEnd();
-                                    byte[] data = this.toByteArray();
-                                    FileUtils.writeByteArrayToFile(new File(destDir, name + ".class"), data);
-                                    TestUtils.verify(new ClassReader(data), log);
-                                    System.out.write('.');
-                                } catch (Throwable e) {
-                                    System.out.write('X');
-                                    exes.add(String.format("%05d %s - %s", count - 1, name, e.getMessage()));
-                                }
-                                if (count % lineCount == 0) {
-                                    try {
-                                        System.out.write(String.format("\n%05d ", count).getBytes(UTF8));
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                }
-                                System.out.flush();
+                    public void visitEnd() {
+                        count++;
+                        try {
+                            super.visitEnd();
+                            byte[] data = this.toByteArray();
+                            FileUtils.writeByteArrayToFile(new File(destDir, name + ".class"), data);
+                            TestUtils.verify(new ClassReader(data), log);
+                            System.out.write('.');
+                        } catch (Throwable e) {
+                            System.out.write('X');
+                            exes.add(String.format("%05d %s - %s", count - 1, name, e.getMessage()));
+                        }
+                        if (count % lineCount == 0) {
+                            try {
+                                System.out.write(String.format("\n%05d ", count).getBytes(UTF8));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
                             }
-                        };
+                        }
+                        System.out.flush();
                     }
-                }, V3.REUSE_REGISTER | V3.TOPOLOGICAL_SORT | V3.OPTIMIZE_SYNCHRONIZED), DexFileReader.SKIP_DEBUG);
+                };
+            }
+        }, V3.REUSE_REGISTER | V3.TOPOLOGICAL_SORT | V3.OPTIMIZE_SYNCHRONIZED), DexFileReader.SKIP_DEBUG);
         System.out.flush();
         System.out.println();
         log.close();

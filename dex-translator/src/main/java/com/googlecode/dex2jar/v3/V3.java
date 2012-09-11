@@ -16,11 +16,11 @@
 package com.googlecode.dex2jar.v3;
 
 import java.util.Map;
-import java.util.Set;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.v3.V3InnerClzGather.Clz;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
 
@@ -35,9 +35,7 @@ public class V3 implements DexFileVisitor {
     public static final int PRINT_IR = 1 << 2;
     public static final int OPTIMIZE_SYNCHRONIZED = 1 << 3;
     protected ClassVisitorFactory cvf;
-    protected Map<String, Integer> accessFlagsMap;
-    protected Map<String, String> innerNameMap;
-    protected Map<String, Set<String>> extraMemberClass;
+    protected Map<String, Clz> innerClz;
     protected DexExceptionHandler exceptionHandler;
     protected int config;
 
@@ -47,18 +45,13 @@ public class V3 implements DexFileVisitor {
     /* package */
     static final boolean DEBUG = false;
 
-    public V3(Map<String, Integer> innerAccessFlagsMap, Map<String, String> innerNameMap,
-            Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler,
-            ClassVisitorFactory classVisitorFactory) {
-        this(innerAccessFlagsMap, innerNameMap, extraMemberClass, exceptionHandler, classVisitorFactory, 0);
+    public V3(Map<String, Clz> innerClz, DexExceptionHandler exceptionHandler, ClassVisitorFactory classVisitorFactory) {
+        this(innerClz, exceptionHandler, classVisitorFactory, 0);
     }
 
-    public V3(Map<String, Integer> innerAccessFlagsMap, Map<String, String> innerNameMap,
-            Map<String, Set<String>> extraMemberClass, DexExceptionHandler exceptionHandler,
-            ClassVisitorFactory classVisitorFactory, int config) {
-        this.accessFlagsMap = innerAccessFlagsMap;
-        this.innerNameMap = innerNameMap;
-        this.extraMemberClass = extraMemberClass;
+    public V3(Map<String, Clz> innerClz, DexExceptionHandler exceptionHandler, ClassVisitorFactory classVisitorFactory,
+            int config) {
+        this.innerClz = innerClz;
         this.exceptionHandler = exceptionHandler;
         this.cvf = classVisitorFactory;
         this.config = config;
@@ -70,8 +63,8 @@ public class V3 implements DexFileVisitor {
         if (cv == null) {
             return null;
         }
-        return new V3ClassAdapter(accessFlagsMap, innerNameMap, this.extraMemberClass, this.exceptionHandler, cv,
-                access_flags, className, superClass, interfaceNames, config);
+        return new V3ClassAdapter(innerClz.get(className), this.exceptionHandler, cv, access_flags, className,
+                superClass, interfaceNames, config);
     }
 
     @Override
