@@ -1,8 +1,8 @@
 package com.googlecode.dex2jar.ir.ts;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
@@ -23,7 +23,6 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 
 public class TopologicalSort implements Transformer {
-
     @Override
     public void transform(IrMethod irMethod) {
         if (irMethod.traps.size() > 0) {
@@ -34,7 +33,7 @@ public class TopologicalSort implements Transformer {
         // 1. generate graph
         init(stmts, irMethod.traps);
 
-        // 2.
+        // 2.remove any loop in the graph
         removeLoop(stmts);
 
         // 3. topological sorting algorithms
@@ -104,7 +103,7 @@ public class TopologicalSort implements Transformer {
             if (stmt._cfg_froms.size() == 0 || stack.size() == 0) {
                 stmt._cfg_visited = visitedFlag;
                 out.add(stmt);
-                for (Stmt t : stmt._ts_tos) {
+                for (Stmt t : stmt._cfg_tos) {
                     t._cfg_froms.remove(stmt);
                     if (t._cfg_visited != visitedFlag) {
                         stack.push(t);
@@ -115,35 +114,106 @@ public class TopologicalSort implements Transformer {
         return out;
     }
 
+    private static class Item {
+        public Stmt stmt;
+        public Iterator<Stmt> it;
+        public boolean visitedAdded = false;
+    }
+
+    private Item buildItem(Stmt stmt) {
+        Item item = new Item();
+        item.stmt = stmt;
+        item.it = new ArrayList<Stmt>(stmt._cfg_tos).iterator();
+        return item;
+    }
+
     /**
-     * A graph has a cycle if and only if depth-first search produces a back edge
+     * A graph has a cycle if and only if depth-first search produces a back edge if there are
      * 
      * @param stmts
      */
     private void removeLoop(StmtList stmts) {
-        dfsRemove(stmts.getFirst(), new HashSet<Stmt>());
+        if (stmts.getSize() < 50) {// use Recursive if no more than 50 stmts
+            dfsRecursiveCallRemove(stmts.getFirst(), new HashSet<Stmt>());
+        } else {
+            dfsStackRemove(stmts.getFirst(), new HashSet<Stmt>());
+        }
     }
 
-    private void dfsRemove(Stmt stmt, Set<Stmt> visited) {
-        visited.add(stmt);
-        for (Stmt to : new ArrayList<Stmt>(stmt._ts_tos)) {
-            if (visited.contains(to)) {// a loop
-                to._cfg_froms.remove(stmt);
-                while (stmt._ts_tos.remove(to)) {
+    /**
+     * Remove loop by store value in stack
+     * 
+     * @param stmt
+     * @param visited
+     */
+    private void dfsStackRemove(Stmt stmt, Set<Stmt> visited) {
+        Stack<Item> stack = new Stack<Item>();
+        stack.push(buildItem(stmt));
+        while (!stack.empty()) {
+            Item item = stack.peek();
+            stmt = item.stmt;
+            item.stmt._cfg_visited = true;
+            if (!item.visitedAdded) {
+                visited.add(item.stmt);
+                item.visitedAdded = true;
+            }
+            boolean needPop = true;
+            Iterator<Stmt> it = item.it;
+            while (it.hasNext()) {
+                Stmt to = it.next();
+                if (visited.contains(to)) {// a loop here
+                    // cut the loop
+                    to._cfg_froms.remove(stmt);
+                    stmt._cfg_tos.remove(to);
+                } else {
+                    if (!to._cfg_visited) {
+                        needPop = false;
+                        stack.push(buildItem(to));
+                        break;
+                    }
                 }
-            } else if (!to._cfg_visited) {
-                dfsRemove(to, visited);
+            }
+            if (needPop) {
+                if (item.visitedAdded) {
+                    visited.remove(stmt);
+                    stack.pop();
+                }
+            }
+        }
+    }
+
+    /**
+     * Remove Loop by Recursive Method Call, if there are 500+ stmt, we got a out-of-stack error
+     * 
+     * @param stmt
+     * @param visited
+     */
+    private void dfsRecursiveCallRemove(Stmt stmt, Set<Stmt> visited) {
+        if (stmt._cfg_visited) {// make sure every node in visited once
+            return;
+        } else {
+            stmt._cfg_visited = true;
+        }
+        visited.add(stmt);
+        // copy the _ts_tos, so we can modify the collection
+        List<Stmt> tos = new ArrayList<Stmt>(stmt._cfg_tos);
+        for (Stmt to : tos) {
+            if (visited.contains(to)) {// a loop here
+                // cut the loop
+                to._cfg_froms.remove(stmt);
+                stmt._cfg_tos.remove(to);
+            } else {
+                dfsRecursiveCallRemove(to, visited);
             }
         }
         visited.remove(stmt);
-        stmt._cfg_visited = true;
     }
 
     private static void link(Stmt from, Stmt to) {
         if (to == null) {// last stmt is a LabelStmt
             return;
         }
-        from._ts_tos.add(to);
+        from._cfg_tos.add(to);
         to._cfg_froms.add(from);
     }
 
@@ -179,10 +249,10 @@ public class TopologicalSort implements Transformer {
             } else {
                 stmt._cfg_froms.clear();
             }
-            if (stmt._ts_tos == null) {
-                stmt._ts_tos = new ArrayList<Stmt>(2);
+            if (stmt._cfg_tos == null) {
+                stmt._cfg_tos = new TreeSet<Stmt>(stmts);
             } else {
-                stmt._ts_tos.clear();
+                stmt._cfg_tos.clear();
             }
         }
         // 2.1 link exception handler
@@ -231,18 +301,17 @@ public class TopologicalSort implements Transformer {
             case GOTO:
                 JumpStmt js = (JumpStmt) stmt;
                 for (Stmt f : stmt._cfg_froms) {
-                    f._ts_tos.remove(stmt);
-                    f._ts_tos.addAll(stmt._ts_tos);
+                    f._cfg_tos.remove(stmt);
+                    f._cfg_tos.addAll(stmt._cfg_tos);
                     f._ts_default_next = js.target;
                 }
 
-                for (Stmt t : stmt._ts_tos) {
+                for (Stmt t : stmt._cfg_tos) {
                     t._cfg_froms.remove(stmt);
                     t._cfg_froms.addAll(stmt._cfg_froms);
                 }
                 break;
             }
-            Collections.reverse(stmt._ts_tos);
         }
     }
 
