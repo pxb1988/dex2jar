@@ -510,6 +510,8 @@ public class IrMethod2AsmMethod implements Opcodes {
                 if (optimizeSynchronized) {
                     switch (v.vt) {
                     case LOCAL:
+                        // FIXME do we have to disable local due to OptSyncTest ?
+                        // break;
                     case CONSTANT: {
                         String key;
                         if (v.vt == VT.LOCAL) {
@@ -524,7 +526,8 @@ public class IrMethod2AsmMethod implements Opcodes {
                         lockMap.put(key, nIndex);
                     }
                         break;
-                    // TODO other
+                    default:
+                        throw new RuntimeException();
                     }
                 }
                 asm.visitInsn(MONITORENTER);
@@ -747,7 +750,7 @@ public class IrMethod2AsmMethod implements Opcodes {
             TypeExpr te = Exprs.nNewArray(fae.type, Constant.nInt(fae.ops.length));
             reBuildE1Expression(te, asm);
             Type tp1 = LocalType.typeOf(fae);
-            for (int i=0; i<fae.ops.length; i++) {
+            for (int i = 0; i < fae.ops.length; i++) {
                 if (fae.ops[i].value == null)
                     continue;
                 asm.visitInsn(DUP);

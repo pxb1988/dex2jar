@@ -1,5 +1,7 @@
 package res;
 
+import java.io.PrintStream;
+
 public class OptimizeSynchronized {
     public void a() {
         synchronized (this) {
@@ -18,6 +20,13 @@ public class OptimizeSynchronized {
     public void c() {
         synchronized (this.b) {
             System.out.println(this);
+        }
+    }
+
+    public void d() {
+        PrintStream out = System.out;
+        synchronized (out) {
+            out.print("aa");
         }
     }
 }
