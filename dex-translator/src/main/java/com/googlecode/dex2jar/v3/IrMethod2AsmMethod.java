@@ -358,10 +358,26 @@ public class IrMethod2AsmMethod implements Opcodes {
         reBuildLocalVar(ir, asm);
     }
 
+    /**
+     * an empty try-catch block will cause other crash, we check this by finding non-label stmts between
+     * {@link Trap#start} and {@link Trap#end}. if find we add the try-catch or we drop the try-catch.
+     * 
+     * @param ir
+     * @param asm
+     */
     private void reBuildTryCatchBlocks(IrMethod ir, MethodVisitor asm) {
         for (Trap trap : ir.traps) {
-            asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handler.label, trap.type == null ? null
-                    : trap.type.getInternalName());
+            boolean needAdd = false;
+            for (Stmt p = trap.start.getNext(); p != null && p != trap.end; p = p.getNext()) {
+                if (p.st != ST.LABEL) {
+                    needAdd = true;
+                    break;
+                }
+            }
+            if (needAdd) {
+                asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handler.label, trap.type == null ? null
+                        : trap.type.getInternalName());
+            }
         }
     }
 

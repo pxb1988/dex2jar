@@ -1,5 +1,6 @@
 package com.googlecode.dex2jar.ir.ts;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +15,16 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 
+/**
+ * Try to clean following between a {@link Trap}
+ * <ol>
+ * <li>Move {@link Stmt}s outside a {@link Trap} if {@link Stmt}s are not throw</li>
+ * <li>Remove {@link Trap} if all {@link Stmt}s are not throw</li>
+ * </ol>
+ * 
+ * @author bob
+ * 
+ */
 public class EndRemover implements Transformer {
 
     static boolean isSimple(Stmt stmt) {
@@ -135,14 +146,15 @@ public class EndRemover implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-        for (Trap trap : irMethod.traps) {
+        for (Trap trap : new ArrayList<Trap>(irMethod.traps)) {// copy the list and we can remove one from original list
             LabelStmt start = null;
-
+            boolean removeTrap = true;
             for (Stmt p = trap.start.getNext(); p != null && p != trap.end;) {
                 boolean notThrow = Cfg.notThrow(p);
                 if (!notThrow) {
                     start = null;
                     p = p.getNext();
+                    removeTrap = false;
                     continue;
                 }
                 switch (p.st) {
@@ -169,6 +181,9 @@ public class EndRemover implements Transformer {
                 default:
                     p = p.getNext();
                 }
+            }
+            if (removeTrap) {
+                irMethod.traps.remove(trap);
             }
         }
     }
