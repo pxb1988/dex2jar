@@ -328,19 +328,21 @@ public class JasminifierClassAdapter extends ClassAdapter {
             if ((mn.access & Opcodes.ACC_DEPRECATED) != 0) {
                 pw.println(".deprecated");
             }
-            if (mn.instructions.size() > 0) {
+            if (mn.instructions != null && mn.instructions.size() > 0) {
                 labelNames.clear();
-                for (int j = 0; j < mn.tryCatchBlocks.size(); ++j) {
-                    TryCatchBlockNode tcb = (TryCatchBlockNode) mn.tryCatchBlocks.get(j);
-                    pw.print(".catch ");
-                    pw.print(tcb.type == null ? "all" : tcb.type);
-                    pw.print(" from ");
-                    print(tcb.start);
-                    pw.print(" to ");
-                    print(tcb.end);
-                    pw.print(" using ");
-                    print(tcb.handler);
-                    pw.println();
+                if (mn.tryCatchBlocks != null) {
+                    for (int j = 0; j < mn.tryCatchBlocks.size(); ++j) {
+                        TryCatchBlockNode tcb = (TryCatchBlockNode) mn.tryCatchBlocks.get(j);
+                        pw.print(".catch ");
+                        pw.print(tcb.type == null ? "all" : tcb.type);
+                        pw.print(" from ");
+                        print(tcb.start);
+                        pw.print(" to ");
+                        print(tcb.end);
+                        pw.print(" using ");
+                        print(tcb.handler);
+                        pw.println();
+                    }
                 }
                 for (int j = 0; j < mn.instructions.size(); ++j) {
                     AbstractInsnNode in = mn.instructions.get(j);
@@ -533,24 +535,26 @@ public class JasminifierClassAdapter extends ClassAdapter {
                         }
                     });
                 }
-                for (int j = 0; j < mn.localVariables.size(); ++j) {
-                    LocalVariableNode lv = (LocalVariableNode) mn.localVariables.get(j);
-                    pw.print(".var ");
-                    pw.print(lv.index);
-                    pw.print(" is '");
-                    pw.print(lv.name);
-                    pw.print("' ");
-                    pw.print(lv.desc);
-                    if (lv.signature != null) {
-                        pw.print(" signature \"");
-                        pw.print(lv.signature);
-                        pw.print("\"");
+                if (mn.localVariables != null) {
+                    for (int j = 0; j < mn.localVariables.size(); ++j) {
+                        LocalVariableNode lv = (LocalVariableNode) mn.localVariables.get(j);
+                        pw.print(".var ");
+                        pw.print(lv.index);
+                        pw.print(" is '");
+                        pw.print(lv.name);
+                        pw.print("' ");
+                        pw.print(lv.desc);
+                        if (lv.signature != null) {
+                            pw.print(" signature \"");
+                            pw.print(lv.signature);
+                            pw.print("\"");
+                        }
+                        pw.print(" from ");
+                        print(lv.start);
+                        pw.print(" to ");
+                        print(lv.end);
+                        pw.println();
                     }
-                    pw.print(" from ");
-                    print(lv.start);
-                    pw.print(" to ");
-                    print(lv.end);
-                    pw.println();
                 }
                 println(".limit locals ", Integer.toString(mn.maxLocals));
                 println(".limit stack ", Integer.toString(mn.maxStack));
