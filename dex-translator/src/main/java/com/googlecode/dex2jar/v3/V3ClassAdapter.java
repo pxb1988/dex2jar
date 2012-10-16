@@ -17,9 +17,12 @@ package com.googlecode.dex2jar.v3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -31,6 +34,7 @@ import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.asm.OrderInnerOutterInsnNodeClassAdapter;
 import com.googlecode.dex2jar.v3.V3InnerClzGather.Clz;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
@@ -66,7 +70,7 @@ public class V3ClassAdapter implements DexClassVisitor {
             String className, String superClass, String[] interfaceNames, int config) {
         super();
         this.clz = clz;
-        this.cv = cv;
+        this.cv = new OrderInnerOutterInsnNodeClassAdapter(cv);
         this.access_flags = access_flags;
         this.className = className;
         this.superClass = superClass;
@@ -94,7 +98,7 @@ public class V3ClassAdapter implements DexClassVisitor {
                     }
                 }
             }
-
+            Clz clz = this.clz;
             int access = clz.access;
             boolean isInnerClass = clz.enclosingClass != null || clz.enclosingMethod != null;
             int accessInClass = clearClassAccess(isInnerClass, access);
@@ -107,41 +111,21 @@ public class V3ClassAdapter implements DexClassVisitor {
             }
             cv.visit(Opcodes.V1_6, accessInClass, Type.getType(className).getInternalName(), signature,
                     superClass == null ? null : Type.getType(superClass).getInternalName(), nInterfaceNames);
-            if (clz.inners != null) {
-                for (Clz inner : clz.inners) {
-                    if (inner.innerName == null) {// anonymous Innerclass
-                        cv.visitInnerClass(Type.getType(inner.name).getInternalName(), null, null,
-                                clearInnerAccess(inner.access));
-                    } else {// non-anonymous Innerclass
-                        cv.visitInnerClass(Type.getType(inner.name).getInternalName(), Type.getType(className)
-                                .getInternalName(), inner.innerName, clearInnerAccess(inner.access));
-                    }
-                }
-            }
-            if (isInnerClass) {
-                for (Clz p = clz; p != null; p = p.enclosingClass) {
-                    Clz enclosingClass = p.enclosingClass;
-                    if (enclosingClass == null) {
-                        break;
-                    }
-                    Method enclosingMethod = p.enclosingMethod;
-                    int accessInInner = clearInnerAccess(access);
 
-                    if (p.innerName != null) {// non-anonymous Innerclass
-                        String enclosingClassDesc = enclosingClass != null ? enclosingClass.name
-                                : enclosingMethod != null ? enclosingMethod.getOwner() : null;
-                        cv.visitInnerClass(Type.getType(p.name).getInternalName(), Type.getType(enclosingClassDesc)
-                                .getInternalName(), p.innerName, accessInInner);
-                    } else {// anonymous Innerclass
-                        if (enclosingMethod != null) {
-                            cv.visitOuterClass(Type.getType(enclosingMethod.getOwner()).getInternalName(),
-                                    enclosingMethod.getName(), enclosingMethod.getDesc());
-                        } else {
-                            cv.visitOuterClass(Type.getType(enclosingClass.name).getInternalName(), null, null);
-                        }
-                        cv.visitInnerClass(Type.getType(p.name).getInternalName(), null, null, accessInInner);
+            searchInnerClass(clz);
+            if (isInnerClass) {
+                // build Outer Clz
+                if (clz.innerName == null) {// anonymous Innerclass
+                    Method enclosingMethod = clz.enclosingMethod;
+                    if (enclosingMethod != null) {
+                        cv.visitOuterClass(Type.getType(enclosingMethod.getOwner()).getInternalName(),
+                                enclosingMethod.getName(), enclosingMethod.getDesc());
+                    } else {
+                        Clz enclosingClass = clz.enclosingClass;
+                        cv.visitOuterClass(Type.getType(enclosingClass.name).getInternalName(), null, null);
                     }
                 }
+                searchEnclosing(clz);
             }
             for (Annotation ann : anns) {
                 AnnotationVisitor av = cv.visitAnnotation(ann.type, ann.visible);
@@ -152,6 +136,97 @@ public class V3ClassAdapter implements DexClassVisitor {
                 cv.visitSource(file, null);
             }
             build = true;
+        }
+    }
+
+    /**
+     * For structure
+     * 
+     * <pre>
+     * class A {
+     *     class B {
+     *         class WeAreHere {
+     *         }
+     *     }
+     * }
+     * </pre>
+     * 
+     * this method will add
+     * 
+     * <pre>
+     * InnerClass  Outter
+     * A$B$WeAreHere A$B
+     * A$B           A
+     * </pre>
+     * 
+     * to WeAreHere.class
+     * 
+     * @param clz
+     */
+    private void searchEnclosing(Clz clz) {
+        for (Clz p = clz; p != null; p = p.enclosingClass) {
+            Clz enclosingClass = p.enclosingClass;
+            if (enclosingClass == null) {
+                break;
+            }
+            int accessInInner = clearInnerAccess(p.access);
+            if (p.innerName != null) {// non-anonymous Innerclass
+                cv.visitInnerClass(Type.getType(p.name).getInternalName(), Type.getType(enclosingClass.name)
+                        .getInternalName(), p.innerName, accessInInner);
+            } else {// anonymous Innerclass
+                cv.visitInnerClass(Type.getType(p.name).getInternalName(), null, null, accessInInner);
+            }
+        }
+    }
+
+    /**
+     * For structure
+     * 
+     * <pre>
+     * class WeAreHere {
+     *     class A {
+     *         class B {
+     * 
+     *         }
+     *     }
+     * }
+     * </pre>
+     * 
+     * this method will add
+     * 
+     * <pre>
+     * InnerClass      Outter
+     * WeAreHere$A$B   WeAreHere$A
+     * WeAreHere$A     WeAreHere
+     * </pre>
+     * 
+     * to WeAreHere.class
+     * 
+     * @param clz
+     */
+    private void searchInnerClass(Clz clz) {
+        Set<Clz> visited = new HashSet<Clz>();
+        Stack<Clz> stack = new Stack<Clz>();
+        stack.push(clz);
+        while (!stack.empty()) {
+            clz = stack.pop();
+            if (visited.contains(clz)) {
+                continue;
+            } else {
+                visited.add(clz);
+            }
+            if (clz.inners != null) {
+                for (Clz inner : clz.inners) {
+                    if (inner.innerName == null) {// anonymous Innerclass
+                        cv.visitInnerClass(Type.getType(inner.name).getInternalName(), null, null,
+                                clearInnerAccess(inner.access));
+                    } else {// non-anonymous Innerclass
+                        cv.visitInnerClass(Type.getType(inner.name).getInternalName(), Type.getType(className)
+                                .getInternalName(), inner.innerName, clearInnerAccess(inner.access));
+                    }
+                    stack.push(inner);
+                }
+            }
         }
     }
 

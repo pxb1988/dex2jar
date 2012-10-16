@@ -16,12 +16,11 @@
 package com.googlecode.dex2jar.v3;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.objectweb.asm.Type;
 
@@ -40,14 +39,6 @@ import com.googlecode.dex2jar.visitors.EmptyVisitor;
  * @version $Rev$
  */
 public class V3InnerClzGather implements DexFileVisitor {
-    static java.util.Comparator<Clz> cmp = new Comparator<V3InnerClzGather.Clz>() {
-
-        @Override
-        public int compare(Clz o1, Clz o2) {
-            return o1.name.compareTo(o2.name);
-        }
-    };
-
     public static class Clz {
         public int access;
         public Clz enclosingClass;
@@ -63,7 +54,7 @@ public class V3InnerClzGather implements DexFileVisitor {
 
         void addInner(Clz clz) {
             if (inners == null) {
-                inners = new TreeSet<Clz>(cmp);
+                inners = new HashSet<Clz>();
             }
             inners.add(clz);
         }
