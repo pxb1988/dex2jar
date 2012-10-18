@@ -66,26 +66,27 @@ public class ArrayTypeTest {
         mv.visitEnd();
     }
 
-    public static void merge1(DexClassVisitor cv) {//obj = array
+    public static void merge1(DexClassVisitor cv) {// obj = array
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "b", new String[] {}, "V"));
         DexCodeVisitor code = mv.visitCode();
-    	DexLabel L0 = new DexLabel();
-    	DexLabel L1 = new DexLabel();
-    	code.visitArguments(3,new int[]{});
+        DexLabel L0 = new DexLabel();
+        DexLabel L1 = new DexLabel();
+        code.visitArguments(3, new int[] {});
         code.visitConstStmt(OP_CONST, 0, 0, TYPE_SINGLE);
-    	code.visitJumpStmt(OP_GOTO,L1);
-    	code.visitLabel(L0);
-    	code.visitUnopStmt(OP_ARRAY_LENGTH, 1, 0, TYPE_INT);
+        code.visitJumpStmt(OP_GOTO, L1);
+        code.visitLabel(L0);
+        code.visitUnopStmt(OP_ARRAY_LENGTH, 1, 0, TYPE_INT);
         code.visitConstStmt(OP_CONST, 1, 0, TYPE_SINGLE);
         code.visitArrayStmt(OP_AGET, 2, 0, 1, TYPE_OBJECT);
         code.visitReturnStmt(OP_RETURN_VOID);
-    	code.visitLabel(L1);
+        code.visitLabel(L1);
         code.visitConstStmt(OP_CONST, 1, 1, TYPE_SINGLE);
-    	code.visitClassStmt(OP_NEW_ARRAY,0,1,"[Ljava/security/cert/X509Certificate;");
-    	code.visitJumpStmt(OP_GOTO,L0);
-    	code.visitEnd();
-    	mv.visitEnd();
+        code.visitClassStmt(OP_NEW_ARRAY, 0, 1, "[Ljava/security/cert/X509Certificate;");
+        code.visitJumpStmt(OP_GOTO, L0);
+        code.visitEnd();
+        mv.visitEnd();
     }
+
     @Test
     public void test120() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
         TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
@@ -94,8 +95,8 @@ public class ArrayTypeTest {
         TestUtils.verify(cr);
     }
 
-    // FIXME issue 122 
-    // @Test
+    // issue 122
+    @Test
     public void test122() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
         TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
         a122(cv);
@@ -103,8 +104,8 @@ public class ArrayTypeTest {
         TestUtils.verify(cr);
     }
 
-    // FIXME issue 123
-    // @Test
+    // issue 123
+    @Test
     public void test123() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
         TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
         a123(cv);
