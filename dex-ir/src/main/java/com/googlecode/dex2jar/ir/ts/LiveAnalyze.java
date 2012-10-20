@@ -41,9 +41,9 @@ import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
 public class LiveAnalyze {
     public static class Phi {
         public Local local;
+        public Set<Phi> sets = new HashSet<Phi>(3);
         public Phi tag;
         public boolean used;
-        public Set<Phi> sets = new HashSet<Phi>(3);
 
         @Override
         public String toString() {
@@ -76,8 +76,8 @@ public class LiveAnalyze {
         return phi;
     }
 
-    protected IrMethod method;
     protected int localSize;
+    protected IrMethod method;
 
     public LiveAnalyze(IrMethod method) {
         super();

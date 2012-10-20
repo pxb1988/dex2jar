@@ -79,6 +79,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
@@ -171,37 +172,37 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         Constant b = Constant.nInt(constant);
         switch (opcode) {
         case OP_ADD_INT_LIT_X:
-            list.add(nAssign(dist, nAdd(a, b)));
+            list.add(nAssign(dist, nAdd(a, b, Type.INT_TYPE)));
             break;
         case OP_RSUB_INT_LIT_X:
-            list.add(nAssign(dist, nSub(b, a)));
+            list.add(nAssign(dist, nSub(b, a, Type.INT_TYPE)));
             break;
         case OP_MUL_INT_LIT_X:
-            list.add(nAssign(dist, nMul(a, b)));
+            list.add(nAssign(dist, nMul(a, b, Type.INT_TYPE)));
             break;
         case OP_DIV_INT_LIT_X:
-            list.add(nAssign(dist, nDiv(a, b)));
+            list.add(nAssign(dist, nDiv(a, b, Type.INT_TYPE)));
             break;
         case OP_REM_INT_LIT_X:
-            list.add(nAssign(dist, nRem(a, b)));
+            list.add(nAssign(dist, nRem(a, b, Type.INT_TYPE)));
             break;
         case OP_AND_INT_LIT_X:
-            list.add(nAssign(dist, nAnd(a, b)));
+            list.add(nAssign(dist, nAnd(a, b, Type.INT_TYPE)));
             break;
         case OP_OR_INT_LIT_X:
-            list.add(nAssign(dist, nOr(a, b)));
+            list.add(nAssign(dist, nOr(a, b, Type.INT_TYPE)));
             break;
         case OP_XOR_INT_LIT_X:
-            list.add(nAssign(dist, nXor(a, b)));
+            list.add(nAssign(dist, nXor(a, b, Type.INT_TYPE)));
             break;
         case OP_SHL_INT_LIT_X:
-            list.add(nAssign(dist, nShl(a, b)));
+            list.add(nAssign(dist, nShl(a, b, Type.INT_TYPE)));
             break;
         case OP_SHR_INT_LIT_X:
-            list.add(nAssign(dist, nShr(a, b)));
+            list.add(nAssign(dist, nShr(a, b, Type.INT_TYPE)));
             break;
         case OP_USHR_INT_LIT_X:
-            list.add(nAssign(dist, nUshr(a, b)));
+            list.add(nAssign(dist, nUshr(a, b, Type.INT_TYPE)));
             break;
 
         }
@@ -212,39 +213,56 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         Local dist = locals[toReg];
         Local a = locals[r1];
         Local b = locals[r2];
+        Type type = null;
+        switch (xt) {
+        case TYPE_INT:
+            type = Type.INT_TYPE;
+            break;
+        case TYPE_LONG:
+            type = Type.LONG_TYPE;
+            break;
+        case TYPE_FLOAT:
+            type = Type.FLOAT_TYPE;
+            break;
+        case TYPE_DOUBLE:
+            type = Type.DOUBLE_TYPE;
+            break;
+        default:
+            throw new DexException();
+        }
         switch (opcode) {
         case OP_ADD:
-            list.add(nAssign(dist, nAdd(a, b)));
+            list.add(nAssign(dist, nAdd(a, b, type)));
             break;
         case OP_SUB:
-            list.add(nAssign(dist, nSub(a, b)));
+            list.add(nAssign(dist, nSub(a, b, type)));
             break;
         case OP_MUL:
-            list.add(nAssign(dist, nMul(a, b)));
+            list.add(nAssign(dist, nMul(a, b, type)));
             break;
         case OP_DIV:
-            list.add(nAssign(dist, nDiv(a, b)));
+            list.add(nAssign(dist, nDiv(a, b, type)));
             break;
         case OP_REM:
-            list.add(nAssign(dist, nRem(a, b)));
+            list.add(nAssign(dist, nRem(a, b, type)));
             break;
         case OP_AND:
-            list.add(nAssign(dist, nAnd(a, b)));
+            list.add(nAssign(dist, nAnd(a, b, type)));
             break;
         case OP_OR:
-            list.add(nAssign(dist, nOr(a, b)));
+            list.add(nAssign(dist, nOr(a, b, type)));
             break;
         case OP_XOR:
-            list.add(nAssign(dist, nXor(a, b)));
+            list.add(nAssign(dist, nXor(a, b, type)));
             break;
         case OP_SHL:
-            list.add(nAssign(dist, nShl(a, b)));
+            list.add(nAssign(dist, nShl(a, b, type)));
             break;
         case OP_SHR:
-            list.add(nAssign(dist, nShr(a, b)));
+            list.add(nAssign(dist, nShr(a, b, type)));
             break;
         case OP_USHR:
-            list.add(nAssign(dist, nUshr(a, b)));
+            list.add(nAssign(dist, nUshr(a, b, type)));
             break;
         }
     }
@@ -411,22 +429,22 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         LabelStmt ls = toLabelStmt(label);
         switch (opcode) {
         case OP_IF_EQ:
-            list.add(nIf(nEq(a, b), ls));
+            list.add(nIf(nEq(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_NE:
-            list.add(nIf(nNe(a, b), ls));
+            list.add(nIf(nNe(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_LT:
-            list.add(nIf(nLt(a, b), ls));
+            list.add(nIf(nLt(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_GE:
-            list.add(nIf(nGe(a, b), ls));
+            list.add(nIf(nGe(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_GT:
-            list.add(nIf(nGt(a, b), ls));
+            list.add(nIf(nGt(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_LE:
-            list.add(nIf(nLe(a, b), ls));
+            list.add(nIf(nLe(a, b, Type.INT_TYPE), ls));
             break;
         }
     }
@@ -438,22 +456,22 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         LabelStmt ls = toLabelStmt(label);
         switch (opcode) {
         case OP_IF_EQZ:
-            list.add(nIf(nEq(a, b), ls));
+            list.add(nIf(nEq(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_NEZ:
-            list.add(nIf(nNe(a, b), ls));
+            list.add(nIf(nNe(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_LTZ:
-            list.add(nIf(nLt(a, b), ls));
+            list.add(nIf(nLt(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_GEZ:
-            list.add(nIf(nGe(a, b), ls));
+            list.add(nIf(nGe(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_GTZ:
-            list.add(nIf(nGt(a, b), ls));
+            list.add(nIf(nGt(a, b, Type.INT_TYPE), ls));
             break;
         case OP_IF_LEZ:
-            list.add(nIf(nLe(a, b), ls));
+            list.add(nIf(nLe(a, b, Type.INT_TYPE), ls));
             break;
         }
     }
@@ -575,15 +593,30 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     public void visitUnopStmt(int opcode, int toReg, int fromReg, int xt) {
         Value dist = locals[toReg];
         Value src = locals[fromReg];
+        Type type = null;
+        switch (xt) {
+        case TYPE_INT:
+            type = Type.INT_TYPE;
+            break;
+        case TYPE_LONG:
+            type = Type.LONG_TYPE;
+            break;
+        case TYPE_FLOAT:
+            type = Type.FLOAT_TYPE;
+            break;
+        case TYPE_DOUBLE:
+            type = Type.DOUBLE_TYPE;
+            break;
+        }
         switch (opcode) {
         case OP_ARRAY_LENGTH:
             list.add(nAssign(dist, nLength(src)));
             break;
         case OP_NEG:
-            list.add(nAssign(dist, nNeg(src)));
+            list.add(nAssign(dist, nNeg(src, type)));
             break;
         case OP_NOT:
-            list.add(nAssign(dist, nNot(src)));
+            list.add(nAssign(dist, nNot(src, type)));
             break;
         }
     }

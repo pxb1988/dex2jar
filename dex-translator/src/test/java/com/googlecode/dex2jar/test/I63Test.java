@@ -1,76 +1,65 @@
 package com.googlecode.dex2jar.test;
 
-import java.util.ArrayList;
-
 import org.junit.Test;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
-import org.objectweb.asm.tree.analysis.BasicVerifier;
 
-import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.Local;
-import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.expr.Exprs;
-import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.Stmts;
-import com.googlecode.dex2jar.ir.ts.EndRemover;
-import com.googlecode.dex2jar.ir.ts.ExceptionHandlerCurrectTransformer;
-import com.googlecode.dex2jar.ir.ts.LocalRemove;
-import com.googlecode.dex2jar.ir.ts.LocalSplit;
-import com.googlecode.dex2jar.ir.ts.LocalType;
-import com.googlecode.dex2jar.ir.ts.Transformer;
-import com.googlecode.dex2jar.v3.IrMethod2AsmMethod;
-import com.googlecode.dex2jar.v3.LocalCurrect;
+import com.googlecode.dex2jar.DexLabel;
+import com.googlecode.dex2jar.Field;
+import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.OdexOpcodes;
+import com.googlecode.dex2jar.v3.V3;
+import com.googlecode.dex2jar.v3.V3MethodAdapter;
+import com.googlecode.dex2jar.visitors.DexClassVisitor;
+import com.googlecode.dex2jar.visitors.DexCodeVisitor;
+import com.googlecode.dex2jar.visitors.DexMethodVisitor;
+import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**
  * test case for issue 63
  */
-public class I63Test {
-    @Test
-    public void a() throws AnalyzerException {
-        IrMethod irMethod = new IrMethod();
-        irMethod.name = "test";
-        irMethod.args = new Type[] {};
-        irMethod.ret = Type.VOID_TYPE;
+public class I63Test implements OdexOpcodes {
 
-        LabelStmt L1 = Stmts.nLabel();
-        LabelStmt L2 = Stmts.nLabel();
-        Local left = Exprs.nLocal("a");
-        irMethod.locals.add(left);
-        irMethod.stmts.add(L1);
-        irMethod.stmts.add(Stmts.nAssign(left, Exprs.nStaticField(Type.getType("La/A;"), "a", Type.getType("La/A;"))));
-        irMethod.stmts.add(L2);
-        irMethod.stmts.add(Stmts.nReturnVoid());
-
-        irMethod.traps.add(new Trap(L1, L2, L2, null));
-
-        Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(), new LocalSplit(), new LocalRemove(),
-                new LocalType(), new LocalCurrect() };
-        Transformer endremove = new EndRemover();
-        endremove.transform(irMethod);
-
-        // indexLabelStmt4Debug(irMethod.stmts);
-
-        MethodNode methodNode = new MethodNode();
-
-        methodNode.name = "a";
-        methodNode.access = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
-        methodNode.desc = "()V";
-        methodNode.tryCatchBlocks = new ArrayList();
-
-        for (Transformer ts : tses) {
-            ts.transform(irMethod);
+    public static void i63(DexClassVisitor cv) {
+        DexMethodVisitor mv = cv.visitMethod(ACC_STATIC, new Method("La;", "b", new String[] {}, "V"));
+        if (mv != null) {
+            DexCodeVisitor code = mv.visitCode();
+            if (code != null) {
+                code.visitArguments(1, new int[] {});
+                DexLabel L1 = new DexLabel();
+                DexLabel L2 = new DexLabel();
+                code.visitLabel(L1);
+                code.visitFieldStmt(OP_SGET, 0, new Field("La;", "f", "J"), TYPE_WIDE);
+                code.visitLabel(L2);
+                code.visitReturnStmt(OP_RETURN_VOID);
+                code.visitEnd();
+                code.visitTryCatch(L1, L2, L2, "La;");
+            }
+            mv.visitEnd();
         }
-        new IrMethod2AsmMethod().convert(irMethod, methodNode);
-
-        methodNode.maxLocals = 0;
-        methodNode.maxStack = 1;
-
-        BasicVerifier verifier = new BasicVerifier();
-        Analyzer a = new Analyzer(verifier);
-        a.analyze("a.B", methodNode);
     }
+
+    @Test
+    public void test() throws IllegalArgumentException, AnalyzerException, IllegalAccessException {
+        final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        cw.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, "La", null, "java/lang/Object", null);
+        i63(new EmptyVisitor() {
+            @Override
+            public DexMethodVisitor visitMethod(int accessFlags, Method method) {
+                return new V3MethodAdapter(accessFlags, method, null, V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT) {
+
+                    @Override
+                    public void visitEnd() {
+                        super.visitEnd();
+                        methodNode.accept(cw);
+                    }
+                };
+            }
+        });
+        ClassReader cr = new ClassReader(cw.toByteArray());
+        TestUtils.verify(cr);
+    }
+
 }

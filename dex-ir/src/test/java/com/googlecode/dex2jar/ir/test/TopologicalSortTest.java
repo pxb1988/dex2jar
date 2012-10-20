@@ -3,6 +3,7 @@ package com.googlecode.dex2jar.ir.test;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
 
 import org.junit.Test;
+import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -48,7 +49,7 @@ public class TopologicalSortTest {
 
         list.add(Stmts.nAssign(b, Constant.nInt(123)));
         LabelStmt ls = Stmts.nLabel();
-        list.add(Stmts.nIf(Exprs.nGt(b, Constant.nInt(22)), ls));
+        list.add(Stmts.nIf(Exprs.nGt(b, Constant.nInt(22), Type.INT_TYPE), ls));
         list.add(Stmts.nAssign(b, Constant.nInt(456)));
         list.add(ls);
         list.add(Stmts.nReturnVoid());
@@ -72,7 +73,7 @@ public class TopologicalSortTest {
         list.add(Stmts.nAssign(b, Constant.nInt(123)));
         LabelStmt L1 = Stmts.nLabel();
         LabelStmt L2 = Stmts.nLabel();
-        list.add(Stmts.nIf(Exprs.nGt(b, Constant.nInt(22)), L1));
+        list.add(Stmts.nIf(Exprs.nGt(b, Constant.nInt(22), Type.INT_TYPE), L1));
         list.add(Stmts.nAssign(b, Constant.nInt(456)));
         list.add(L2);
         list.add(Stmts.nReturnVoid());
@@ -98,7 +99,7 @@ public class TopologicalSortTest {
         list.add(Stmts.nAssign(b, Constant.nInt(123)));
         LabelStmt L1 = Stmts.nLabel();
         LabelStmt L2 = Stmts.nLabel();
-        list.add(Stmts.nIf(Exprs.nGt(b, Constant.nInt(22)), L1));
+        list.add(Stmts.nIf(Exprs.nGt(b, Constant.nInt(22), Type.INT_TYPE), L1));
         list.add(L2);
         list.add(Stmts.nAssign(b, Constant.nInt(456)));
         list.add(Stmts.nReturnVoid());

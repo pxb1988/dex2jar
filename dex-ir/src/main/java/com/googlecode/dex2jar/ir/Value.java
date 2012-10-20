@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir;
 
+import org.objectweb.asm.Type;
+
 /**
  * Represent a local/constant/expression
  * 
@@ -109,7 +111,11 @@ public abstract class Value implements Cloneable {
         }
     }
 
-    public Object _lt_type;
+    public interface TypeRef {
+        Type get();
+    }
+
+    public TypeRef typeRef;
     /**
      * The number of argument
      */

@@ -12,6 +12,7 @@ import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.expr.BinopExpr;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
@@ -316,26 +317,26 @@ public class TopologicalSort implements Transformer {
     }
 
     private void reverseIF(ValueBox op) {
-        E2Expr e2 = (E2Expr) op.value;
+        BinopExpr e2 = (BinopExpr) op.value;
 
         switch (e2.vt) {
         case GE:
-            op.value = Exprs.nLt(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nLt(e2.op1.value, e2.op2.value, e2.type);
             break;
         case GT:
-            op.value = Exprs.nLe(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nLe(e2.op1.value, e2.op2.value, e2.type);
             break;
         case LT:
-            op.value = Exprs.nGe(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nGe(e2.op1.value, e2.op2.value, e2.type);
             break;
         case LE:
-            op.value = Exprs.nGt(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nGt(e2.op1.value, e2.op2.value, e2.type);
             break;
         case EQ:
-            op.value = Exprs.nNe(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nNe(e2.op1.value, e2.op2.value, e2.type);
             break;
         case NE:
-            op.value = Exprs.nEq(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nEq(e2.op1.value, e2.op2.value, e2.type);
             break;
         }
     }

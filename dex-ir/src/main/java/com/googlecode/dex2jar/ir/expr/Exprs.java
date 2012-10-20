@@ -39,12 +39,12 @@ public final class Exprs {
         return vb;
     }
 
-    public static BinopExpr nAdd(Value a, Value b) {
-        return new BinopExpr(VT.ADD, a, b);
+    public static BinopExpr nAdd(Value a, Value b, Type type) {
+        return new BinopExpr(VT.ADD, a, b, type);
     }
 
-    public static BinopExpr nAnd(Value a, Value b) {
-        return new BinopExpr(VT.AND, a, b);
+    public static BinopExpr nAnd(Value a, Value b, Type type) {
+        return new BinopExpr(VT.AND, a, b, type);
     }
 
     public static ArrayExpr nArray(Value base, Value index) {
@@ -60,19 +60,19 @@ public final class Exprs {
     }
 
     public static BinopExpr nDCmpg(Value a, Value b) {
-        return new BinopExpr(VT.DCMPG, a, b);
+        return new BinopExpr(VT.DCMPG, a, b, Type.DOUBLE_TYPE);
     }
 
     public static BinopExpr nDCmpl(Value a, Value b) {
-        return new BinopExpr(VT.DCMPL, a, b);
+        return new BinopExpr(VT.DCMPL, a, b, Type.DOUBLE_TYPE);
     }
 
-    public static BinopExpr nDiv(Value a, Value b) {
-        return new BinopExpr(VT.DIV, a, b);
+    public static BinopExpr nDiv(Value a, Value b, Type type) {
+        return new BinopExpr(VT.DIV, a, b, type);
     }
 
-    public static BinopExpr nEq(Value a, Value b) {
-        return new BinopExpr(VT.EQ, a, b);
+    public static BinopExpr nEq(Value a, Value b, Type type) {
+        return new BinopExpr(VT.EQ, a, b, type);
     }
 
     public static RefExpr nExceptionRef(Type type) {
@@ -80,23 +80,23 @@ public final class Exprs {
     }
 
     public static BinopExpr nFCmpg(Value a, Value b) {
-        return new BinopExpr(VT.FCMPG, a, b);
+        return new BinopExpr(VT.FCMPG, a, b, Type.FLOAT_TYPE);
     }
 
     public static BinopExpr nFCmpl(Value a, Value b) {
-        return new BinopExpr(VT.FCMPL, a, b);
+        return new BinopExpr(VT.FCMPL, a, b, Type.FLOAT_TYPE);
     }
 
     public static FieldExpr nField(Value object, Type ownerType, String fieldName, Type fieldType) {
         return new FieldExpr(new ValueBox(object), ownerType, fieldName, fieldType);
     }
 
-    public static BinopExpr nGe(Value a, Value b) {
-        return new BinopExpr(VT.GE, a, b);
+    public static BinopExpr nGe(Value a, Value b, Type type) {
+        return new BinopExpr(VT.GE, a, b, type);
     }
 
-    public static BinopExpr nGt(Value a, Value b) {
-        return new BinopExpr(VT.GT, a, b);
+    public static BinopExpr nGt(Value a, Value b, Type type) {
+        return new BinopExpr(VT.GT, a, b, type);
     }
 
     public static TypeExpr nInstanceOf(Value value, Type type) {
@@ -129,35 +129,35 @@ public final class Exprs {
     }
 
     public static BinopExpr nLCmp(Value a, Value b) {
-        return new BinopExpr(VT.LCMP, a, b);
+        return new BinopExpr(VT.LCMP, a, b, Type.LONG_TYPE);
     }
 
-    public static BinopExpr nLe(Value a, Value b) {
-        return new BinopExpr(VT.LE, a, b);
+    public static BinopExpr nLe(Value a, Value b, Type type) {
+        return new BinopExpr(VT.LE, a, b, type);
     }
 
     public static UnopExpr nLength(Value array) {
-        return new UnopExpr(VT.LENGTH, array);
+        return new UnopExpr(VT.LENGTH, array, null);
     }
 
     public static Local nLocal(String name) {
         return new Local(name);
     }
 
-    public static BinopExpr nLt(Value a, Value b) {
-        return new BinopExpr(VT.LT, a, b);
+    public static BinopExpr nLt(Value a, Value b, Type type) {
+        return new BinopExpr(VT.LT, a, b, type);
     }
 
-    public static BinopExpr nMul(Value a, Value b) {
-        return new BinopExpr(VT.MUL, a, b);
+    public static BinopExpr nMul(Value a, Value b, Type type) {
+        return new BinopExpr(VT.MUL, a, b, type);
     }
 
-    public static BinopExpr nNe(Value a, Value b) {
-        return new BinopExpr(VT.NE, a, b);
+    public static BinopExpr nNe(Value a, Value b, Type type) {
+        return new BinopExpr(VT.NE, a, b, type);
     }
 
-    public static UnopExpr nNeg(Value array) {
-        return new UnopExpr(VT.NEG, array);
+    public static UnopExpr nNeg(Value array, Type type) {
+        return new UnopExpr(VT.NEG, array, type);
     }
 
     public static NewExpr nNew(Type type) {
@@ -176,48 +176,48 @@ public final class Exprs {
         return new NewMutiArrayExpr(base, dim, box(sizes));
     }
 
-    public static UnopExpr nNot(Value array) {
-        return new UnopExpr(VT.NOT, array);
+    public static UnopExpr nNot(Value array, Type type) {
+        return new UnopExpr(VT.NOT, array, type);
     }
 
-    public static BinopExpr nOr(Value a, Value b) {
-        return new BinopExpr(VT.OR, a, b);
+    public static BinopExpr nOr(Value a, Value b, Type type) {
+        return new BinopExpr(VT.OR, a, b, type);
     }
 
     public static RefExpr nParameterRef(Type type, int index) {
         return new RefExpr(VT.PARAMETER_REF, type, index);
     }
 
-    public static BinopExpr nRem(Value a, Value b) {
-        return new BinopExpr(VT.REM, a, b);
+    public static BinopExpr nRem(Value a, Value b, Type type) {
+        return new BinopExpr(VT.REM, a, b, type);
     }
 
-    public static BinopExpr nShl(Value a, Value b) {
-        return new BinopExpr(VT.SHL, a, b);
+    public static BinopExpr nShl(Value a, Value b, Type type) {
+        return new BinopExpr(VT.SHL, a, b, type);
     }
 
-    public static BinopExpr nShr(Value a, Value b) {
-        return new BinopExpr(VT.SHR, a, b);
+    public static BinopExpr nShr(Value a, Value b, Type type) {
+        return new BinopExpr(VT.SHR, a, b, type);
     }
 
     public static FieldExpr nStaticField(Type ownerType, String fieldName, Type fieldType) {
         return new FieldExpr(null, ownerType, fieldName, fieldType);
     }
 
-    public static BinopExpr nSub(Value a, Value b) {
-        return new BinopExpr(VT.SUB, a, b);
+    public static BinopExpr nSub(Value a, Value b, Type type) {
+        return new BinopExpr(VT.SUB, a, b, type);
     }
 
     public static RefExpr nThisRef(Type type) {
         return new RefExpr(VT.THIS_REF, type, -1);
     }
 
-    public static BinopExpr nUshr(Value a, Value b) {
-        return new BinopExpr(VT.USHR, a, b);
+    public static BinopExpr nUshr(Value a, Value b, Type type) {
+        return new BinopExpr(VT.USHR, a, b, type);
     }
 
-    public static BinopExpr nXor(Value a, Value b) {
-        return new BinopExpr(VT.XOR, a, b);
+    public static BinopExpr nXor(Value a, Value b, Type type) {
+        return new BinopExpr(VT.XOR, a, b, type);
     }
 
     private Exprs() {

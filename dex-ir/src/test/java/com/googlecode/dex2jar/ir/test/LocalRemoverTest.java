@@ -100,7 +100,7 @@ public class LocalRemoverTest {
             LabelStmt L2 = nLabel();
             list.add(nAssign(a, nInt(5)));
             list.add(nAssign(b, nInt(6)));
-            list.add(nIf(nGt(a, b), L1));
+            list.add(nIf(nGt(a, b, Type.INT_TYPE), L1));
             list.add(nAssign(c, a));
             list.add(nGoto(L2));
             list.add(L1);
@@ -173,7 +173,7 @@ public class LocalRemoverTest {
 
         LabelStmt L1 = nLabel();
         LabelStmt L2 = nLabel();
-        list.add(nIf(nGt(nInt(100), nInt(0)), L1));
+        list.add(nIf(nGt(nInt(100), nInt(0), Type.INT_TYPE), L1));
         list.add(nAssign(b, nString("123")));
         list.add(nGoto(L2));
         list.add(L1);
@@ -236,8 +236,8 @@ public class LocalRemoverTest {
         jm.locals.add(value);
 
         list.add(nAssign(array, nNewArray(Type.INT_TYPE, nInt(5))));
-        list.add(nAssign(index, nAdd(nInt(1999), nInt(3))));
-        list.add(nAssign(value, nAdd(index, nInt(4))));
+        list.add(nAssign(index, nAdd(nInt(1999), nInt(3), Type.INT_TYPE)));
+        list.add(nAssign(value, nAdd(index, nInt(4), Type.INT_TYPE)));
         list.add(nAssign(nArray(array, index), value));
         list.add(nReturnVoid());
 
