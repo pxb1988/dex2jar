@@ -51,9 +51,8 @@ public class I101Test {
         byte[] data = cv.toByteArray();
         ClassReader cr = new ClassReader(data);
         TestUtils.verify(cr);
-        // FIXME java.lang.ClassFormatError: Illegal exception table range in class file Lt
-        // CL cl = new CL();
-        // cl.xxxDefine("Lt", data);
+        CL cl = new CL();
+        cl.xxxDefine("Lt", data);
     }
 
     static class CL extends ClassLoader {

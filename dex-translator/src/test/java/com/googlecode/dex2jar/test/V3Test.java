@@ -46,7 +46,7 @@ public class V3Test {
         try {
             for (File f : TestUtils.listTestDexFiles()) {
                 System.out.println("dex2jar file " + f);
-                File distDir = new File(f.getParentFile(), FilenameUtils.getBaseName(f.getName()) + "_dex2jar");
+                File distDir = new File("target", FilenameUtils.getBaseName(f.getName()) + "_dex2jar");
                 doData(DexFileReader.readDex(f), distDir);
             }
         } catch (Exception e) {
