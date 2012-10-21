@@ -10,7 +10,6 @@ import java.util.TreeSet;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.BinopExpr;
 import com.googlecode.dex2jar.ir.expr.Exprs;

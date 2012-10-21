@@ -8,11 +8,9 @@ import static com.googlecode.dex2jar.DexOpcodes.OP_MOVE_EXCEPTION;
 import static com.googlecode.dex2jar.DexOpcodes.OP_RETURN_VOID;
 
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
 
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.v3.V3;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
@@ -46,18 +44,7 @@ public class I101Test {
 
     @Test
     public void test() throws Exception {
-        TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
-        a(cv);
-        byte[] data = cv.toByteArray();
-        ClassReader cr = new ClassReader(data);
-        TestUtils.verify(cr);
-        CL cl = new CL();
-        cl.xxxDefine("Lt", data);
-    }
-
-    static class CL extends ClassLoader {
-        public Class<?> xxxDefine(String type, byte[] data) {
-            return super.defineClass(type, data, 0, data.length);
-        }
+        byte[] data = TestUtils.testDexASMifier(getClass(), "a", "Lt");
+        TestUtils.defineClass("Lt", data);
     }
 }

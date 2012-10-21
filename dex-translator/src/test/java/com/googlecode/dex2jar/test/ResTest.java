@@ -26,9 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
-import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.v3.Dex2jar;
-import com.googlecode.dex2jar.v3.Main;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
@@ -53,7 +51,7 @@ public class ResTest {
             files.add(f);
         }
 
-        List<Exception> exes = new ArrayList();
+        List<Exception> exes = new ArrayList<Exception>();
         System.out.flush();
         int count = 0;
         for (Entry<String, List<File>> e : m.entrySet()) {

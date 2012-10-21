@@ -10,17 +10,14 @@ import static com.googlecode.dex2jar.DexOpcodes.OP_GOTO;
 import static com.googlecode.dex2jar.DexOpcodes.OP_INVOKE_VIRTUAL;
 import static com.googlecode.dex2jar.DexOpcodes.OP_NEW_ARRAY;
 import static com.googlecode.dex2jar.DexOpcodes.OP_RETURN_VOID;
-import static com.googlecode.dex2jar.DexOpcodes.TYPE_OBJECT;
 import static com.googlecode.dex2jar.DexOpcodes.TYPE_INT;
+import static com.googlecode.dex2jar.DexOpcodes.TYPE_OBJECT;
 import static com.googlecode.dex2jar.DexOpcodes.TYPE_SINGLE;
 
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.v3.V3;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
@@ -88,36 +85,10 @@ public class ArrayTypeTest {
     }
 
     @Test
-    public void test120() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
-        TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
-        a120(cv);
-        ClassReader cr = new ClassReader(cv.toByteArray());
-        TestUtils.verify(cr);
-    }
-
-    // issue 122
-    @Test
-    public void test122() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
-        TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
-        a122(cv);
-        ClassReader cr = new ClassReader(cv.toByteArray());
-        TestUtils.verify(cr);
-    }
-
-    // issue 123
-    @Test
-    public void test123() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
-        TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
-        a123(cv);
-        ClassReader cr = new ClassReader(cv.toByteArray());
-        TestUtils.verify(cr);
-    }
-
-    @Test
-    public void testMerge1() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
-        TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
-        merge1(cv);
-        ClassReader cr = new ClassReader(cv.toByteArray());
-        TestUtils.verify(cr);
+    public void test() throws Exception {
+        TestUtils.testDexASMifier(getClass(), "a120");
+        TestUtils.testDexASMifier(getClass(), "a122");
+        TestUtils.testDexASMifier(getClass(), "a123");
+        TestUtils.testDexASMifier(getClass(), "merge1");
     }
 }
