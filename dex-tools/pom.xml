@@ -7,14 +7,14 @@
         <version>1.0</version>
     </parent>
     <artifactId>dex-tools</artifactId>
-    <version>${dex2jar.tools.version}</version>
+    <version>0.0.0.7-SNAPSHOT</version>
     <name>Dex Tools</name>
     <description>Tools to work with dex and class files</description>
     <dependencies>
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>dex-translator</artifactId>
-            <version>${dex2jar.translator.version}</version>
+            <version>0.0.9.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>commons-lite</artifactId>
-            <version>${dex2jar.reader.version}</version>
+            <version>1.12-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.jasmin</groupId>
@@ -65,7 +65,7 @@
                 <version>2.2.2</version>
                 <configuration>
                     <appendAssemblyId>false</appendAssemblyId>
-                    <finalName>dex2jar-${dex2jar.translator.version}</finalName>
+                    <finalName>dex2jar-${project.version}</finalName>
                     <descriptors>
                         <descriptor>src/main/assemble/package.xml</descriptor>
                     </descriptors>
