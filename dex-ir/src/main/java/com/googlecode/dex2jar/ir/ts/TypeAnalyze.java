@@ -61,7 +61,7 @@ public class TypeAnalyze {
 
     public static class DefTypeRef implements TypeRef {
         static Comparator<Type> c = new Comparator<Type>() {
-            int x[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 9 };
+            int x[] = { 999, 1, 4, 2, 3, 5, 6, 7, 8, 10, 9 };
 
             @Override
             public int compare(Type o1, Type o2) {

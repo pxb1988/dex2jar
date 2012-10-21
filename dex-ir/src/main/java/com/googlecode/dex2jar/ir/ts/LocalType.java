@@ -43,8 +43,6 @@ public class LocalType implements Transformer {
         TypeAnalyze ta = new TypeAnalyze(irMethod);
         List<DefTypeRef> refs = ta.analyze();
 
-        refs.size();
-
         for (DefTypeRef ref : refs) {
             Type type = null;
 
