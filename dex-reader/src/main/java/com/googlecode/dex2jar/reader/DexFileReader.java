@@ -16,10 +16,10 @@
 package com.googlecode.dex2jar.reader;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UTFDataFormatException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,9 +35,8 @@ import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.DexOpcodes;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.reader.io.BeArrayDataIn;
+import com.googlecode.dex2jar.reader.io.ArrayDataIn;
 import com.googlecode.dex2jar.reader.io.DataIn;
-import com.googlecode.dex2jar.reader.io.LeArrayDataIn;
 import com.googlecode.dex2jar.reader.io.OffsetedDataIn;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
@@ -216,11 +215,7 @@ public class DexFileReader {
 
     static private DataIn opDataIn(byte[] data) {
         try {
-            if (isLittleEndian) {
-                return new LeArrayDataIn(readDex(data));
-            } else {
-                return new BeArrayDataIn(readDex(data));
-            }
+            return new ArrayDataIn(readDex(data), isLittleEndian);
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -544,11 +539,10 @@ public class DexFileReader {
             in.pushMove(offset);
             try {
                 int length = (int) in.readULeb128();
-                ByteArrayOutputStream baos = new ByteArrayOutputStream(length);
-                for (int b = in.readByte(); b != 0; b = in.readByte()) {
-                    baos.write(b);
-                }
-                return new String(baos.toByteArray(), UTF8);
+                StringBuilder buff = new StringBuilder((int) (length * 1.5));
+                return Mutf8.decode(in, buff);
+            } catch (UTFDataFormatException e) {
+                throw new DexException(e, "fail to load string %d@%08x", id, offset);
             } finally {
                 in.pop();
             }

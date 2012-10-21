@@ -111,4 +111,17 @@ public class TopologicalSortTest {
         // System.out.println("after======");
         // System.out.println(jm);
     }
+
+    @Test
+    public void testHugeStmt() {
+        IrMethod jm = new IrMethod();
+        StmtList list = jm.stmts;
+        Local b = nLocal("a");
+        jm.locals.add(b);
+        for (int i = 0; i < 100000; i++) {
+            list.add(Stmts.nAssign(b, Constant.nInt(i)));
+        }
+        new TopologicalSort().transform(jm);
+    }
+
 }

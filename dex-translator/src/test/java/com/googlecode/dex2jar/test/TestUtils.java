@@ -222,6 +222,16 @@ public abstract class TestUtils {
 
         for (int i = 0; i < methods.size(); ++i) {
             MethodNode method = (MethodNode) methods.get(i);
+
+            List tryCatchBlocks = method.tryCatchBlocks;
+            for (int j = 0; j < tryCatchBlocks.size(); j++) {
+                TryCatchBlockNode tcn = (TryCatchBlockNode) tryCatchBlocks.get(j);
+                if (tcn.start.equals(tcn.end)) {
+                    throw new DexException("try/catch block %d in %s has same start(%s) and end(%s)", j, method.name,
+                            tcn.start.getLabel(), tcn.end.getLabel());
+                }
+            }
+
             BasicVerifier verifier = new BasicVerifier();
             Analyzer a = new Analyzer(verifier);
             try {

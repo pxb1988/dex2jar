@@ -72,7 +72,9 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
     }
 
     private void findLabels(DataIn in, int instruction_size) {
-        for (int baseOffset = in.getCurrentPosition(), currentOffset = 0; currentOffset < instruction_size; currentOffset = (in
+        int baseOffset = in.getCurrentPosition();
+        fixIssue130(in, instruction_size);
+        for (int currentOffset = (in.getCurrentPosition() - baseOffset) / 2; currentOffset < instruction_size; currentOffset = (in
                 .getCurrentPosition() - baseOffset) / 2) {
             int opcode = in.readUShortx();
             int uOpcodeH = opcode >> 8;
@@ -82,6 +84,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                     opcode = uOpcodeL;
                 }
             }
+
             OpcodeFormat format = OpcodeFormat.get(opcode, dex.apiLevel);
             try {
                 switch (opcode) {
@@ -177,6 +180,41 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
             } catch (Exception e) {
                 throw new DexException(e, String.format("while scan for label, Posotion :%04x", currentOffset));
             }
+        }
+    }
+
+    /**
+     * This is a trick to fix issue 130 http://code.google.com/p/dex2jar/issues/detail?id=130
+     * 
+     * <pre>
+     * 036280: 3200 0900                              |0000: if-eq v0, v0, 0009 // +0009
+     * 036284: 2600 0300 0000                         |0002: fill-array-data v0, 00000005 // +00000003
+     * 03628a: 0003 0100 0800 0000 7010 ce0b 0000 ... |0005: array-data (8 units)
+     * </pre>
+     * 
+     * skip the if-eq, and direct read from 0009
+     * 
+     * @param in
+     * @param instruction_size
+     */
+    private void fixIssue130(DataIn in, int instruction_size) {
+        if (instruction_size < 4) {
+            return;
+        }
+        int base = in.getCurrentPosition();
+        int opcode = in.readUShortx();
+        int uOpcodeH = opcode >> 8;
+        {
+            int uOpcodeL = opcode & 0xFF;
+            if (uOpcodeL != 0xFF) {
+                opcode = uOpcodeL;
+            }
+        }
+        if ((opcode == OP_IF_EQ) && ((uOpcodeH & 0xF) == (uOpcodeH >> 4))) {
+            int offset = in.readShortx();
+            in.skip(offset * 2 - 4);
+        } else {
+            in.move(base);
         }
     }
 
@@ -293,12 +331,16 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         dcv.visitEnd();
     }
 
+    // 处理指令
     private void acceptInsn(DataIn in, int instruction_size, DexOpcodeAdapter n) {
-        // 处理指令
+
         Iterator<Integer> labelOffsetIterator = this.labels.keySet().iterator();
         Integer nextLabelOffset = labelOffsetIterator.hasNext() ? labelOffsetIterator.next() : null;
-        for (int baseOffset = in.getCurrentPosition(), currentOffset = 0; currentOffset < instruction_size; currentOffset = (in
+        int baseOffset = in.getCurrentPosition();
+        fixIssue130(in, instruction_size);
+        for (int currentOffset = (in.getCurrentPosition() - baseOffset) / 2; currentOffset < instruction_size; currentOffset = (in
                 .getCurrentPosition() - baseOffset) / 2) {
+
             boolean currentOffsetVisited = false;
             while (nextLabelOffset != null) {// issue 65, a label may `inside` an instruction
                 int _intNextLabelOffset = nextLabelOffset;// autobox
@@ -325,6 +367,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                     opcode = uOpcodeL;
                 }
             }
+
             OpcodeFormat format = OpcodeFormat.get(opcode, dex.apiLevel);
 
             switch (format) {

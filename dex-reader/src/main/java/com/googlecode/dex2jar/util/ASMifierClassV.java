@@ -32,9 +32,9 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  * @version $Rev$
  */
 public class ASMifierClassV implements DexClassVisitor {
-    ArrayOut out = new ArrayOut();
-    List<ArrayOut> methodOuts = new ArrayList<ArrayOut>();
-    List<ArrayOut> fieldOuts = new ArrayList<ArrayOut>();
+    protected ArrayOut out = new ArrayOut();
+    private List<ArrayOut> methodOuts = new ArrayList<ArrayOut>();
+    private List<ArrayOut> fieldOuts = new ArrayList<ArrayOut>();
 
     int fCount = 0;
     int mCount = 0;
@@ -45,8 +45,7 @@ public class ASMifierClassV implements DexClassVisitor {
         out.s("package %s;", pkgName);
         out.s("import com.googlecode.dex2jar.*;");
         out.s("import com.googlecode.dex2jar.visitors.*;");
-        out.s("import static com.googlecode.dex2jar.DexOpcodes.*;");
-        out.s("import static com.googlecode.dex2jar.util.Hex.*;");
+        out.s("import static com.googlecode.dex2jar.OdexOpcodes.*;");
         out.s("public class %s {", javaClassName);
         out.push();
         out.s("public static void accept(DexFileVisitor v) {");

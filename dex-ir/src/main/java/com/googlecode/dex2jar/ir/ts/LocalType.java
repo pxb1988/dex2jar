@@ -24,6 +24,7 @@ import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.expr.CastExpr;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.RefExpr;
@@ -80,6 +81,14 @@ public class LocalType implements Transformer {
             return t1;
         }
         return t2;
+    }
+
+    public static boolean needMerge(Type t1, Type t2) {
+        if ((t1.getSort() == Type.ARRAY && t2.getSort() == Type.OBJECT) || 
+        		(t2.getSort() == Type.ARRAY && t1.getSort() == Type.OBJECT)) {
+            return true;
+        }
+        return false;
     }
 
     static TypeBox trimTypeBox(TypeBox tb) {
@@ -189,6 +198,7 @@ public class LocalType implements Transformer {
             switch (v.vt) {
             case ARRAY:
                 // TODO associate array expr types
+                type(tb1, Type.getType(Object.class));
                 type(tb2, Type.INT_TYPE);
                 break;
             case ADD:
@@ -235,8 +245,16 @@ public class LocalType implements Transformer {
                 type(tb, Type.BOOLEAN_TYPE);
                 break;
             }
+            break;
         case En:
             switch (v.vt) {
+            case FILLED_ARRAY:
+                FilledArrayExpr fae = (FilledArrayExpr) v;
+                type(fae, Type.getType("[" + fae.type.getDescriptor()));
+                for (int i = 0; i < fae.ops.length; i++) {
+                    exec(fae.ops[i].value);
+                }
+                break;
             case INVOKE_NEW:
             case INVOKE_STATIC: {
                 InvokeExpr ie = (InvokeExpr) v;
@@ -281,10 +299,13 @@ public class LocalType implements Transformer {
             tb2.xtype = tb1.xtype;
             return;
         }
-        Type nt = merge(tb1.xtype.type, tb2.xtype.type);
-        tb1.xtype.tb = tb2;
-        tb1.xtype = tb2.xtype;
-        tb2.xtype.type = nt;
+        //Only merge for special case
+        if (needMerge(tb1.xtype.type, tb2.xtype.type)) {
+        	Type nt = merge(tb1.xtype.type, tb2.xtype.type);
+        	tb1.xtype.tb = tb2;
+        	tb1.xtype = tb2.xtype;
+        	tb2.xtype.type = nt;
+        }
     }
 
     @Override

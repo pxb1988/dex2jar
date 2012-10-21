@@ -27,7 +27,9 @@ import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
 import com.googlecode.dex2jar.ir.expr.ArrayExpr;
 import com.googlecode.dex2jar.ir.expr.CastExpr;
+import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.FieldExpr;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.expr.NewExpr;
 import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
@@ -356,10 +358,26 @@ public class IrMethod2AsmMethod implements Opcodes {
         reBuildLocalVar(ir, asm);
     }
 
+    /**
+     * an empty try-catch block will cause other crash, we check this by finding non-label stmts between
+     * {@link Trap#start} and {@link Trap#end}. if find we add the try-catch or we drop the try-catch.
+     * 
+     * @param ir
+     * @param asm
+     */
     private void reBuildTryCatchBlocks(IrMethod ir, MethodVisitor asm) {
         for (Trap trap : ir.traps) {
-            asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handler.label, trap.type == null ? null
-                    : trap.type.getInternalName());
+            boolean needAdd = false;
+            for (Stmt p = trap.start.getNext(); p != null && p != trap.end; p = p.getNext()) {
+                if (p.st != ST.LABEL) {
+                    needAdd = true;
+                    break;
+                }
+            }
+            if (needAdd) {
+                asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handler.label, trap.type == null ? null
+                        : trap.type.getInternalName());
+            }
         }
     }
 
@@ -508,6 +526,8 @@ public class IrMethod2AsmMethod implements Opcodes {
                 if (optimizeSynchronized) {
                     switch (v.vt) {
                     case LOCAL:
+                        // FIXME do we have to disable local due to OptSyncTest ?
+                        // break;
                     case CONSTANT: {
                         String key;
                         if (v.vt == VT.LOCAL) {
@@ -522,7 +542,8 @@ public class IrMethod2AsmMethod implements Opcodes {
                         lockMap.put(key, nIndex);
                     }
                         break;
-                    // TODO other
+                    default:
+                        throw new RuntimeException();
                     }
                 }
                 asm.visitInsn(MONITORENTER);
@@ -740,6 +761,26 @@ public class IrMethod2AsmMethod implements Opcodes {
     }
 
     private static void reBuildEnExpression(EnExpr value, MethodVisitor asm) {
+        if (value.vt == VT.FILLED_ARRAY) {
+            FilledArrayExpr fae = (FilledArrayExpr) value;
+            TypeExpr te = Exprs.nNewArray(fae.type, Constant.nInt(fae.ops.length));
+            reBuildE1Expression(te, asm);
+            Type tp1 = LocalType.typeOf(fae);
+            for (int i = 0; i < fae.ops.length; i++) {
+                if (fae.ops[i].value == null)
+                    continue;
+                asm.visitInsn(DUP);
+                asm.visitLdcInsn(i);
+                accept(fae.ops[i].value, asm);
+                Type tp2 = LocalType.typeOf(fae.ops[i].value);
+                if (tp1.getSort() == Type.ARRAY) {
+                    asm.visitInsn(Type.getType(tp1.getDescriptor().substring(1)).getOpcode(IASTORE));
+                } else {
+                    asm.visitInsn(tp2.getOpcode(IASTORE));
+                }
+            }
+            return;
+        }
         if (value.vt == VT.INVOKE_NEW) {
             asm.visitTypeInsn(NEW, ((InvokeExpr) value).methodOwnerType.getInternalName());
             asm.visitInsn(DUP);

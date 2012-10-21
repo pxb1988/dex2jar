@@ -92,7 +92,7 @@ public abstract class Value implements Cloneable {
         INVOKE_INTERFACE, INVOKE_NEW, INVOKE_SPECIAL, INVOKE_STATIC, INVOKE_VIRTUAL, //
         LE("<="), LENGTH, LOCAL, LT("<"), MUL("*"), NE("!="), NEG, //
         NEW, NEW_ARRAY, NEW_MUTI_ARRAY, NOT, OR("|"), PARAMETER_REF, REM("%"), SHL("<<"), SHR(">>"), SUB("-"), THIS_REF, USHR(
-                ">>>"), XOR("^");
+                ">>>"), XOR("^"), FILLED_ARRAY;
         private String name;
 
         VT() {

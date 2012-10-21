@@ -15,44 +15,21 @@
  */
 package com.googlecode.dex2jar.reader.io;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.DataInput;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Stack;
 
 import com.googlecode.dex2jar.DexException;
 
-public class BeRandomAccessFileInput implements DataIn, Closeable {
-    protected RandomAccessFile r;
-
-    public BeRandomAccessFileInput(File file) {
-        try {
-            r = new RandomAccessFile(file, "r");
-        } catch (FileNotFoundException e) {
-            throw new DexException(e);
-        }
-    }
-
-    @Override
-    public int getCurrentPosition() {
-        try {
-            return (int) r.getFilePointer();
-        } catch (IOException e) {
-            throw new DexException(e);
-        }
-    }
+public abstract class DataInputDataIn implements DataIn {
+    protected DataInput in;
+    private boolean isLE;
 
     private Stack<Integer> stack = new Stack<Integer>();
 
-    @Override
-    public void move(int absOffset) {
-        try {
-            r.seek(absOffset);
-        } catch (IOException e) {
-            throw new DexException(e);
-        }
+    public DataInputDataIn(DataInput in, boolean isLE) {
+        this.in = in;
+        this.isLE = isLE;
     }
 
     @Override
@@ -74,7 +51,7 @@ public class BeRandomAccessFileInput implements DataIn, Closeable {
     @Override
     public int readByte() {
         try {
-            return r.read();
+            return in.readByte();
         } catch (IOException e) {
             throw new DexException(e);
         }
@@ -84,7 +61,7 @@ public class BeRandomAccessFileInput implements DataIn, Closeable {
     public byte[] readBytes(int size) {
         byte[] data = new byte[size];
         try {
-            r.read(data);
+            in.readFully(data);
         } catch (IOException e) {
             throw new DexException(e);
         }
@@ -94,33 +71,6 @@ public class BeRandomAccessFileInput implements DataIn, Closeable {
     @Override
     public int readIntx() {
         return readUIntx();
-    }
-
-    @Override
-    public int readUIntx() {
-        try {
-            return r.readInt();
-        } catch (IOException e) {
-            throw new DexException(e);
-        }
-    }
-
-    @Override
-    public int readShortx() {
-        try {
-            return r.readShort();
-        } catch (IOException e) {
-            throw new DexException(e);
-        }
-    }
-
-    @Override
-    public int readUShortx() {
-        try {
-            return r.readUnsignedShort();
-        } catch (IOException e) {
-            throw new DexException(e);
-        }
     }
 
     @Override
@@ -142,6 +92,33 @@ public class BeRandomAccessFileInput implements DataIn, Closeable {
     }
 
     @Override
+    public int readShortx() {
+        try {
+            return in.readShort();
+        } catch (IOException e) {
+            throw new DexException(e);
+        }
+    }
+
+    @Override
+    public int readUByte() {
+        try {
+            return in.readUnsignedByte();
+        } catch (IOException e) {
+            throw new DexException(e);
+        }
+    }
+
+    @Override
+    public int readUIntx() {
+        if (isLE) {
+            return readUByte() | (readUByte() << 8) | (readUByte() << 16) | (readUByte() << 24);
+        } else {
+            return (readUByte() << 24) | (readUByte() << 16) | (readUByte() << 8) | readUByte();
+        }
+    }
+
+    @Override
     public long readULeb128() {
         long value = 0;
         int count = 0;
@@ -156,26 +133,20 @@ public class BeRandomAccessFileInput implements DataIn, Closeable {
     }
 
     @Override
-    public int readUByte() {
-        try {
-            return r.readUnsignedByte();
-        } catch (IOException e) {
-            throw new DexException(e);
+    public int readUShortx() {
+        if (isLE) {
+            return readUByte() | (readUByte() << 8);
+        } else {
+            return (readUByte() << 8) | readUByte();
         }
     }
 
     @Override
     public void skip(int bytes) {
         try {
-            r.skipBytes(bytes);
+            in.skipBytes(bytes);
         } catch (IOException e) {
             throw new DexException(e);
         }
     }
-
-    @Override
-    public void close() throws IOException {
-        r.close();
-    }
-
 }

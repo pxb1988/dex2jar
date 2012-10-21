@@ -45,7 +45,7 @@ import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
  */
 public class ZeroTransformer implements Transformer {
 
-    static class Phi {
+    public static class Phi {
         public Boolean isZero = null;
         // public Set<Phi> parents = new HashSet<Phi>();
         public Set<Phi> children = new HashSet<Phi>();
@@ -249,7 +249,7 @@ public class ZeroTransformer implements Transformer {
                 break;
             case E2:
                 E2Stmt e2 = (E2Stmt) p;
-                if (e2.st != ST.ASSIGN && e2.st != ST.IDENTITY) {
+                if (e2.op1.value.vt != VT.LOCAL) {
                     replace(e2.op1, frame);
                 }
                 replace(e2.op2, frame);
@@ -262,7 +262,6 @@ public class ZeroTransformer implements Transformer {
                 break;
             }
         }
-
     }
 
     private void replace(ValueBox op, Phi[] frame) {

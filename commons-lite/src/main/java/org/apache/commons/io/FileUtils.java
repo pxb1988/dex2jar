@@ -110,7 +110,11 @@ public class FileUtils {
     }
 
     private static void doFind(File dir, Set<String> exts, List<File> list, boolean r) {
-        for (File f : dir.listFiles()) {
+        File[] fs = dir.listFiles();
+        if (fs == null) {
+            return;
+        }
+        for (File f : fs) {
             if (f.isFile()) {
                 String name = f.getName();
                 for (String ext : exts) {

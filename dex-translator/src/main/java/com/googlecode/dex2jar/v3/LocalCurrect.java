@@ -25,6 +25,7 @@ import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
@@ -101,11 +102,26 @@ public class LocalCurrect implements Transformer {
             currectArrayInExpr(e2.op2);
             break;
         case En:
-            EnExpr en = (EnExpr) value;
-            for (ValueBox op : en.ops) {
-                currectArrayInExpr(op);
+            if (value.vt ==VT.FILLED_ARRAY) {
+                detectFilledArray((FilledArrayExpr)value);
+            } else {
+                EnExpr en = (EnExpr) value;
+                for (ValueBox op : en.ops) {
+                    currectArrayInExpr(op);
+                }
             }
             break;
+        }
+    }
+
+    private void detectFilledArray(FilledArrayExpr fae) {
+        for (int i=0; i<fae.ops.length; i++) {
+            Value val = fae.ops[i].value;
+            if (val.vt == VT.FILLED_ARRAY) {
+                detectFilledArray((FilledArrayExpr)val);
+            } else {
+                LocalType.type(val, Type.getType(fae.type.getDescriptor()));
+            }
         }
     }
 

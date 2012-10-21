@@ -168,9 +168,9 @@ public final class Exprs {
         return new TypeExpr(VT.NEW_ARRAY, size, elementType);
     }
 
-    // public static NewExpr nNew(Type type) {
-    // return new NewExpr(type);
-    // }
+    public static FilledArrayExpr nFilledArray(Type elementType, Value[] datas) {
+        return new FilledArrayExpr(box(datas), elementType);
+    }
 
     public static NewMutiArrayExpr nNewMutiArray(Type base, int dim, Value[] sizes) {
         return new NewMutiArrayExpr(base, dim, box(sizes));

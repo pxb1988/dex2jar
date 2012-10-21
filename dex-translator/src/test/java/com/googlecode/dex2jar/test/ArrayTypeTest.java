@@ -6,8 +6,11 @@ import static com.googlecode.dex2jar.DexOpcodes.OP_AGET;
 import static com.googlecode.dex2jar.DexOpcodes.OP_APUT;
 import static com.googlecode.dex2jar.DexOpcodes.OP_ARRAY_LENGTH;
 import static com.googlecode.dex2jar.DexOpcodes.OP_CONST;
+import static com.googlecode.dex2jar.DexOpcodes.OP_GOTO;
 import static com.googlecode.dex2jar.DexOpcodes.OP_INVOKE_VIRTUAL;
+import static com.googlecode.dex2jar.DexOpcodes.OP_NEW_ARRAY;
 import static com.googlecode.dex2jar.DexOpcodes.OP_RETURN_VOID;
+import static com.googlecode.dex2jar.DexOpcodes.TYPE_OBJECT;
 import static com.googlecode.dex2jar.DexOpcodes.TYPE_INT;
 import static com.googlecode.dex2jar.DexOpcodes.TYPE_SINGLE;
 
@@ -15,6 +18,7 @@ import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 
+import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.v3.V3;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
@@ -62,6 +66,27 @@ public class ArrayTypeTest {
         mv.visitEnd();
     }
 
+    public static void merge1(DexClassVisitor cv) {// obj = array
+        DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "b", new String[] {}, "V"));
+        DexCodeVisitor code = mv.visitCode();
+        DexLabel L0 = new DexLabel();
+        DexLabel L1 = new DexLabel();
+        code.visitArguments(3, new int[] {});
+        code.visitConstStmt(OP_CONST, 0, 0, TYPE_SINGLE);
+        code.visitJumpStmt(OP_GOTO, L1);
+        code.visitLabel(L0);
+        code.visitUnopStmt(OP_ARRAY_LENGTH, 1, 0, TYPE_INT);
+        code.visitConstStmt(OP_CONST, 1, 0, TYPE_SINGLE);
+        code.visitArrayStmt(OP_AGET, 2, 0, 1, TYPE_OBJECT);
+        code.visitReturnStmt(OP_RETURN_VOID);
+        code.visitLabel(L1);
+        code.visitConstStmt(OP_CONST, 1, 1, TYPE_SINGLE);
+        code.visitClassStmt(OP_NEW_ARRAY, 0, 1, "[Ljava/security/cert/X509Certificate;");
+        code.visitJumpStmt(OP_GOTO, L0);
+        code.visitEnd();
+        mv.visitEnd();
+    }
+
     @Test
     public void test120() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
         TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
@@ -70,20 +95,28 @@ public class ArrayTypeTest {
         TestUtils.verify(cr);
     }
 
-    // FIXME issue 122 
-    // @Test
+    // issue 122
+    @Test
     public void test122() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
+        TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
+        a122(cv);
+        ClassReader cr = new ClassReader(cv.toByteArray());
+        TestUtils.verify(cr);
+    }
+
+    // issue 123
+    @Test
+    public void test123() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
         TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
         a123(cv);
         ClassReader cr = new ClassReader(cv.toByteArray());
         TestUtils.verify(cr);
     }
 
-    // FIXME issue 123
-    // @Test
-    public void test123() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
+    @Test
+    public void testMerge1() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
         TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
-        a122(cv);
+        merge1(cv);
         ClassReader cr = new ClassReader(cv.toByteArray());
         TestUtils.verify(cr);
     }

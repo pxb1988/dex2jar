@@ -20,6 +20,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
+import org.objectweb.asm.Type;
+
+import com.googlecode.dex2jar.ir.Constant;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Value;
@@ -28,13 +31,17 @@ import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.expr.ArrayExpr;
 import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
 import com.googlecode.dex2jar.ir.expr.InvokeExpr;
 import com.googlecode.dex2jar.ir.expr.NewExpr;
+import com.googlecode.dex2jar.ir.expr.TypeExpr;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
@@ -237,6 +244,113 @@ public class LocalRemove implements Transformer {
                 }
             }
         }
+
+        /* 
+         * Merge some simple filled arrays
+         * merge:
+         * a[][]=new xx[2][];a[0]=new xx[2];a[0][0]=b;a[0][1]=c;a[1]=new xx[2];a[1][0]=d;a[1][1]=e;	->	a[][]=new xx[][]{{b,c},{d,e}};
+         * tmp[][]=new xx[][]{{b,c},{d,e}};a=tmp;	->	a=new xx[][]{{b,c},{d,e}};
+         * not merge:
+         * a[]=new xx[3];a[0]=b;a[1]=c;(Not full)
+         * a[]=new xx[2];a[0]=b;a[1]=c.gg();(Not simple)
+         */
+        boolean changed = false;
+        do {
+            changed = false;
+            for (int p = 0; p < orderList.size(); p++) {
+                Stmt st = orderList.get(p);
+                if (st == null || !list.contains(st)) {
+                    continue;
+                }
+                switch (st.st) {
+                
+                case ASSIGN:
+                    AssignStmt as = (AssignStmt) st;
+                    if (as.op2.value.vt == VT.NEW_ARRAY) {
+                        TypeExpr te = (TypeExpr)as.op2.value;
+                        Value val = as.op1.value;
+                        if (te.op.value instanceof Constant) {
+                            int arraySize = (Integer)((Constant)te.op.value).value;
+                            Type type = te.type;
+                            int size = 0;
+                            int empty = 0;
+                            //Verify array data
+                            for (int j = 1; j < orderList.size() - p; j++) {
+                                Stmt st2 = orderList.get(p + j);
+                                if(st2 == null) {
+                                    empty ++;
+                                    continue;
+                                }
+                                if (st2.st == ST.ASSIGN) {
+                                    AssignStmt as2 = (AssignStmt) st2;
+                                    if(as2.op1.value.vt == VT.ARRAY) {
+                                        ArrayExpr ae2 = (ArrayExpr)as2.op1.value;
+                                        if ((ae2.op1.value == val) && (ae2.op2.value instanceof Constant)) {
+                                            int idx = (Integer)((Constant)ae2.op2.value).value;
+                                            if (idx == (j-empty-1)) {
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                }
+                                size = j -1;
+                                break;
+                            }
+                            int dataSize = size - empty;
+                            if (dataSize == arraySize) {//Not full array may cause some NullPoint problems
+                                Value[] vbs = new Value[arraySize];
+                                for (int j = 1; j <= size; j++) {
+                                    Stmt st2 = orderList.get(p + j);
+                                    if(st2 == null) {
+                                        continue;
+                                    }
+                                    AssignStmt as2 = (AssignStmt) st2;
+                                    ArrayExpr ae2 = (ArrayExpr)as2.op1.value;
+                                    int idx = ((Integer)((Constant)ae2.op2.value).value);
+                                    vbs[idx] = as2.op2.value;
+                                    orderList.set((p + j), null);
+                                    list.remove(st2);
+                                }
+                                Local loc = (Local)val;
+                                loc._ls_read_count -= dataSize;
+                                FilledArrayExpr fa = Exprs.nFilledArray(type, vbs);
+                                AssignStmt nas = Stmts.nAssign(loc, fa);
+                                list.replace(st, nas);
+                                orderList.set(p, nas);
+                                changed = true;
+                                //Merge tmp Locals
+                                if (loc._ls_write_count == 1 && loc._ls_read_count == 1) {
+                                    Stmt st3 = null;
+                                    for (int j = size + 1; j < orderList.size() - p; j++) {
+                                        st3 = orderList.get(p + j);
+                                        if (st3 != null) {
+                                            break;
+                                        }
+                                    }
+                                    if (st3 != null && (st3.st == ST.ASSIGN || st3.st == ST.IDENTITY)) {
+                                        AssignStmt as3 = (AssignStmt) st3;
+                                        if (as3.op2.value == loc) {
+                                            loc._ls_read_count = 0;
+                                            loc._ls_write_count = 0;
+                                            
+                                            list.remove(nas);
+                                            orderList.set(p, null);
+                                            
+                                            AssignStmt nas3 = Stmts.nAssign(as3.op1.value, fa);
+                                            list.replace(st3, nas3);
+                                            orderList.set(orderList.indexOf(st3), nas3);
+                                            
+                                            je.locals.remove(loc);
+                                            
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } while (changed);
 
         {
             List<ValueBox> vbs = new ArrayList<ValueBox>(20);
