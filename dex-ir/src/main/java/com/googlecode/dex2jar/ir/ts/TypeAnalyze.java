@@ -1,3 +1,19 @@
+/*
+ * dex2jar - Tools to work with android .dex and java .class files
+ * Copyright (c) 2009-2012 Panxiaobo
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.googlecode.dex2jar.ir.ts;
 
 import java.util.ArrayList;
@@ -5,7 +21,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -36,6 +51,12 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
+/**
+ * Analyze Expr types
+ * 
+ * @author Panxiaobo
+ * 
+ */
 public class TypeAnalyze {
 
     public static class DefTypeRef implements TypeRef {
@@ -111,21 +132,21 @@ public class TypeAnalyze {
             }
         }
 
-        public Set<DefTypeRef> sameValues = new HashSet();
+        public Set<DefTypeRef> sameValues = new HashSet<DefTypeRef>();
         /**
          * reference to values
          */
-        public Set<DefTypeRef> arrayValues = new HashSet();
+        public Set<DefTypeRef> arrayValues = new HashSet<DefTypeRef>();
         /**
          * reference to roots
          */
-        public Set<DefTypeRef> arryRoots = new HashSet();
+        public Set<DefTypeRef> arryRoots = new HashSet<DefTypeRef>();
 
-        public Set<DefTypeRef> froms = new HashSet();
-        public Set<Type> providerAs = new TreeSet(c);
-        public Set<DefTypeRef> tos = new HashSet();
+        public Set<DefTypeRef> froms = new HashSet<DefTypeRef>();
+        public Set<Type> providerAs = new TreeSet<Type>(c);
+        public Set<DefTypeRef> tos = new HashSet<DefTypeRef>();
         public Type type;
-        public Set<Type> useAs = new TreeSet(c);
+        public Set<Type> useAs = new TreeSet<Type>(c);
 
         Value value;
 
@@ -136,7 +157,9 @@ public class TypeAnalyze {
 
         @Override
         public String toString() {
-
+            if (type != null) {
+                return type.toString();
+            }
             StringBuilder sb = new StringBuilder();
             sb.append(value).append(": ");
             if (providerAs != null) {
@@ -155,7 +178,7 @@ public class TypeAnalyze {
     }
 
     protected IrMethod method;
-    List<DefTypeRef> refs = new ArrayList();
+    List<DefTypeRef> refs = new ArrayList<DefTypeRef>();
 
     public TypeAnalyze(IrMethod method) {
         super();
@@ -191,7 +214,7 @@ public class TypeAnalyze {
             break;
         case CONSTANT:
             Constant cst = (Constant) op;
-            Type type = cst.type;
+            // Type type = cst.type;
             Object value = cst.value;
             if (value instanceof String) {
                 provideAs(cst, Type.getType(String.class));
@@ -392,7 +415,7 @@ public class TypeAnalyze {
             for (ValueBox vb : vbs) {
                 useAs(vb.value, fae.type);
             }
-            provideAs(fae, Type.getType("[" + fae.type));
+            provideAs(fae, Type.getType("[" + fae.type.getDescriptor()));
             break;
         case NEW_MUTI_ARRAY:
             NewMutiArrayExpr nmae = (NewMutiArrayExpr) enExpr;
@@ -434,23 +457,10 @@ public class TypeAnalyze {
         }
     }
 
-    Type findOne(Set<Type> types) {
-        boolean isObject = false;
-        for (Type t : types) {
-            switch (t.getSort()) {
-            case Type.ARRAY:
-            case Type.OBJECT:
-                isObject = true;
-                break;
-            }
-        }
-        return types.iterator().next();
-    }
-
     void fixProvidAs() {
-        LinkedList<DefTypeRef> queue = new LinkedList();
+        LinkedList<DefTypeRef> queue = new LinkedList<DefTypeRef>();
         queue.addAll(refs);
-        Set<DefTypeRef> cache = new HashSet();
+        Set<DefTypeRef> cache = new HashSet<DefTypeRef>();
         while (!queue.isEmpty()) {
             DefTypeRef ref = queue.poll();
             if (ref.providerAs.size() > 0) {

@@ -40,6 +40,9 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
@@ -53,6 +56,12 @@ import org.objectweb.asm.util.TraceMethodVisitor;
 
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.reader.DexFileReader;
+import com.googlecode.dex2jar.v3.V3;
+import com.googlecode.dex2jar.v3.V3MethodAdapter;
+import com.googlecode.dex2jar.visitors.DexClassVisitor;
+import com.googlecode.dex2jar.visitors.DexFieldVisitor;
+import com.googlecode.dex2jar.visitors.DexMethodVisitor;
+import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
@@ -84,7 +93,7 @@ public abstract class TestUtils {
             ZipEntry entry = e.nextElement();
             if (entry.getName().endsWith(".class")) {
                 StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
+                // PrintWriter pw = new PrintWriter(sw);
                 InputStream is = zipFile.getInputStream(entry);
                 try {
                     verify(new ClassReader(IOUtils.toByteArray(is)));
@@ -213,6 +222,7 @@ public abstract class TestUtils {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     public static void verify(final ClassReader cr, PrintWriter out) throws AnalyzerException,
             IllegalArgumentException, IllegalAccessException {
         ClassNode cn = new ClassNode();
@@ -246,4 +256,50 @@ public abstract class TestUtils {
         }
     }
 
+    public static byte[] testDexASMifier(Class<?> clz, String methodName) throws Exception {
+        return testDexASMifier(clz, methodName, "xxxx/" + methodName);
+    }
+
+    public static byte[] testDexASMifier(Class<?> clz, String methodName, String generateClassName) throws Exception {
+        final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        cw.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, generateClassName, null, "java/lang/Object", null);
+        EmptyVisitor em = new EmptyVisitor() {
+            public DexMethodVisitor visitMethod(int accessFlags, com.googlecode.dex2jar.Method method) {
+                return new V3MethodAdapter(accessFlags, method, null, V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT) {
+                    @Override
+                    public void visitEnd() {
+                        super.visitEnd();
+                        methodNode.accept(cw);
+                    }
+                };
+            }
+
+            @Override
+            public DexFieldVisitor visitField(int accessFlags, com.googlecode.dex2jar.Field field, Object value) {
+                FieldVisitor fv = cw.visitField(accessFlags, field.getName(), field.getType(), null, value);
+                fv.visitEnd();
+                return null;
+            }
+        };
+        Method m = clz.getMethod(methodName, DexClassVisitor.class);
+        if (m == null) {
+            throw new java.lang.NoSuchMethodException(methodName);
+        }
+        m.setAccessible(true);
+        m.invoke(null, em);
+        byte[] data = cw.toByteArray();
+        ClassReader cr = new ClassReader(data);
+        TestUtils.verify(cr);
+        return data;
+    }
+
+    public static Class<?> defineClass(String type, byte[] data) {
+        return new CL().xxxDefine(type, data);
+    }
+
+    static class CL extends ClassLoader {
+        public Class<?> xxxDefine(String type, byte[] data) {
+            return super.defineClass(type, data, 0, data.length);
+        }
+    }
 }
