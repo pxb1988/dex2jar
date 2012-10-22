@@ -66,6 +66,9 @@ public class I56_AccessFlag {
     final class C4 {
     }
 
+    abstract class C5 {
+    }
+
     synchronized void sync1() {
     }
 
