@@ -101,10 +101,7 @@ public class V3ClassAdapter implements DexClassVisitor {
 
             Clz clz = this.clz;
 
-            // the abstract or interface is in class_flags not in Innerclass
-            final int x = (Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT);
-            int access = (clz.access & ~x) | (access_flags & x);
-
+            int access = clz.access;
             boolean isInnerClass = clz.enclosingClass != null || clz.enclosingMethod != null;
             int accessInClass = clearClassAccess(isInnerClass, access);
             String[] nInterfaceNames = null;

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.Annotation;
@@ -104,6 +105,8 @@ public class V3InnerClzGather implements DexFileVisitor {
         return classes;
     }
 
+    private static final int ACC_INTERFACE_ABSTRACT = (Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT);
+
     /*
      * (non-Javadoc)
      * 
@@ -114,7 +117,8 @@ public class V3InnerClzGather implements DexFileVisitor {
     public DexClassVisitor visit(int access_flags, final String className, String superClass, String[] interfaceNames) {
 
         final Clz clz = get(className);
-        clz.access |= access_flags;
+
+        clz.access = (clz.access & ~ACC_INTERFACE_ABSTRACT) | access_flags;
 
         return new EmptyVisitor() {
             protected List<Annotation> anns = new ArrayList<Annotation>();
@@ -150,7 +154,7 @@ public class V3InnerClzGather implements DexFileVisitor {
                     } else if ("Ldalvik/annotation/InnerClass;".equals(ann.type)) {
                         for (Item it : ann.items) {
                             if ("accessFlags".equals(it.name)) {
-                                clz.access |= (Integer) it.value;
+                                clz.access |= (Integer) it.value & ~ACC_INTERFACE_ABSTRACT;
                             } else if ("name".equals(it.name)) {
                                 clz.innerName = (String) it.value;
                             }
