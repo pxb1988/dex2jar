@@ -264,15 +264,21 @@ public class V3ClassAdapter implements DexClassVisitor {
                 @Override
                 public DexAnnotationVisitor visitAnnotation(String name, String desc) {
                     return new EmptyVisitor() {
-                        @Override
-                        public void visit(String name, Object value) {
+                        private void putDefault(String name, Object value) {
                             if (annotationDefaults == null) {
                                 annotationDefaults = new HashMap<String, Object>();
                             }
-                            if (value instanceof DexType) {
-                                value = Type.getType(((DexType) value).desc);
-                            }
                             annotationDefaults.put(name, value);
+                        }
+
+                        @Override
+                        public void visit(String name, Object value) {
+                            putDefault(name, value);
+                        }
+
+                        @Override
+                        public void visitEnum(String name, String desc, String value) {
+                            putDefault(name, new Field(desc, value, desc));
                         }
                     };
                 }
@@ -312,7 +318,15 @@ public class V3ClassAdapter implements DexClassVisitor {
                     if (value != null) {
                         AnnotationVisitor av = methodNode.visitAnnotationDefault();
                         if (av != null) {
-                            av.visit(null, value);
+                            if (value instanceof Field) {
+                                Field field = (Field) value;
+                                av.visitEnum(null, field.getOwner(), field.getName());
+                            } else {
+                                if (value instanceof DexType) {
+                                    value = Type.getType(((DexType) value).desc);
+                                }
+                                av.visit(null, value);
+                            }
                             av.visitEnd();
                         }
                     }
