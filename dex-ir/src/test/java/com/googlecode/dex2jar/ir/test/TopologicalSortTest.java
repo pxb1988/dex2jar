@@ -62,6 +62,21 @@ public class TopologicalSortTest {
     }
 
     @Test
+    public void testStartGoto() {
+        IrMethod jm = new IrMethod();
+
+        StmtList list = jm.stmts;
+
+        LabelStmt ls = Stmts.nLabel();
+        list.add(Stmts.nGoto(ls));
+
+        list.add(ls);
+        list.add(Stmts.nReturnVoid());
+
+        new TopologicalSort().transform(jm);
+    }
+
+    @Test
     public void testIF_ELSE() {
         IrMethod jm = new IrMethod();
 
