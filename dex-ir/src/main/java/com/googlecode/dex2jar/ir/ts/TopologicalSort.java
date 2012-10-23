@@ -91,7 +91,7 @@ public class TopologicalSort implements Transformer {
          */
         for (JumpStmt gotoStmt : gotos) {
             Stmt t = gotoStmt.getNext();
-            while (t.st == ST.LABEL) {
+            while (t != null && t.st == ST.LABEL) {
                 if (t == gotoStmt.target) {
                     stmts.remove(gotoStmt);
                     break;
