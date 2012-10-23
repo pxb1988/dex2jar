@@ -46,7 +46,10 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "r", longOpt = "reuse-reg", hasArg = false, description = "reuse regiter while generate java .class file")
     private boolean reuseReg = false;
 
-    @Opt(opt = "s", longOpt = "topological-sort", hasArg = false, description = "sort block by topological, that will generate more readable code")
+    @Opt(opt = "s", hasArg = false, description = "same with --topological-sort/-ts")
+    private boolean topologicalSort1 = false;
+
+    @Opt(opt = "ts", longOpt = "topological-sort", hasArg = false, description = "sort block by topological, that will generate more readable code")
     private boolean topologicalSort = false;
 
     @Opt(opt = "d", longOpt = "debug-info", hasArg = false, description = "translate debug info")
@@ -71,19 +74,16 @@ public class Dex2jarCmd extends BaseCmd {
 
         if ((exceptionFile != null || output != null) && remainingArgs.length != 1) {
             System.err.println("-e/-o can only used with one file");
-            usage();
             return;
         }
         if (debugInfo && reuseReg) {
             System.err.println("-d/-r can not use together");
-            usage();
             return;
         }
 
         if (output != null) {
             if (output.exists() && !forceOverwrite) {
                 System.err.println(output + " exists, use --force to overwrite");
-                usage();
                 return;
             }
         } else {
@@ -91,7 +91,6 @@ public class Dex2jarCmd extends BaseCmd {
                 File file = new File(FilenameUtils.getBaseName(fileName) + "-dex2jar.jar");
                 if (file.exists() && !forceOverwrite) {
                     System.err.println(file + " exists, use --force to overwrite");
-                    usage();
                     return;
                 }
             }
@@ -105,8 +104,9 @@ public class Dex2jarCmd extends BaseCmd {
             DexExceptionHandlerImpl handler = notHandleException ? null : new DexExceptionHandlerImpl()
                     .skipDebug(!debugInfo);
 
-            Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort(topologicalSort)
-                    .skipDebug(!debugInfo).optimizeSynchronized(this.optmizeSynchronized).printIR(printIR).to(file);
+            Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg)
+                    .topoLogicalSort(topologicalSort || topologicalSort1).skipDebug(!debugInfo)
+                    .optimizeSynchronized(this.optmizeSynchronized).printIR(printIR).to(file);
 
             if (!notHandleException) {
                 Map<Method, Exception> exceptions = handler.getExceptions();

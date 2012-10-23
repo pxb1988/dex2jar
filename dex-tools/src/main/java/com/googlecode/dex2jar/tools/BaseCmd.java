@@ -51,6 +51,8 @@ public abstract class BaseCmd {
         String opt();
     }
 
+    @Opt(opt = "h", longOpt = "help", hasArg = false, description = "Print this help message")
+    private boolean printHelp = false;
     private final String cmdLineSyntax;
     protected CommandLine commandLine;
     private final String header;
@@ -115,7 +117,11 @@ public abstract class BaseCmd {
                     f.set(this, value);
                 }
             }
-            doCommandLine();
+            if (this.printHelp) {
+                usage();
+            } else {
+                doCommandLine();
+            }
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
