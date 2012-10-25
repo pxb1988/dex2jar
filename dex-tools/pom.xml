@@ -7,14 +7,14 @@
         <version>1.0</version>
     </parent>
     <artifactId>dex-tools</artifactId>
-    <version>0.0.0.7-SNAPSHOT</version>
+    <version>0.0.9.11-SNAPSHOT</version>
     <name>Dex Tools</name>
     <description>Tools to work with dex and class files</description>
     <dependencies>
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>dex-translator</artifactId>
-            <version>0.0.9.11-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>pxb.bc</groupId>
             <artifactId>p-rename</artifactId>
-            <version>1.3</version>
+            <version>1.4</version>
         </dependency>
     </dependencies>
     <build>
