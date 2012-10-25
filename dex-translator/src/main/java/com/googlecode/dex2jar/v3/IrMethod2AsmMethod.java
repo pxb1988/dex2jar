@@ -477,11 +477,13 @@ public class IrMethod2AsmMethod implements Opcodes {
                     FieldExpr fe = (FieldExpr) v1;
                     if (fe.op == null) {// static field
                         accept(v2, asm);
+                        insertI2x(LocalType.typeOf(v2), fe.fieldType, asm);
                         asm.visitFieldInsn(PUTSTATIC, fe.fieldOwnerType.getInternalName(), fe.fieldName,
                                 fe.fieldType.getDescriptor());
                     } else {// virtual field
                         accept(fe.op.value, asm);
                         accept(v2, asm);
+                        insertI2x(LocalType.typeOf(v2), fe.fieldType, asm);
                         asm.visitFieldInsn(PUTFIELD, fe.fieldOwnerType.getInternalName(), fe.fieldName,
                                 fe.fieldType.getDescriptor());
                     }
@@ -494,7 +496,9 @@ public class IrMethod2AsmMethod implements Opcodes {
                     Type tp1 = LocalType.typeOf(ae.op1.value);
                     Type tp2 = LocalType.typeOf(ae);
                     if (tp1.getSort() == Type.ARRAY) {
-                        asm.visitInsn(Type.getType(tp1.getDescriptor().substring(1)).getOpcode(IASTORE));
+                        Type arrayElementType = Type.getType(tp1.getDescriptor().substring(1));
+                        insertI2x(LocalType.typeOf(v2), arrayElementType, asm);
+                        asm.visitInsn(arrayElementType.getOpcode(IASTORE));
                     } else {
                         asm.visitInsn(tp2.getOpcode(IASTORE));
                     }
@@ -586,6 +590,7 @@ public class IrMethod2AsmMethod implements Opcodes {
             case RETURN: {
                 Value v = ((UnopStmt) st).op.value;
                 accept(v, asm);
+                insertI2x(LocalType.typeOf(v), ir.ret, asm);
                 asm.visitInsn(LocalType.typeOf(v).getOpcode(IRETURN));
             }
                 break;
@@ -617,6 +622,39 @@ public class IrMethod2AsmMethod implements Opcodes {
                 asm.visitInsn(ATHROW);
                 break;
             }
+        }
+    }
+
+    /**
+     * insert I2x instruction
+     * 
+     * @param tos
+     * @param expect
+     * @param mv
+     */
+    private static void insertI2x(Type tos, Type expect, MethodVisitor mv) {
+        switch (expect.getSort()) {
+        case Type.BYTE:
+            switch (tos.getSort()) {
+            case Type.SHORT:
+            case Type.CHAR:
+            case Type.INT:
+                mv.visitInsn(I2B);
+            }
+            break;
+        case Type.SHORT:
+            switch (tos.getSort()) {
+            case Type.CHAR:
+            case Type.INT:
+                mv.visitInsn(I2S);
+            }
+            break;
+        case Type.CHAR:
+            switch (tos.getSort()) {
+            case Type.INT:
+                mv.visitInsn(I2C);
+            }
+            break;
         }
     }
 
@@ -766,6 +804,13 @@ public class IrMethod2AsmMethod implements Opcodes {
             TypeExpr te = Exprs.nNewArray(fae.type, Constant.nInt(fae.ops.length));
             reBuildE1Expression(te, asm);
             Type tp1 = LocalType.typeOf(fae);
+            int xastore = IASTORE;
+            Type elementType = null;
+            if (tp1.getSort() == Type.ARRAY) {
+                elementType = Type.getType(tp1.getDescriptor().substring(1));
+                xastore = elementType.getOpcode(IASTORE);
+            }
+
             for (int i = 0; i < fae.ops.length; i++) {
                 if (fae.ops[i].value == null)
                     continue;
@@ -773,24 +818,19 @@ public class IrMethod2AsmMethod implements Opcodes {
                 asm.visitLdcInsn(i);
                 accept(fae.ops[i].value, asm);
                 Type tp2 = LocalType.typeOf(fae.ops[i].value);
-                if (tp1.getSort() == Type.ARRAY) {
-                    asm.visitInsn(Type.getType(tp1.getDescriptor().substring(1)).getOpcode(IASTORE));
-                } else {
-                    asm.visitInsn(tp2.getOpcode(IASTORE));
+                if (elementType != null) {
+                    insertI2x(tp2, elementType, asm);
                 }
+                asm.visitInsn(xastore);
             }
             return;
         }
-        if (value.vt == VT.INVOKE_NEW) {
-            asm.visitTypeInsn(NEW, ((InvokeExpr) value).methodOwnerType.getInternalName());
-            asm.visitInsn(DUP);
-        }
 
-        for (ValueBox vb : value.ops) {
-            accept(vb.value, asm);
-        }
         switch (value.vt) {
         case NEW_MUTI_ARRAY:
+            for (ValueBox vb : value.ops) {
+                accept(vb.value, asm);
+            }
             NewMutiArrayExpr nmae = (NewMutiArrayExpr) value;
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < nmae.dimension; i++) {
@@ -799,12 +839,26 @@ public class IrMethod2AsmMethod implements Opcodes {
             sb.append(nmae.baseType.getDescriptor());
             asm.visitMultiANewArrayInsn(sb.toString(), nmae.dimension);
             break;
-        case INVOKE_INTERFACE:
         case INVOKE_NEW:
+            asm.visitTypeInsn(NEW, ((InvokeExpr) value).methodOwnerType.getInternalName());
+            asm.visitInsn(DUP);
+            // pass through
+        case INVOKE_INTERFACE:
         case INVOKE_SPECIAL:
         case INVOKE_STATIC:
         case INVOKE_VIRTUAL:
             InvokeExpr ie = (InvokeExpr) value;
+            int i = 0;
+            if (value.vt != VT.INVOKE_STATIC && value.vt != VT.INVOKE_NEW) {
+                i = 1;
+                accept(value.ops[0].value, asm);
+            }
+            for (int j = 0; i < value.ops.length; i++, j++) {
+                ValueBox vb = value.ops[i];
+                accept(vb.value, asm);
+                insertI2x(LocalType.typeOf(vb.value), ie.argmentTypes[j], asm);
+            }
+
             int opcode;
             switch (value.vt) {
             case INVOKE_VIRTUAL:

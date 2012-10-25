@@ -130,10 +130,6 @@ Rev = {node|short}
         </plugins>
     </build>
     <properties>
-        <dex2jar.tools.version>0.0.0.6</dex2jar.tools.version>
-        <dex2jar.ir.version>1.8</dex2jar.ir.version>
-        <dex2jar.reader.version>1.11</dex2jar.reader.version>
-        <dex2jar.translator.version>0.0.9.10</dex2jar.translator.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 </project>

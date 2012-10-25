@@ -7,7 +7,7 @@
         <version>1.0</version>
     </parent>
     <artifactId>dex-ir</artifactId>
-    <version>${dex2jar.ir.version}</version>
+    <version>1.9</version>
     <name>Dex Instruction Representation</name>
     <dependencies>
         <dependency>

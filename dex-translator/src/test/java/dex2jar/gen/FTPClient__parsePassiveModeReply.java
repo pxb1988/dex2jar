@@ -19,43 +19,22 @@ import static com.googlecode.dex2jar.DexOpcodes.OP_SHL_INT_LIT_X;
 import static com.googlecode.dex2jar.DexOpcodes.OP_THROW;
 
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.test.TestUtils;
-import com.googlecode.dex2jar.v3.V3MethodAdapter;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
-import com.googlecode.dex2jar.visitors.EmptyVisitor;
 
 public class FTPClient__parsePassiveModeReply implements Opcodes {
     @Test
-    public void test() throws IllegalArgumentException, AnalyzerException, IllegalAccessException {
-        final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        cw.visit(V1_6, ACC_PUBLIC, "Lt", null, "java/lang/Object", null);
-        m003___parsePassiveModeReply(new EmptyVisitor() {
-            @Override
-            public DexMethodVisitor visitMethod(int accessFlags, Method method) {
-                return new V3MethodAdapter(accessFlags, method, null) {
-
-                    @Override
-                    public void visitEnd() {
-                        super.visitEnd();
-                        methodNode.accept(cw);
-                    }
-                };
-            }
-        });
-        ClassReader cr = new ClassReader(cw.toByteArray());
-        TestUtils.verify(cr);
+    public void test() throws Exception {
+        TestUtils.testDexASMifier(getClass(), "m003___parsePassiveModeReply");
     }
 
     public static void m003___parsePassiveModeReply(DexClassVisitor cv) {

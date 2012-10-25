@@ -16,12 +16,9 @@ import static com.googlecode.dex2jar.DexOpcodes.TYPE_INT;
 import static com.googlecode.dex2jar.DexOpcodes.TYPE_OBJECT;
 
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import com.googlecode.dex2jar.DexLabel;
 import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.v3.V3;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
 import com.googlecode.dex2jar.visitors.DexMethodVisitor;
@@ -72,10 +69,7 @@ public class I121Test {
     }
 
     @Test
-    public void test() throws IllegalArgumentException, IllegalAccessException, AnalyzerException {
-        TestDexClassV cv = new TestDexClassV("Lt", V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT);
-        a(cv);
-        ClassReader cr = new ClassReader(cv.toByteArray());
-        TestUtils.verify(cr);
+    public void test() throws Exception {
+        TestUtils.testDexASMifier(getClass(), "a");
     }
 }

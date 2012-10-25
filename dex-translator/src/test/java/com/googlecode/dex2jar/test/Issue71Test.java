@@ -15,59 +15,38 @@
  */
 package com.googlecode.dex2jar.test;
 
-import static com.googlecode.dex2jar.ir.Constant.nLong;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nAdd;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
-
-import java.util.ArrayList;
-
 import org.junit.Test;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.MethodNode;
 
-import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.Local;
-import com.googlecode.dex2jar.ir.ts.EndRemover;
-import com.googlecode.dex2jar.ir.ts.ExceptionHandlerCurrectTransformer;
-import com.googlecode.dex2jar.ir.ts.LocalRemove;
-import com.googlecode.dex2jar.ir.ts.LocalSplit;
-import com.googlecode.dex2jar.ir.ts.LocalType;
-import com.googlecode.dex2jar.ir.ts.Transformer;
-import com.googlecode.dex2jar.v3.IrMethod2AsmMethod;
-import com.googlecode.dex2jar.v3.LocalCurrect;
+import com.googlecode.dex2jar.DexOpcodes;
+import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.visitors.DexClassVisitor;
+import com.googlecode.dex2jar.visitors.DexCodeVisitor;
+import com.googlecode.dex2jar.visitors.DexMethodVisitor;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * 
  */
-public class Issue71Test {
+public class Issue71Test implements DexOpcodes {
+    public static void i71(DexClassVisitor cv) {
+        DexMethodVisitor mv = cv.visitMethod(ACC_STATIC, new Method("La;", "test", new String[] {}, "V"));
+        if (mv != null) {
+            DexCodeVisitor code = mv.visitCode();
+            if (code != null) {
+                code.visitArguments(2, new int[] {});
+                code.visitConstStmt(OP_CONST, 0, 0L, TYPE_WIDE);
+                code.visitConstStmt(OP_CONST, 1, 2L, TYPE_WIDE);
+                code.visitBinopStmt(OP_ADD, 0, 0, 1, TYPE_LONG);
+                code.visitReturnStmt(OP_RETURN_VOID);
+                code.visitEnd();
+            }
+            mv.visitEnd();
+        }
+    }
 
     @Test
-    public void shortTest() {
-        IrMethod irMethod = new IrMethod();
-        irMethod.name = "test";
-        irMethod.args = new Type[] {};
-        irMethod.ret = Type.VOID_TYPE;
-        Local a = nLocal("a");
-        irMethod.locals.add(a);
-
-        irMethod.stmts.add(nAssign(a, nLong(0L)));
-        irMethod.stmts.add(nAssign(a, nAdd(a, nLong(2))));
-
-        Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(), new LocalSplit(), new LocalRemove(),
-                new LocalType(), new LocalCurrect() };
-        Transformer endremove = new EndRemover();
-        endremove.transform(irMethod);
-
-        // indexLabelStmt4Debug(irMethod.stmts);
-
-        for (Transformer ts : tses) {
-            ts.transform(irMethod);
-        }
-        MethodNode node = new MethodNode();
-        node.tryCatchBlocks = new ArrayList();
-        new IrMethod2AsmMethod().convert(irMethod, node);
+    public void shortTest() throws Exception {
+        TestUtils.testDexASMifier(getClass(), "i71");
     }
 
 }

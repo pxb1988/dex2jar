@@ -15,9 +15,10 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
+import org.objectweb.asm.Type;
+
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.E1Expr;
-import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
 
 /**
@@ -25,23 +26,27 @@ import com.googlecode.dex2jar.ir.ValueBox;
  * 
  * @see VT#LENGTH
  * @see VT#NEG
+ * @see VT#NOT
  * 
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
 public class UnopExpr extends E1Expr {
+    public Type type;
 
     /**
-     * @param type
+     * @param vt
      * @param value
+     * @param type
      */
-    public UnopExpr(VT type, Value value) {
-        super(type, new ValueBox(value));
+    public UnopExpr(VT vt, Value value, Type type) {
+        super(vt, new ValueBox(value));
+        this.type = type;
     }
 
     @Override
     public Value clone() {
-        return new UnopExpr(vt, op.value.clone());
+        return new UnopExpr(vt, op.value.clone(), type);
     }
 
     @Override
@@ -51,6 +56,8 @@ public class UnopExpr extends E1Expr {
             return op + ".length";
         case NEG:
             return "(-" + op + ")";
+        case NOT:
+            return "(!" + op + ")";
         }
         return super.toString();
     }

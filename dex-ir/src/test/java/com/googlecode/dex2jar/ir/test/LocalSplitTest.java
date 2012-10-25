@@ -72,7 +72,7 @@ public class LocalSplitTest {
 
         LabelStmt L1 = nLabel();
         LabelStmt L2 = nLabel();
-        list.add(nIf(nGt(nInt(100), nInt(0)), L1));
+        list.add(nIf(nGt(nInt(100), nInt(0), Type.INT_TYPE), L1));
         list.add(nAssign(b, nString("123")));
         list.add(nGoto(L2));
         list.add(L1);
@@ -136,8 +136,8 @@ public class LocalSplitTest {
         jm.locals.add(value);
 
         list.add(nAssign(array, nNewArray(Type.INT_TYPE, nInt(5))));
-        list.add(nAssign(index, nAdd(nInt(1999), nInt(3))));
-        list.add(nAssign(value, nAdd(index, nInt(4))));
+        list.add(nAssign(index, nAdd(nInt(1999), nInt(3), Type.INT_TYPE)));
+        list.add(nAssign(value, nAdd(index, nInt(4), Type.INT_TYPE)));
         list.add(nAssign(nArray(array, index), value));
         list.add(nReturnVoid());
 
@@ -280,16 +280,16 @@ public class LocalSplitTest {
         Local c = nLocal("c");
         jm.locals.add(b);
         jm.locals.add(c);
-        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L2));
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2), Type.INT_TYPE), L2));
         list.add(nAssign(b, nInt(3)));
         list.add(nGoto(L3));
         list.add(L2);
         list.add(nAssign(b, nInt(4)));
         list.add(L3);
-        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L4));
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2), Type.INT_TYPE), L4));
         list.add(Stmts.nReturnVoid());
         list.add(L4);
-        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L5));
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2), Type.INT_TYPE), L5));
         list.add(Stmts.nAssign(c, Exprs.nInvokeStatic(new Value[] { b }, Type.getType(String.class), "someMethod",
                 new Type[] { Type.INT_TYPE }, Type.VOID_TYPE)));
         list.add(Stmts.nReturnVoid());
@@ -316,16 +316,16 @@ public class LocalSplitTest {
         Local c = nLocal("c");
         jm.locals.add(b);
         jm.locals.add(c);
-        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L2));
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2), Type.INT_TYPE), L2));
         list.add(nAssign(b, nInt(3)));
         list.add(nGoto(L3));
         list.add(L2);
         list.add(nAssign(b, nInt(4)));
         list.add(L3);
-        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L4));
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2), Type.INT_TYPE), L4));
         list.add(Stmts.nReturnVoid());
         list.add(L4);
-        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2)), L5));
+        list.add(Stmts.nIf(Exprs.nEq(nInt(1), nInt(2), Type.INT_TYPE), L5));
 
         list.add(Stmts.nReturnVoid());
         list.add(L5);

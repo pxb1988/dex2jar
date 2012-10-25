@@ -57,12 +57,11 @@ import com.googlecode.dex2jar.visitors.DexMethodVisitor;
  * @version $Rev$
  */
 public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
-    protected static Transformer endremove = new EndRemover();
     protected static Transformer topologicalSort = new TopologicalSort();
     private static final Logger log = Logger.getLogger(V3MethodAdapter.class.getName());
-    protected static Transformer[] tses = new Transformer[] { new ExceptionHandlerCurrectTransformer(),
-            new ZeroTransformer(), new ArrayNullPointerTransformer(), new FixVar(), new LocalSplit(),
-            new LocalRemove(), new LocalType(), new LocalCurrect() };
+    protected static Transformer[] tses = new Transformer[] { new EndRemover(),
+            new ExceptionHandlerCurrectTransformer(), new ZeroTransformer(), new ArrayNullPointerTransformer(),
+            new FixVar(), new LocalSplit(), new LocalRemove(), new LocalType() };
     static {
         log.log(Level.CONFIG, "InsnList.check=false");
         // Optimize Tree Analyzer
@@ -205,22 +204,25 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         if (irMethod != null) {
             try {
                 if (irMethod.stmts.getSize() > 1) {
-
                     if (V3.DEBUG) {
                         indexLabelStmt4Debug(irMethod.stmts);
-                    }
-
-                    endremove.transform(irMethod);
-                    for (Transformer ts : tses) {
-                        ts.transform(irMethod);
-                    }
-                    if (0 != (config & V3.TOPOLOGICAL_SORT)) {
-                        topologicalSort.transform(irMethod);
-                    }
-
-                    if (V3.DEBUG) {
+                        for (Transformer ts : tses) {
+                            ts.transform(irMethod);
+                            indexLabelStmt4Debug(irMethod.stmts);
+                        }
+                        if (0 != (config & V3.TOPOLOGICAL_SORT)) {
+                            topologicalSort.transform(irMethod);
+                        }
                         indexLabelStmt4Debug(irMethod.stmts);
+                    } else {
+                        for (Transformer ts : tses) {
+                            ts.transform(irMethod);
+                        }
+                        if (0 != (config & V3.TOPOLOGICAL_SORT)) {
+                            topologicalSort.transform(irMethod);
+                        }
                     }
+
                 }
                 if (0 != (config & V3.PRINT_IR)) {
                     indexLabelStmt4Debug(irMethod.stmts);

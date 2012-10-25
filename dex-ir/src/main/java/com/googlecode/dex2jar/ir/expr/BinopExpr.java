@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
+import org.objectweb.asm.Type;
+
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.ValueBox;
@@ -49,14 +51,16 @@ import com.googlecode.dex2jar.ir.ValueBox;
  * @version $Rev$
  */
 public class BinopExpr extends E2Expr {
+    public Type type;
 
-    public BinopExpr(VT type, Value op1, Value op2) {
-        super(type, new ValueBox(op1), new ValueBox(op2));
+    public BinopExpr(VT vt, Value op1, Value op2, Type type) {
+        super(vt, new ValueBox(op1), new ValueBox(op2));
+        this.type = type;
     }
 
     @Override
     public Value clone() {
-        return new BinopExpr(vt, op1.value.clone(), op2.value.clone());
+        return new BinopExpr(vt, op1.value.clone(), op2.value.clone(), type);
     }
 
     @Override

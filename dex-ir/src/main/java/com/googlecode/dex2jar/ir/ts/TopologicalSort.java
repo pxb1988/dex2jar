@@ -10,8 +10,8 @@ import java.util.TreeSet;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.expr.BinopExpr;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
@@ -57,27 +57,41 @@ public class TopologicalSort implements Transformer {
                         if (stmt.st == ST.IF) {
                             JumpStmt jumpStmt = (JumpStmt) stmt;
                             if (jumpStmt.target == next) {
-                                reverseIF(jumpStmt.op);
-                                jumpStmt.target = (LabelStmt) orgNext;
+                                reverseIF(jumpStmt);
                             } else {
                                 JumpStmt gotoStmt = Stmts.nGoto((LabelStmt) orgNext);
+                                gotos.add(gotoStmt);
                                 stmts.add(gotoStmt);
                             }
                         } else {
                             JumpStmt gotoStmt = Stmts.nGoto((LabelStmt) orgNext);
+                            gotos.add(gotoStmt);
                             stmts.add(gotoStmt);
                         }
                     }
                 } else {
                     JumpStmt gotoStmt = Stmts.nGoto((LabelStmt) orgNext);
+                    gotos.add(gotoStmt);
                     stmts.add(gotoStmt);
                 }
             }
         }
 
+        /**
+         * deal with
+         * 
+         * <pre>
+         * GOTO L2
+         * L0:
+         * L1:
+         * L2:
+         * </pre>
+         * 
+         * remove the GOTO L2
+         */
         for (JumpStmt gotoStmt : gotos) {
             Stmt t = gotoStmt.getNext();
-            while (t.st == ST.LABEL) {
+            while (t != null && t.st == ST.LABEL) {
                 if (t == gotoStmt.target) {
                     stmts.remove(gotoStmt);
                     break;
@@ -217,30 +231,50 @@ public class TopologicalSort implements Transformer {
         to._cfg_froms.add(from);
     }
 
-    private void init(StmtList stmts, List<Trap> traps) {
-        // 1. init _ts_default_next and insert label after IF stmt
-        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
-            switch (stmt.st) {
-            case IF:
-                Stmt n = stmt.getNext();
-                if (n != null && n.st != ST.LABEL) {
-                    LabelStmt ls = Stmts.nLabel();
-                    stmts.insertAftre(stmt, ls);
-                }
-                stmt._ts_default_next = stmt.getNext();
-                break;
-            case GOTO:
-            case RETURN:
-            case RETURN_VOID:
-            case TABLE_SWITCH:
-            case LOOKUP_SWITCH:
-            case THROW:
-                stmt._ts_default_next = null;
-                break;
-            default:
-                stmt._ts_default_next = stmt.getNext();
-                break;
+    /**
+     * 1. init _ts_default_next, 2. insert label after IF stmt, 3. insert label before GOTO stmt.
+     * 
+     * @param stmts
+     * @param stmt
+     */
+    private void init_ts_default_next(StmtList stmts, Stmt stmt) {
+        switch (stmt.st) {
+        case IF:
+            Stmt n = stmt.getNext();
+            if (n != null && n.st != ST.LABEL) {
+                LabelStmt ls = Stmts.nLabel();
+                stmts.insertAftre(stmt, ls);
             }
+            stmt._ts_default_next = stmt.getNext();
+            break;
+        case GOTO: {
+            Stmt pre = stmt.getPre();
+            if (pre == null || pre.st != ST.LABEL) {
+                LabelStmt ls = Stmts.nLabel();
+                stmts.insertBefore(stmt, ls);
+                if (pre != null) {
+                    init_ts_default_next(stmts, pre);
+                }
+                init_ts_default_next(stmts, ls);
+            }
+        }// pass through
+        case RETURN:
+        case RETURN_VOID:
+        case TABLE_SWITCH:
+        case LOOKUP_SWITCH:
+        case THROW:
+            stmt._ts_default_next = null;
+            break;
+        default:
+            stmt._ts_default_next = stmt.getNext();
+            break;
+        }
+    }
+
+    private void init(StmtList stmts, List<Trap> traps) {
+        // 1. init _ts_default_next
+        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
+            init_ts_default_next(stmts, stmt);
         }
         // 2. init cfg
         for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
@@ -315,28 +349,32 @@ public class TopologicalSort implements Transformer {
         }
     }
 
-    private void reverseIF(ValueBox op) {
-        E2Expr e2 = (E2Expr) op.value;
+    private void reverseIF(JumpStmt js) {
+        ValueBox op = js.op;
+        BinopExpr e2 = (BinopExpr) op.value;
 
         switch (e2.vt) {
         case GE:
-            op.value = Exprs.nLt(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nLt(e2.op1.value, e2.op2.value, e2.type);
             break;
         case GT:
-            op.value = Exprs.nLe(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nLe(e2.op1.value, e2.op2.value, e2.type);
             break;
         case LT:
-            op.value = Exprs.nGe(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nGe(e2.op1.value, e2.op2.value, e2.type);
             break;
         case LE:
-            op.value = Exprs.nGt(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nGt(e2.op1.value, e2.op2.value, e2.type);
             break;
         case EQ:
-            op.value = Exprs.nNe(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nNe(e2.op1.value, e2.op2.value, e2.type);
             break;
         case NE:
-            op.value = Exprs.nEq(e2.op1.value, e2.op2.value);
+            op.value = Exprs.nEq(e2.op1.value, e2.op2.value, e2.type);
             break;
         }
+        LabelStmt tmp = js.target;
+        js.target = (LabelStmt) js._ts_default_next;
+        js._ts_default_next = tmp;
     }
 }
