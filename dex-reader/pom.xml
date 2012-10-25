@@ -5,20 +5,14 @@
     <parent>
         <groupId>com.googlecode.dex2jar</groupId>
         <artifactId>dex2jar</artifactId>
-        <version>1.0</version>
+        <version>1.1</version>
     </parent>
     <artifactId>dex-reader</artifactId>
-    <version>1.12-SNAPSHOT</version>
+    <version>1.13-SNAPSHOT</version>
     <name>Dex Reader</name>
     <description>Tools to work with android .dex and java .class files</description>
     <url>http://code.google.como/p/dex2jar/</url>
     <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.5</version>
-            <scope>test</scope>
-        </dependency>
         <!-- <dependency> -->
         <!-- <groupId>commons-io</groupId> -->
         <!-- <artifactId>commons-io</artifactId> -->
@@ -32,7 +26,7 @@
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>commons-lite</artifactId>
-            <version>1.12-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
