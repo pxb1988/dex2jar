@@ -73,7 +73,7 @@ public class ExceptionHandlerCurrectTransformer implements Transformer {
 
                 LabelStmt lbl = Stmts.nLabel();
                 JumpStmt g = Stmts.nGoto(lbl);
-                irMethod.stmts.insertAftre(pre, g);
+                irMethod.stmts.insertAfter(pre, g);
                 irMethod.stmts.insertBefore(st, lbl);
                 if (ex == null) {
                     ex = Exprs.nLocal("unRefEx");
