@@ -22,7 +22,6 @@ import java.util.Queue;
 import java.util.Set;
 
 import com.googlecode.dex2jar.ir.Constant;
-import com.googlecode.dex2jar.ir.ET;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Value;
@@ -40,7 +39,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.EnStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
-import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
+import com.googlecode.dex2jar.ir.ts.BaseLiveAnalyze.Phi;
 
 /**
  * 
@@ -48,11 +47,10 @@ import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
  * 
  */
 public class ZeroTransformer implements Transformer {
-
-    public static class Phi {
+    static class ZeroAnalyzePhi extends Phi {
         public Boolean isZero = null;
-        public Set<Phi> parents = new HashSet<Phi>();
-        public Set<Phi> children = new HashSet<Phi>();
+        public Set<Phi> assignFrom = new HashSet<Phi>(3);
+        public Set<Phi> assignTo = new HashSet<Phi>(3);
 
         @Override
         public String toString() {
@@ -63,7 +61,13 @@ public class ZeroTransformer implements Transformer {
         }
     }
 
-    private static class ZeroAnalyze {
+    private static class ZeroAnalyze extends BaseLiveAnalyze {
+
+        @Override
+        protected Phi newPhi() {
+            return new ZeroAnalyzePhi();
+        }
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -84,160 +88,63 @@ public class ZeroTransformer implements Transformer {
             return sb.toString();
         }
 
-        IrMethod method;
-
         public ZeroAnalyze(IrMethod irMethod) {
-            super();
-            this.method = irMethod;
+            super(irMethod);
         }
 
-        private void init() {
-            int i = 0;
-            for (Local local : method.locals) {
-                local._ls_index = i++;
-            }
-        }
-
-        public void analyze() {
-            init();
-            analyze0();
-        }
-
-        private void analyze0() {
-            Cfg.createCfgForLiveAnalyze(method);
-            final int localSize = method.locals.size();
-            final Phi[] tmp = new Phi[localSize];
-            final Queue<Phi> phis = new LinkedList<Phi>();
-            Cfg.Forward(method, new FrameVisitor<Phi[]>() {
-
-                private Phi newPhi() {
-                    Phi phi = new Phi();
-                    phis.add(phi);
-                    return phi;
-                }
-
-                @Override
-                public Phi[] exec(Stmt stmt) {
-                    {
-                        Phi[] frame = (Phi[]) stmt._ls_forward_frame;
-                        if (frame == null) {
-                            stmt._ls_forward_frame = frame = new Phi[localSize];
-                        }
-                        System.arraycopy(frame, 0, tmp, 0, localSize);
-                    }
-                    if (stmt.et == ET.E2) {
-                        E2Stmt e2 = (E2Stmt) stmt;
-                        Value op1 = e2.op1.value;
-                        Value op2 = e2.op2.value;
-                        switch (stmt.st) {
-                        case ASSIGN:
-                            if (op1.vt == VT.LOCAL) {
-                                Local a = (Local) op1;
-                                switch (op2.vt) {
-                                case CONSTANT: {
-                                    Constant c = (Constant) op2;
-                                    Phi phi = newPhi();
-                                    if (c.value instanceof Integer && ZERO.equals(c.value)) {
-                                        phi.isZero = Boolean.TRUE;
-                                    } else {
-                                        phi.isZero = Boolean.FALSE;
-                                    }
-
-                                    tmp[a._ls_index] = phi;
-                                }
-                                    break;
-                                case LOCAL: {
-                                    Local b = (Local) op2;
-                                    tmp[a._ls_index] = tmp[b._ls_index];
-                                }
-                                    break;
-                                default: {
-                                    Phi phi = newPhi();
-                                    phi.isZero = Boolean.FALSE;
-                                    tmp[a._ls_index] = phi;
-                                }
-                                    break;
-                                }
-                            }
-                            break;
-                        case IDENTITY: {
-                            Local a = (Local) op1;
-                            Phi phi = newPhi();
-                            phi.isZero = Boolean.FALSE;
-                            tmp[a._ls_index] = phi;
-                        }
-                            break;
-                        }
-                    }
-                    return tmp;
-                }
-
-                @Override
-                public void merge(Phi[] frame, Stmt dist) {
-                    if (dist._cfg_froms.size() == 1) {
-                        dist._ls_forward_frame = new Phi[localSize];
-                        System.arraycopy(frame, 0, dist._ls_forward_frame, 0, localSize);
-                    } else {
-                        Phi[] distFrame = (Phi[]) dist._ls_forward_frame;
-                        if (distFrame == null) {
-                            dist._ls_forward_frame = distFrame = new Phi[localSize];
-                        }
-                        for (int i = 0; i < localSize; i++) {
-                            Phi b = distFrame[i];
-                            if (b == null) {
-                                distFrame[i] = b = newPhi();
-                                phis.add(b);
-                            }
-                            Phi a = frame[i];
-                            if (a != null) {
-                                b.parents.add(a);
-                                a.children.add(b);
-                            }
-                        }
-                    }
-                }
-            });
-
-            Set<Phi> cache = new HashSet<Phi>();
-
-            while (!phis.isEmpty()) {
-                Phi phi = phis.poll();
-                cache.clear();
-                if (phi.isZero == null) {
-                    if (phi.parents.size() > 0) {
-                        boolean isZero = true;
-
-                        for (Phi parent : phi.parents) {
-                            if (!Boolean.TRUE.equals(parent.isZero)) {
-                                isZero = false;
-                                break;
-                            }
-                        }
-                        if (isZero) {
-                            phi.isZero = Boolean.TRUE;
-                            for (Phi child : phi.children) {
-                                if (child.isZero == null) {
-                                    cache.add(child);
-                                }
-                            }
-                        }
-                    }
+        @Override
+        protected void onAssignLocal(Phi[] frame, Phi phi, Value value) {
+            if (value.vt == VT.CONSTANT) {
+                ZeroAnalyzePhi zaf = (ZeroAnalyzePhi) phi;
+                Constant c = (Constant) value;
+                if (c.value instanceof Integer && ZERO.equals(c.value)) {
+                    zaf.isZero = Boolean.TRUE;
                 } else {
-                    if (Boolean.FALSE.equals(phi.isZero)) {
-                        for (Phi child : phi.children) {
-                            if (child.isZero == null) {
-                                cache.add(child);
-                            }
-                            child.isZero = Boolean.FALSE;
+                    zaf.isZero = Boolean.FALSE;
+                }
+            } else if (value.vt == VT.LOCAL) {
+                Local local = (Local) value;
+                ZeroAnalyzePhi zaf1 = (ZeroAnalyzePhi) phi;
+                ZeroAnalyzePhi zaf2 = (ZeroAnalyzePhi) frame[local._ls_index];
+                zaf1.assignFrom.add(zaf2);
+                zaf2.assignTo.add(zaf1);
+            } else {
+                ZeroAnalyzePhi zaf = (ZeroAnalyzePhi) phi;
+                zaf.isZero = Boolean.FALSE;
+            }
+        }
+
+        protected void analyzePhi() {
+            super.analyzePhi();
+            Queue<Phi> queue = new LinkedList<Phi>();
+            queue.addAll(phis);
+            while (!queue.isEmpty()) {
+                ZeroAnalyzePhi phi = (ZeroAnalyzePhi) queue.poll();
+                if (Boolean.FALSE.equals(phi.isZero)) {
+                    for (Phi p : phi.children) {
+                        ZeroAnalyzePhi cp = (ZeroAnalyzePhi) p;
+                        if (cp.isZero == null) {
+                            cp.isZero = Boolean.FALSE;
+                            queue.add(cp);
+                        }
+                    }
+                    for (Phi p : phi.assignTo) {
+                        ZeroAnalyzePhi cp = (ZeroAnalyzePhi) p;
+                        if (cp.isZero == null) {
+                            cp.isZero = Boolean.FALSE;
+                            queue.add(cp);
                         }
                     }
                 }
-                for (Phi x : cache) {
-                    if (!phis.contains(x)) {
-                        phis.add(x);
-                    }
+            }
+
+            for (Phi p : phis) {
+                ZeroAnalyzePhi cp = (ZeroAnalyzePhi) p;
+                if (cp.isZero == null) {
+                    cp.isZero = Boolean.TRUE;
                 }
             }
+
         }
     }
 
@@ -263,7 +170,7 @@ public class ZeroTransformer implements Transformer {
                 if (p.st == ST.LABEL) {
                     if (p._cfg_froms.size() > 0) { // there is a merge here
                         for (int i = 0; i < localSize; i++) {
-                            Phi phi = frame[i];
+                            ZeroAnalyzePhi phi = (ZeroAnalyzePhi) frame[i];
                             Local local = locals.get(i);
                             if (phi != null && phi.isZero != null && phi.isZero) {// the local is not null
                                 for (Stmt from : p._cfg_froms) {// check for each from
@@ -303,14 +210,7 @@ public class ZeroTransformer implements Transformer {
         case IF:
         case LOOKUP_SWITCH:
         case TABLE_SWITCH:
-            while (p != null) {
-                Stmt q = p.getPre();
-                if (q == null || q.st != ST.LABEL) {// insert before any label
-                    stmts.insertBefore(p, Stmts.nAssign(local, Constant.nInt(0)));
-                    break;
-                }
-                p = q;
-            }
+            stmts.insertBefore(p, Stmts.nAssign(local, Constant.nInt(0)));
             break;
         default:
             // TODO check if we need to insert for other smt
@@ -330,7 +230,7 @@ public class ZeroTransformer implements Transformer {
         if (frame == null) {
             return false;
         }
-        Phi phi = frame[index];
+        ZeroAnalyzePhi phi = (ZeroAnalyzePhi) frame[index];
         if (phi == null || phi.isZero == null) {
             return false;
         }
@@ -347,7 +247,7 @@ public class ZeroTransformer implements Transformer {
             E0Expr e0 = (E0Expr) value;
             if (e0.vt == VT.LOCAL) {
                 Local local = (Local) e0;
-                Phi phi = frame[local._ls_index];
+                ZeroAnalyzePhi phi = (ZeroAnalyzePhi) frame[local._ls_index];
                 if (Boolean.TRUE.equals(phi.isZero)) {
                     op.value = Constant.nInt(0);// replace it with zero
                 }
