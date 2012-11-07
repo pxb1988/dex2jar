@@ -201,6 +201,7 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     @Override
     public void visitEnd() {
         build();
+        IrMethod irMethod = this.irMethod;
         if (irMethod != null) {
             try {
                 if (irMethod.stmts.getSize() > 1) {

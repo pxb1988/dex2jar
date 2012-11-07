@@ -123,8 +123,8 @@ public class Cfg {
      * @param jm
      */
     public static void createCfgForLiveAnalyze(IrMethod jm) {
-
         for (Stmt st : jm.stmts) {
+            st._ls_forward_frame = null;
             if (st._cfg_froms == null) {
                 st._cfg_froms = new TreeSet<Stmt>(jm.stmts);
             } else {
@@ -180,6 +180,7 @@ public class Cfg {
     public static void createCFG(IrMethod jm) {
 
         for (Stmt st : jm.stmts) {
+            st._ls_forward_frame = null;
             if (st._cfg_froms == null) {
                 st._cfg_froms = new TreeSet<Stmt>(jm.stmts);
             } else {
