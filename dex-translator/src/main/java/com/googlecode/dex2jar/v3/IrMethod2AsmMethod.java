@@ -44,10 +44,11 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
+import com.googlecode.dex2jar.ir.ts.BaseLiveAnalyze.Phi;
 import com.googlecode.dex2jar.ir.ts.Cfg;
 import com.googlecode.dex2jar.ir.ts.Cfg.StmtVisitor;
 import com.googlecode.dex2jar.ir.ts.LiveAnalyze;
-import com.googlecode.dex2jar.ir.ts.LiveAnalyze.Phi;
+import com.googlecode.dex2jar.ir.ts.LiveAnalyze.LivePhi;
 import com.googlecode.dex2jar.ir.ts.LocalType;
 
 public class IrMethod2AsmMethod implements Opcodes {
@@ -89,7 +90,8 @@ public class IrMethod2AsmMethod implements Opcodes {
 
         // 1. live local analyze
         LiveAnalyze la = new LiveAnalyze(ir);
-        List<Phi> phis = la.analyze();
+        la.analyze();
+        List<Phi> phis = la.phis;
         if (V3.DEBUG) {
             for (Local local : ir.locals) {
                 if (local._ls_index >= 0) {
@@ -165,21 +167,22 @@ public class IrMethod2AsmMethod implements Opcodes {
     }
 
     private void markPhiNeverReuse(List<Phi> phis, Local local) {
-        Phi nPhi = null;
-        for (Phi phi : phis) {
+        LivePhi nPhi = null;
+        for (Phi x : phis) {
+            LivePhi phi = (LivePhi) x;
             if (phi.local == local) {
                 nPhi = phi;
                 break;
             }
         }
         if (nPhi == null) {
-            nPhi = new Phi();
+            nPhi = new LivePhi();
             nPhi.local = local;
         }
         for (Phi phi : phis) {
             if (phi != nPhi) {
-                phi.sets.add(nPhi);
-                nPhi.sets.add(phi);
+                phi.parents.add(nPhi);
+                nPhi.parents.add(phi);
             }
         }
     }
@@ -187,7 +190,8 @@ public class IrMethod2AsmMethod implements Opcodes {
     private int findNextColor(Phi v, int n, int max, int[] maps) {
         BitSet bs = new BitSet(max);
         bs.set(0, max);
-        for (Phi one : v.sets) {
+        for (Phi t : v.parents) {
+            LivePhi one = (LivePhi) t;
             int x = maps[one.local._ls_index];
             if (x >= 0) {
                 bs.clear(x);
@@ -217,19 +221,19 @@ public class IrMethod2AsmMethod implements Opcodes {
         Collections.sort(phis, new Comparator<Phi>() {
             @Override
             public int compare(Phi o1, Phi o2) {
-                int r = o2.sets.size() - o1.sets.size();
+                int r = o2.parents.size() - o1.parents.size();
                 return r == 0 ? sizeOf(o2) - sizeOf(o1) : r;
             }
         });
         Phi first = phis.get(0);
         int size = sizeOf(first);
-        for (Phi p : first.sets) {
+        for (Phi p : first.parents) {
             size += sizeOf(p);
         }
 
         BitSet toColor = new BitSet(phis.size());
         for (int i = 0; i < phis.size(); i++) {
-            Phi p = phis.get(i);
+            LivePhi p = (LivePhi) phis.get(i);
             if (maps[p.local._ls_index] < 0) {
                 toColor.set(i);
             }
@@ -245,7 +249,7 @@ public class IrMethod2AsmMethod implements Opcodes {
         if (x < 0) {
             return true;
         }
-        Phi phi = phis.get(x);
+        LivePhi phi = (LivePhi) phis.get(x);
         for (int i = findNextColor(phi, 0, size, maps); i >= 0; i = findNextColor(phi, i + 1, size, maps)) {
             maps[phi.local._ls_index] = i;
             if (doColor(x + 1, toColor, phis, size, maps)) {
@@ -257,7 +261,7 @@ public class IrMethod2AsmMethod implements Opcodes {
     }
 
     private static int sizeOf(Phi p) {
-        return LocalType.typeOf(p.local).getSize();
+        return LocalType.typeOf(((LivePhi) p).local).getSize();
     }
 
     private void createGraph(IrMethod ir, int localSize) {
@@ -281,8 +285,8 @@ public class IrMethod2AsmMethod implements Opcodes {
                 for (int j = i + 1; j < tmp.size(); j++) {
                     Phi b = tmp.get(j);
                     if (a != b) {
-                        a.sets.add(b);
-                        b.sets.add(a);
+                        a.parents.add(b);
+                        b.parents.add(a);
                     }
                 }
             }
