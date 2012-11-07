@@ -15,9 +15,10 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 
 import com.googlecode.dex2jar.ir.Constant;
@@ -31,10 +32,14 @@ import com.googlecode.dex2jar.ir.Value.E2Expr;
 import com.googlecode.dex2jar.ir.Value.EnExpr;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.EnStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
 
 /**
@@ -46,7 +51,7 @@ public class ZeroTransformer implements Transformer {
 
     public static class Phi {
         public Boolean isZero = null;
-        // public Set<Phi> parents = new HashSet<Phi>();
+        public Set<Phi> parents = new HashSet<Phi>();
         public Set<Phi> children = new HashSet<Phi>();
 
         @Override
@@ -99,10 +104,10 @@ public class ZeroTransformer implements Transformer {
         }
 
         private void analyze0() {
-            Cfg.createCFG(method);
+            Cfg.createCfgForLiveAnalyze(method);
             final int localSize = method.locals.size();
             final Phi[] tmp = new Phi[localSize];
-            final List<Phi> phis = new ArrayList<Phi>();
+            final Queue<Phi> phis = new LinkedList<Phi>();
             Cfg.Forward(method, new FrameVisitor<Phi[]>() {
 
                 private Phi newPhi() {
@@ -185,7 +190,7 @@ public class ZeroTransformer implements Transformer {
                             }
                             Phi a = frame[i];
                             if (a != null) {
-                                // b.parents.add(a);
+                                b.parents.add(a);
                                 a.children.add(b);
                             }
                         }
@@ -193,33 +198,44 @@ public class ZeroTransformer implements Transformer {
                 }
             });
 
-            markNotZeroes(phis);// mark all NOT zeroes
-            for (Phi p : phis) {
-                if (p.isZero == null) {
-                    p.isZero = Boolean.TRUE;
-                }
-            }
-            phis.clear();
-        }
+            Set<Phi> cache = new HashSet<Phi>();
 
-        static void markNotZeroes(List<Phi> phis) {
-            Set<Phi> notZeroSet = new HashSet<Phi>();
-            for (Phi p : phis) {
-                if (p.isZero != null && p.isZero.equals(Boolean.FALSE)) {
-                    notZero(p, notZeroSet);
-                }
-            }
-        }
+            while (!phis.isEmpty()) {
+                Phi phi = phis.poll();
+                cache.clear();
+                if (phi.isZero == null) {
+                    if (phi.parents.size() > 0) {
+                        boolean isZero = true;
 
-        static void notZero(Phi p, Set<Phi> notZeroSet) {
-            if (!notZeroSet.contains(p)) {
-                notZeroSet.add(p);
-                if (p.isZero != null && Boolean.TRUE.equals(p.isZero)) {
-                    throw new RuntimeException();
+                        for (Phi parent : phi.parents) {
+                            if (!Boolean.TRUE.equals(parent.isZero)) {
+                                isZero = false;
+                                break;
+                            }
+                        }
+                        if (isZero) {
+                            phi.isZero = Boolean.TRUE;
+                            for (Phi child : phi.children) {
+                                if (child.isZero == null) {
+                                    cache.add(child);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if (Boolean.FALSE.equals(phi.isZero)) {
+                        for (Phi child : phi.children) {
+                            if (child.isZero == null) {
+                                cache.add(child);
+                            }
+                            child.isZero = Boolean.FALSE;
+                        }
+                    }
                 }
-                p.isZero = Boolean.FALSE;
-                for (Phi s : p.children) {
-                    notZero(s, notZeroSet);
+                for (Phi x : cache) {
+                    if (!phis.contains(x)) {
+                        phis.add(x);
+                    }
                 }
             }
         }
@@ -229,18 +245,36 @@ public class ZeroTransformer implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-
+        // 1. analyze
         ZeroAnalyze za = new ZeroAnalyze(irMethod);
         za.analyze();
 
-        for (Stmt p = irMethod.stmts.getFirst(); p != null; p = p.getNext()) {
+        List<Local> locals = irMethod.locals;
+        int localSize = locals.size();
+        StmtList stmts = irMethod.stmts;
+        // 2. mark MUST-BE-ZERO
+        for (Stmt p = stmts.getFirst(); p != null; p = p.getNext()) {
             Phi[] frame = (Phi[]) p._ls_forward_frame;
-            p._ls_forward_frame = null;
             if (frame == null || !p._cfg_visited) {// dead code ?
                 continue;
             }
             switch (p.et) {
             case E0:
+                if (p.st == ST.LABEL) {
+                    if (p._cfg_froms.size() > 0) { // there is a merge here
+                        for (int i = 0; i < localSize; i++) {
+                            Phi phi = frame[i];
+                            Local local = locals.get(i);
+                            if (phi != null && phi.isZero != null && phi.isZero) {// the local is not null
+                                for (Stmt from : p._cfg_froms) {// check for each from
+                                    if (needInsertX(from, i)) {
+                                        insertX(stmts, (LabelStmt) p, from, i, local);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 break;
             case E1:
                 E1Stmt e1 = (E1Stmt) p;
@@ -261,6 +295,46 @@ public class ZeroTransformer implements Transformer {
                 break;
             }
         }
+    }
+
+    private void insertX(StmtList stmts, LabelStmt ls, Stmt p, int index, Local local) {
+        switch (p.st) {
+        case GOTO:
+        case IF:
+        case LOOKUP_SWITCH:
+        case TABLE_SWITCH:
+            while (p != null) {
+                Stmt q = p.getPre();
+                if (q == null || q.st != ST.LABEL) {// insert before any label
+                    stmts.insertBefore(p, Stmts.nAssign(local, Constant.nInt(0)));
+                    break;
+                }
+                p = q;
+            }
+            break;
+        default:
+            // TODO check if we need to insert for other smt
+            // stmts.insertAfter(p, Stmts.nAssign(local, Constant.nInt(0)));
+        }
+    }
+
+    /**
+     * if the phi in frame p is ZERO, return true
+     * 
+     * @param p
+     * @param index
+     * @return
+     */
+    private boolean needInsertX(Stmt p, int index) {
+        Phi[] frame = (Phi[]) p._ls_forward_frame;
+        if (frame == null) {
+            return false;
+        }
+        Phi phi = frame[index];
+        if (phi == null || phi.isZero == null) {
+            return false;
+        }
+        return phi.isZero;
     }
 
     private void replace(ValueBox op, Phi[] frame) {
