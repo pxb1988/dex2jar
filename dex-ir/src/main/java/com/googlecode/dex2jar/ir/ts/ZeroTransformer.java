@@ -172,7 +172,7 @@ public class ZeroTransformer implements Transformer {
                         for (int i = 0; i < localSize; i++) {
                             ZeroAnalyzePhi phi = (ZeroAnalyzePhi) frame[i];
                             Local local = locals.get(i);
-                            if (phi != null && phi.isZero != null && phi.isZero) {// the local is not null
+                            if (phi != null && Boolean.FALSE.equals(phi.isZero)) {// the local is not null
                                 for (Stmt from : p._cfg_froms) {// check for each from
                                     if (needInsertX(from, i)) {
                                         insertX(stmts, (LabelStmt) p, from, i, local);
