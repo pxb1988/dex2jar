@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -169,10 +171,29 @@ public class Dex2jar {
         return this;
     }
 
+    private Set<String> dirs = new HashSet<String>();
+
+    private void check(String dir, ZipOutputStream zos) throws IOException {
+        if (dirs.contains(dir)) {
+            return;
+        }
+        dirs.add(dir);
+        int i = dir.lastIndexOf('/');
+        if (i > 0) {
+            check(dir.substring(0, i), zos);
+        }
+        zos.putNextEntry(new ZipEntry(dir));
+        zos.closeEntry();
+    }
+
     private void saveTo(byte[] data, String name, Object dist) throws IOException {
         if (dist instanceof ZipOutputStream) {
             ZipOutputStream zos = (ZipOutputStream) dist;
             ZipEntry entry = new ZipEntry(name + ".class");
+            int i = name.lastIndexOf('/');
+            if (i > 0) {
+                check(name.substring(0, i), zos);
+            }
             zos.putNextEntry(entry);
             zos.write(data);
             zos.closeEntry();
