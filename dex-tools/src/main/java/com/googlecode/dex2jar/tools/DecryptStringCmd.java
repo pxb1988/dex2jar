@@ -42,13 +42,12 @@ import p.rn.util.FileWalker;
 import p.rn.util.FileWalker.StreamHandler;
 import p.rn.util.FileWalker.StreamOpener;
 
+import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
+
+@Syntax(cmd = "d2j-decrpyt-string", syntax = "[options] <jar>", desc = "Decrypt in class file", onlineHelp = "https://code.google.com/p/dex2jar/wiki/DecryptStrings")
 public class DecryptStringCmd extends BaseCmd {
     public static void main(String[] args) {
         new DecryptStringCmd().doMain(args);
-    }
-
-    public DecryptStringCmd() {
-        super("d2j-decrpyt-string [options] <jar>", "Decrypt in class file");
     }
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
@@ -92,6 +91,8 @@ public class DecryptStringCmd extends BaseCmd {
             System.err.println(output + " exists, use --force to overwrite");
             return;
         }
+
+        System.err.println(jar + " -> " + output);
 
         List<String> list = new ArrayList<String>();
         if (classpath != null) {

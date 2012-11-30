@@ -20,8 +20,11 @@ import java.io.File;
 
 import org.apache.commons.io.FilenameUtils;
 
+import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
+
 import p.rn.name.Renamer;
 
+@Syntax(cmd = "d2j-jar-remap", syntax = "[options] jar", desc = "rename package/class/method/field name in a jar", onlineHelp = "https://code.google.com/p/dex2jar/wiki/DeObfuscateJarWithDexTool")
 public class JarRemap extends BaseCmd {
     public static void main(String[] args) {
         new JarRemap().doMain(args);
@@ -33,10 +36,6 @@ public class JarRemap extends BaseCmd {
     private File output;
     @Opt(opt = "c", longOpt = "config", required = true, description = "config file for remap, this is REQUIRED", argName = "config")
     private File config;
-
-    public JarRemap() {
-        super("d2j-jar-remap [options] <jar>", "rename package/class/method/field name in a jar");
-    }
 
     @Override
     protected void doCommandLine() throws Exception {

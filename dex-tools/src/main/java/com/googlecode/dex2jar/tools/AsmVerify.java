@@ -37,6 +37,9 @@ import p.rn.util.FileWalker;
 import p.rn.util.FileWalker.StreamHandler;
 import p.rn.util.FileWalker.StreamOpener;
 
+import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
+
+@Syntax(cmd = "d2j-asm-verify", syntax = "[options] <jar0> [jar1 ... jarN]", desc = "Verify .class in jar")
 public class AsmVerify extends BaseCmd {
 
     private static String getShortName(final String name) {
@@ -87,10 +90,6 @@ public class AsmVerify extends BaseCmd {
 
     @Opt(opt = "d", longOpt = "detail", hasArg = false, description = "Print detail error message")
     boolean detail = false;
-
-    public AsmVerify() {
-        super("d2j-asm-verify [options] <jar0> [jar1 ... jarN]", "Verify .class in jar");
-    }
 
     @Override
     protected void doCommandLine() throws Exception {
