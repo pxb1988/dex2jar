@@ -32,9 +32,9 @@
             <version>p2.5</version>
         </dependency>
         <dependency>
-            <groupId>pxb.bc</groupId>
-            <artifactId>p-rename</artifactId>
-            <version>1.4</version>
+            <groupId>com.googlecode.dex2jar</groupId>
+            <artifactId>jar-rename</artifactId>
+            <version>1.4-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>

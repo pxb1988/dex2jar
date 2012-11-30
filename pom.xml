@@ -15,6 +15,7 @@
         <module>dex-ir</module>
         <module>dex-tools</module>
         <module>commons-lite</module>
+        <module>jar-rename</module>
     </modules>
     <dependencies>
         <dependency>
