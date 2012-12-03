@@ -221,8 +221,9 @@ public class TypeAnalyze {
             } else if (value instanceof Type) {
                 provideAs(cst, Type.getType(Class.class));
             } else if (value instanceof Number) {
-                if (value instanceof Integer) {
-                    int a = ((Integer) value).intValue();
+                if (value instanceof Integer || value instanceof Byte || value instanceof Short
+                        || value instanceof Character) {
+                    int a = ((Number) value).intValue();
                     if (a >= 0 && a <= 1) {
                         provideAs(cst, Type.BOOLEAN_TYPE);
                     } else if (a >= Byte.MIN_VALUE && a <= Byte.MAX_VALUE) {

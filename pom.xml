@@ -5,7 +5,7 @@
     <artifactId>dex2jar</artifactId>
     <packaging>pom</packaging>
     <name>dex2jar</name>
-    <version>1.0</version>
+    <version>1.1</version>
     <description>A tool for converting Android .dex format to Java .class format</description>
     <url>http://code.google.como/p/dex2jar/</url>
 
@@ -15,7 +15,16 @@
         <module>dex-ir</module>
         <module>dex-tools</module>
         <module>commons-lite</module>
+        <module>jar-rename</module>
     </modules>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
     <reporting>
         <plugins>
             <plugin>

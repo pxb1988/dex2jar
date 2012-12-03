@@ -190,7 +190,7 @@ public class EndRemover implements Transformer {
 
     private void move4Label(StmtList stmts, LabelStmt start, Stmt end, LabelStmt label) {
         move4End(stmts, start, end);
-        stmts.insertAftre(end, Stmts.nGoto(label));
+        stmts.insertAfter(end, Stmts.nGoto(label));
     }
 
     private void move4End(StmtList stmts, LabelStmt start, Stmt end) {

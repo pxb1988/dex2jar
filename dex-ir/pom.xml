@@ -4,22 +4,16 @@
     <parent>
         <artifactId>dex2jar</artifactId>
         <groupId>com.googlecode.dex2jar</groupId>
-        <version>1.0</version>
+        <version>1.1</version>
     </parent>
     <artifactId>dex-ir</artifactId>
-    <version>1.9</version>
+    <version>1.10</version>
     <name>Dex Instruction Representation</name>
     <dependencies>
         <dependency>
             <groupId>asm</groupId>
             <artifactId>asm-all</artifactId>
             <version>3.3.1</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.8.2</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 	<build>

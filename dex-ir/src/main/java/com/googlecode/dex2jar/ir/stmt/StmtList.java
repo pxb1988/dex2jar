@@ -115,7 +115,7 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         this.index++;
     }
 
-    public void insertAftre(Stmt position, Stmt stmt) {
+    public void insertAfter(Stmt position, Stmt stmt) {
         if (position.list == this) {
             indexIt(stmt);
             stmt.list = this;

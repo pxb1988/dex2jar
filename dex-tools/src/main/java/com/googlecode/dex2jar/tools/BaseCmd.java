@@ -37,36 +37,69 @@ import org.apache.commons.cli.PosixParser;
 public abstract class BaseCmd {
     @Retention(value = RetentionPolicy.RUNTIME)
     @Target(value = { ElementType.FIELD })
-    protected @interface Opt {
+    static protected @interface Opt {
         String argName() default "";
 
         String description();
 
         boolean hasArg() default true;
 
-        boolean required() default false;
-
         String longOpt() default "";
 
         String opt();
+
+        boolean required() default false;
     }
 
+    @Retention(value = RetentionPolicy.RUNTIME)
+    @Target(value = { ElementType.TYPE })
+    static protected @interface Syntax {
+
+        String cmd();
+
+        String desc() default "";
+
+        String onlineHelp() default "";
+
+        String syntax() default "";
+    }
+
+    private String cmdLineSyntax;
+    private String cmdName;
+    protected CommandLine commandLine;
+    private String desc;
     @Opt(opt = "h", longOpt = "help", hasArg = false, description = "Print this help message")
     private boolean printHelp = false;
-    private final String cmdLineSyntax;
-    protected CommandLine commandLine;
-    private final String header;
+    private String onlineHelp;
     private Map<String, Field> map = new HashMap<String, Field>();
     protected final Options options = new Options();
+
     protected String remainingArgs[];
+
+    public BaseCmd() {
+    }
 
     public BaseCmd(String cmdLineSyntax, String header) {
         super();
-        this.cmdLineSyntax = cmdLineSyntax;
-        this.header = header;
+
+        int i = cmdLineSyntax.indexOf(' ');
+        if (i > 0) {
+            this.cmdName = cmdLineSyntax.substring(0, i);
+            this.cmdLineSyntax = cmdLineSyntax.substring(i + 1);
+        }
+        this.desc = header;
     }
 
-    protected Object convert(String value, Class<?> type) {
+    public BaseCmd(String cmdName, String cmdSyntax, String header) {
+        super();
+
+        this.cmdName = cmdName;
+        this.cmdLineSyntax = cmdSyntax;
+        this.desc = header;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    protected Object convert(String value, Class type) {
         if (type.equals(String.class)) {
             return value;
         }
@@ -88,6 +121,12 @@ public abstract class BaseCmd {
         if (type.equals(File.class)) {
             return new File(value);
         }
+        try {
+            type.asSubclass(Enum.class);
+            return Enum.valueOf(type, value);
+        } catch (Exception e) {
+        }
+
         throw new RuntimeException("can't convert [" + value + "] to type " + type);
     }
 
@@ -96,10 +135,16 @@ public abstract class BaseCmd {
     public void doMain(String... args) {
         initOptions();
         CommandLineParser parser = new PosixParser();
+        for (String s : args) {
+            if (s.equals("-h") || s.equals("--help")) {
+                usage();
+                return;
+            }
+        }
         try {
             commandLine = parser.parse(options, args);
         } catch (ParseException ex) {
-            usage();
+            System.err.println("ERROR: " + ex.getMessage() + ", --help for detail help");
             return;
         }
         this.remainingArgs = commandLine.getArgs();
@@ -129,7 +174,7 @@ public abstract class BaseCmd {
     }
 
     protected String getVersionString() {
-        return "dex2jar dex-tool-" + BaseCmd.class.getPackage().getImplementationVersion() + ", Apache-2.0";
+        return getClass().getPackage().getImplementationVersion();
     }
 
     protected void initOptionFromClass(Class<?> clz) {
@@ -138,6 +183,15 @@ public abstract class BaseCmd {
         } else {
             initOptionFromClass(clz.getSuperclass());
         }
+
+        Syntax syntax = clz.getAnnotation(Syntax.class);
+        if (syntax != null) {
+            this.cmdLineSyntax = syntax.syntax();
+            this.cmdName = syntax.cmd();
+            this.desc = syntax.desc();
+            this.onlineHelp = syntax.onlineHelp();
+        }
+
         Field[] fs = clz.getDeclaredFields();
         for (Field f : fs) {
             Opt opt = f.getAnnotation(Opt.class);
@@ -183,14 +237,17 @@ public abstract class BaseCmd {
             @Override
             public void printHelp(PrintWriter pw, int width, String cmdLineSyntax, String header, Options options,
                     int leftPad, int descPad, String footer, boolean autoUsage) {
-                String xHeader = BaseCmd.this.header;
+                String xHeader = BaseCmd.this.desc;
                 if (xHeader != null && !xHeader.equals("")) {
                     printWrapped(pw, width, xHeader);
                 }
                 super.printHelp(pw, width, cmdLineSyntax, header, options, leftPad, descPad, footer, autoUsage);
             }
-
         };
-        formatter.printHelp(cmdLineSyntax, "options:", options, "version: " + getVersionString());
+        String footer = "version: " + getVersionString();
+        if (onlineHelp != null && !"".equals(onlineHelp)) {
+            footer = footer + "\nonline help:\n" + onlineHelp;
+        }
+        formatter.printHelp(this.cmdName + " " + cmdLineSyntax, "options:", options, footer);
     }
 }

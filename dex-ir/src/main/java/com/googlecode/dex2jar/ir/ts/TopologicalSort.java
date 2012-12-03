@@ -243,7 +243,7 @@ public class TopologicalSort implements Transformer {
             Stmt n = stmt.getNext();
             if (n != null && n.st != ST.LABEL) {
                 LabelStmt ls = Stmts.nLabel();
-                stmts.insertAftre(stmt, ls);
+                stmts.insertAfter(stmt, ls);
             }
             stmt._ts_default_next = stmt.getNext();
             break;
