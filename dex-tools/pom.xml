@@ -7,7 +7,7 @@
         <version>1.1</version>
     </parent>
     <artifactId>dex-tools</artifactId>
-    <version>0.0.9.12-SNAPSHOT</version>
+    <version>0.0.9.13-SNAPSHOT</version>
     <name>Dex Tools</name>
     <description>Tools to work with dex and class files</description>
     <dependencies>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>commons-lite</artifactId>
-            <version>1.13-SNAPSHOT</version>
+            <version>1.14-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.jasmin</groupId>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>jar-rename</artifactId>
-            <version>1.4-SNAPSHOT</version>
+            <version>1.5-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>

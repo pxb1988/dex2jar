@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>dex-translator</artifactId>
-    <version>0.0.9.12-SNAPSHOT</version>
+    <version>0.0.9.13-SNAPSHOT</version>
     <name>Dex Translator</name>
     <description>Tools to work with android .dex and java .class files</description>
     <url>http://code.google.como/p/dex2jar/</url>
@@ -17,17 +17,17 @@
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>dex-reader</artifactId>
-            <version>1.13-SNAPSHOT</version>
+            <version>1.14-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>dex-ir</artifactId>
-            <version>1.10-SNAPSHOT</version>
+            <version>1.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>commons-lite</artifactId>
-            <version>1.13-SNAPSHOT</version>
+            <version>1.14-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
