@@ -448,6 +448,10 @@ public class IrMethod2AsmMethod implements Opcodes {
                     Local local = ((Local) v1);
                     int i = local._ls_index;
 
+                    if (v2.vt == VT.LOCAL && (i == ((Local) v2)._ls_index)) {//
+                        continue;
+                    }
+
                     boolean skipOrg = false;
                     if (LocalType.typeOf(v1).equals(Type.INT_TYPE)) {// check for IINC
                         if (v2.vt == VT.ADD) {
