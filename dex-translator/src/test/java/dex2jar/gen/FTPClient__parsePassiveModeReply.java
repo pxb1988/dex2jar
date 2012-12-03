@@ -60,7 +60,7 @@ public class FTPClient__parsePassiveModeReply implements Opcodes {
                 DexLabel L0 = new DexLabel();
                 DexLabel L1 = new DexLabel();
                 DexLabel L2 = new DexLabel();
-                code.visitTryCatch(L0, L1, L2, "Ljava/lang/NumberFormatException;");
+                code.visitTryCatch(L0, L1, new DexLabel[] { L2 }, new String[] { "Ljava/lang/NumberFormatException;" });
 
                 code.visitConstStmt(OP_CONST, 7, Integer.valueOf(46), 0); // int: 0x0000002e float:0.000000
                 code.visitConstStmt(OP_CONST_STRING, 8, "Could not parse passive host information.\nServer Reply: ", 2);

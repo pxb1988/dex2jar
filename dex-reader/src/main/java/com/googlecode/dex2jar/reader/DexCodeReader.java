@@ -218,13 +218,15 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         }
     }
 
-    private void findTryCatch(DataIn in, DexCodeVisitor dcv, int tries_size) {
+    private void findTryCatch(DataIn in, DexCodeVisitor dcv, int tries_size, int insn_size) {
         int encoded_catch_handler_list = in.getCurrentPosition() + tries_size * 8;
         for (int i = 0; i < tries_size; i++) {
             int start_addr = in.readUIntx();
             int insn_count = in.readUShortx();
             int handler_offset = in.readUShortx();
-
+            if (start_addr > insn_size) {
+                continue;
+            }
             order(start_addr);
             int end = start_addr + insn_count;
             order(end);
@@ -233,23 +235,28 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
             try {
                 boolean catchAll = false;
                 int listSize = (int) in.readLeb128();
+                int handlerCount = listSize;
                 if (listSize <= 0) {
                     listSize = -listSize;
+                    handlerCount = listSize + 1;
                     catchAll = true;
                 }
+                DexLabel labels[] = new DexLabel[handlerCount];
+                String types[] = new String[handlerCount];
                 for (int k = 0; k < listSize; k++) {
                     int type_id = (int) in.readULeb128();
                     int handler = (int) in.readULeb128();
                     order(handler);
 
-                    String type = dex.getType(type_id);
-                    dcv.visitTryCatch(this.labels.get(start_addr), this.labels.get(end), this.labels.get(handler), type);
+                    types[k] = dex.getType(type_id);
+                    labels[k] = this.labels.get(handler);
                 }
                 if (catchAll) {
                     int handler = (int) in.readULeb128();
                     order(handler);
-                    dcv.visitTryCatch(this.labels.get(start_addr), this.labels.get(end), this.labels.get(handler), null);
+                    labels[listSize] = this.labels.get(handler);
                 }
+                dcv.visitTryCatch(this.labels.get(start_addr), this.labels.get(end), labels, types);
             } finally {
                 in.pop();
             }
@@ -305,7 +312,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                 if ((instruction_size & 0x01) != 0) {// skip padding
                     in.skip(2);
                 }
-                findTryCatch(in, dcv, tries_size);
+                findTryCatch(in, dcv, tries_size, instruction_size);
             } finally {
                 in.pop();
             }

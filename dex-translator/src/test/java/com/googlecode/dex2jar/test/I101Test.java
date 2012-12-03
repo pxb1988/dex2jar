@@ -24,7 +24,7 @@ public class I101Test {
         DexLabel L0 = new DexLabel();
         DexLabel L1 = new DexLabel();
         DexLabel L2 = new DexLabel();
-        code.visitTryCatch(L0, L1, L2, "Lsome/Exception;");
+        code.visitTryCatch(L0, L1, new DexLabel[] { L2 }, new String[] { "Lsome/Exception;" });
 
         code.visitLabel(L0);
         code.visitConstStmt(OP_CONST_STRING, 0, "abc", 2);

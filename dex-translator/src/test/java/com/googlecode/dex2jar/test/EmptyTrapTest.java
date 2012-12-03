@@ -68,13 +68,13 @@ public class EmptyTrapTest implements Opcodes {
                 DexLabel L0 = new DexLabel();
                 DexLabel L1 = new DexLabel();
                 DexLabel L2 = new DexLabel();
-                code.visitTryCatch(L0, L1, L2, "Lorg/json/JSONException;");
+                code.visitTryCatch(L0, L1, new DexLabel[] { L2 }, new String[] { "Lorg/json/JSONException;" });
                 DexLabel L3 = new DexLabel();
                 DexLabel L4 = new DexLabel();
-                code.visitTryCatch(L3, L4, L2, "Lorg/json/JSONException;");
+                code.visitTryCatch(L3, L4, new DexLabel[] { L2 }, new String[] { "Lorg/json/JSONException;" });
                 DexLabel L5 = new DexLabel();
                 DexLabel L6 = new DexLabel();
-                code.visitTryCatch(L5, L6, L2, "Lorg/json/JSONException;");
+                code.visitTryCatch(L5, L6, new DexLabel[] { L2 }, new String[] { "Lorg/json/JSONException;" });
                 DexLabel L7 = new DexLabel();
                 code.visitLineNumber(50, L7);
                 code.visitLineNumber(50, L0);

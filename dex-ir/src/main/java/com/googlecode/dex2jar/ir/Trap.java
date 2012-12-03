@@ -28,29 +28,40 @@ import com.googlecode.dex2jar.ir.stmt.LabelStmt;
  * @version $Rev$
  */
 public class Trap {
-    public LabelStmt start, end, handler;
-    public Type type;
+    public LabelStmt start, end, handlers[];
+    public Type types[];
 
     public Trap() {
         super();
     }
 
-    public Trap(LabelStmt start, LabelStmt end, LabelStmt handler, Type type) {
+    public Trap(LabelStmt start, LabelStmt end, LabelStmt handlers[], Type types[]) {
         super();
         this.start = start;
         this.end = end;
-        this.handler = handler;
-        this.type = type;
+        this.handlers = handlers;
+        this.types = types;
     }
 
     public Trap clone(Map<LabelStmt, LabelStmt> map) {
-        return new Trap(start.clone(map), end.clone(map), handler.clone(map), type);
+        int size = handlers.length;
+        LabelStmt[] cloneHandlers = new LabelStmt[size];
+        Type[] cloneTypes = new Type[size];
+        for (int i = 0; i < size; i++) {
+            cloneHandlers[i] = handlers[i].clone(map);
+            cloneTypes[i] = types[i];
+        }
+        return new Trap(start.clone(map), end.clone(map), cloneHandlers, cloneTypes);
     }
 
     @Override
     public String toString() {
-        return String.format(".catch %s - %s > %s // %s", start.getDisplayName(), end.getDisplayName(), handler.getDisplayName(),
-                type == null ? "all" : ToStringUtil.toShortClassName(type));
+        StringBuilder sb = new StringBuilder(String.format(".catch %s - %s : ", start.getDisplayName(),
+                end.getDisplayName()));
+        for (int i = 0; i < handlers.length; i++) {
+            sb.append(types[i] == null ? "all" : types[i]).append(" > ").append(handlers[i].getDisplayName())
+                    .append(",");
+        }
+        return sb.toString();
     }
-
 }

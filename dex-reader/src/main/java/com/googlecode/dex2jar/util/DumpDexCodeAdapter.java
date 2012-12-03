@@ -32,16 +32,16 @@ public class DumpDexCodeAdapter extends AbstractDumpDexCodeAdapter {
     private static class TryCatch {
         public DexLabel end;
 
-        public DexLabel handler;
+        public DexLabel[] handlers;
         public DexLabel start;
-        public String type;
+        public String[] types;
 
-        public TryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
+        public TryCatch(DexLabel start, DexLabel end, DexLabel[] handlers, String[] types) {
             super();
             this.start = start;
             this.end = end;
-            this.handler = handler;
-            this.type = type;
+            this.handlers = handlers;
+            this.types = types;
         }
     }
 
@@ -129,31 +129,36 @@ public class DumpDexCodeAdapter extends AbstractDumpDexCodeAdapter {
                     info(-1, "try { // TC_%d ", trys.indexOf(tc));
                     break;
                 }
-                if (label.equals(tc.handler)) {
-                    String t = tc.type;
-                    info(-1, "catch(%s) // TC_%d", t == null ? "all" : t, trys.indexOf(tc));
-                    break;
+                for (int i = 0; i < tc.handlers.length; i++) {
+                    String type = tc.types[i];
+                    DexLabel handler = tc.handlers[i];
+                    if (label.equals(handler)) {
+                        String t = type;
+                        info(-1, "catch(%s) // TC_%d", t == null ? "all" : t, trys.indexOf(tc));
+                        break;
+                    }
                 }
             }
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.googlecode.dex2jar.visitors.DexCodeAdapter#visitTryCatch(int, int, int, java.lang.String)
-     */
     @Override
-    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
-        TryCatch tc = new TryCatch(start, end, handler, type);
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel[] handlers, String[] types) {
+        TryCatch tc = new TryCatch(start, end, handlers, types);
         trys.add(tc);
         int id = trys.indexOf(tc);
-        if (type == null) {
-            out.printf("TR_%d L%s ~ L%s > L%s all\n", id, labelToString(start), labelToString(end), labelToString(handler));
-        } else {
-            out.printf("TR_%d L%s ~ L%s > L%s %s\n", id, labelToString(start), labelToString(end), labelToString(handler), type);
+        for (int i = 0; i < types.length; i++) {
+            String type = types[i];
+            DexLabel handler = handlers[i];
+            if (type == null) {
+                out.printf("TR_%d L%s ~ L%s > L%s all\n", id, labelToString(start), labelToString(end),
+                        labelToString(handler));
+            } else {
+                out.printf("TR_%d L%s ~ L%s > L%s %s\n", id, labelToString(start), labelToString(end),
+                        labelToString(handler), type);
+            }
         }
-        super.visitTryCatch(start, end, handler, type);
+        super.visitTryCatch(start, end, handlers, types);
     }
 
     @Override
@@ -163,7 +168,8 @@ public class DumpDexCodeAdapter extends AbstractDumpDexCodeAdapter {
 
     @Override
     public void visitLocalVariable(String name, String type, String signature, DexLabel start, DexLabel end, int reg) {
-        out.printf("LOCAL_VARIABLE L%s ~ L%s v%d -> %s // %s \n", labelToString(start), labelToString(end), reg, name, type);
+        out.printf("LOCAL_VARIABLE L%s ~ L%s v%d -> %s // %s \n", labelToString(start), labelToString(end), reg, name,
+                type);
     }
 
 }

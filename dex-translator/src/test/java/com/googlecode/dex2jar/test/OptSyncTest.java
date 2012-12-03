@@ -10,7 +10,6 @@ import static com.googlecode.dex2jar.DexOpcodes.OP_RETURN_VOID;
 import static com.googlecode.dex2jar.DexOpcodes.OP_THROW;
 import static com.googlecode.dex2jar.DexOpcodes.TYPE_OBJECT;
 
-import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 
@@ -57,7 +56,7 @@ public class OptSyncTest {
         DexLabel try_end = new DexLabel();
         DexLabel catch_a = new DexLabel();
 
-        code.visitTryCatch(try_start, try_end, catch_a, null);
+        code.visitTryCatch(try_start, try_end, new DexLabel[] { catch_a }, new String[] { null });
         code.visitArguments(2, new int[] {});
         code.visitFieldStmt(DexOpcodes.OP_SGET, v0, new Field("Ljava/lang/System;", "out", "Ljava/io/PrintStream;"),
                 DexOpcodes.TYPE_OBJECT);

@@ -196,7 +196,7 @@ public class LocalRemoverTest {
         LabelStmt L2 = nLabel();
         LabelStmt L3 = nLabel();
         LabelStmt L4 = nLabel();
-        jm.traps.add(new Trap(L1, L2, L3, exType));
+        jm.traps.add(new Trap(L1, L2, new LabelStmt[] { L3 }, new Type[] { exType }));
 
         Local b = nLocal("a");
         Local ex = nLocal("ex");
@@ -255,7 +255,7 @@ public class LocalRemoverTest {
         LabelStmt L2 = nLabel();
         LabelStmt L3 = nLabel();
         LabelStmt L4 = nLabel();
-        jm.traps.add(new Trap(L1, L2, L3, exType));
+        jm.traps.add(new Trap(L1, L2, new LabelStmt[] { L3 }, new Type[] { exType }));
 
         Local b = nLocal("b");
         Local ex = nLocal("ex");

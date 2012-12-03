@@ -308,7 +308,7 @@ public interface DexCodeVisitor {
      */
     void visitUnopStmt(int opcode, int toReg, int fromReg, int xta, int xtb);
 
-    void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type);
+    void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler[], String type[]);
 
     void visitArguments(int total, int[] args);
 

@@ -584,9 +584,14 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
     }
 
     @Override
-    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
-        irMethod.traps.add(new Trap(toLabelStmt(start), toLabelStmt(end), toLabelStmt(handler), type == null ? null
-                : Type.getType(type)));
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel[] handlers, String[] types) {
+        LabelStmt xlabelStmts[] = new LabelStmt[types.length];
+        Type[] xtypes = new Type[types.length];
+        for (int i = 0; i < types.length; i++) {
+            xlabelStmts[i] = toLabelStmt(handlers[i]);
+            xtypes[i] = types[i] == null ? null : Type.getType(types[i]);
+        }
+        irMethod.traps.add(new Trap(toLabelStmt(start), toLabelStmt(end), xlabelStmts, xtypes));
     }
 
     @Override

@@ -40,7 +40,8 @@ public class I121Test {
         DexLabel catch_a = new DexLabel();
         DexLabel goto_2 = new DexLabel();
 
-        code.visitTryCatch(try_start_2, try_end_9, catch_a, "Ljava/io/UnsupportedEncodingException;");
+        code.visitTryCatch(try_start_2, try_end_9, new DexLabel[] { catch_a },
+                new String[] { "Ljava/io/UnsupportedEncodingException;" });
 
         code.visitArguments(3, new int[] { p0, p1 });
 

@@ -379,8 +379,11 @@ public class IrMethod2AsmMethod implements Opcodes {
                 }
             }
             if (needAdd) {
-                asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handler.label, trap.type == null ? null
-                        : trap.type.getInternalName());
+                for (int i = 0; i < trap.handlers.length; i++) {
+                    Type type = trap.types[i];
+                    asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handlers[i].label,
+                            type == null ? null : type.getInternalName());
+                }
             }
         }
     }

@@ -151,8 +151,8 @@ public class DexCodeAdapter implements DexCodeVisitor {
     }
 
     @Override
-    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
-        dcv.visitTryCatch(start, end, handler, type);
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel[] handlers, String[] types) {
+        dcv.visitTryCatch(start, end, handlers, types);
     }
 
     @Override
