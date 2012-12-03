@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.stmt.BaseSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
@@ -41,8 +42,19 @@ public class CleanLabel implements Transformer {
     public void transform(IrMethod irMethod) {
         Set<LabelStmt> uselabels = new HashSet<LabelStmt>();
         addTrap(irMethod.traps, uselabels);
+        addVars(irMethod.vars, uselabels);
         addStmt(irMethod.stmts, uselabels);
         rmUnused(irMethod.stmts, uselabels);
+    }
+
+    private void addVars(List<LocalVar> vars, Set<LabelStmt> uselabels) {
+        if (vars != null) {
+            for (LocalVar var : vars) {
+                uselabels.add(var.start);
+                uselabels.add(var.end);
+            }
+        }
+
     }
 
     private void rmUnused(StmtList stmts, Set<LabelStmt> uselabels) {
