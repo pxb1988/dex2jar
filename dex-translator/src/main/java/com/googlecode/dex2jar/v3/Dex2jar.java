@@ -182,7 +182,7 @@ public class Dex2jar {
         if (i > 0) {
             check(dir.substring(0, i), zos);
         }
-        zos.putNextEntry(new ZipEntry(dir));
+        zos.putNextEntry(new ZipEntry(dir + "/"));
         zos.closeEntry();
     }
 
