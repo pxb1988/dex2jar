@@ -90,7 +90,7 @@ public class FileOut {
             }
             dirs.add(dir);
             int i = dir.lastIndexOf('/');
-            if (i > 0) {
+            if (i >= 0) {
                 check(dir.substring(0, i));
             }
             zos.putNextEntry(new ZipEntry(dir + "/"));
@@ -102,24 +102,34 @@ public class FileOut {
         }
 
         public void write(boolean isDir, String name, byte[] data, Object nameObject) throws IOException {
-            zos.putNextEntry(buildEntry(name, nameObject));
-            if (!isDir) {
+            if (isDir) {
+                if (!name.endsWith("/")) {
+                    throw new IOException("file name should end with '/'");
+                }
+                check(name.substring(0, name.length() - 1));
+            } else {
+                zos.putNextEntry(buildEntry(name, nameObject));
                 zos.write(data);
+                zos.closeEntry();
             }
-            zos.closeEntry();
         }
 
         public void write(boolean isDir, String name, InputStream is, Object nameObject) throws IOException {
-            zos.putNextEntry(buildEntry(name, nameObject));
-            if (!isDir) {
+            if (isDir) {
+                if (!name.endsWith("/")) {
+                    throw new IOException("file name should end with '/'");
+                }
+                check(name.substring(0, name.length() - 1));
+            } else {
+                zos.putNextEntry(buildEntry(name, nameObject));
                 IOUtils.copy(is, zos);
+                zos.closeEntry();
             }
-            zos.closeEntry();
         }
 
         private ZipEntry buildEntry(String name, Object nameObject) throws IOException {
             int i = name.lastIndexOf('/');
-            if (i > 0) {
+            if (i >= 0) {
                 check(name.substring(0, i));
             }
             if (nameObject instanceof ZipEntry) {
