@@ -122,7 +122,7 @@ public class AsmVerify extends BaseCmd {
                     InputStream is = current.get();
                     ClassReader cr = new ClassReader(is);
                     ClassNode cn = new ClassNode();
-                    cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
+                    cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG | ClassReader.EXPAND_FRAMES);
 
                     List<?> methods = cn.methods;
                     for (int i = 0; i < methods.size(); ++i) {
