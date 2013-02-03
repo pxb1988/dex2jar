@@ -8,7 +8,7 @@
         <version>1.1</version>
     </parent>
     <artifactId>dex-reader</artifactId>
-    <version>1.14-SNAPSHOT</version>
+    <version>1.15-SNAPSHOT</version>
     <name>Dex Reader</name>
     <description>Tools to work with android .dex and java .class files</description>
     <url>http://code.google.como/p/dex2jar/</url>
