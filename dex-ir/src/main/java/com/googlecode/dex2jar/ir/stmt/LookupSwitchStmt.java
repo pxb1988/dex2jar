@@ -18,7 +18,6 @@ package com.googlecode.dex2jar.ir.stmt;
 import java.util.Map;
 
 import com.googlecode.dex2jar.ir.ValueBox;
-import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
 /**
  * Represent a LOOKUP_SWITCH statement
@@ -26,13 +25,11 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
  * @see ST#LOOKUP_SWITCH
  * 
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
- * @version $Rev$
+ * @version $Rev: 9fd8005bbaa4 $
  */
-public class LookupSwitchStmt extends E1Stmt {
+public class LookupSwitchStmt extends BaseSwitchStmt {
 
-    public LabelStmt defaultTarget;
     public int[] lookupValues;
-    public LabelStmt[] targets;
 
     public LookupSwitchStmt(ValueBox key, int[] lookupValues, LabelStmt[] targets, LabelStmt defaultTarget) {
         super(ST.LOOKUP_SWITCH, key);

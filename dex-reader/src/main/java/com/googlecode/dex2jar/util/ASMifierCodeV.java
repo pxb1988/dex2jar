@@ -98,6 +98,20 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
 
     int i = 0;
 
+    public String v(DexLabel[] labels) {
+        StringBuilder sb = new StringBuilder("new DexLabel[]{");
+        boolean first = true;
+        for (DexLabel dexLabel : labels) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(",");
+            }
+            sb.append(v(dexLabel));
+        }
+        return sb.append("}").toString();
+    }
+
     private Object v(DexLabel l) {
         if (l.info == null) {
 
@@ -157,19 +171,7 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
 
     @Override
     public void visitLookupSwitchStmt(int opcode, int aA, DexLabel label, int[] cases, DexLabel[] labels) {
-        StringBuilder sb = new StringBuilder();
-        boolean first = true;
-        for (DexLabel dexLabel : labels) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(",");
-            }
-            sb.append(v(dexLabel));
-        }
-
-        m.s("code.visitLookupSwitchStmt(%s,%s,%s,%s,new DexLabel[]{%s});", op(opcode), aA, v(label), Escape.v(cases),
-                sb.toString());
+        m.s("code.visitLookupSwitchStmt(%s,%s,%s,%s,%s);", op(opcode), aA, v(label), Escape.v(cases), v(labels));
     }
 
     @Override
@@ -205,18 +207,7 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     @Override
     public void visitTableSwitchStmt(int opcode, int aA, DexLabel label, int first_case, int last_case,
             DexLabel[] labels) {
-        StringBuilder sb = new StringBuilder();
-        boolean first = true;
-        for (DexLabel dexLabel : labels) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(",");
-            }
-            sb.append(v(dexLabel));
-        }
-        m.s("code.visitTableSwitchStmt(%s,%s,%s,%s,%s,new DexLabel[]{%s});", op(opcode), aA, v(label), first_case,
-                last_case, sb.toString());
+        m.s("code.visitTableSwitchStmt(%s,%s,%s,%s,%s,%s);", op(opcode), aA, v(label), first_case, last_case, v(labels));
     }
 
     @Override
@@ -230,8 +221,8 @@ public class ASMifierCodeV implements OdexCodeVisitor, DexOpcodes {
     }
 
     @Override
-    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
-        m.s("code.visitTryCatch(%s,%s,%s,%s);", v(start), v(end), v(handler), Escape.v(type));
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel[] handlers, String[] types) {
+        m.s("code.visitTryCatch(%s,%s,%s,%s);", v(start), v(end), v(handlers), Escape.v(types));
     }
 
     @Override

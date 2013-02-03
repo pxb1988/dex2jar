@@ -19,7 +19,6 @@ import java.util.Map;
 
 import com.googlecode.dex2jar.ir.Value;
 import com.googlecode.dex2jar.ir.ValueBox;
-import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
 /**
  * Represent a TABLE_SWITCH statement
@@ -27,13 +26,11 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
  * @see ST#TABLE_SWITCH
  * 
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
- * @version $Rev$
+ * @version $Rev: 9fd8005bbaa4 $
  */
-public class TableSwitchStmt extends E1Stmt {
+public class TableSwitchStmt extends BaseSwitchStmt {
 
-    public LabelStmt defaultTarget;
     public int lowIndex, highIndex;
-    public LabelStmt[] targets;
 
     public TableSwitchStmt() {
         super(ST.TABLE_SWITCH, null);

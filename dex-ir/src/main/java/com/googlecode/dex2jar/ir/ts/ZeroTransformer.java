@@ -93,6 +93,11 @@ public class ZeroTransformer implements Transformer {
         }
 
         @Override
+        protected void initCFG() {
+            Cfg.createCFG(method);
+        }
+
+        @Override
         protected void onAssignLocal(Phi[] frame, Phi phi, Value value) {
             if (value.vt == VT.CONSTANT) {
                 ZeroAnalyzePhi zaf = (ZeroAnalyzePhi) phi;

@@ -28,7 +28,7 @@ public class I63Test implements OdexOpcodes {
                 code.visitLabel(L2);
                 code.visitReturnStmt(OP_RETURN_VOID);
                 code.visitEnd();
-                code.visitTryCatch(L1, L2, L2, "La;");
+                code.visitTryCatch(L1, L2, new DexLabel[] { L2 }, new String[] { "La;" });
             }
             mv.visitEnd();
         }

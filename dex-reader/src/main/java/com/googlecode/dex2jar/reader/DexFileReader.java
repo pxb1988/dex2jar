@@ -126,7 +126,9 @@ public class DexFileReader {
                 zis = new ZipInputStream(new ByteArrayInputStream(data));
                 for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
                     if (entry.getName().equals("classes.dex")) {
-                        return IOUtils.toByteArray(zis);
+                        data = IOUtils.toByteArray(zis);
+                        zis.close();
+                        return data;
                     }
                 }
             } finally {

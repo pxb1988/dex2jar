@@ -139,7 +139,9 @@ public class Cfg {
 
         for (Trap t : jm.traps) {
             for (Stmt s = t.start; s != t.end; s = s.getNext()) {
-                link(s, t.handler);
+                for (LabelStmt handler : t.handlers) {
+                    link(s, handler);
+                }
             }
         }
 
@@ -205,7 +207,9 @@ public class Cfg {
                     // 3 c=(string)b
                     // 0 - 2 > 2
                     // 如果1语句出错,则或使用0的frame到2去执行
-                    link(s.getPre(), t.handler);
+                    for (LabelStmt handler : t.handlers) {
+                        link(s.getPre(), handler);
+                    }
                 }
             }
         }

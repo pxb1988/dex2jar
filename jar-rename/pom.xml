@@ -7,7 +7,7 @@
         <version>1.1</version>
     </parent>
     <artifactId>jar-rename</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>

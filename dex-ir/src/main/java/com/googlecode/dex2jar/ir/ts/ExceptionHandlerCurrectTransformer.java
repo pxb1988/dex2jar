@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
+import org.objectweb.asm.Type;
+
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
@@ -60,25 +62,28 @@ public class ExceptionHandlerCurrectTransformer implements Transformer {
     public void transform(IrMethod irMethod) {
         Local ex = null;
         for (Trap t : irMethod.traps) {
-            LabelStmt handler = t.handler;
-            Stmt st = handler.getNext();
-            Stmt pre = handler.getPre();
-            while (st.st == ST.LABEL) {
-                st = st.getNext();
-            }
-            while (pre.st == ST.LABEL) {
-                pre = pre.getPre();
-            }
-            if (needInsertMoveExceptionRef(st) && needInsertGoto(pre)) {
-
-                LabelStmt lbl = Stmts.nLabel();
-                JumpStmt g = Stmts.nGoto(lbl);
-                irMethod.stmts.insertAfter(pre, g);
-                irMethod.stmts.insertBefore(st, lbl);
-                if (ex == null) {
-                    ex = Exprs.nLocal("unRefEx");
+            for (int i = 0; i < t.handlers.length; i++) {
+                LabelStmt handler = t.handlers[i];
+                Type type = t.types[i];
+                Stmt st = handler.getNext();
+                Stmt pre = handler.getPre();
+                while (st.st == ST.LABEL) {
+                    st = st.getNext();
                 }
-                irMethod.stmts.insertBefore(lbl, Stmts.nAssign(ex, Exprs.nExceptionRef(t.type)));
+                while (pre.st == ST.LABEL) {
+                    pre = pre.getPre();
+                }
+                if (needInsertMoveExceptionRef(st) && needInsertGoto(pre)) {
+
+                    LabelStmt lbl = Stmts.nLabel();
+                    JumpStmt g = Stmts.nGoto(lbl);
+                    irMethod.stmts.insertAfter(pre, g);
+                    irMethod.stmts.insertBefore(st, lbl);
+                    if (ex == null) {
+                        ex = Exprs.nLocal("unRefEx");
+                    }
+                    irMethod.stmts.insertBefore(lbl, Stmts.nAssign(ex, Exprs.nExceptionRef(type)));
+                }
             }
         }
         if (ex != null) {

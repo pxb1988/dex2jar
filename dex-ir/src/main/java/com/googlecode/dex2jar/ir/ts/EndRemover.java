@@ -20,6 +20,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
  * <ol>
  * <li>Move {@link Stmt}s outside a {@link Trap} if {@link Stmt}s are not throw</li>
  * <li>Remove {@link Trap} if all {@link Stmt}s are not throw</li>
+ * <li>...;GOTO L2; ... ; L2: ; return; => ...;return ; ... ; L2: ; return;</li>
  * </ol>
  * 
  * @author bob
@@ -186,6 +187,20 @@ public class EndRemover implements Transformer {
                 irMethod.traps.remove(trap);
             }
         }
+        StmtList stmts = irMethod.stmts;
+        for (Stmt p = stmts.getFirst(); p != null; p = p.getNext()) {
+            if (p.st == ST.GOTO) {
+                LabelStmt target = ((JumpStmt) p).target;
+                Stmt next = target.getNext();
+                if (next != null && (next.st == ST.RETURN || next.st == ST.RETURN_VOID)) {
+                    Stmt nnext = next.clone(null);
+                    stmts.insertAfter(p, nnext);
+                    stmts.remove(p);
+                    p = nnext;
+                }
+            }
+        }
+
     }
 
     private void move4Label(StmtList stmts, LabelStmt start, Stmt end, LabelStmt label) {

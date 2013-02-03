@@ -166,7 +166,7 @@ public class EmptyVisitor implements OdexFileVisitor, DexClassVisitor, DexMethod
     }
 
     @Override
-    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler, String type) {
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel[] handlers, String[] types) {
 
     }
 

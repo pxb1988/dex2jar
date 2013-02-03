@@ -379,8 +379,11 @@ public class IrMethod2AsmMethod implements Opcodes {
                 }
             }
             if (needAdd) {
-                asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handler.label, trap.type == null ? null
-                        : trap.type.getInternalName());
+                for (int i = 0; i < trap.handlers.length; i++) {
+                    Type type = trap.types[i];
+                    asm.visitTryCatchBlock(trap.start.label, trap.end.label, trap.handlers[i].label,
+                            type == null ? null : type.getInternalName());
+                }
             }
         }
     }
@@ -444,6 +447,10 @@ public class IrMethod2AsmMethod implements Opcodes {
 
                     Local local = ((Local) v1);
                     int i = local._ls_index;
+
+                    if (v2.vt == VT.LOCAL && (i == ((Local) v2)._ls_index)) {//
+                        continue;
+                    }
 
                     boolean skipOrg = false;
                     if (LocalType.typeOf(v1).equals(Type.INT_TYPE)) {// check for IINC

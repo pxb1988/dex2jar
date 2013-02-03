@@ -106,11 +106,11 @@ public class DecryptStringCmd extends BaseCmd {
         final Method jmethod;
         try {
             URLClassLoader cl = new URLClassLoader(urls);
-            jmethod = cl.loadClass(methodOwner).getMethod(methodName, String.class);
+            jmethod = cl.loadClass(methodOwner).getDeclaredMethod(methodName, String.class);
             jmethod.setAccessible(true);
         } catch (Exception ex) {
-            System.err.println("can't load method: String " + methodOwner + "." + methodName + "(String), message:"
-                    + ex.getMessage());
+            System.err.println("can't load method: String " + methodOwner + "." + methodName + "(String)");
+            ex.printStackTrace();
             return;
         }
         final String methodOwnerInternalType = this.methodOwner.replace('.', '/');
@@ -128,7 +128,7 @@ public class DecryptStringCmd extends BaseCmd {
 
                     ClassReader cr = new ClassReader(current.get());
                     ClassNode cn = new ClassNode();
-                    cr.accept(cn, 0);
+                    cr.accept(cn, ClassReader.EXPAND_FRAMES);
 
                     for (Object m0 : cn.methods) {
                         MethodNode m = (MethodNode) m0;

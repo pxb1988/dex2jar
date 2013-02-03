@@ -17,7 +17,9 @@ package com.googlecode.dex2jar.ir.ts;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -45,18 +47,6 @@ public abstract class BaseLiveAnalyze {
         @Override
         public String toString() {
             return ".";
-        }
-    }
-
-    private static void doAddUsed(Phi r, Set<Phi> regs) {
-        if (r.used) {
-            if (!regs.contains(r)) {
-                regs.add(r);
-                for (Phi p : r.parents) {
-                    p.used = true;
-                    doAddUsed(p, regs);
-                }
-            }
         }
     }
 
@@ -142,8 +132,20 @@ public abstract class BaseLiveAnalyze {
 
     protected Set<Phi> markUsed() {
         Set<Phi> used = new HashSet<Phi>(phis.size() / 2);
-        for (Phi reg : phis) {
-            doAddUsed(reg, used);
+        Queue<Phi> q = new LinkedList<Phi>();
+        q.addAll(phis);
+        while (!q.isEmpty()) {
+            Phi v = q.poll();
+            if (v.used) {
+                if (used.contains(v)) {
+                    continue;
+                }
+                used.add(v);
+                for (Phi p : v.parents) {
+                    p.used = true;
+                    q.add(p);
+                }
+            }
         }
         phis.clear();
         phis.addAll(used);
