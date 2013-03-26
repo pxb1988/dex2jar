@@ -126,7 +126,7 @@ public class DexFileReader {
             } catch (ClassNotFoundException e) {
                 ze = new ZipExtractor();
             }
-            ze.extract(data, "classes.dex");
+            return ze.extract(data, "classes.dex");
         }
         throw new RuntimeException("the src file not a .dex, .odex or zip file");
     }
