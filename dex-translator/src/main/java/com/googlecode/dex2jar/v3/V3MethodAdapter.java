@@ -27,9 +27,8 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
-import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.DexOpcodes;
+import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.asm.LdcOptimizeAdapter;
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -49,6 +48,7 @@ import com.googlecode.dex2jar.ir.ts.LocalType;
 import com.googlecode.dex2jar.ir.ts.TopologicalSort;
 import com.googlecode.dex2jar.ir.ts.Transformer;
 import com.googlecode.dex2jar.ir.ts.ZeroTransformer;
+import com.googlecode.dex2jar.v3.AnnotationNode.Item;
 import com.googlecode.dex2jar.visitors.DexAnnotationAble;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexCodeVisitor;
@@ -63,7 +63,8 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     private static final Logger log = Logger.getLogger(V3MethodAdapter.class.getName());
     protected static Transformer[] tses = new Transformer[] { new EndRemover(),
             new ExceptionHandlerCurrectTransformer(), new ZeroTransformer(), new ArrayNullPointerTransformer(),
-            new FixVar(),new CleanLabel(), new LocalSplit(), new LocalRemove(), new LocalType(), new ExceptionHandlerTrim() };
+            new FixVar(), new CleanLabel(), new LocalSplit(), new LocalRemove(), new LocalType(),
+            new ExceptionHandlerTrim() };
     static {
         log.log(Level.CONFIG, "InsnList.check=false");
         // Optimize Tree Analyzer
@@ -89,8 +90,8 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     protected IrMethod irMethod;
     final protected Method method;
     final protected MethodNode methodNode = new MethodNode();
-    protected Annotation signatureAnnotation;
-    protected Annotation throwsAnnotation;
+    protected AnnotationNode signatureAnnotation;
+    protected AnnotationNode throwsAnnotation;
     protected int config;
 
     public V3MethodAdapter(int accessFlags, Method method, DexExceptionHandler exceptionHandler) {
@@ -109,30 +110,22 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
         methodNode.desc = method.getDesc();
     }
 
+    @SuppressWarnings("unchecked")
     protected void build() {
         List<String> exceptions = new ArrayList<String>();
         String signature = null;
         if (this.throwsAnnotation != null) {
             for (Item item : this.throwsAnnotation.items) {
                 if (item.name.equals("value")) {
-                    Annotation values = (Annotation) item.value;
-                    for (Item i : values.items) {
-                        exceptions.add(((Type) i.value).getInternalName());
+                    List<Object> values = (List<Object>) item.value;
+                    for (Object obj : values) {
+                        exceptions.add(Type.getType(((DexType) obj).desc).getInternalName());
                     }
                 }
             }
         }
         if (this.signatureAnnotation != null) {
-            for (Item item : this.signatureAnnotation.items) {
-                if (item.name.equals("value")) {
-                    Annotation values = (Annotation) item.value;
-                    StringBuilder sb = new StringBuilder();
-                    for (Item i : values.items) {
-                        sb.append(i.value.toString());
-                    }
-                    signature = sb.toString();
-                }
-            }
+            signature = V3ClassAdapter.buildSignature(this.signatureAnnotation);
         }
 
         MethodNode methodNode = this.methodNode;
@@ -164,11 +157,11 @@ public class V3MethodAdapter implements DexMethodVisitor, Opcodes {
     @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (name.equals("Ldalvik/annotation/Signature;")) {
-            this.signatureAnnotation = new Annotation(name, visible);
-            return new V3AnnAdapter(this.signatureAnnotation);
+            this.signatureAnnotation = new AnnotationNode(name, visible);
+            return this.signatureAnnotation;
         } else if (name.equals("Ldalvik/annotation/Throws;")) {
-            this.throwsAnnotation = new Annotation(name, visible);
-            return new V3AnnAdapter(this.throwsAnnotation);
+            this.throwsAnnotation = new AnnotationNode(name, visible);
+            return this.throwsAnnotation;
         } else {
             AnnotationVisitor av = methodNode.visitAnnotation(name, visible);
             if (av != null) {
