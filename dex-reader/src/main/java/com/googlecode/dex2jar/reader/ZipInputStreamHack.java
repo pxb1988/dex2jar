@@ -21,9 +21,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * A hack to the ZipInputStream, clean the encrypted-bit flag before checking. from the code we know the
- * {@link #createZipEntry(String)} is always invoked before the check, so this class will change
- * {@link ZipInputStream#flag} in {@link #createZipEntry(String)} using reflection API
+ * A hack to the ZipInputStream, clean the encrypted-bit flag before checking.
+ * 
+ * from the code we know the {@link #createZipEntry(String)} is always invoked before the check in openjdk7, and in
+ * openjdk6 flag is read from tmpbuf after {@link #createZipEntry(String)} , so this class will change
+ * {@link ZipInputStream#flag} and {@link ZipInputStream#tmpbuf} in {@link #createZipEntry(String)} using reflection API
  * 
  * <pre>
  * // here are the code from openjdk-7
@@ -37,11 +39,25 @@ import java.util.zip.ZipInputStream;
  * e.time = get32(tmpbuf, LOCTIM);
  * </pre>
  * 
+ * <pre>
+ * // here are the code from openjdk-6
+ * ZipEntry e = createZipEntry(getUTF8String(b, 0, len));
+ * // now get the remaining fields for the entry
+ * flag = get16(tmpbuf, LOCFLG);
+ * if ((flag &amp; 1) == 1) {
+ *     throw new ZipException(&quot;encrypted ZIP entry not supported&quot;);
+ * }
+ * e.method = get16(tmpbuf, LOCHOW);
+ * e.time = get32(tmpbuf, LOCTIM);
+ * </pre>
+ * 
  * @author Panxiaobo
  * 
  */
 public class ZipInputStreamHack extends ZipInputStream {
     static java.lang.reflect.Field flagField;
+    static java.lang.reflect.Field tmpbufField;
+
     static {
         try {
             flagField = ZipInputStream.class.getDeclaredField("flag");
@@ -49,6 +65,13 @@ public class ZipInputStreamHack extends ZipInputStream {
         } catch (Exception ignored) {
 
         }
+        try {
+            tmpbufField = ZipInputStream.class.getDeclaredField("tmpbuf");
+            tmpbufField.setAccessible(true);
+        } catch (Exception ignored) {
+
+        }
+
     }
 
     public ZipInputStreamHack(InputStream in) {
@@ -57,7 +80,7 @@ public class ZipInputStreamHack extends ZipInputStream {
 
     @Override
     protected ZipEntry createZipEntry(String name) {
-        if (flagField != null) {
+        if (flagField != null) { // for openjdk7
             try {
                 int flag = (Integer) flagField.get(this);
                 flagField.set(this, (flag >> 1) << 1);
@@ -65,7 +88,17 @@ public class ZipInputStreamHack extends ZipInputStream {
 
             }
         }
+        if (tmpbufField != null) {// for openjdk6
+            try {
+                byte[] buffer = (byte[]) flagField.get(this);
+                int flagLow8 = buffer[6];// 6 is for LOCFLG
+                flagLow8 = (flagLow8 >> 1) << 1;
+                buffer[6] = (byte) flagLow8;
+            } catch (Exception e) {
+
+            }
+        }
+
         return super.createZipEntry(name);
     }
-
 }
