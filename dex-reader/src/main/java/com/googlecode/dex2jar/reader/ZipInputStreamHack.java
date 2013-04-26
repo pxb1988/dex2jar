@@ -90,7 +90,7 @@ public class ZipInputStreamHack extends ZipInputStream {
         }
         if (tmpbufField != null) {// for openjdk6
             try {
-                byte[] buffer = (byte[]) flagField.get(this);
+                byte[] buffer = (byte[]) tmpbufField.get(this);
                 int flagLow8 = buffer[6];// 6 is for LOCFLG
                 flagLow8 = (flagLow8 >> 1) << 1;
                 buffer[6] = (byte) flagLow8;
