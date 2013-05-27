@@ -29,12 +29,11 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.Annotation.Item;
 import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
 import com.googlecode.dex2jar.Method;
 import com.googlecode.dex2jar.asm.OrderInnerOutterInsnNodeClassAdapter;
+import com.googlecode.dex2jar.v3.AnnotationNode.Item;
 import com.googlecode.dex2jar.v3.V3InnerClzGather.Clz;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
@@ -50,7 +49,7 @@ public class V3ClassAdapter implements DexClassVisitor {
 
     protected int access_flags;
     protected Map<String, Object> annotationDefaults;
-    protected List<Annotation> anns = new ArrayList<Annotation>();
+    protected List<AnnotationNode> anns = new ArrayList<AnnotationNode>();
     protected boolean build = false;
     protected String className;
     protected Clz clz;
@@ -79,23 +78,29 @@ public class V3ClassAdapter implements DexClassVisitor {
         this.config = config;
     }
 
+    /* package */@SuppressWarnings("unchecked")
+    static String buildSignature(AnnotationNode ann) {
+        for (Item item : ann.items) {
+            if (item.name.equals("value")) {
+                List<Object> values = (List<Object>) item.value;
+                StringBuilder sb = new StringBuilder();
+                for (Object i : values) {
+                    sb.append(i.toString());
+                }
+                return sb.toString();
+            }
+        }
+        return null;
+    }
+
     protected void build() {
         if (!build) {
             String signature = null;
-            for (Iterator<Annotation> it = anns.iterator(); it.hasNext();) {
-                Annotation ann = it.next();
+            for (Iterator<AnnotationNode> it = anns.iterator(); it.hasNext();) {
+                AnnotationNode ann = it.next();
                 if ("Ldalvik/annotation/Signature;".equals(ann.type)) {
                     it.remove();
-                    for (Item item : ann.items) {
-                        if (item.name.equals("value")) {
-                            Annotation values = (Annotation) item.value;
-                            StringBuilder sb = new StringBuilder();
-                            for (Item i : values.items) {
-                                sb.append(i.value.toString());
-                            }
-                            signature = sb.toString();
-                        }
-                    }
+                    signature = buildSignature(ann);
                 }
             }
 
@@ -129,10 +134,8 @@ public class V3ClassAdapter implements DexClassVisitor {
                 }
                 searchEnclosing(clz);
             }
-            for (Annotation ann : anns) {
-                AnnotationVisitor av = cv.visitAnnotation(ann.type, ann.visible);
-                V3AnnAdapter.accept(ann.items, av);
-                av.visitEnd();
+            for (AnnotationNode ann : anns) {
+                ann.accept(cv);
             }
             if (file != null) {
                 cv.visitSource(file, null);
@@ -255,6 +258,13 @@ public class V3ClassAdapter implements DexClassVisitor {
         return access;
     }
 
+    void putDefault(String name, Object value) {
+        if (annotationDefaults == null) {
+            annotationDefaults = new HashMap<String, Object>();
+        }
+        annotationDefaults.put(name, value);
+    }
+
     @Override
     public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
         if (name.equals("Ldalvik/annotation/EnclosingClass;") || name.equals("Ldalvik/annotation/EnclosingMethod;")
@@ -265,30 +275,21 @@ public class V3ClassAdapter implements DexClassVisitor {
             return new EmptyVisitor() {
                 @Override
                 public DexAnnotationVisitor visitAnnotation(String name, String desc) {
-                    return new EmptyVisitor() {
-                        private void putDefault(String name, Object value) {
-                            if (annotationDefaults == null) {
-                                annotationDefaults = new HashMap<String, Object>();
+                    return new AnnotationNode() {
+
+                        @Override
+                        public void visitEnd() {
+                            for (Item item : this.items) {
+                                putDefault(item.name, item.value);
                             }
-                            annotationDefaults.put(name, value);
-                        }
-
-                        @Override
-                        public void visit(String name, Object value) {
-                            putDefault(name, value);
-                        }
-
-                        @Override
-                        public void visitEnum(String name, String desc, String value) {
-                            putDefault(name, new Field(desc, value, desc));
                         }
                     };
                 }
             };
         } else {
-            Annotation ann = new Annotation(name, visible);
+            AnnotationNode ann = new AnnotationNode(name, visible);
             anns.add(ann);
-            return new V3AnnAdapter(ann);
+            return ann;
         }
     }
 
@@ -320,15 +321,7 @@ public class V3ClassAdapter implements DexClassVisitor {
                     if (value != null) {
                         AnnotationVisitor av = methodNode.visitAnnotationDefault();
                         if (av != null) {
-                            if (value instanceof Field) {
-                                Field field = (Field) value;
-                                av.visitEnum(null, field.getOwner(), field.getName());
-                            } else {
-                                if (value instanceof DexType) {
-                                    value = Type.getType(((DexType) value).desc);
-                                }
-                                av.visit(null, value);
-                            }
+                            AnnotationNode.accept(null, value, av);
                             av.visitEnd();
                         }
                     }

@@ -15,7 +15,6 @@
  */
 package com.googlecode.dex2jar.reader;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,8 +24,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -121,19 +118,15 @@ public class DexFileReader {
         if ("de".equals(new String(data, 0, 2))) {// dex/y
             return data;
         } else if ("PK".equals(new String(data, 0, 2))) {// ZIP
-            ZipInputStream zis = null;
+            ZipExtractor ze;
             try {
-                zis = new ZipInputStream(new ByteArrayInputStream(data));
-                for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-                    if (entry.getName().equals("classes.dex")) {
-                        data = IOUtils.toByteArray(zis);
-                        zis.close();
-                        return data;
-                    }
-                }
-            } finally {
-                IOUtils.closeQuietly(zis);
+                // if we got commons-compress in the classpath
+                Class.forName("org.apache.commons.compress.archivers.zip.ZipArchiveInputStream");
+                ze = new CCZipExtractor();
+            } catch (ClassNotFoundException e) {
+                ze = new ZipExtractor();
             }
+            return ze.extract(data, "classes.dex");
         }
         throw new RuntimeException("the src file not a .dex, .odex or zip file");
     }

@@ -8,7 +8,7 @@
         <version>1.1</version>
     </parent>
     <artifactId>dex-reader</artifactId>
-    <version>1.14</version>
+    <version>1.15</version>
     <name>Dex Reader</name>
     <description>Tools to work with android .dex and java .class files</description>
     <url>http://code.google.como/p/dex2jar/</url>
@@ -27,6 +27,12 @@
             <groupId>com.googlecode.dex2jar</groupId>
             <artifactId>commons-lite</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.4.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

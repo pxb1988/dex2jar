@@ -14,7 +14,6 @@
 				<include>*.sh</include>
 			</includes>
 			<outputDirectory>/</outputDirectory>
-			<fileMode>0555</fileMode>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/bin/</directory>
@@ -22,31 +21,26 @@
 				<exclude>*.sh</exclude>
 			</excludes>
 			<outputDirectory>/</outputDirectory>
-			<fileMode>0444</fileMode>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/jars</directory>
 			<outputDirectory>/lib</outputDirectory>
-			<fileMode>0444</fileMode>
 		</fileSet>
 	</fileSets>
 	<files>
 		<file>
 			<source>src/main/resources/META-INF/LICENSE.txt</source>
 			<outputDirectory>/</outputDirectory>
-			<fileMode>0444</fileMode>
 		</file>
 		<file>
 			<source>src/main/resources/META-INF/NOTICE.txt</source>
 			<outputDirectory>/</outputDirectory>
-			<fileMode>0444</fileMode>
 		</file>
 	</files>
 	<dependencySets>
 		<dependencySet>
 			<outputDirectory>/lib</outputDirectory>
 			<scope>runtime</scope>
-			<fileMode>0444</fileMode>
 		</dependencySet>
 	</dependencySets>
 </assembly>

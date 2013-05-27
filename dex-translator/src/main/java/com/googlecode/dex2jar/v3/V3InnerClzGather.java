@@ -23,11 +23,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
-import com.googlecode.dex2jar.Annotation;
-import com.googlecode.dex2jar.Annotation.Item;
+import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Method;
+import com.googlecode.dex2jar.v3.AnnotationNode.Item;
 import com.googlecode.dex2jar.visitors.DexAnnotationVisitor;
 import com.googlecode.dex2jar.visitors.DexClassVisitor;
 import com.googlecode.dex2jar.visitors.DexFileVisitor;
@@ -121,18 +120,19 @@ public class V3InnerClzGather implements DexFileVisitor {
         clz.access = (clz.access & ~ACC_INTERFACE_ABSTRACT) | access_flags;
 
         return new EmptyVisitor() {
-            protected List<Annotation> anns = new ArrayList<Annotation>();
+            protected List<AnnotationNode> anns = new ArrayList<AnnotationNode>();
 
             @Override
             public DexAnnotationVisitor visitAnnotation(String name, boolean visible) {
-                Annotation ann = new Annotation(name, visible);
+                AnnotationNode ann = new AnnotationNode(name, visible);
                 anns.add(ann);
-                return new V3AnnAdapter(ann);
+                return ann;
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public void visitEnd() {
-                for (Annotation ann : anns) {
+                for (AnnotationNode ann : anns) {
                     if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
                         for (Item i : ann.items) {
                             if (i.name.equals("value")) {
@@ -162,10 +162,10 @@ public class V3InnerClzGather implements DexFileVisitor {
                     } else if ("Ldalvik/annotation/MemberClasses;".equals(ann.type)) {
                         for (Item it : ann.items) {
                             if ("value".equals(it.name)) {
-                                Annotation v = (Annotation) it.value;
-                                for (Item item : v.items) {
-                                    Type type = (Type) item.value;
-                                    Clz inner = get(type.getDescriptor());
+                                List<Object> members = (List<Object>) it.value;
+                                for (Object member : members) {
+                                    DexType type = (DexType) member;
+                                    Clz inner = get(type.desc);
                                     clz.addInner(inner);
                                     inner.enclosingClass = clz;
                                 }

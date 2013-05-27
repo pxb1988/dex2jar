@@ -459,15 +459,19 @@ public class IrMethod2AsmMethod implements Opcodes {
                             if ((e.op1.value == local && e.op2.value.vt == VT.CONSTANT)
                                     || (e.op2.value == local && e.op1.value.vt == VT.CONSTANT)) {
                                 int increment = (Integer) ((Constant) (e.op1.value == local ? e.op2.value : e.op1.value)).value;
-                                asm.visitIincInsn(i, increment);
-                                skipOrg = true;
+                                if (increment >= Short.MIN_VALUE && increment <= Short.MAX_VALUE) {
+                                    asm.visitIincInsn(i, increment);
+                                    skipOrg = true;
+                                }
                             }
                         } else if (v2.vt == VT.SUB) {
                             E2Expr e = (E2Expr) v2;
                             if (e.op1.value == local && e.op2.value.vt == VT.CONSTANT) {
                                 int increment = -(Integer) ((Constant) e.op2.value).value;
-                                asm.visitIincInsn(i, increment);
-                                skipOrg = true;
+                                if (increment >= Short.MIN_VALUE && increment <= Short.MAX_VALUE) {
+                                    asm.visitIincInsn(i, increment);
+                                    skipOrg = true;
+                                }
                             }
                         }
                     }

@@ -30,8 +30,12 @@ import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -57,10 +61,12 @@ public class DecryptStringCmd extends BaseCmd {
 
     @Opt(opt = "mo", longOpt = "decrypt-method-owner", description = "the owner of the mothed which can decrypt the stings, example: java.lang.String", argName = "owner")
     private String methodOwner;
-    @Opt(opt = "mn", longOpt = "decrypt-method-name", description = "the owner of the mothed which can decrypt the stings, the method's signature must be static (Ljava/lang/String;)Ljava/lang/String;", argName = "name")
+    @Opt(opt = "mn", longOpt = "decrypt-method-name", description = "the owner of the mothed which can decrypt the stings, the method's signature must be static (type)Ljava/lang/String;", argName = "name")
     private String methodName;
-    @Opt(opt = "cp", longOpt = "classpath", description = "", argName = "cp")
+    @Opt(opt = "cp", longOpt = "classpath", description = "add extra lib to classpath", argName = "cp")
     private String classpath;
+    @Opt(opt = "t", longOpt = "arg-type", description = "the type of the method's argument, int,string. default is string", argName = "type")
+    private String type = "string";
 
     @Override
     protected void doCommandLine() throws Exception {
@@ -104,12 +110,15 @@ public class DecryptStringCmd extends BaseCmd {
             urls[i] = new File(list.get(i)).toURI().toURL();
         }
         final Method jmethod;
+        final String targetMethodDesc;
         try {
+            Class<?> argType = "string".equals(type) ? String.class : int.class;
             URLClassLoader cl = new URLClassLoader(urls);
-            jmethod = cl.loadClass(methodOwner).getDeclaredMethod(methodName, String.class);
+            jmethod = cl.loadClass(methodOwner).getDeclaredMethod(methodName, argType);
             jmethod.setAccessible(true);
+            targetMethodDesc = Type.getMethodDescriptor(jmethod);
         } catch (Exception ex) {
-            System.err.println("can't load method: String " + methodOwner + "." + methodName + "(String)");
+            System.err.println("can't load method: String " + methodOwner + "." + methodName + "(" + type + ")");
             ex.printStackTrace();
             return;
         }
@@ -137,25 +146,34 @@ public class DecryptStringCmd extends BaseCmd {
                         }
                         AbstractInsnNode p = m.instructions.getFirst();
                         while (p != null) {
-                            if (p.getOpcode() == Opcodes.LDC) {
-                                LdcInsnNode ldc = (LdcInsnNode) p;
-                                if (ldc.cst instanceof String) {
-                                    String v = (String) ldc.cst;
-                                    AbstractInsnNode q = p.getNext();
-                                    if (q.getOpcode() == Opcodes.INVOKESTATIC) {
-                                        MethodInsnNode mn = (MethodInsnNode) q;
-                                        if (mn.name.equals(methodName)
-                                                && mn.desc.equals("(Ljava/lang/String;)Ljava/lang/String;")
-                                                && mn.owner.equals(methodOwnerInternalType)) {
-                                            try {
-                                                Object newValue = jmethod.invoke(null, v);
-                                                ldc.cst = newValue;
-                                            } catch (Exception e) {
-                                                // ignore
-                                            }
-                                            m.instructions.remove(q);
+                            if (p.getOpcode() == Opcodes.INVOKESTATIC) {
+                                MethodInsnNode mn = (MethodInsnNode) p;
+                                if (mn.name.equals(methodName) && mn.desc.equals(targetMethodDesc)
+                                        && mn.owner.equals(methodOwnerInternalType)) {
+                                    AbstractInsnNode q = p.getPrevious();
+                                    AbstractInsnNode next = p.getNext();
+                                    if (q.getOpcode() == Opcodes.LDC) {
+                                        LdcInsnNode ldc = (LdcInsnNode) q;
+                                        tryReplace(m.instructions, p, q, jmethod, ldc.cst);
+                                    } else if (q.getType() == AbstractInsnNode.INT_INSN) {
+                                        IntInsnNode in = (IntInsnNode) q;
+                                        tryReplace(m.instructions, p, q, jmethod, in.operand);
+                                    } else {
+                                        switch (q.getOpcode()) {
+                                        case Opcodes.ICONST_M1:
+                                        case Opcodes.ICONST_0:
+                                        case Opcodes.ICONST_1:
+                                        case Opcodes.ICONST_2:
+                                        case Opcodes.ICONST_3:
+                                        case Opcodes.ICONST_4:
+                                        case Opcodes.ICONST_5:
+                                            int x = ((InsnNode) q).getOpcode() - Opcodes.ICONST_0;
+                                            tryReplace(m.instructions, p, q, jmethod, x);
+                                            break;
                                         }
                                     }
+                                    p = next;
+                                    continue;
                                 }
                             }
                             p = p.getNext();
@@ -170,5 +188,20 @@ public class DecryptStringCmd extends BaseCmd {
         } finally {
             IOUtils.closeQuietly(fo);
         }
+    }
+
+    public static AbstractInsnNode tryReplace(InsnList instructions, AbstractInsnNode p, AbstractInsnNode q,
+            Method jmethod, Object arg) {
+        try {
+            String newValue = (String) jmethod.invoke(null, arg);
+            LdcInsnNode nLdc = new LdcInsnNode(newValue);
+            instructions.insertBefore(p, nLdc);
+            instructions.remove(p);
+            instructions.remove(q);
+            return nLdc.getNext();
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
     }
 }
