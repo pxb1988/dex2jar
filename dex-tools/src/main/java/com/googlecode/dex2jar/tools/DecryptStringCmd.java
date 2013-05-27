@@ -63,7 +63,7 @@ public class DecryptStringCmd extends BaseCmd {
     private String methodOwner;
     @Opt(opt = "mn", longOpt = "decrypt-method-name", description = "the owner of the mothed which can decrypt the stings, the method's signature must be static (type)Ljava/lang/String;", argName = "name")
     private String methodName;
-    @Opt(opt = "cp", longOpt = "classpath", description = "", argName = "cp")
+    @Opt(opt = "cp", longOpt = "classpath", description = "add extra lib to classpath", argName = "cp")
     private String classpath;
     @Opt(opt = "t", longOpt = "arg-type", description = "the type of the method's argument, int,string. default is string", argName = "type")
     private String type = "string";
