@@ -23,18 +23,19 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
+import java.util.Set;
+import java.util.TreeSet;
 
 public abstract class BaseCmd {
+    @SuppressWarnings("serial")
+    protected static class HelpException extends RuntimeException {
+    }
+
     @Retention(value = RetentionPolicy.RUNTIME)
     @Target(value = { ElementType.FIELD })
     static protected @interface Opt {
@@ -51,6 +52,31 @@ public abstract class BaseCmd {
         boolean required() default false;
     }
 
+    static protected class Option implements Comparable<Option> {
+        public String argName = "arg";
+        public String description;
+        public Field field;
+        public boolean hasArg = true;
+        public String longOpt;
+        public String opt;
+        public boolean required = false;
+
+        @Override
+        public int compareTo(Option o) {
+            return this.opt.compareTo(o.opt);
+        }
+
+        public String getOptAndLongOpt() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("-").append(opt);
+            if (longOpt != null) {
+                sb.append(",--").append(longOpt);
+            }
+            return sb.toString();
+        }
+
+    }
+
     @Retention(value = RetentionPolicy.RUNTIME)
     @Target(value = { ElementType.TYPE })
     static protected @interface Syntax {
@@ -63,16 +89,16 @@ public abstract class BaseCmd {
 
         String syntax() default "";
     }
-
     private String cmdLineSyntax;
+
     private String cmdName;
-    protected CommandLine commandLine;
     private String desc;
+    private String onlineHelp;
+
+    protected Map<String, Option> optMap = new HashMap<String, Option>();
+
     @Opt(opt = "h", longOpt = "help", hasArg = false, description = "Print this help message")
     private boolean printHelp = false;
-    private String onlineHelp;
-    private Map<String, Field> map = new HashMap<String, Field>();
-    protected final Options options = new Options();
 
     protected String remainingArgs[];
 
@@ -81,7 +107,6 @@ public abstract class BaseCmd {
 
     public BaseCmd(String cmdLineSyntax, String header) {
         super();
-
         int i = cmdLineSyntax.indexOf(' ');
         if (i > 0) {
             this.cmdName = cmdLineSyntax.substring(0, i);
@@ -92,10 +117,20 @@ public abstract class BaseCmd {
 
     public BaseCmd(String cmdName, String cmdSyntax, String header) {
         super();
-
         this.cmdName = cmdName;
         this.cmdLineSyntax = cmdSyntax;
         this.desc = header;
+    }
+
+    private Set<Option> collectRequriedOptions(Map<String, Option> optMap) {
+        Set<Option> options = new HashSet<Option>();
+        for (Map.Entry<String, Option> e : optMap.entrySet()) {
+            Option option = e.getValue();
+            if (option.required) {
+                options.add(option);
+            }
+        }
+        return options;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -128,49 +163,20 @@ public abstract class BaseCmd {
         }
 
         throw new RuntimeException("can't convert [" + value + "] to type " + type);
-    }
+    };
 
     protected abstract void doCommandLine() throws Exception;
 
     public void doMain(String... args) {
-        initOptions();
-        CommandLineParser parser = new PosixParser();
-        for (String s : args) {
-            if (s.equals("-h") || s.equals("--help")) {
-                usage();
-                return;
-            }
-        }
         try {
-            commandLine = parser.parse(options, args);
-        } catch (ParseException ex) {
-            System.err.println("ERROR: " + ex.getMessage() + ", --help for detail help");
-            return;
-        }
-        this.remainingArgs = commandLine.getArgs();
-        try {
-            for (Option option : commandLine.getOptions()) {
-                String opt = option.getOpt();
-                Field f = map.get(opt);
-                if (f != null) {
-                    Object value;
-                    if (!option.hasArg()) {// no arg, it's a flag option
-                        value = true;
-                    } else {
-                        value = convert(commandLine.getOptionValue(opt), f.getType());
-                    }
-                    f.set(this, value);
-                }
-            }
-            if (this.printHelp) {
-                usage();
-            } else {
-                doCommandLine();
-            }
+            initOptions();
+            parseSetArgs(args);
+            doCommandLine();
+        } catch (HelpException e) {
+            usage();
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
-
     }
 
     protected String getVersionString() {
@@ -213,16 +219,20 @@ public abstract class BaseCmd {
                         throw new RuntimeException("the value of " + f + " must be false, as it is declared as no args");
                     }
                 }
-                Option option = new Option(opt.opt(), opt.hasArg(), opt.description());
-                option.setRequired(opt.required());
+                Option option = new Option();
+                option.field = f;
+                option.opt = opt.opt();
+                option.description = opt.description();
+                option.hasArg = opt.hasArg();
+                option.required = opt.required();
                 if (!"".equals(opt.longOpt())) {
-                    option.setLongOpt(opt.longOpt());
+                    option.longOpt = opt.longOpt();
+                    optMap.put("--" + option.longOpt, option);
                 }
                 if (!"".equals(opt.argName())) {
-                    option.setArgName(opt.argName());
+                    option.argName = opt.argName();
                 }
-                options.addOption(option);
-                map.put(opt.opt(), f);
+                optMap.put("-" + option.opt, option);
             }
         }
     }
@@ -231,23 +241,150 @@ public abstract class BaseCmd {
         initOptionFromClass(this.getClass());
     }
 
-    protected void usage() {
-        HelpFormatter formatter = new HelpFormatter() {
-
-            @Override
-            public void printHelp(PrintWriter pw, int width, String cmdLineSyntax, String header, Options options,
-                    int leftPad, int descPad, String footer, boolean autoUsage) {
-                String xHeader = BaseCmd.this.desc;
-                if (xHeader != null && !xHeader.equals("")) {
-                    printWrapped(pw, width, xHeader);
+    protected void parseSetArgs(String... args) throws IllegalArgumentException, IllegalAccessException {
+        List<String> remainsOptions = new ArrayList<String>();
+        Set<Option> requiredOpts = collectRequriedOptions(optMap);
+        Option needArgOpt = null;
+        for (String s : args) {
+            if (needArgOpt != null) {
+                needArgOpt.field.set(this, convert(s, needArgOpt.field.getType()));
+                needArgOpt = null;
+            } else if (s.startsWith("-")) {// its a short or long option
+                Option opt = optMap.get(s);
+                requiredOpts.remove(opt);
+                if (opt == null) {
+                    System.err.println("ERROR: Unrecognized option: " + s);
+                    throw new HelpException();
+                } else {
+                    if (opt.hasArg) {
+                        needArgOpt = opt;
+                    } else {
+                        opt.field.set(this, true);
+                    }
                 }
-                super.printHelp(pw, width, cmdLineSyntax, header, options, leftPad, descPad, footer, autoUsage);
+            } else {
+                remainsOptions.add(s);
             }
-        };
-        String footer = "version: " + getVersionString();
-        if (onlineHelp != null && !"".equals(onlineHelp)) {
-            footer = footer + "\nonline help:\n" + onlineHelp;
         }
-        formatter.printHelp(this.cmdName + " " + cmdLineSyntax, "options:", options, footer);
+
+        if (needArgOpt != null) {
+            System.err.println("ERROR: Option " + needArgOpt.getOptAndLongOpt() + " need an argument value");
+            throw new HelpException();
+        }
+        this.remainingArgs = remainsOptions.toArray(new String[0]);
+        if (this.printHelp) {
+            throw new HelpException();
+        }
+        if (!requiredOpts.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("ERROR: Options: ");
+            boolean first = true;
+            for (Option option : requiredOpts) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(" and ");
+                }
+                sb.append(option.getOptAndLongOpt());
+            }
+            sb.append(" is required");
+            System.err.println(sb.toString());
+            throw new HelpException();
+        }
+
+    }
+
+    protected void usage() {
+        PrintWriter out = new PrintWriter(System.err, true);
+
+        final int maxLength = 80;
+        final int maxPaLength = 40;
+        out.println(this.cmdName + " -- " + desc);
+        out.println("usage: " + this.cmdName + " " + cmdLineSyntax);
+        if (this.optMap.size() > 0) {
+            out.println("options:");
+        }
+        // [PART.A.........][Part.B
+        // .-a,--aa.<arg>...desc1
+        // .................desc2
+        // .-b,--bb
+        TreeSet<Option> options = new TreeSet<Option>(this.optMap.values());
+        int palength = -1;
+        for (Option option : options) {
+            int pa = 5 + option.opt.length();
+            if (option.longOpt != null) {
+                pa += 3 + option.longOpt.length();
+            }
+            if (option.hasArg) {
+                pa += 3 + option.argName.length();
+            }
+            if (pa < maxPaLength) {
+                if (pa > palength) {
+                    palength = pa;
+                }
+            }
+        }
+        int pblength = maxLength - palength;
+
+        StringBuilder sb = new StringBuilder();
+        for (Option option : options) {
+            sb.setLength(0);
+            sb.append(" -").append(option.opt);
+            if (option.longOpt != null) {
+                sb.append(",--").append(option.longOpt);
+            }
+            if (option.hasArg) {
+                sb.append(" <").append(option.argName).append(">");
+            }
+            String desc = option.description;
+            if (desc == null || desc.length() == 0) {// no description
+                out.println(sb);
+            } else {
+                for (int i = palength - sb.length(); i > 0; i--) {
+                    sb.append(' ');
+                }
+                if (sb.length() > maxPaLength) {// to huge part A
+                    out.println(sb);
+                    sb.setLength(0);
+                    for (int i = 0; i < palength; i++) {
+                        sb.append(' ');
+                    }
+                }
+                int nextStart = 0;
+                while (nextStart < desc.length()) {
+                    if (desc.length() - nextStart < pblength) {// can put in one line
+                        sb.append(desc.substring(nextStart));
+                        out.println(sb);
+                        nextStart = desc.length();
+                        sb.setLength(0);
+                    } else {
+                        sb.append(desc.substring(nextStart, pblength));
+                        out.println(sb);
+                        nextStart += pblength;
+                        sb.setLength(0);
+                        for (int i = 0; i < palength; i++) {
+                            sb.append(' ');
+                        }
+                    }
+                }
+                if (sb.length() > 0) {
+                    out.println(sb);
+                    sb.setLength(0);
+                }
+            }
+        }
+        String ver = getVersionString();
+        if (ver != null && !"".equals(ver)) {
+            out.println("version: " + ver);
+        }
+        if (onlineHelp != null && !"".equals(onlineHelp)) {
+            if (onlineHelp.length() + "online help: ".length() > maxLength) {
+                out.println("online help: ");
+                out.println(onlineHelp);
+            } else {
+                out.println("online help: " + onlineHelp);
+            }
+        }
+        out.flush();
     }
 }
