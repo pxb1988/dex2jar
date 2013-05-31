@@ -33,6 +33,7 @@ import org.objectweb.asm.ClassWriter;
 import com.googlecode.dex2jar.DexException;
 import com.googlecode.dex2jar.reader.DexFileReader;
 import com.googlecode.dex2jar.reader.io.DataIn;
+import com.googlecode.dex2jar.visitors.DexClassVisitor;
 
 public class Dex2jar {
     public static Dex2jar from(byte[] in) throws IOException {
@@ -63,7 +64,7 @@ public class Dex2jar {
 
     final private DexFileReader reader;
     private int readerConfig;
-
+    private boolean verbose = false;
     private int v3Config;
 
     private Dex2jar(DexFileReader reader) {
@@ -97,7 +98,18 @@ public class Dex2jar {
                         }
                     };
                 }
-            }, v3Config), readerConfig);
+            }, v3Config) {
+
+                @Override
+                public DexClassVisitor visit(int access_flags, String className, String superClass,
+                        String[] interfaceNames) {
+                    if (verbose) {
+                        System.err.println("Processing " + className);
+                    }
+                    return super.visit(access_flags, className, superClass, interfaceNames);
+                }
+
+            }, readerConfig);
         } catch (Exception e) {
             if (exceptionHandler == null) {
                 throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
@@ -130,6 +142,16 @@ public class Dex2jar {
         } else {
             this.v3Config &= ~V3.TOPOLOGICAL_SORT;
         }
+        return this;
+    }
+
+    public Dex2jar verbose() {
+        this.verbose = true;
+        return this;
+    }
+
+    public Dex2jar verbose(boolean b) {
+        this.verbose = b;
         return this;
     }
 

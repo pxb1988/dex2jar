@@ -48,7 +48,8 @@ public class Dex2jarCmd extends BaseCmd {
 
     @Opt(opt = "s", hasArg = false, description = "same with --topological-sort/-ts")
     private boolean topologicalSort1 = false;
-
+    @Opt(opt = "v", longOpt = "verbose", hasArg = false, description = "show progress")
+    private boolean verbose = false;
     @Opt(opt = "ts", longOpt = "topological-sort", hasArg = false, description = "sort block by topological, that will generate more readable code")
     private boolean topologicalSort = false;
 
@@ -106,7 +107,7 @@ public class Dex2jarCmd extends BaseCmd {
 
             Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg)
                     .topoLogicalSort(topologicalSort || topologicalSort1).skipDebug(!debugInfo)
-                    .optimizeSynchronized(this.optmizeSynchronized).printIR(printIR).to(file);
+                    .optimizeSynchronized(this.optmizeSynchronized).printIR(printIR).verbose(verbose).to(file);
 
             if (!notHandleException) {
                 Map<Method, Exception> exceptions = handler.getExceptions();

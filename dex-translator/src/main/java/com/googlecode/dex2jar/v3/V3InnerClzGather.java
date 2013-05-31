@@ -136,8 +136,13 @@ public class V3InnerClzGather implements DexFileVisitor {
                     if (ann.type.equals("Ldalvik/annotation/EnclosingClass;")) {
                         for (Item i : ann.items) {
                             if (i.name.equals("value")) {
-                                clz.enclosingClass = get(i.value.toString());
-                                clz.enclosingClass.addInner(clz);
+                                String value = i.value.toString();
+                                if (value.equals(clz.name)) {// issue 178
+                                    System.out.println("WARN: bad EnclosingClass find in " + clz.name + ", ignored");
+                                } else {
+                                    clz.enclosingClass = get(value);
+                                    clz.enclosingClass.addInner(clz);
+                                }
                             }
                         }
                     } else if (ann.type.equals("Ldalvik/annotation/EnclosingMethod;")) {
