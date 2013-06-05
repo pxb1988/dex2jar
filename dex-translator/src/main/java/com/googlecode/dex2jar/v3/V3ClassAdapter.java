@@ -169,11 +169,13 @@ public class V3ClassAdapter implements DexClassVisitor {
      * @param clz
      */
     private void searchEnclosing(Clz clz) {
+        Set<Clz> visited = new HashSet<Clz>();// issue 197 prevent from endless loop
         for (Clz p = clz; p != null; p = p.enclosingClass) {
             Clz enclosingClass = p.enclosingClass;
-            if (enclosingClass == null) {
+            if (enclosingClass == null || visited.contains(enclosingClass)) {
                 break;
             }
+            visited.add(enclosingClass);
             int accessInInner = clearInnerAccess(p.access);
             if (p.innerName != null) {// non-anonymous Innerclass
                 cv.visitInnerClass(Type.getType(p.name).getInternalName(), Type.getType(enclosingClass.name)

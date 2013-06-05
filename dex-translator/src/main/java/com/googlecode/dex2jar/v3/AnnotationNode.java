@@ -197,7 +197,7 @@ public class AnnotationNode implements DexAnnotationVisitor {
 
         @Override
         public DexAnnotationVisitor visitAnnotation(String name, String desc) {
-            AnnotationNode node = new AnnotationNode();
+            AnnotationNode node = new AnnotationNode(desc, true);
             list.add(node);
             return node;
         }
