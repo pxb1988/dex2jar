@@ -1,6 +1,6 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2012 Panxiaobo
+ * Copyright (c) 2009-2013 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,23 +29,25 @@ public class BinGen {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
+        if (args.length < 2) {
+            System.err.println("bin-gen cfg-dir out-dir");
+            return;
+        }
+        File cfg = new File(args[0]);
+        File out = new File(args[1]);
         Properties p = new Properties();
-        p.load(BinGen.class.getResourceAsStream("class.cfg"));
+        p.load(FileUtils.openInputStream(new File(cfg, "class.cfg")));
 
-        String bat = FileUtils.readFileToString(new File(
-                "src/main/resources/com/googlecode/dex2jar/bin_gen/bat_template"), "UTF-8");
-        String sh = FileUtils.readFileToString(
-                new File("src/main/resources/com/googlecode/dex2jar/bin_gen/sh_template"), "UTF-8");
+        String bat = FileUtils.readFileToString(new File(cfg, "bat_template"), "UTF-8");
+        String sh = FileUtils.readFileToString(new File(cfg, "sh_template"), "UTF-8");
 
-        File binDir = new File("src/main/bin");
-        String setclasspath = FileUtils.readFileToString(new File(
-                "src/main/resources/com/googlecode/dex2jar/bin_gen/setclasspath.bat"), "UTF-8");
-        FileUtils.writeStringToFile(new File(binDir, "setclasspath.bat"), setclasspath, "UTF-8");
+        String setclasspath = FileUtils.readFileToString(new File(cfg, "setclasspath.bat"), "UTF-8");
+        FileUtils.writeStringToFile(new File(out, "setclasspath.bat"), setclasspath, "UTF-8");
         for (Object key : p.keySet()) {
             String name = key.toString();
-            FileUtils.writeStringToFile(new File(binDir, key.toString() + ".sh"),
+            FileUtils.writeStringToFile(new File(out, key.toString() + ".sh"),
                     sh.replaceAll("__@class_name@__", p.getProperty(name)), "UTF-8");
-            FileUtils.writeStringToFile(new File(binDir, key.toString() + ".bat"),
+            FileUtils.writeStringToFile(new File(out, key.toString() + ".bat"),
                     bat.replaceAll("__@class_name@__", p.getProperty(name)), "UTF-8");
         }
     }
