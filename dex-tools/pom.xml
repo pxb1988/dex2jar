@@ -89,8 +89,8 @@
                             <classpathScope>test</classpathScope>
                             <mainClass>com.googlecode.dex2jar.bin_gen.BinGen</mainClass>
                             <arguments>
-                                <argument>src/main/bin_gen</argument>
-                                <argument>target/bin</argument>
+                                <argument>${project.basedir}/src/main/bin_gen</argument>
+                                <argument>${project.basedir}/target/bin</argument>
                             </arguments>
                         </configuration>
                     </execution>
