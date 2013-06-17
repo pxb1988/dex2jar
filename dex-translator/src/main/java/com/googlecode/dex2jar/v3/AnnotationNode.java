@@ -77,11 +77,16 @@ public class AnnotationNode implements DexAnnotationVisitor {
             // av1.visit("name", method.getName());
             // av1.visit("desc", method.getType().getDesc());
             // av1.visitEnd();
-            av.visit(name, v);
+            // av.visit(name, v);
+            System.err.println("WARN: ignored method annotation value");
         } else if (v instanceof DexType) {
             av.visit(name, ((DexType) v).desc);
         } else {
-            av.visit(name, v);
+            if (v == null) {
+                System.err.println("WARN: ignored null annotation value");
+            } else {
+                av.visit(name, v);
+            }
         }
     }
 
