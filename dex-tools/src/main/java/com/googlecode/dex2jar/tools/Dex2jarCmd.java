@@ -56,7 +56,7 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "d", longOpt = "debug-info", hasArg = false, description = "translate debug info")
     private boolean debugInfo = false;
 
-    @Opt(opt = "p", longOpt = "print-ir", hasArg = false, description = "print ir to Syste.out")
+    @Opt(opt = "p", longOpt = "print-ir", hasArg = false, description = "print ir to System.out")
     private boolean printIR = false;
 
     @Opt(opt = "os", longOpt = "optmize-synchronized", hasArg = false, description = "optmize-synchronized")
@@ -69,30 +69,28 @@ public class Dex2jarCmd extends BaseCmd {
     @Override
     protected void doCommandLine() throws Exception {
         if (remainingArgs.length == 0) {
-            usage();
-            return;
+            throw new HelpException("At least one fileN is required");
         }
 
         if ((exceptionFile != null || output != null) && remainingArgs.length != 1) {
-            System.err.println("-e/-o can only used with one file");
-            return;
+            throw new HelpException("-e/-o can only used with one file");
         }
         if (debugInfo && reuseReg) {
-            System.err.println("-d/-r can not use together");
-            return;
+            throw new HelpException("-d/-r can not use together");
         }
 
         if (output != null) {
             if (output.exists() && !forceOverwrite) {
-                System.err.println(output + " exists, use --force to overwrite");
-                return;
+                throw new HelpException(output + " exists, use --force to overwrite");
             }
         } else {
             for (String fileName : remainingArgs) {
+                if (!new File(fileName).exists()) {
+                    throw new HelpException(fileName + " not exists");
+                }
                 File file = new File(FilenameUtils.getBaseName(fileName) + "-dex2jar.jar");
                 if (file.exists() && !forceOverwrite) {
-                    System.err.println(file + " exists, use --force to overwrite");
-                    return;
+                    throw new HelpException(file + " exists, use --force to overwrite");
                 }
             }
         }

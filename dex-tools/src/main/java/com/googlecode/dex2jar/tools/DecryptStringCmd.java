@@ -59,9 +59,9 @@ public class DecryptStringCmd extends BaseCmd {
     @Opt(opt = "o", longOpt = "output", description = "output of .jar files, default is $current_dir/[jar-name]-decrypted.jar", argName = "out")
     private File output;
 
-    @Opt(opt = "mo", longOpt = "decrypt-method-owner", description = "the owner of the mothed which can decrypt the stings, example: java.lang.String", argName = "owner")
+    @Opt(opt = "mo", required = true, longOpt = "decrypt-method-owner", description = "the owner of the method which can decrypt the stings, example: java.lang.String", argName = "owner")
     private String methodOwner;
-    @Opt(opt = "mn", longOpt = "decrypt-method-name", description = "the owner of the mothed which can decrypt the stings, the method's signature must be static (type)Ljava/lang/String;", argName = "name")
+    @Opt(opt = "mn", required = true, longOpt = "decrypt-method-name", description = "the owner of the method which can decrypt the stings, the method's signature must be static (type)Ljava/lang/String;. Please use -t,--arg-type to set the argument type.", argName = "name")
     private String methodName;
     @Opt(opt = "cp", longOpt = "classpath", description = "add extra lib to classpath", argName = "cp")
     private String classpath;
@@ -70,9 +70,10 @@ public class DecryptStringCmd extends BaseCmd {
 
     @Override
     protected void doCommandLine() throws Exception {
-        if (remainingArgs.length != 1) {
-            usage();
-            return;
+        if (remainingArgs.length == 0) {
+            throw new HelpException("One <jar> file is required");
+        } else if (remainingArgs.length > 1) {
+            throw new HelpException("Only one <jar> file is required, But we found " + remainingArgs.length);
         }
 
         File jar = new File(remainingArgs[0]);
@@ -80,11 +81,6 @@ public class DecryptStringCmd extends BaseCmd {
             System.err.println(jar + " is not exists");
             return;
         }
-        if (methodName == null || methodOwner == null) {
-            System.err.println("Please set --decrypt-method-owner and --decrypt-method-name");
-            return;
-        }
-
         if (output == null) {
             if (jar.isDirectory()) {
                 output = new File(jar.getName() + "-decrypted.jar");

@@ -34,6 +34,15 @@ import java.util.TreeSet;
 public abstract class BaseCmd {
     @SuppressWarnings("serial")
     protected static class HelpException extends RuntimeException {
+
+        public HelpException() {
+            super();
+        }
+
+        public HelpException(String message) {
+            super(message);
+        }
+
     }
 
     @Retention(value = RetentionPolicy.RUNTIME)
@@ -89,6 +98,7 @@ public abstract class BaseCmd {
 
         String syntax() default "";
     }
+
     private String cmdLineSyntax;
 
     private String cmdName;
@@ -173,6 +183,10 @@ public abstract class BaseCmd {
             parseSetArgs(args);
             doCommandLine();
         } catch (HelpException e) {
+            String msg = e.getMessage();
+            if (msg != null && msg.length() > 0) {
+                System.err.println("ERROR: " + msg);
+            }
             usage();
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -358,12 +372,14 @@ public abstract class BaseCmd {
                         nextStart = desc.length();
                         sb.setLength(0);
                     } else {
-                        sb.append(desc.substring(nextStart, pblength));
+                        sb.append(desc.substring(nextStart, nextStart + pblength));
                         out.println(sb);
                         nextStart += pblength;
                         sb.setLength(0);
-                        for (int i = 0; i < palength; i++) {
-                            sb.append(' ');
+                        if (nextStart < desc.length()) {
+                            for (int i = 0; i < palength; i++) {
+                                sb.append(' ');
+                            }
                         }
                     }
                 }
