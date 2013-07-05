@@ -15,6 +15,10 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -23,6 +27,7 @@ import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
+import com.googlecode.dex2jar.ir.stmt.BaseSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.JumpStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
@@ -60,50 +65,120 @@ public class ExceptionHandlerCurrectTransformer implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-        Local ex = null;
+
+        Set<LabelStmt> hanlders = new HashSet<LabelStmt>();
         for (Trap t : irMethod.traps) {
             for (int i = 0; i < t.handlers.length; i++) {
-                LabelStmt handler = t.handlers[i];
-                Type type = t.types[i];
-                Stmt st = handler.getNext();
-                Stmt pre = handler.getPre();
-                while (st.st == ST.LABEL) {
-                    st = st.getNext();
+                hanlders.add(t.handlers[i]);
+            }
+        }
+        Local ex = null;
+        for (LabelStmt handler : hanlders) {
+            Stmt st = handler.getNext();
+            while (st.st == ST.LABEL && !hanlders.contains(st)) {
+                st = st.getNext();
+            }
+            if (needInsertMoveExceptionRef(st)) {
+                if (ex == null) {
+                    ex = Exprs.nLocal("unRefEx");
+                    irMethod.locals.add(ex);
                 }
-                while (pre.st == ST.LABEL) {
-                    pre = pre.getPre();
-                }
-                if (needInsertMoveExceptionRef(st) && needInsertGoto(pre)) {
+                Stmt stmt = Stmts.nIdentity(ex, Exprs.nExceptionRef(Type.getType(Throwable.class)));
 
-                    LabelStmt lbl = Stmts.nLabel();
-                    JumpStmt g = Stmts.nGoto(lbl);
-                    irMethod.stmts.insertAfter(pre, g);
+                irMethod.stmts.insertBefore(st, stmt);
+            }
+        }
+        Cfg.createCFG(irMethod, false);
+
+        for (LabelStmt handler : hanlders) {
+            Stmt st = handler.getNext();
+            while (st.st == ST.LABEL) {
+                st = st.getNext();
+            }
+            if (handler._cfg_froms.size() > 0) {
+                LabelStmt lbl = Stmts.nLabel();
+                lbl._cfg_froms = new TreeSet<Stmt>(irMethod.stmts);
+                lbl._cfg_tos = new TreeSet<Stmt>(irMethod.stmts);
+                if (isExHandler(st)) {
+                    Stmt after = st.getNext();
+                    irMethod.stmts.insertAfter(st, lbl);
+                    cfgInsert(st, after, lbl);
+                } else {
+                    Stmt pre = st.getPre();
                     irMethod.stmts.insertBefore(st, lbl);
-                    if (ex == null) {
-                        ex = Exprs.nLocal("unRefEx");
+                    cfgInsert(pre, st, lbl);
+                }
+                for (Stmt stmt : new HashSet<Stmt>(handler._cfg_froms)) {
+
+                    switch (stmt.st) {
+                    case GOTO: {
+                        JumpStmt jumpStmt = (JumpStmt) stmt;
+                        jumpStmt.target = lbl;
+                        cfgReplace(stmt, handler, lbl);
                     }
-                    irMethod.stmts.insertBefore(lbl, Stmts.nAssign(ex, Exprs.nExceptionRef(type)));
+                        break;
+                    case LOOKUP_SWITCH:
+                    case TABLE_SWITCH:
+                        BaseSwitchStmt bss = (BaseSwitchStmt) stmt;
+                        if (bss.defaultTarget.equals(handler)) {
+                            bss.defaultTarget = lbl;
+                        }
+                        LabelStmt[] targets = bss.targets;
+                        for (int i = 0; i < targets.length; i++) {
+                            if (targets[i].equals(handler)) {
+                                targets[i] = lbl;
+                            }
+                        }
+                        cfgReplace(stmt, handler, lbl);
+                        break;
+                    case IF: {
+                        JumpStmt jumpStmt = (JumpStmt) stmt;
+                        if (jumpStmt.target.equals(handler)) {
+                            jumpStmt.target = lbl;
+                            cfgReplace(stmt, handler, lbl);
+                        }
+                    }
+                    // go thought
+                    default:
+                        Stmt next = stmt.getNext();
+                        if (handler.equals(next)) {
+                            Stmt g = Stmts.nGoto(lbl);
+                            g._cfg_froms = new TreeSet<Stmt>(irMethod.stmts);
+                            g._cfg_tos = new TreeSet<Stmt>(irMethod.stmts);
+                            g._cfg_tos.add(lbl);
+                            irMethod.stmts.insertAfter(stmt, g);
+                            cfgReplace(stmt, handler, g);
+                        }
+                    }
                 }
             }
         }
-        if (ex != null) {
-            irMethod.locals.add(ex);
+    }
+
+    void cfgInsert(Stmt pre, Stmt next, Stmt p) {
+        if (pre._cfg_tos.contains(next)) {
+            pre._cfg_tos.remove(next);
+            pre._cfg_tos.add(p);
+            next._cfg_froms.remove(pre);
+            next._cfg_froms.add(p);
+            p._cfg_froms.add(pre);
+            p._cfg_tos.add(next);
         }
     }
 
-    private boolean needInsertGoto(Stmt pre) {
-        switch (pre.st) {
-        case RETURN:
-        case GOTO:
-        case RETURN_VOID:
-        case THROW:
-            return false;
-        }
-        return true;
+    void cfgReplace(Stmt pre, Stmt next, Stmt p) {
+        pre._cfg_tos.remove(next);
+        pre._cfg_tos.add(p);
+        next._cfg_froms.remove(pre);
+        p._cfg_froms.add(pre);
+    }
+
+    private boolean isExHandler(Stmt st) {
+        return (st.st == ST.ASSIGN || st.st == ST.IDENTITY) && ((AssignStmt) st).op2.value.vt == VT.EXCEPTION_REF;
     }
 
     private boolean needInsertMoveExceptionRef(Stmt st) {
-        return st.st != ST.ASSIGN || ((AssignStmt) st).op2.value.vt != VT.EXCEPTION_REF;
+        return !isExHandler(st);
     }
 
 }

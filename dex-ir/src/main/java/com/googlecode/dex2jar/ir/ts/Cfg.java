@@ -180,6 +180,10 @@ public class Cfg {
     }
 
     public static void createCFG(IrMethod jm) {
+        createCFG(jm, true);
+    }
+
+    public static void createCFG(IrMethod jm, boolean linkTrap) {
 
         for (Stmt st : jm.stmts) {
             st._ls_forward_frame = null;
@@ -194,26 +198,26 @@ public class Cfg {
                 st._cfg_tos.clear();
             }
         }
-
-        for (Trap t : jm.traps) {
-            for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
-                if (!notThrow(s)) {
-                    // 为什么连接其上一个节点?
-                    // 对一条会抛出异常的语句来说,如果执行失败,handler的frame应该和其父节点相同
-                    // 比方说
-                    // 0
-                    // 1 b=(Boolean)b
-                    // 2 c=@Ex
-                    // 3 c=(string)b
-                    // 0 - 2 > 2
-                    // 如果1语句出错,则或使用0的frame到2去执行
-                    for (LabelStmt handler : t.handlers) {
-                        link(s.getPre(), handler);
+        if (linkTrap) {
+            for (Trap t : jm.traps) {
+                for (Stmt s = t.start.getNext(); s != t.end; s = s.getNext()) {
+                    if (!notThrow(s)) {
+                        // 为什么连接其上一个节点?
+                        // 对一条会抛出异常的语句来说,如果执行失败,handler的frame应该和其父节点相同
+                        // 比方说
+                        // 0
+                        // 1 b=(Boolean)b
+                        // 2 c=@Ex
+                        // 3 c=(string)b
+                        // 0 - 2 > 2
+                        // 如果1语句出错,则或使用0的frame到2去执行
+                        for (LabelStmt handler : t.handlers) {
+                            link(s.getPre(), handler);
+                        }
                     }
                 }
             }
         }
-
         for (Stmt st : jm.stmts) {
             switch (st.st) {
             case GOTO:
