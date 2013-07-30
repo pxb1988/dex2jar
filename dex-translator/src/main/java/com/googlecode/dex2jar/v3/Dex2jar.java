@@ -155,6 +155,15 @@ public class Dex2jar {
         return this;
     }
 
+    public Dex2jar noCode(boolean b) {
+        if (b) {
+            this.readerConfig |= DexFileReader.SKIP_CODE;
+        } else {
+            this.v3Config &= ~DexFileReader.SKIP_CODE;
+        }
+        return this;
+    }
+    
     public Dex2jar optimizeSynchronized(boolean b) {
         if (b) {
             this.v3Config |= V3.OPTIMIZE_SYNCHRONIZED;

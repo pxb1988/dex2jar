@@ -45,6 +45,8 @@ public class Dex2jarCmd extends BaseCmd {
 
     @Opt(opt = "r", longOpt = "reuse-reg", hasArg = false, description = "reuse regiter while generate java .class file")
     private boolean reuseReg = false;
+    @Opt(opt = "nc", longOpt = "no-code", hasArg = false, description = "skip code")
+    private boolean noCode = false;
 
     @Opt(opt = "s", hasArg = false, description = "same with --topological-sort/-ts")
     private boolean topologicalSort1 = false;
@@ -105,7 +107,8 @@ public class Dex2jarCmd extends BaseCmd {
 
             Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg)
                     .topoLogicalSort(topologicalSort || topologicalSort1).skipDebug(!debugInfo)
-                    .optimizeSynchronized(this.optmizeSynchronized).printIR(printIR).verbose(verbose).to(file);
+                    .optimizeSynchronized(this.optmizeSynchronized).printIR(printIR).verbose(verbose).noCode(noCode)
+                    .to(file);
 
             if (!notHandleException) {
                 Map<Method, Exception> exceptions = handler.getExceptions();
