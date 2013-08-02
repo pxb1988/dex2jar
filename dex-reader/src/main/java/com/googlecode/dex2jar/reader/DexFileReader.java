@@ -98,7 +98,10 @@ public class DexFileReader {
      * skip field constant in dex file.
      */
     public static final int SKIP_FIELD_CONSTANT = 1 << 4;
-
+    /**
+    * ingore read exception
+    */
+    public static final int IGNORE_READ_EXCEPTION = 1 << 5;
     private final boolean odex;
     private DataIn odex_in;
     private int odex_depsOffset;
@@ -322,13 +325,38 @@ public class DexFileReader {
                 {
                     acceptClass(dv, dcv, className, config);
                 }
+            } catch (Exception ex) {
+                DexException dexException = new DexException(ex, "Error process class: [%d]%s", cid, className);
+                if (0 != (config & IGNORE_READ_EXCEPTION)) {
+                    niceExceptionMessage(dexException, 0);
+                } else {
+                    throw dexException;
+                }
             } finally {
                 in.pop();
             }
         }
         dv.visitEnd();
     }
-
+    static void niceExceptionMessage(Throwable t, int deep) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < deep + 1; i++) {
+            sb.append(".");
+        }
+        sb.append(' ');
+        if (t instanceof DexException) {
+            sb.append(t.getMessage());
+            System.err.println(sb.toString());
+            if (t.getCause() != null) {
+                niceExceptionMessage(t.getCause(), deep + 1);
+            }
+        } else {
+            if (t != null) {
+                System.err.println(sb.append("ROOT cause:").toString());
+                t.printStackTrace(System.err);
+            }
+        }
+    }
     private void acceptClass(DexFileVisitor dv, DexClassVisitor dcv, String className, int config) {
         DataIn in = this.in;
         int source_file_idx = in.readUIntx();
