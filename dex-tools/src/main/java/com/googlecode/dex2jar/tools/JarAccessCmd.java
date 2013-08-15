@@ -47,6 +47,10 @@ public class JarAccessCmd extends BaseCmd {
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
+
+    @Opt(opt = "v", longOpt = "verbose", hasArg = false, description = "verbose")
+    private boolean verbose = false;
+
     @Opt(opt = "o", longOpt = "output", description = "output dir of .j files, default is $current_dir/[jar-name]-access.jar", argName = "out-dir")
     private File output;
 
@@ -160,6 +164,8 @@ public class JarAccessCmd extends BaseCmd {
             return;
         }
 
+        System.err.println("jar-access " + jar + " -> " + output);
+
         final int rf = ~str2acc(removeFieldAccess);
         final int rm = ~str2acc(removeMethodAccess);
         final int rc = ~str2acc(removeClassAccess);
@@ -192,7 +198,7 @@ public class JarAccessCmd extends BaseCmd {
                             public void visit(int version, int access, String name, String signature, String superName,
                                     String[] interfaces) {
                                 int na = (access & rc) | ac;
-                                if (access != na) {
+                                if (verbose && access != na) {
                                     System.out.println("c " + name);
                                 }
                                 super.visit(version, na, name, signature, superName, interfaces);
@@ -202,7 +208,7 @@ public class JarAccessCmd extends BaseCmd {
                             public FieldVisitor visitField(int access, String name, String desc, String signature,
                                     Object value) {
                                 int na = (access & rf) | af;
-                                if (na != access) {
+                                if (verbose && na != access) {
                                     System.out.println("f " + r.getClassName() + "." + name);
                                 }
                                 return super.visitField(na, name, desc, signature, value);
@@ -212,7 +218,7 @@ public class JarAccessCmd extends BaseCmd {
                             public MethodVisitor visitMethod(int access, String name, String desc, String signature,
                                     String[] exceptions) {
                                 int na = (access & rm) | am;
-                                if (na != access) {
+                                if (verbose && na != access) {
                                     System.out.println("m " + r.getClassName() + "." + name + desc);
                                 }
                                 return super.visitMethod(na, name, desc, signature, exceptions);
