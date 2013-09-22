@@ -41,8 +41,11 @@ public class BinGen {
         String bat = FileUtils.readFileToString(new File(cfg, "bat_template"), "UTF-8");
         String sh = FileUtils.readFileToString(new File(cfg, "sh_template"), "UTF-8");
 
-        String setclasspath = FileUtils.readFileToString(new File(cfg, "setclasspath.bat"), "UTF-8");
-        FileUtils.writeStringToFile(new File(out, "setclasspath.bat"), setclasspath, "UTF-8");
+        for (File file2copy : FileUtils.listFiles(cfg, new String[]{"sh", "bat"}, false)) {
+            String content = FileUtils.readFileToString(file2copy, "UTF-8");
+            FileUtils.writeStringToFile(new File(out, file2copy.getName()), content, "UTF-8");
+        }
+
         for (Object key : p.keySet()) {
             String name = key.toString();
             FileUtils.writeStringToFile(new File(out, key.toString() + ".sh"),

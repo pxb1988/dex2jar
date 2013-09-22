@@ -32,5 +32,9 @@ done
 PRGDIR=`dirname "$PRG"`
 #
 
-# call d2j_invoke.sh to setup java environment
-"$PRGDIR/d2j_invoke.sh" "__@class_name@__" "$@"
+_classpath="."
+for k in "$PRGDIR"/lib/*.jar
+do
+ _classpath="${_classpath}:${k}"
+done
+java -Xms512m -Xmx1024m -classpath "${_classpath}" "$@"

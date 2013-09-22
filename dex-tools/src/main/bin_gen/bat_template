@@ -17,7 +17,5 @@ REM See the License for the specific language governing permissions and
 REM limitations under the License.
 REM
 
-set CLASSPATH=
-FOR %%i IN ("%~dp0lib\*.jar") DO CALL "%~dp0setclasspath.bat" "%%i"
-
-java -Xms512m -Xmx1024m -cp %CLASSPATH% "__@class_name@__" %*
+REM call d2j_invoke.bat to setup java environment
+@"%~dp0d2j_invoke.bat" __@class_name@__ %*
