@@ -659,6 +659,18 @@ public class DexFileReader {
         int code_off = (int) in.readULeb128();
         int method_id = lastIndex + diff;
         Method method = getMethod(method_id);
+
+        // issue 195, a <clinit> or <init> but not marked as ACC_CONSTRUCTOR,
+        // skip the method
+        if (0 == (method_access_flags & DexOpcodes.ACC_CONSTRUCTOR)
+                && (method.getName().equals("<init>") || method.getName()
+                        .equals("<clinit>"))) {
+            System.err.println("GLITCH: method " + method.toString()
+                    + " not marked as ACC_CONSTRUCTOR");
+            System.err.println("WARN: skip method " + method.toString());
+            return method_id;
+        }
+
         try {
             DexMethodVisitor dmv = cv.visitMethod(method_access_flags, method);
             if (dmv != null) {
