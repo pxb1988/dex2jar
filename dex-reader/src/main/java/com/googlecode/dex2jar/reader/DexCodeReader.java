@@ -34,7 +34,15 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
  * @version $Rev$
  */
 /* default */class DexCodeReader implements DexOpcodes {
+    private static class OpcodeFormatNotFoundException extends Exception {
+        private static final long serialVersionUID = 1L;
+        public final int offset, opcode;
 
+        private OpcodeFormatNotFoundException(int offset, int opcode) {
+            this.offset = offset;
+            this.opcode = opcode;
+        }
+    }
     /**
      * dex文件
      */
@@ -71,7 +79,7 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
         this.isStatic = isStatic;
     }
 
-    private void findLabels(DataIn in, int instruction_size) {
+    private void findLabels(DataIn in, int instruction_size) throws OpcodeFormatNotFoundException {
         int baseOffset = in.getCurrentPosition();
         fixIssue130(in, instruction_size);
         for (int currentOffset = (in.getCurrentPosition() - baseOffset) / 2; currentOffset < instruction_size; currentOffset = (in
@@ -86,6 +94,11 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
             }
 
             OpcodeFormat format = OpcodeFormat.get(opcode, dex.apiLevel);
+
+            if (format == null) {
+                throw new OpcodeFormatNotFoundException(currentOffset * 2, opcode);
+            }
+
             try {
                 switch (opcode) {
                 case OP_GOTO:// 10t
@@ -301,41 +314,78 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
                     i++;
                 }
             }
-            dcv.visitArguments(total_registers_size, args);
         }
 
-        // 处理异常处理
-        if (tries_size > 0) {
-            in.push();
-            try {
-                in.skip(instruction_size * 2);
-                if ((instruction_size & 0x01) != 0) {// skip padding
-                    in.skip(2);
-                }
-                findTryCatch(in, dcv, tries_size, instruction_size);
-            } finally {
-                in.pop();
-            }
-        }
-        // 处理debug信息
-        if (debug_off != 0 && (0 == (config & DexFileReader.SKIP_DEBUG))) {
-            in.pushMove(debug_off);
-            try {
-                new DexDebugInfoReader(in, dex, instruction_size, this, localVariables, args).accept(dcv);
-            } finally {
-                in.pop();
-            }
-        }
-        // 查找标签
+        // issue 194, handle opcode GLITCH
+        boolean codeReadSuccess = true;
+        // first of all, travel the instructions to find labels
         in.push();
         try {
             findLabels(in, instruction_size);
+        } catch (OpcodeFormatNotFoundException e) {
+            System.err.println(String.format("GLITCH: zero-width instruction at %s, @0x%04x, op=0x%02x",
+                    this.method.toString(), e.offset, e.opcode));
+            codeReadSuccess = false;
         } finally {
             in.pop();
         }
-        DexOpcodeAdapter n = new DexOpcodeAdapter(this.dex, this.labels, dcv);
-        acceptInsn(in, instruction_size, n);
-        dcv.visitEnd();
+
+        if (codeReadSuccess) {
+            dcv.visitArguments(total_registers_size, args);
+            // 处理异常处理
+            if (tries_size > 0) {
+                in.push();
+                try {
+                    in.skip(instruction_size * 2);
+                    if ((instruction_size & 0x01) != 0) {// skip padding
+                        in.skip(2);
+                    }
+                    findTryCatch(in, dcv, tries_size, instruction_size);
+                } finally {
+                    in.pop();
+                }
+            }
+            // 处理debug信息
+            if (debug_off != 0 && (0 == (config & DexFileReader.SKIP_DEBUG))) {
+                in.pushMove(debug_off);
+                try {
+                    new DexDebugInfoReader(in, dex, instruction_size, this,
+                            localVariables, args).accept(dcv);
+                } finally {
+                    in.pop();
+                }
+            }
+
+            DexOpcodeAdapter n = new DexOpcodeAdapter(this.dex, this.labels,
+                    dcv);
+            acceptInsn(in, instruction_size, n);
+            dcv.visitEnd();
+        } else {
+            // fail to read instructions, replace the instructions
+
+            System.err.println("WARN: Replace insn of " + method
+                    + " to D2JSTUB");
+
+            // make sure there is a reg for the exception
+            if (total_registers_size - in_register_size < 1) {
+                total_registers_size++;
+                for (int i = 0; i < args.length; i++) {
+                    args[i] = args[i] + 1;
+                }
+            }
+
+            // reg 0: the exception object
+            int R0ex = 0;
+
+            dcv.visitArguments(total_registers_size, args);
+            dcv.visitClassStmt(OP_NEW_INSTANCE, R0ex,
+                    "LD2JSTUB_FAIL_READ_INSN_HERE;");
+            dcv.visitMethodStmt(OP_INVOKE_DIRECT, new int[] { R0ex },
+                    new Method("LD2JSTUB_FAIL_READ_INSN_HERE;", "<init>",
+                            new String[0], "V"));
+            dcv.visitReturnStmt(OP_THROW, 0, TYPE_OBJECT);
+            dcv.visitEnd();
+        }
     }
 
     // 处理指令
@@ -376,6 +426,11 @@ import com.googlecode.dex2jar.visitors.DexCodeVisitor;
             }
 
             OpcodeFormat format = OpcodeFormat.get(opcode, dex.apiLevel);
+
+            // format is already checked in findLabels
+//            if (format == null) {
+//                throw new OpcodeFormatNotFoundException(currentOffset * 2, opcode);
+//            }
 
             switch (format) {
             case F10t:

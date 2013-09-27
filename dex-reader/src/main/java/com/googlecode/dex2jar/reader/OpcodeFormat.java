@@ -21,6 +21,12 @@ import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
         return size;
     }
 
+    /**
+     *
+     * @param opcode
+     * @param apiLevel
+     * @return  null if the opcode not exists
+     */
     public static OpcodeFormat get(int opcode, int apiLevel) {
         switch (opcode) {
         case 0x00F0:// OP_INVOKE_DIRECT_EMPTY,OP_INVOKE_OBJECT_INIT_RANGE
@@ -359,6 +365,6 @@ import static com.googlecode.dex2jar.reader.DexInternalOpcode.*;
         case OP_INVOKE_OBJECT_INIT_JUMBO:
             return F5rc;
         }
-        throw new RuntimeException("opcode format for " + opcode + " not found!");
+        return null;
     }
 }
