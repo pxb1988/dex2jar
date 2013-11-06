@@ -102,6 +102,13 @@ public class DexFileReader {
     * ingore read exception
     */
     public static final int IGNORE_READ_EXCEPTION = 1 << 5;
+
+    /**
+     * read all methods, even if they are glitch
+     */
+    public static final int KEEP_ALL_METHODS = 1 << 6;
+
+
     private final boolean odex;
     private DataIn odex_in;
     private int odex_depsOffset;
@@ -459,15 +466,19 @@ public class DexFileReader {
                     for (int i = 0; i < instance_fields; i++) {
                         lastIndex = acceptField(lastIndex, dcv, fieldAnnotationPositions, null, config);
                     }
+                    boolean firstMethod = true;
                     lastIndex = 0;
                     for (int i = 0; i < direct_methods; i++) {
                         lastIndex = acceptMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions,
-                                config);
+                                config, firstMethod);
+                        firstMethod = false;
                     }
+                    firstMethod = true;
                     lastIndex = 0;
                     for (int i = 0; i < virtual_methods; i++) {
                         lastIndex = acceptMethod(lastIndex, dcv, methodAnnotationPositions, paramAnnotationPositions,
-                                config);
+                                config, firstMethod);
+                        firstMethod = false;
                     }
                 }
             } finally {
@@ -645,20 +656,31 @@ public class DexFileReader {
     /**
      * 访问方法
      * 
+     *
      * @param lastIndex
      * @param cv
      * @param methodAnnos
      * @param parameterAnnos
+     * @param firstMethod
      * @return
      */
     /* default */int acceptMethod(int lastIndex, DexClassVisitor cv, Map<Integer, Integer> methodAnnos,
-            Map<Integer, Integer> parameterAnnos, int config) {
+                                  Map<Integer, Integer> parameterAnnos, int config, boolean firstMethod) {
         DataIn in = this.in;
         int diff = (int) in.readULeb128();
         int method_access_flags = (int) in.readULeb128();
         int code_off = (int) in.readULeb128();
         int method_id = lastIndex + diff;
         Method method = getMethod(method_id);
+
+        // issue 200, methods may have same signature, we only need to keep the first one
+        if (!firstMethod && diff == 0) {  // detect a duplicated method
+            System.out.printf("GLITCH: duplicated method %s\n", method.toString());
+            if ((config & KEEP_ALL_METHODS) == 0) {
+                System.out.printf("WARN: skip method %s\n", method.toString());
+                return method_id;
+            }
+        }
 
         // issue 195, a <clinit> or <init> but not marked as ACC_CONSTRUCTOR,
         // skip the method
@@ -667,8 +689,10 @@ public class DexFileReader {
                         .equals("<clinit>"))) {
             System.err.println("GLITCH: method " + method.toString()
                     + " not marked as ACC_CONSTRUCTOR");
-            System.err.println("WARN: skip method " + method.toString());
-            return method_id;
+            if ((config & KEEP_ALL_METHODS) == 0) {
+                System.out.printf("WARN: skip method %s\n", method.toString());
+                return method_id;
+            }
         }
 
         try {
