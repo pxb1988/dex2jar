@@ -717,6 +717,9 @@ public class DexFileReader {
                             int sizeJ = in.readUIntx();
                             for (int j = 0; j < sizeJ; j++) {
                                 int field_annotation_offset = in.readUIntx();
+                                if(field_annotation_offset == 0){
+                                    continue;
+                                }
                                 in.pushMove(field_annotation_offset);
                                 try {
                                     DexAnnotationAble dpav = dmv.visitParameterAnnotation(j);
