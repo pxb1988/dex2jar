@@ -683,16 +683,11 @@ public class DexFileReader {
         }
 
         // issue 195, a <clinit> or <init> but not marked as ACC_CONSTRUCTOR,
-        // skip the method
         if (0 == (method_access_flags & DexOpcodes.ACC_CONSTRUCTOR)
                 && (method.getName().equals("<init>") || method.getName()
                         .equals("<clinit>"))) {
             System.err.println("GLITCH: method " + method.toString()
                     + " not marked as ACC_CONSTRUCTOR");
-            if ((config & KEEP_ALL_METHODS) == 0) {
-                System.out.printf("WARN: skip method %s\n", method.toString());
-                return method_id;
-            }
         }
 
         try {
