@@ -219,8 +219,8 @@ public class DecryptStringCmd extends BaseCmd {
                     if (clz == null) {
                         System.err.println("clz is null:" + config.owner);
                     }
-                    Method jmethod = clz.getDeclaredMethod(config.name,
-                            this.toJavaType(Type.getArgumentTypes(config.desc)));
+                    Method jmethod = findAnyMethodMatch(clz, config.name,
+                            toJavaType(Type.getArgumentTypes(config.desc)));
                     jmethod.setAccessible(true);
                     config.jmethod = jmethod;
                     map.put(config, config);
@@ -323,6 +323,37 @@ public class DecryptStringCmd extends BaseCmd {
         } finally {
             IOUtils.closeQuietly(fo);
         }
+    }
+
+    /**
+     * fix for issue 216, travel all the parent of class and use getDeclaredMethod to find methods
+     */
+    private Method findAnyMethodMatch(Class<?> clz, String name, Class<?>[] classes) {
+        try {
+            Method m = clz.getDeclaredMethod(name, classes);
+            if (m != null) {
+                return m;
+            }
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        Class<?> sup = clz.getSuperclass();
+        if (sup != null) {
+            Method m = findAnyMethodMatch(sup, name, classes);
+            if (m != null) {
+                return m;
+            }
+        }
+        Class<?>[] itfs = clz.getInterfaces();
+        if (itfs != null && itfs.length > 0) {
+            for (Class<?> itf : itfs) {
+                Method m = findAnyMethodMatch(itf, name, classes);
+                if (m != null) {
+                    return m;
+                }
+            }
+        }
+        return null;
     }
 
     Object readCst(AbstractInsnNode q) {
