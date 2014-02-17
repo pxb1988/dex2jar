@@ -75,6 +75,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nUnLock;
 
 import java.util.Arrays;
 
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -148,7 +149,10 @@ public class V3CodeAdapter implements DexCodeVisitor, Opcodes, DexOpcodes {
         }
         for (int i = 0; i < locals.length; i++) {
             if (locals[i] == null) {
-                locals[i] = nLocal("a" + i);
+                Local local = nLocal("a" + i);
+                locals[i] = local;
+                // simple fix for issue 219, init all tmp register to 0 at the start of insn.
+                list.add(Stmts.nAssign(local, nInt(0)));
             }
         }
     }
