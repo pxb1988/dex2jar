@@ -21,6 +21,7 @@ import java.util.List;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Type;
 
 import com.googlecode.dex2jar.DexType;
 import com.googlecode.dex2jar.Field;
@@ -80,7 +81,8 @@ public class AnnotationNode implements DexAnnotationVisitor {
             // av.visit(name, v);
             System.err.println("WARN: ignored method annotation value");
         } else if (v instanceof DexType) {
-            av.visit(name, ((DexType) v).desc);
+            // fix issue 222 the type is translated to string in annotation
+            av.visit(name, Type.getType(((DexType) v).desc));
         } else {
             if (v == null) {
                 System.err.println("WARN: ignored null annotation value");
