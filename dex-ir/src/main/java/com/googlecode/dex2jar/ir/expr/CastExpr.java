@@ -15,13 +15,9 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
-import org.objectweb.asm.Type;
-
-import com.googlecode.dex2jar.ir.ToStringUtil;
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.E1Expr;
-import com.googlecode.dex2jar.ir.Value.VT;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.Util;
+import com.googlecode.dex2jar.ir.expr.Value.E1Expr;
 
 /**
  * * @see VT#CAST
@@ -30,22 +26,31 @@ import com.googlecode.dex2jar.ir.ValueBox;
  * @version $Rev$
  */
 public class CastExpr extends E1Expr {
-    public Type from;
-    public Type to;
+    public String from;
+    public String to;
 
-    public CastExpr(Value value, Type from, Type to) {
-        super(VT.CAST, new ValueBox(value));
+    public CastExpr(Value value, String from, String to) {
+        super(VT.CAST, value);
         this.from = from;
         this.to = to;
     }
 
     @Override
-    public Value clone() {
-        return new CastExpr(super.op.value, from, to);
+    protected void releaseMemory() {
+        from = to = null;
+        super.releaseMemory();
     }
 
     @Override
-    public String toString() {
-        return "((" + ToStringUtil.toShortClassName(to) + ")" + op + ")";
+    public Value clone() {
+        return new CastExpr(op.trim().clone(), from, to);
+    }
+    @Override
+    public Value clone(LabelAndLocalMapper mapper) {
+        return new CastExpr(op.clone(mapper), from, to);
+    }
+    @Override
+    public String toString0() {
+        return "((" + Util.toShortClassName(to) + ")" + op + ")";
     }
 }

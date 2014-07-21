@@ -15,11 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
-import org.objectweb.asm.Type;
-
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.E2Expr;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value.E2Expr;
 
 /**
  * Represent a Binop expression, value = op1 vt op2
@@ -51,20 +48,29 @@ import com.googlecode.dex2jar.ir.ValueBox;
  * @version $Rev$
  */
 public class BinopExpr extends E2Expr {
-    public Type type;
+    public String type;
 
-    public BinopExpr(VT vt, Value op1, Value op2, Type type) {
-        super(vt, new ValueBox(op1), new ValueBox(op2));
+    public BinopExpr(VT vt, Value op1, Value op2, String type) {
+        super(vt, op1, op2);
         this.type = type;
     }
 
     @Override
-    public Value clone() {
-        return new BinopExpr(vt, op1.value.clone(), op2.value.clone(), type);
+    protected void releaseMemory() {
+        type = null;
+        super.releaseMemory();
     }
 
     @Override
-    public String toString() {
+    public Value clone() {
+        return new BinopExpr(vt, op1.trim().clone(), op2.trim().clone(), type);
+    }
+    @Override
+    public Value clone(LabelAndLocalMapper mapper) {
+        return new BinopExpr(vt, op1.clone(mapper), op2.clone(mapper), type);
+    }
+    @Override
+    public String toString0() {
         return "(" + op1 + " " + super.vt + " " + op2 + ")";
     }
 }

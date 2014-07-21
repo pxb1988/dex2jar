@@ -1,42 +1,40 @@
 package com.googlecode.dex2jar.test;
 
+import com.googlecode.d2j.DexConstants;
 import org.junit.Test;
 
-import com.googlecode.dex2jar.DexLabel;
-import com.googlecode.dex2jar.Field;
-import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.OdexOpcodes;
-import com.googlecode.dex2jar.visitors.DexClassVisitor;
-import com.googlecode.dex2jar.visitors.DexCodeVisitor;
-import com.googlecode.dex2jar.visitors.DexMethodVisitor;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.reader.Op;
+import com.googlecode.d2j.visitors.DexClassVisitor;
+import com.googlecode.d2j.visitors.DexCodeVisitor;
+import com.googlecode.d2j.visitors.DexMethodVisitor;
+import org.junit.runner.RunWith;
 
 /**
  * test case for issue 63
  */
-public class I63Test implements OdexOpcodes {
+@RunWith(DexTranslatorRunner.class)
+public class I63Test implements DexConstants {
 
+    @Test
     public static void i63(DexClassVisitor cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_STATIC, new Method("La;", "b", new String[] {}, "V"));
         if (mv != null) {
             DexCodeVisitor code = mv.visitCode();
             if (code != null) {
-                code.visitArguments(1, new int[] {});
+                code.visitRegister(1);
                 DexLabel L1 = new DexLabel();
                 DexLabel L2 = new DexLabel();
                 code.visitLabel(L1);
-                code.visitFieldStmt(OP_SGET, 0, new Field("La;", "f", "J"), TYPE_WIDE);
+                code.visitFieldStmt(Op.SGET, 0, -1, new Field("La;", "f", "J"));
                 code.visitLabel(L2);
-                code.visitReturnStmt(OP_RETURN_VOID);
+                code.visitStmt0R(Op.RETURN_VOID);
                 code.visitEnd();
                 code.visitTryCatch(L1, L2, new DexLabel[] { L2 }, new String[] { "La;" });
             }
             mv.visitEnd();
         }
     }
-
-    @Test
-    public void test() throws Exception {
-        TestUtils.testDexASMifier(getClass(), "i63", "i63");
-    }
-
 }

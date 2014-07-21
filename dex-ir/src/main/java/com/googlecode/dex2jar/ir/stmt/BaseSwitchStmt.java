@@ -16,7 +16,7 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
 /**
@@ -26,7 +26,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
  * 
  */
 public abstract class BaseSwitchStmt extends E1Stmt {
-    public BaseSwitchStmt(ST type, ValueBox op) {
+    public BaseSwitchStmt(ST type, Value op) {
         super(type, op);
     }
 

@@ -15,11 +15,9 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 /**
@@ -69,22 +67,19 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         }
     }
 
-    public List<AssignStmt> _ls_inits = new ArrayList<AssignStmt>();
-    public List<Stmt> _ls_visit_order;
-
     private Stmt first, last;
 
-    private int index = 0;
+    private int index = 1;
     private int size = 0;
 
     public void add(Stmt stmt) {
         insertLast(stmt);
     }
 
-    public StmtList clone(Map<LabelStmt, LabelStmt> map) {
+    public StmtList clone(LabelAndLocalMapper mapper) {
         StmtList nList = new StmtList();
         for (Stmt stmt : this) {
-            nList.add(stmt.clone(map));
+            nList.add(stmt.clone(mapper));
         }
         return nList;
     }
@@ -111,8 +106,10 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
     }
 
     private void indexIt(Stmt stmt) {
-        stmt.id = this.index;
-        this.index++;
+        if (stmt.id <= 0) {
+            stmt.id = this.index;
+            this.index++;
+        }
     }
 
     public void insertAfter(Stmt position, Stmt stmt) {

@@ -1,0 +1,7 @@
+description = 'Dex Writer'
+
+dependencies {
+    compile project(':dex-reader-api')
+    testCompile group: 'junit', name: 'junit', version:'4.10'
+    testCompile project(':dex-reader')
+}

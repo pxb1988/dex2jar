@@ -1,0 +1,4 @@
+description = 'a simple cmd parser'
+
+dependencies {
+}

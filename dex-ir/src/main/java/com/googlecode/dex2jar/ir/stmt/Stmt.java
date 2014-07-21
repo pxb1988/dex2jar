@@ -15,12 +15,12 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import com.googlecode.dex2jar.ir.ET;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value;
 
 /**
  * Represent a statement
@@ -52,12 +52,22 @@ public abstract class Stmt {
      */
     public static abstract class E1Stmt extends Stmt {
 
-        public ValueBox op;
+        public Value op;
 
-        public E1Stmt(ST type, ValueBox op) {
+        public E1Stmt(ST type, Value op) {
             super(type, ET.E1);
             this.op = op;
         }
+
+        @Override
+        public Value getOp() {
+            return op;
+        }
+
+        public void setOp(Value op) {
+            this.op = op;
+        }
+
     }
 
     /**
@@ -67,30 +77,40 @@ public abstract class Stmt {
      */
     public static abstract class E2Stmt extends Stmt {
 
-        public ValueBox op1;
-        public ValueBox op2;
+        public Value op1;
+        public Value op2;
 
-        public E2Stmt(ST type, ValueBox op1, ValueBox op2) {
+        public E2Stmt(ST type, Value op1, Value op2) {
             super(type, ET.E2);
             this.op1 = op1;
             this.op2 = op2;
         }
-    }
 
-    /**
-     * Represent a statement with 3+ arguments
-     * 
-     * @see ET#En
-     */
-    public static abstract class EnStmt extends Stmt {
-
-        public ValueBox[] ops;
-
-        public EnStmt(ST type, ValueBox[] ops) {
-            super(type, ET.E1);
-            this.ops = ops;
+        @Override
+        public Value getOp1() {
+            return op1;
         }
+
+        @Override
+        public Value getOp2() {
+            return op2;
+        }
+
+        public void setOp1(Value op1) {
+            this.op1 = op1;
+        }
+
+        public void setOp2(Value op2) {
+            this.op2 = op2;
+        }
+
     }
+
+    public static final int CAN_CONTINUE = 1 << 0;
+    public static final int CAN_BRNANCH = 1 << 1;
+    public static final int CAN_SWITCH = 1 << 2;
+    public static final int CAN_THROW = 1 << 3;
+    public static final int MAY_THROW=1<<4;
 
     /**
      * Statement Type
@@ -98,8 +118,39 @@ public abstract class Stmt {
      */
     public static enum ST {
 
-        ASSIGN, GOTO, IDENTITY, IF, LABEL, LOCK, LOOKUP_SWITCH, //
-        NOP, RETURN, RETURN_VOID, TABLE_SWITCH, THROW, UNLOCK
+        LOCAL_START(CAN_CONTINUE), // same as ASSIGN but left must keep and must be local
+        LOCAL_END(CAN_CONTINUE), // must keep and op must be local
+        ASSIGN(CAN_CONTINUE | MAY_THROW), IDENTITY(CAN_CONTINUE), LABEL(CAN_CONTINUE), LOCK(CAN_CONTINUE | CAN_THROW), NOP(
+                CAN_CONTINUE), UNLOCK(CAN_CONTINUE | CAN_THROW), VOID_INVOKE(CAN_CONTINUE | CAN_THROW), FILL_ARRAY_DATA(
+                CAN_CONTINUE | CAN_THROW), //
+        RETURN(MAY_THROW), RETURN_VOID(0), THROW(CAN_THROW), //
+        GOTO(CAN_BRNANCH), IF(CAN_CONTINUE | CAN_BRNANCH | MAY_THROW), //
+        LOOKUP_SWITCH(CAN_SWITCH | MAY_THROW), TABLE_SWITCH(CAN_SWITCH | MAY_THROW), ;
+        private int config;
+
+        ST(int config) {
+            this.config = config;
+        }
+
+        public boolean canBranch() {
+            return 0 != (CAN_BRNANCH & config);
+        }
+
+        public boolean canContinue() {
+            return 0 != (CAN_CONTINUE & config);
+        }
+
+        public boolean canSwitch() {
+            return 0 != (CAN_SWITCH & config);
+        }
+
+        public boolean mayThrow() {
+            return 0 != (MAY_THROW & config);
+        }
+
+        public boolean canThrow() {
+            return 0 != (CAN_THROW & config);
+        }
     }
 
     /**
@@ -110,17 +161,17 @@ public abstract class Stmt {
     /**
      * Used in construct of a method CFG, After {@link Stmt} nodes
      */
-    public Set<Stmt> _cfg_tos;
+    public Set<LabelStmt> exceptionHandlers;
 
     /**
      * Used in visit the method CFG
      */
-    public boolean _cfg_visited;
+    public boolean visited;
 
     /**
      * Used in Local Split, forward frame of the {@link Stmt}
      */
-    public Object _ls_forward_frame;
+    public Object frame;
 
     public Stmt _ts_default_next;
 
@@ -167,16 +218,7 @@ public abstract class Stmt {
         this.et = et;
     }
 
-    public abstract Stmt clone(Map<LabelStmt, LabelStmt> map);
-
-    protected LabelStmt cloneLabel(Map<LabelStmt, LabelStmt> map, LabelStmt label) {
-        LabelStmt nTarget = map.get(label);
-        if (nTarget == null) {
-            nTarget = Stmts.nLabel();
-            map.put(label, nTarget);
-        }
-        return nTarget;
-    }
+    public abstract Stmt clone(LabelAndLocalMapper mapper);
 
     /**
      * 
@@ -186,11 +228,39 @@ public abstract class Stmt {
         return next;
     }
 
+    public Value getOp() {
+        return null;
+    }
+
+    public Value getOp1() {
+        return null;
+    }
+
+    public Value getOp2() {
+        return null;
+    }
+
+    public Value[] getOps() {
+        return null;
+    }
+
     /**
      * 
      * @return Previous statement in {@link StmtList}, null if it is the first statement in {@link StmtList}
      */
     public final Stmt getPre() {
         return pre;
+    }
+
+    public void setOp(Value op) {
+    }
+
+    public void setOp1(Value op) {
+    }
+
+    public void setOp2(Value op) {
+    }
+
+    public void setOps(Value[] op) {
     }
 }

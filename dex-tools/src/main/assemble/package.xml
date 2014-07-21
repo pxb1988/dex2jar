@@ -12,43 +12,15 @@
             <directory>target/bin/</directory>
             <includes>
                 <include>*.sh</include>
-            </includes>
-            <fileMode>775</fileMode>
-            <outputDirectory>/</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <directory>target/bin/</directory>
-            <includes>
                 <include>*.bat</include>
             </includes>
-            <fileMode>664</fileMode>
             <outputDirectory>/</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <directory>src/main/jars</directory>
-            <outputDirectory>/lib</outputDirectory>
-            <fileMode>664</fileMode>
-            <directoryMode>775</directoryMode>
         </fileSet>
     </fileSets>
-    <files>
-        <file>
-            <source>src/main/resources/META-INF/LICENSE.txt</source>
-            <fileMode>664</fileMode>
-            <outputDirectory>/</outputDirectory>
-        </file>
-        <file>
-            <source>src/main/resources/META-INF/NOTICE.txt</source>
-            <fileMode>664</fileMode>
-            <outputDirectory>/</outputDirectory>
-        </file>
-    </files>
     <dependencySets>
         <dependencySet>
             <outputDirectory>/lib</outputDirectory>
             <scope>runtime</scope>
-            <fileMode>664</fileMode>
-            <directoryMode>775</directoryMode>
         </dependencySet>
     </dependencySets>
 </assembly>

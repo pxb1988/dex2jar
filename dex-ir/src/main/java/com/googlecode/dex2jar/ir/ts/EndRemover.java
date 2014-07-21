@@ -5,9 +5,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.Value.VT;
-import com.googlecode.dex2jar.ir.stmt.JumpStmt;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.Value.VT;
+import com.googlecode.dex2jar.ir.stmt.GotoStmt;
+import com.googlecode.dex2jar.ir.stmt.IfStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
@@ -28,122 +31,12 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
  */
 public class EndRemover implements Transformer {
 
-    static boolean isSimple(Stmt stmt) {
-        while (stmt != null) {
-            switch (stmt.st) {
-            case ASSIGN:
-            case IDENTITY:
-                E2Stmt e2 = (E2Stmt) stmt;
-                if (e2.op1.value.vt != VT.LOCAL) {
-                    return false;
-                }
-                switch (e2.op2.value.vt) {
-                case LOCAL:
-                case CONSTANT:
-                    break;
-                default:
-                    return false;
-                }
-                break;
-            case LABEL:
-            case NOP:
-            case UNLOCK:
-                break;
-            case THROW:
-            case IF:
-            case LOCK:
-            case LOOKUP_SWITCH:
-            case TABLE_SWITCH:
-                return false;
-            case RETURN:
-            case RETURN_VOID:
-            case GOTO:
-                return true;
-            }
-            stmt = stmt.getNext();
+    private static final LabelAndLocalMapper keepLocal = new LabelAndLocalMapper() {
+        @Override
+        public Local map(Local local) {
+            return local;
         }
-        return true;
-    }
-
-    static void directJump(StmtList list) {
-        Map<LabelStmt, LabelStmt> map = new HashMap<LabelStmt, LabelStmt>();
-        for (Stmt st = list.getFirst(); st != null;) {
-
-            switch (st.st) {
-            case GOTO: {
-                JumpStmt js = (JumpStmt) st;
-                if (isSimple(js.target)) {
-                    boolean end = false;
-                    for (Stmt p = js.target.getNext(); !end; p = p.getNext()) {
-                        switch (p.st) {
-                        case LABEL:
-                            break;
-                        case GOTO:
-                            LabelStmt target = ((JumpStmt) p).target;
-                            list.insertBefore(js, Stmts.nGoto(target));
-                            end = true;
-                            break;
-                        case RETURN:
-                        case RETURN_VOID:
-                            list.insertBefore(js, p.clone(null));
-                            end = true;
-                            break;
-                        default:
-                            list.insertBefore(js, p.clone(null));
-                            break;
-                        }
-                    }
-                    Stmt tmp = st.getNext();
-                    list.remove(st);
-                    st = tmp;
-                } else {
-                    st = st.getNext();
-                }
-                break;
-            }
-            case IF: {
-                JumpStmt js = (JumpStmt) st;
-                if (map.containsKey(js.target)) {
-                    LabelStmt nTarget = map.get(js.target);
-                    js.target = nTarget;
-                } else if (isSimple(js.target)) {
-                    LabelStmt nTarget = Stmts.nLabel();
-                    map.put(js.target, nTarget);
-                    list.add(nTarget);
-                    boolean end = false;
-                    for (Stmt p = js.target.getNext(); !end; p = p.getNext()) {
-                        switch (p.st) {
-                        case LABEL:
-                            break;
-                        case GOTO:
-                            LabelStmt target = ((JumpStmt) p).target;
-                            list.add(Stmts.nGoto(target));
-                            end = true;
-                            break;
-                        case RETURN:
-                        case RETURN_VOID:
-                            list.add(p.clone(null));
-                            end = true;
-                            break;
-                        default:
-                            list.add(p.clone(null));
-                            break;
-                        }
-                    }
-                    js.target = nTarget;
-
-                }
-            }
-                st = st.getNext();
-                break;
-
-            default: {
-                st = st.getNext();
-                break;
-            }
-            }
-        }
-    }
+    };
 
     @Override
     public void transform(IrMethod irMethod) {
@@ -190,10 +83,10 @@ public class EndRemover implements Transformer {
         StmtList stmts = irMethod.stmts;
         for (Stmt p = stmts.getFirst(); p != null; p = p.getNext()) {
             if (p.st == ST.GOTO) {
-                LabelStmt target = ((JumpStmt) p).target;
+                LabelStmt target = ((GotoStmt) p).target;
                 Stmt next = target.getNext();
                 if (next != null && (next.st == ST.RETURN || next.st == ST.RETURN_VOID)) {
-                    Stmt nnext = next.clone(null);
+                    Stmt nnext = next.clone(keepLocal);
                     stmts.insertAfter(p, nnext);
                     stmts.remove(p);
                     p = nnext;
@@ -212,7 +105,7 @@ public class EndRemover implements Transformer {
         Stmt g1 = Stmts.nGoto(start);
         stmts.insertBefore(start, g1);
         Stmt last = stmts.getLast();
-        while (last.st == ST.GOTO && ((JumpStmt) last).target == start) {
+        while (last.st == ST.GOTO && ((GotoStmt) last).target == start) {
             stmts.remove(last);
             last = stmts.getLast();
         }

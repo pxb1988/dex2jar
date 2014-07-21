@@ -17,8 +17,6 @@ package com.googlecode.dex2jar.ir;
 
 import java.util.Map;
 
-import org.objectweb.asm.Type;
-
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 
 /**
@@ -29,13 +27,13 @@ import com.googlecode.dex2jar.ir.stmt.LabelStmt;
  */
 public class Trap {
     public LabelStmt start, end, handlers[];
-    public Type types[];
+    public String types[];
 
     public Trap() {
         super();
     }
 
-    public Trap(LabelStmt start, LabelStmt end, LabelStmt handlers[], Type types[]) {
+    public Trap(LabelStmt start, LabelStmt end, LabelStmt handlers[], String types[]) {
         super();
         this.start = start;
         this.end = end;
@@ -43,15 +41,15 @@ public class Trap {
         this.types = types;
     }
 
-    public Trap clone(Map<LabelStmt, LabelStmt> map) {
+    public Trap clone(LabelAndLocalMapper mapper) {
         int size = handlers.length;
         LabelStmt[] cloneHandlers = new LabelStmt[size];
-        Type[] cloneTypes = new Type[size];
+        String[] cloneTypes = new String[size];
         for (int i = 0; i < size; i++) {
-            cloneHandlers[i] = handlers[i].clone(map);
+            cloneHandlers[i] = handlers[i].clone(mapper);
             cloneTypes[i] = types[i];
         }
-        return new Trap(start.clone(map), end.clone(map), cloneHandlers, cloneTypes);
+        return new Trap(start.clone(mapper), end.clone(mapper), cloneHandlers, cloneTypes);
     }
 
     @Override

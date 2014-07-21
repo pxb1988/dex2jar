@@ -15,50 +15,41 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.box;
-
-import org.objectweb.asm.Label;
-
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 public final class Stmts {
 
     public static AssignStmt nAssign(Value left, Value right) {
-        return new AssignStmt(ST.ASSIGN, box(left), box(right));
-    }
-
-    public static AssignStmt nAssign(ValueBox left, ValueBox right) {
         return new AssignStmt(ST.ASSIGN, left, right);
     }
 
-    public static JumpStmt nGoto(LabelStmt target) {
-        return new JumpStmt(ST.GOTO, target);
+    public static AssignStmt nFillArrayData(Value left, Value arrayData) {
+        return new AssignStmt(ST.FILL_ARRAY_DATA, left, arrayData);
+    }
+
+    public static GotoStmt nGoto(LabelStmt target) {
+        return new GotoStmt(target);
     }
 
     public static AssignStmt nIdentity(Value local, Value identityRef) {
-        return new AssignStmt(ST.IDENTITY, box(local), box(identityRef));
+        return new AssignStmt(ST.IDENTITY, local, identityRef);
     }
 
-    public static JumpStmt nIf(Value a, LabelStmt target) {
-        return new JumpStmt(ST.IF, box(a), target);
+    public static IfStmt nIf(Value a, LabelStmt target) {
+        return new IfStmt(ST.IF, a, target);
     }
 
     public static LabelStmt nLabel() {
-        return new LabelStmt(new Label());
-    }
-
-    public static LabelStmt nLabel(Label label) {
-        return new LabelStmt(label);
+        return new LabelStmt();
     }
 
     public static UnopStmt nLock(Value op) {
-        return new UnopStmt(ST.LOCK, box(op));
+        return new UnopStmt(ST.LOCK, op);
     }
 
     public static LookupSwitchStmt nLookupSwitch(Value key, int[] lookupValues, LabelStmt[] targets, LabelStmt target) {
-        return new LookupSwitchStmt(box(key), lookupValues, targets, target);
+        return new LookupSwitchStmt(key, lookupValues, targets, target);
     }
 
     public static NopStmt nNop() {
@@ -66,24 +57,28 @@ public final class Stmts {
     }
 
     public static UnopStmt nReturn(Value op) {
-        return new UnopStmt(ST.RETURN, box(op));
+        return new UnopStmt(ST.RETURN, op);
     }
 
     public static ReturnVoidStmt nReturnVoid() {
         return new ReturnVoidStmt();
     }
 
-    public static TableSwitchStmt nTableSwitch(Value key, int lowIndex, int highIndex, LabelStmt[] targets,
+    public static TableSwitchStmt nTableSwitch(Value key, int lowIndex, LabelStmt[] targets,
             LabelStmt target) {
-        return new TableSwitchStmt(key, lowIndex, highIndex, targets, target);
+        return new TableSwitchStmt(key, lowIndex, targets, target);
     }
 
     public static UnopStmt nThrow(Value op) {
-        return new UnopStmt(ST.THROW, box(op));
+        return new UnopStmt(ST.THROW, op);
     }
 
     public static UnopStmt nUnLock(Value op) {
-        return new UnopStmt(ST.UNLOCK, box(op));
+        return new UnopStmt(ST.UNLOCK, op);
+    }
+
+    public static VoidInvokeStmt nVoidInvoke(Value op) {
+        return new VoidInvokeStmt(op);
     }
 
     private Stmts() {

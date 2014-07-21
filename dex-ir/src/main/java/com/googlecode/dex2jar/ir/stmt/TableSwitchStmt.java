@@ -15,10 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
-
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value;
 
 /**
  * Represent a TABLE_SWITCH statement
@@ -30,27 +28,26 @@ import com.googlecode.dex2jar.ir.ValueBox;
  */
 public class TableSwitchStmt extends BaseSwitchStmt {
 
-    public int lowIndex, highIndex;
+    public int lowIndex;
 
     public TableSwitchStmt() {
         super(ST.TABLE_SWITCH, null);
     }
 
-    public TableSwitchStmt(Value key, int lowIndex, int highIndex, LabelStmt[] targets, LabelStmt defaultTarget) {
-        super(ST.TABLE_SWITCH, new ValueBox(key));
+    public TableSwitchStmt(Value key, int lowIndex, LabelStmt[] targets, LabelStmt defaultTarget) {
+        super(ST.TABLE_SWITCH, key);
         this.lowIndex = lowIndex;
-        this.highIndex = highIndex;
         this.targets = targets;
         this.defaultTarget = defaultTarget;
     }
 
     @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
+    public Stmt clone(LabelAndLocalMapper mapper) {
         LabelStmt[] nTargets = new LabelStmt[targets.length];
         for (int i = 0; i < nTargets.length; i++) {
-            nTargets[i] = cloneLabel(map, targets[i]);
+            nTargets[i] = mapper.map(targets[i]);
         }
-        return new TableSwitchStmt(op.value.clone(), lowIndex, highIndex, nTargets, cloneLabel(map, defaultTarget));
+        return new TableSwitchStmt(op.clone(mapper), lowIndex, nTargets, mapper.map(defaultTarget));
     }
 
     @Override

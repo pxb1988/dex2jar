@@ -17,15 +17,14 @@
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.LocalVar;
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.VT;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.Value;
+import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 
 /**
- * the {@link LocalVar#reg} in {@link LocalVar} may be replace to a constant value in {@link ZeroTransformer}. This
+ * the {@link LocalVar#reg} in {@link LocalVar} may be replace to a constant value in {@link ConstTransformer}. This
  * class try to insert a new local before {@link LocalVar#start}.
  * 
  * <p>
@@ -63,12 +62,12 @@ public class FixVar implements Transformer {
     public void transform(IrMethod irMethod) {
         int i = 0;
         for (LocalVar var : irMethod.vars) {
-            if (var.reg.value.vt != VT.LOCAL) {
-                if (var.reg.value.vt == VT.CONSTANT) {
-                    Local n = new Local("d" + i++);
-                    Value old = var.reg.value;
+            if (var.reg.trim().vt != VT.LOCAL) {
+                if (var.reg.trim().vt == VT.CONSTANT) {
+                    Local n = new Local(i++);
+                    Value old = var.reg.trim();
                     irMethod.stmts.insertBefore(var.start, Stmts.nAssign(n, old));
-                    var.reg = new ValueBox(n);
+                    var.reg = n;
                     irMethod.locals.add(n);
                 } else {
                     // throw new DexExcpeption("not support");

@@ -15,47 +15,59 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
-
-import org.objectweb.asm.Type;
-
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
-import com.googlecode.dex2jar.ir.stmt.BaseSwitchStmt;
-import com.googlecode.dex2jar.ir.stmt.JumpStmt;
+import com.googlecode.dex2jar.ir.stmt.GotoStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * issue 63
+ * <p/>
  * 
  * <pre>
- * L1: 
+ * L1:
  *    STMTs
  * L2:
  *    RETURN
  * L1~L2 > L2 Exception
  * </pre>
- * 
+ * <p/>
  * currect to
+ * <p/>
  * 
  * <pre>
- * L1: 
+ * L1:
  *    STMTs
- *    GOTO L3
  * L2:
- *    MOVE-EXCEPTION
- * L3:
  *    RETURN
- * L1~L2 > L2 Exception
+ * L3:
+ *    MOVE-EXCEPTION
+ *    GOTO L2:
+ * L1~L2 > L3 Exception
+ * </pre>
+ * 
+ * we insert MOVE-EXCEPTION at tail of code to prevent the following
+ * 
+ * <pre>
+ *     L1:
+ *        ...
+ *        goto L2:
+ *        ...
+ *     L2:
+ *        return;
+ *     L1~L2 > L3 Exception
  * </pre>
  * 
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
@@ -65,120 +77,53 @@ public class ExceptionHandlerCurrectTransformer implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-
-        Set<LabelStmt> hanlders = new HashSet<LabelStmt>();
-        for (Trap t : irMethod.traps) {
-            for (int i = 0; i < t.handlers.length; i++) {
-                hanlders.add(t.handlers[i]);
-            }
+        if (irMethod.traps.size() == 0) {
+            return;
         }
         Local ex = null;
-        for (LabelStmt handler : hanlders) {
-            Stmt st = handler.getNext();
-            while (st.st == ST.LABEL && !hanlders.contains(st)) {
-                st = st.getNext();
-            }
-            if (needInsertMoveExceptionRef(st)) {
-                if (ex == null) {
-                    ex = Exprs.nLocal("unRefEx");
-                    irMethod.locals.add(ex);
+        Set<LabelStmt> handlers=new HashSet<>();
+        Map<LabelStmt, LabelStmt> newLocations = new HashMap<>();
+        for (Trap t : irMethod.traps) {
+            for (int i = 0; i < t.handlers.length; i++) {
+                LabelStmt handler = t.handlers[i];
+                Stmt st = handler.getNext();
+                while (st.st == ST.LABEL) {
+                    st = st.getNext();
                 }
-                Stmt stmt = Stmts.nIdentity(ex, Exprs.nExceptionRef(Type.getType(Throwable.class)));
+                LabelStmt x = (LabelStmt) st.getPre();
+                if (needInsertMoveExceptionRef(st)) {
+                    LabelStmt newHandler = newLocations.get(x);
+                    if (newHandler == null) {
+                        if (ex == null) {
+                            ex = Exprs.nLocal("unRefEx");
+                        }
 
-                irMethod.stmts.insertBefore(st, stmt);
+                        newHandler = Stmts.nLabel();
+                        GotoStmt g = Stmts.nGoto(x);
+
+                        irMethod.stmts.add(newHandler);
+                        irMethod.stmts.add(Stmts.nIdentity(ex, Exprs.nExceptionRef("Ljava/lang/Throwable;")));
+                        irMethod.stmts.add(g);
+                        newLocations.put(x, newHandler);
+                    }
+                    t.handlers[i] = newHandler;
+                } else if (x != handler) {
+                    t.handlers[i] = x;
+                }
+                handlers.add(t.handlers[i]);
             }
         }
-        Cfg.createCFG(irMethod, false);
-
-        for (LabelStmt handler : hanlders) {
-            Stmt st = handler.getNext();
-            while (st.st == ST.LABEL) {
-                st = st.getNext();
-            }
-            if (handler._cfg_froms.size() > 0) {
-                LabelStmt lbl = Stmts.nLabel();
-                lbl._cfg_froms = new TreeSet<Stmt>(irMethod.stmts);
-                lbl._cfg_tos = new TreeSet<Stmt>(irMethod.stmts);
-                if (isExHandler(st)) {
-                    Stmt after = st.getNext();
-                    irMethod.stmts.insertAfter(st, lbl);
-                    cfgInsert(st, after, lbl);
-                } else {
-                    Stmt pre = st.getPre();
-                    irMethod.stmts.insertBefore(st, lbl);
-                    cfgInsert(pre, st, lbl);
-                }
-                for (Stmt stmt : new HashSet<Stmt>(handler._cfg_froms)) {
-
-                    switch (stmt.st) {
-                    case GOTO: {
-                        JumpStmt jumpStmt = (JumpStmt) stmt;
-                        jumpStmt.target = lbl;
-                        cfgReplace(stmt, handler, lbl);
-                    }
-                        break;
-                    case LOOKUP_SWITCH:
-                    case TABLE_SWITCH:
-                        BaseSwitchStmt bss = (BaseSwitchStmt) stmt;
-                        if (bss.defaultTarget.equals(handler)) {
-                            bss.defaultTarget = lbl;
-                        }
-                        LabelStmt[] targets = bss.targets;
-                        for (int i = 0; i < targets.length; i++) {
-                            if (targets[i].equals(handler)) {
-                                targets[i] = lbl;
-                            }
-                        }
-                        cfgReplace(stmt, handler, lbl);
-                        break;
-                    case IF: {
-                        JumpStmt jumpStmt = (JumpStmt) stmt;
-                        if (jumpStmt.target.equals(handler)) {
-                            jumpStmt.target = lbl;
-                            cfgReplace(stmt, handler, lbl);
-                        }
-                    }
-                    // go thought
-                    default:
-                        Stmt next = stmt.getNext();
-                        if (handler.equals(next)) {
-                            Stmt g = Stmts.nGoto(lbl);
-                            g._cfg_froms = new TreeSet<Stmt>(irMethod.stmts);
-                            g._cfg_tos = new TreeSet<Stmt>(irMethod.stmts);
-                            g._cfg_tos.add(lbl);
-                            irMethod.stmts.insertAfter(stmt, g);
-                            cfgReplace(stmt, handler, g);
-                        }
-                    }
-                }
-            }
+        newLocations.clear();
+        if (ex != null) {
+            irMethod.locals.add(ex);
         }
-    }
 
-    void cfgInsert(Stmt pre, Stmt next, Stmt p) {
-        if (pre._cfg_tos.contains(next)) {
-            pre._cfg_tos.remove(next);
-            pre._cfg_tos.add(p);
-            next._cfg_froms.remove(pre);
-            next._cfg_froms.add(p);
-            p._cfg_froms.add(pre);
-            p._cfg_tos.add(next);
-        }
-    }
 
-    void cfgReplace(Stmt pre, Stmt next, Stmt p) {
-        pre._cfg_tos.remove(next);
-        pre._cfg_tos.add(p);
-        next._cfg_froms.remove(pre);
-        p._cfg_froms.add(pre);
-    }
 
-    private boolean isExHandler(Stmt st) {
-        return (st.st == ST.ASSIGN || st.st == ST.IDENTITY) && ((AssignStmt) st).op2.value.vt == VT.EXCEPTION_REF;
     }
 
     private boolean needInsertMoveExceptionRef(Stmt st) {
-        return !isExHandler(st);
+        return st.st != ST.IDENTITY || st.getOp2().vt != VT.EXCEPTION_REF;
     }
 
 }

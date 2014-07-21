@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
@@ -78,11 +79,10 @@ public class ExceptionHandlerTrim implements Transformer {
     public void transform(IrMethod irMethod) {
         List<Trap> trips = irMethod.traps;
         irMethod.traps = new ArrayList();
-        Map<LabelStmt, LabelStmt> map = new HashMap<LabelStmt, LabelStmt>() {
-
+        LabelAndLocalMapper map=new LabelAndLocalMapper(){
             @Override
-            public LabelStmt get(Object key) {
-                return (LabelStmt) key;
+            public LabelStmt map(LabelStmt label) {
+                return label;
             }
         };
         for (Trap trap : trips) {

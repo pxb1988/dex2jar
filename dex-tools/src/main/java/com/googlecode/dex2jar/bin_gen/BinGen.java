@@ -1,6 +1,6 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
+ * Copyright (c) 2009-2012 Panxiaobo
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,14 @@
  */
 package com.googlecode.dex2jar.bin_gen;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Properties;
-
-import org.apache.commons.io.FileUtils;
 
 public class BinGen {
 
@@ -33,25 +36,55 @@ public class BinGen {
             System.err.println("bin-gen cfg-dir out-dir");
             return;
         }
-        File cfg = new File(args[0]);
-        File out = new File(args[1]);
+        final Path cfg = new File(args[0]).toPath();
+        final Path out = new File(args[1]).toPath();
         Properties p = new Properties();
-        p.load(FileUtils.openInputStream(new File(cfg, "class.cfg")));
-
-        String bat = FileUtils.readFileToString(new File(cfg, "bat_template"), "UTF-8");
-        String sh = FileUtils.readFileToString(new File(cfg, "sh_template"), "UTF-8");
-
-        for (File file2copy : FileUtils.listFiles(cfg, new String[]{"sh", "bat"}, false)) {
-            String content = FileUtils.readFileToString(file2copy, "UTF-8");
-            FileUtils.writeStringToFile(new File(out, file2copy.getName()), content, "UTF-8");
+        try (InputStream is = Files.newInputStream(cfg.resolve("class.cfg"))) {
+            p.load(is);
         }
+
+        String bat = new String(Files.readAllBytes(cfg.resolve("bat_template")), StandardCharsets.UTF_8);
+
+        String sh = new String(Files.readAllBytes(cfg.resolve("sh_template")), StandardCharsets.UTF_8);
+
+        Files.walkFileTree(cfg, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                String fileName = file.getFileName().toString();
+                if (fileName.endsWith(".sh") || fileName.endsWith(".bat")) {
+                    Path f = out.resolve(cfg.relativize(file));
+                    Path parent = f.getParent();
+                    if (parent != null) {
+                        Files.createDirectories(parent);
+                    }
+                    Files.copy(file, f, StandardCopyOption.REPLACE_EXISTING);
+                }
+                return super.visitFile(file, attrs);
+            }
+        });
 
         for (Object key : p.keySet()) {
             String name = key.toString();
-            FileUtils.writeStringToFile(new File(out, key.toString() + ".sh"),
-                    sh.replaceAll("__@class_name@__", p.getProperty(name)), "UTF-8");
-            FileUtils.writeStringToFile(new File(out, key.toString() + ".bat"),
-                    bat.replaceAll("__@class_name@__", p.getProperty(name)), "UTF-8");
+            Path path = out.resolve(key.toString() + ".sh");
+            Path parent = path.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            try (BufferedWriter bw = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+                    StandardOpenOption.WRITE)) {
+                String s = sh.replaceAll("__@class_name@__", p.getProperty(name));
+                bw.append(s);
+            }
+            path = out.resolve(key.toString() + ".bat");
+            parent = path.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            try (BufferedWriter bw = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+                    StandardOpenOption.WRITE)) {
+                String s = bat.replaceAll("__@class_name@__", p.getProperty(name));
+                bw.append(s);
+            }
         }
     }
 }

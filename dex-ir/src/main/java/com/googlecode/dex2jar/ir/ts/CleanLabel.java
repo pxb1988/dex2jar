@@ -23,11 +23,7 @@ import java.util.Set;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.LocalVar;
 import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.stmt.BaseSwitchStmt;
-import com.googlecode.dex2jar.ir.stmt.JumpStmt;
-import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.*;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 /**
@@ -74,7 +70,7 @@ public class CleanLabel implements Transformer {
     private void addStmt(StmtList stmts, Set<LabelStmt> labels) {
         for (Stmt p = stmts.getFirst(); p != null; p = p.getNext()) {
             if (p instanceof JumpStmt) {
-                labels.add(((JumpStmt) p).target);
+                labels.add(((JumpStmt) p).getTarget());
             } else if (p instanceof BaseSwitchStmt) {
                 BaseSwitchStmt stmt = (BaseSwitchStmt) p;
                 labels.add(stmt.defaultTarget);

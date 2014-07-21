@@ -3,33 +3,66 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>dex2jar</artifactId>
-        <groupId>com.googlecode.dex2jar</groupId>
-        <version>1.1</version>
+        <groupId>com.googlecode.d2j</groupId>
+        <version>2.0</version>
     </parent>
     <artifactId>dex-tools</artifactId>
-    <version>0.0.9.16-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
     <name>Dex Tools</name>
     <description>Tools to work with dex and class files</description>
     <dependencies>
         <dependency>
-            <groupId>com.googlecode.dex2jar</groupId>
+            <groupId>com.googlecode.d2j</groupId>
             <artifactId>dex-translator</artifactId>
-            <version>${project.version}</version>
+            <version>2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.googlecode.dex2jar</groupId>
-            <artifactId>commons-lite</artifactId>
-            <version>1.15-SNAPSHOT</version>
+            <groupId>com.googlecode.d2j</groupId>
+            <artifactId>d2j-base-cmd</artifactId>
+            <version>2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.googlecode.jasmin</groupId>
-            <artifactId>jasmin</artifactId>
-            <version>p2.5</version>
+            <groupId>com.googlecode.d2j</groupId>
+            <artifactId>d2j-smali</artifactId>
+            <version>2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.googlecode.dex2jar</groupId>
-            <artifactId>jar-rename</artifactId>
-            <version>1.6-SNAPSHOT</version>
+            <groupId>com.googlecode.d2j</groupId>
+            <artifactId>d2j-jasmin</artifactId>
+            <version>2.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.d2j</groupId>
+            <artifactId>dex-reader</artifactId>
+            <version>2.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.d2j</groupId>
+            <artifactId>dex-writer</artifactId>
+            <version>2.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.6</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.4.1</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.tukaani</groupId>
+                    <artifactId>xz</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.google.android.tools</groupId>
+            <artifactId>dx</artifactId>
+            <version>1.7</version>
         </dependency>
     </dependencies>
     <build>
@@ -98,14 +131,4 @@
             </plugin>
         </plugins>
     </build>
-    <repositories>
-        <repository>
-            <id>GoogleCode jasmin Repo</id>
-            <url>http://maven.jasmin.googlecode.com/hg</url>
-        </repository>
-        <repository>
-            <id>GoogleCode p-libs Repo</id>
-            <url>http://maven.p-libs.googlecode.com/hg</url>
-        </repository>
-    </repositories>
 </project>

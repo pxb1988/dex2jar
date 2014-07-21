@@ -15,39 +15,40 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
-import org.objectweb.asm.Type;
-
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.EnExpr;
-import com.googlecode.dex2jar.ir.Value.VT;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.Util;
+import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
 
 /**
  * Represent a FILLED_ARRAY expression.
- * 
+ *
  * @see VT#FILLED_ARRAY
  */
 public class FilledArrayExpr extends EnExpr {
 
-    public Type type;
-
-    public FilledArrayExpr(ValueBox[] datas, Type type) {
+    public String type;
+    @Override
+    protected void releaseMemory() {
+        type = null;
+        super.releaseMemory();
+    }
+    public FilledArrayExpr(Value[] datas, String type) {
         super(VT.FILLED_ARRAY, datas);
         this.type = type;
     }
 
     @Override
     public Value clone() {
-        ValueBox[] nOps = new ValueBox[ops.length];
-        for (int i = 0; i < nOps.length; i++) {
-            nOps[i] = new ValueBox(ops[i].value.clone());
-        }
-        return new FilledArrayExpr(nOps, type);
+        return new FilledArrayExpr(cloneOps(), type);
+    }
+    @Override
+    public Value clone(LabelAndLocalMapper mapper) {
+        return new FilledArrayExpr(cloneOps(mapper), type);
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder().append('{');
+    public String toString0() {
+        StringBuilder sb = new StringBuilder().append("new ").append(Util.toShortClassName(type)).append("[]{");
         for (int i = 0; i < ops.length; i++) {
             sb.append(ops[i]).append(", ");
         }

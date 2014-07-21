@@ -15,43 +15,43 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
-import org.objectweb.asm.Type;
-
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.EnExpr;
-import com.googlecode.dex2jar.ir.Value.VT;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
 
 /**
  * Represent a NEW_MUTI_ARRAY expression.
  * 
  * @see VT#NEW_MUTI_ARRAY
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
- * @version $Rev$
+ * @version $Rev: 9fd8005bbaa4 $
  */
 public class NewMutiArrayExpr extends EnExpr {
 
-    public Type baseType;
+    public String baseType;
     public int dimension;
 
-    public NewMutiArrayExpr(Type base, int dimension, ValueBox[] sizes) {
+    public NewMutiArrayExpr(String base, int dimension, Value[] sizes) {
         super(VT.NEW_MUTI_ARRAY, sizes);
         this.baseType = base;
         this.dimension = dimension;
-        this.ops = new ValueBox[sizes.length];
+    }
+
+    @Override
+    protected void releaseMemory() {
+        baseType = null;
+        super.releaseMemory();
     }
 
     @Override
     public Value clone() {
-        ValueBox[] nOps = new ValueBox[ops.length];
-        for (int i = 0; i < nOps.length; i++) {
-            nOps[i] = new ValueBox(ops[i].value.clone());
-        }
-        return new NewMutiArrayExpr(baseType, dimension, nOps);
+        return new NewMutiArrayExpr(baseType, dimension, cloneOps());
     }
-
     @Override
-    public String toString() {
+    public Value clone(LabelAndLocalMapper mapper) {
+        return new NewMutiArrayExpr(baseType, dimension, cloneOps(mapper));
+    }
+    @Override
+    public String toString0() {
         StringBuilder sb = new StringBuilder();
         sb.append("new ").append(baseType);
         for (int i = 0; i < dimension; i++) {

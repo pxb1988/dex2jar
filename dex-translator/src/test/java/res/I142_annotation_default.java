@@ -30,6 +30,4 @@ public @interface I142_annotation_default {
 
     double lll() default 1.0D;
 
-    AA[] mmm() default { AA.A, AA.B };
-
 }

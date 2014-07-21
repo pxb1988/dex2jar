@@ -15,10 +15,10 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.objectweb.asm.Label;
-
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E0Stmt;
 
 /**
@@ -32,30 +32,46 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E0Stmt;
 public class LabelStmt extends E0Stmt {
 
     public String displayName;
-    public Label label;
     public int lineNumber = -1;
+    public List<AssignStmt> phis;
+    public Object tag;
 
-    public LabelStmt(Label label) {
+    public LabelStmt() {
         super(ST.LABEL);
-        this.label = label;
     }
 
     @Override
-    public LabelStmt clone(Map<LabelStmt, LabelStmt> map) {
-        return cloneLabel(map, this);
+    public LabelStmt clone(LabelAndLocalMapper mapper) {
+        LabelStmt labelStmt = mapper.map(this);
+        if (phis != null && labelStmt.phis == null) {
+            labelStmt.phis = new ArrayList<>(phis.size());
+            for (AssignStmt phi : phis) {
+                labelStmt.phis.add((AssignStmt) phi.clone(mapper));
+            }
+        }
+        return labelStmt;
     }
 
     public String getDisplayName() {
-        return displayName == null ? label.toString() : displayName;
+        if (displayName != null) {
+            return displayName;
+        }
+        int x = hashCode();
+        return String.format("L%08x", x);
     }
 
     @Override
     public String toString() {
-        if (lineNumber >= 0) {
-            return getDisplayName() + ": // line " + lineNumber;
-        } else {
-            return getDisplayName() + ":";
+        StringBuilder sb = new StringBuilder();
+        sb.append(getDisplayName()).append(":");
+
+        if (phis != null && phis.size() > 0) {
+            sb.append(" // ").append(phis);
         }
+        if (lineNumber >= 0) {
+            sb.append(" // line ").append(lineNumber);
+        }
+        return sb.toString();
     }
 
 }
