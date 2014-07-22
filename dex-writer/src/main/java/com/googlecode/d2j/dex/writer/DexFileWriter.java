@@ -212,7 +212,7 @@ public class DexFileWriter extends DexFileVisitor {
         return buffer.array();
     }
 
-    private void updateChecksum(ByteBuffer buffer, int size) {
+    public static void updateChecksum(ByteBuffer buffer, int size) {
         byte[] data = buffer.array();
         MessageDigest digest;
         try {
