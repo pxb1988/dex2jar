@@ -2,11 +2,11 @@ configurations {
   antlr2java
 }
 dependencies {
-  compile(group: 'org.antlr', name: 'antlr-runtime', version:'3.5') {
+  compile(group: 'org.antlr', name: 'antlr-runtime', version:'3.5.1') {
         exclude(module: 'stringtemplate')
   }
   compile project(':dex-reader')
-  antlr2java(group: 'org.antlr', name: 'antlr', version:'3.5')
+  antlr2java(group: 'org.antlr', name: 'antlr', version:'3.5.1')
   provided project(':d2j-base-cmd')
   provided project(':dex-writer')
 }

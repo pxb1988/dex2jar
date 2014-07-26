@@ -33,9 +33,10 @@ subprojects {
   test.classpath += configurations.provided
 // == end
 
-  tasks.withType(Compile) {
-    options.encoding = 'UTF-8'
-  }
+// TODO gradle 2.0 fail on 'Compile'
+//  tasks.withType(Compile) {
+//    options.encoding = 'UTF-8'
+//  }
   dependencies {
     testCompile group: 'junit', name: 'junit', version:'4.11'
   }
