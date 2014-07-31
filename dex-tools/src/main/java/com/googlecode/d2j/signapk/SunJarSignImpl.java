@@ -6,7 +6,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
-import sun.misc.BASE64Encoder;
 import sun.security.pkcs.ContentInfo;
 import sun.security.pkcs.PKCS7;
 import sun.security.pkcs.SignerInfo;
@@ -19,13 +18,6 @@ public class SunJarSignImpl extends AbstractJarSign {
     public SunJarSignImpl(X509Certificate cert, PrivateKey privateKey) {
         super(privateKey);
         this.cert = cert;
-    }
-
-    private BASE64Encoder base64 = new BASE64Encoder();
-
-    @SuppressWarnings("all")
-    protected String encodeBase64(byte[] data) {
-        return base64.encode(data);
     }
 
     /** Write a .RSA file with a digital signature. */

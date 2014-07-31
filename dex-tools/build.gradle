@@ -8,7 +8,6 @@ dependencies {
   compile project(':dex-writer')
   compile project(':d2j-base-cmd')
   compile "com.google.android.tools:dx:1.7"
-  provided 'commons-codec:commons-codec:1.6'
 }
 
 task bin_gen(type: JavaExec) {

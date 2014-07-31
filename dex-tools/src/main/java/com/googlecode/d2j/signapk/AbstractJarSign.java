@@ -195,7 +195,9 @@ public abstract class AbstractJarSign {
         return output;
     }
 
-    protected abstract String encodeBase64(byte[] data);
+    protected String encodeBase64(byte[] data) {
+       return Base64.encodeToString(data, Base64.DEFAULT);
+    }
 
     public void sign(File in, File out) throws IOException, GeneralSecurityException {
 
