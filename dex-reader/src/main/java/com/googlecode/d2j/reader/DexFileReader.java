@@ -1015,10 +1015,10 @@ public class DexFileReader {
             } else {
                 nextBit.set(offset);
             }
-            if (offset >= insns.length) {
+            int u1offset = offset * 2;
+            if (u1offset >= insns.length) {
                 continue;
             }
-            int u1offset = offset * 2;
             int opcode = 0xFF & insns[u1offset];
             Op op = null;
             if (opcode < values.length) {
@@ -1141,7 +1141,7 @@ public class DexFileReader {
                 default:
                 }
                 if (!canContinue) {
-                    WARN("GLITCH: index-out-of-range at %s for %s @%04x", method.toString(), op, u1offset);
+                    WARN("GLITCH: index-out-of-range at %s for %s @%04x", method.toString(), op, offset);
                 }
             }
 
@@ -1276,6 +1276,9 @@ public class DexFileReader {
                 }
             }
             int u1offset = offset * 2;
+            if (u1offset >= insns.length) {
+                continue;
+            }
             int opcode = 0xFF & insns[u1offset];
 
             Op op = null;
