@@ -342,7 +342,9 @@ public class BaksmaliDumper implements DexConstants {
         out.pop();
         out.s(".end annotation");
     }
-
+    public void baksmaliClass(DexClassNode n, BufferedWriter writer) {
+        baksmaliClass(n, new BaksmaliDumpOut(writer));
+    }
     public void baksmaliClass(DexClassNode n, Out out) {
 
         buff.setLength(0);
