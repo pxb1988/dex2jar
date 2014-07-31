@@ -226,7 +226,7 @@ public abstract class BaseCmd {
             return new File(value);
         }
         if (type.equals(Path.class)) {
-            return new File(value).getPath();
+            return new File(value).toPath();
         }
         try {
             type.asSubclass(Enum.class);
