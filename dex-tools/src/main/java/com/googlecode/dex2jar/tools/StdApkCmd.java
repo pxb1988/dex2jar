@@ -59,7 +59,7 @@ public class StdApkCmd extends BaseCmd {
                 if (!nEntry.isDirectory()) {
                     try (InputStream is = zipFile.getInputStream(e)) {
                         while (true) {
-                            int c = is.read(data);
+                            int c = is.read(buffer);
                             if (c < 0) {
                                 break;
                             }
