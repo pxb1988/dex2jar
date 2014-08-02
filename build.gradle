@@ -37,7 +37,8 @@ subprojects {
 //  tasks.withType(Compile) {
 //    options.encoding = 'UTF-8'
 //  }
-  dependencies {
+  [compileJava, compileTestJava]*.options.collect {options ->options.encoding = 'UTF-8'}
+    dependencies {
     testCompile group: 'junit', name: 'junit', version:'4.11'
   }
 
