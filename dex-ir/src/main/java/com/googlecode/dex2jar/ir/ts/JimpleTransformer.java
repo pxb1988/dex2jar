@@ -130,6 +130,7 @@ public class JimpleTransformer implements Transformer {
             case LOOKUP_SWITCH:
             case TABLE_SWITCH:
             case RETURN:
+            case THROW:
                 keep = false;
                 break;
             default:
