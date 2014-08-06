@@ -17,6 +17,7 @@
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.StmtTraveler;
 import com.googlecode.dex2jar.ir.expr.*;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
@@ -46,8 +47,8 @@ import static com.googlecode.dex2jar.ir.expr.Value.VT.*;
 public class NewTransformer implements Transformer {
     @Override
     public void transform(IrMethod method) {
-        Map<Local, NewExpr> nAssign = new HashMap<>();
-        Map<Local, AssignStmt> init = new HashMap<>();
+        final Map<Local, NewExpr> nAssign = new HashMap<>();
+        final Map<Local, AssignStmt> init = new HashMap<>();
         for (Iterator<Stmt> it = method.stmts.iterator(); it.hasNext();) {
             Stmt p = it.next();
             if (p.st == ASSIGN && p.getOp1().vt == LOCAL && p.getOp2().vt == NEW) {
@@ -55,6 +56,56 @@ public class NewTransformer implements Transformer {
                 Local local = (Local) p.getOp1();
                 nAssign.put(local, (NewExpr) p.getOp2());
                 init.put(local, (AssignStmt) p);
+            }
+        }
+        if (nAssign.size() == 0) {
+            return;
+        }
+        int[] reads = Cfg.countLocalReads(method);
+        final Set<Local> oneOrLess = new HashSet<>();
+        final boolean changed[] = { true };
+        while (changed[0]) {
+            changed[0] = false;
+            for (Local local : nAssign.keySet()) {
+                if (reads[local._ls_index] < 2) {
+                    oneOrLess.add(local);
+                    method.stmts.remove(init.remove(local));
+                    method.locals.remove(local);
+                }
+            }
+
+            if (oneOrLess.size() > 0) {
+                new StmtTraveler() {
+                    @Override
+                    public Stmt travel(Stmt stmt) {
+                        Stmt p = super.travel(stmt);
+                        if (p.st == ASSIGN && p.getOp1().vt == LOCAL && p.getOp2().vt == NEW) {
+                            // the stmt is a new assign stmt
+                            Local local = (Local) p.getOp1();
+                            if (!nAssign.containsKey(local)) {
+                                nAssign.put(local, (NewExpr) p.getOp2());
+                                init.put(local, (AssignStmt) p);
+                                changed[0] = true;
+                            }
+                        }
+                        return p;
+                    }
+
+                    @Override
+                    public Value travel(Value op) {
+                        if (op.vt == LOCAL) {
+                            Local local = (Local) op;
+                            if (oneOrLess.contains(local)) {
+                                return nAssign.get(local);
+                            }
+                        }
+                        return super.travel(op);
+                    }
+                }.travel(method.stmts);
+                for (Local local : oneOrLess) {
+                    nAssign.remove(local);
+                }
+                oneOrLess.clear();
             }
         }
 
@@ -74,39 +125,39 @@ public class NewTransformer implements Transformer {
 
             if (ie != null) {
                 if ("<init>".equals(ie.name) && "V".equals(ie.ret)) {
-                    Local objToInit = (Local) ie.getOps()[0];
-                    NewExpr newExpr = nAssign.get(objToInit);
-                    if (newExpr != null) {
-                        if (!ie.owner.equals(newExpr.type)) {
-                            throw new RuntimeException("");
+                    Value[] orgOps = ie.getOps();
+                    if (orgOps[0].vt == LOCAL) {
+                        Local objToInit = (Local) ie.getOps()[0];
+                        NewExpr newExpr = nAssign.get(objToInit);
+                        if (newExpr != null) {
+                            if (!ie.owner.equals(newExpr.type)) {
+                                throw new RuntimeException("");
+                            }
+
+                            Value[] nOps = new Value[orgOps.length - 1];
+                            System.arraycopy(orgOps, 1, nOps, 0, nOps.length);
+                            InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.args, ie.owner);
+                            method.stmts.insertBefore(p, Stmts.nAssign(objToInit, invokeNew));
+                            it.remove();
+                            replaced.add(objToInit);
                         }
-                        Value[] orgOps = ie.getOps();
-                        Value[] nOps = new Value[orgOps.length - 1];
-                        System.arraycopy(orgOps, 1, nOps, 0, nOps.length);
-                        InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.args, ie.owner);
-                        method.stmts.insertBefore(p, Stmts.nAssign(objToInit, invokeNew));
-                        it.remove();
-                        replaced.add(objToInit);
-                    } else {
-                        // a invoke super in constructor
+                    } else if (orgOps[0].vt == NEW) {
+                        NewExpr newExpr = (NewExpr) ie.getOps()[0];
+                        if (newExpr != null) {
+                            Value[] nOps = new Value[orgOps.length - 1];
+                            System.arraycopy(orgOps, 1, nOps, 0, nOps.length);
+                            InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.args, ie.owner);
+                            method.stmts.insertBefore(p, Stmts.nVoidInvoke(invokeNew));
+                            it.remove();
+                        }
                     }
+
                 }
             }
         }
         nAssign.clear();
         for (Local x : replaced) {
             method.stmts.remove(init.remove(x));
-        }
-        if (init.size() > 0) {
-            int[] reads = Cfg.countLocalReads(method);
-            for (Map.Entry<Local, AssignStmt> e : init.entrySet()) {
-                Local local = e.getKey();
-                AssignStmt as = e.getValue();
-                if (reads[local._ls_index] == 0) {
-                    method.stmts.remove(as);
-                    method.locals.remove(local);
-                }
-            }
         }
     }
 }
