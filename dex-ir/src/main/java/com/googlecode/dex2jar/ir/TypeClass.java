@@ -118,6 +118,7 @@ public enum TypeClass {
 
                         case JD:
                             throw new RuntimeException();
+                        default:
                         }
                     case ZIFL:
                         switch (clz) {
@@ -129,6 +130,7 @@ public enum TypeClass {
 
                         case JD:
                             throw new RuntimeException();
+                        default:
                         }
                     case IF:
                         switch (clz) {
@@ -141,6 +143,7 @@ public enum TypeClass {
 
                         case JD:
                             throw new RuntimeException();
+                        default:
                         }
                     case ZIF:
                         switch (clz) {
@@ -154,6 +157,7 @@ public enum TypeClass {
 
                         case JD:
                             throw new RuntimeException();
+                        default:
                         }
                     case ZI:
                         switch (clz) {
@@ -165,9 +169,11 @@ public enum TypeClass {
                             return thizCls;
                         case JD:
                             throw new RuntimeException();
+                        default:
                         }
                     case JD:
                         throw new RuntimeException();
+                    default:
                     }
                 }
             }

@@ -32,7 +32,7 @@ public class StdApkCmd extends BaseCmd {
     @Opt(opt = "o", longOpt = "output", description = "The output file", argName = "out", required = true)
     private Path output;
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new StdApkCmd().doMain(args);
     }
 
@@ -48,26 +48,27 @@ public class StdApkCmd extends BaseCmd {
         byte[] buffer = new byte[1000];
         try (ZipOutputStream zos = new AutoSTOREDZipOutputStream(Files.newOutputStream(output))) {
             byte[] data = Files.readAllBytes(new File(remainingArgs[0]).toPath());
-            com.googlecode.d2j.util.zip.ZipFile zipFile = new com.googlecode.d2j.util.zip.ZipFile(data);
-            for (com.googlecode.d2j.util.zip.ZipEntry e : zipFile.entries()) {
-                ZipEntry nEntry = new ZipEntry(e.getName());
+            try(com.googlecode.d2j.util.zip.ZipFile zipFile = new com.googlecode.d2j.util.zip.ZipFile(data)) {
+                for (com.googlecode.d2j.util.zip.ZipEntry e : zipFile.entries()) {
+                    ZipEntry nEntry = new ZipEntry(e.getName());
 
-                nEntry.setMethod(e.getMethod() == com.googlecode.d2j.util.zip.ZipEntry.STORED ? ZipEntry.STORED
-                        : ZipEntry.DEFLATED);
-                zos.putNextEntry(nEntry);
+                    nEntry.setMethod(e.getMethod() == com.googlecode.d2j.util.zip.ZipEntry.STORED ? ZipEntry.STORED
+                            : ZipEntry.DEFLATED);
+                    zos.putNextEntry(nEntry);
 
-                if (!nEntry.isDirectory()) {
-                    try (InputStream is = zipFile.getInputStream(e)) {
-                        while (true) {
-                            int c = is.read(buffer);
-                            if (c < 0) {
-                                break;
+                    if (!nEntry.isDirectory()) {
+                        try (InputStream is = zipFile.getInputStream(e)) {
+                            while (true) {
+                                int c = is.read(buffer);
+                                if (c < 0) {
+                                    break;
+                                }
+                                zos.write(buffer, 0, c);
                             }
-                            zos.write(buffer, 0, c);
                         }
                     }
+                    zos.closeEntry();
                 }
-                zos.closeEntry();
             }
             zos.finish();
         }

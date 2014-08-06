@@ -16,9 +16,6 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.StmtTraveler;
 import com.googlecode.dex2jar.ir.expr.Constant;
@@ -44,7 +41,6 @@ public class NpeTransformer extends StatedTransformer {
         if (method.locals.size() == 0) {
             return false;
         }
-        Set<Stmt> npes = new HashSet<>();
         StmtTraveler st = new StmtTraveler() {
             @Override
             public Stmt travel(Stmt stmt) {
@@ -79,7 +75,7 @@ public class NpeTransformer extends StatedTransformer {
                     }
                 }
                     break;
-
+                default:
                 }
                 return op;
             }
@@ -131,7 +127,7 @@ public class NpeTransformer extends StatedTransformer {
                     }
                 }
                     break;
-
+                default:
                 }
                 Value sop = super.travel(op);
                 if (sop.vt == Value.VT.LOCAL || sop.vt == Value.VT.CONSTANT) {
@@ -179,6 +175,7 @@ public class NpeTransformer extends StatedTransformer {
                     }
                 }
                 break;
+            case En:
             }
         } catch (XNPE e) {
             m.stmts.insertBefore(p,

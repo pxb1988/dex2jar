@@ -26,7 +26,7 @@ import org.objectweb.asm.*;
 
 @BaseCmd.Syntax(cmd = "d2j-jar-access", syntax = "[options] <jar>", desc = "add or remove class/method/field access in jar file")
 public class JarAccessCmd extends BaseCmd implements Opcodes {
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new JarAccessCmd().doMain(args);
     }
 

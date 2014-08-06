@@ -164,6 +164,7 @@ public class TypeTransformer implements Transformer {
             case INT:
             case IF:
                 return "I";
+            default:
             }
             throw new RuntimeException();
         }
@@ -278,6 +279,8 @@ public class TypeTransformer implements Transformer {
             case DOUBLE:
             case VOID:
                 ref.provideDesc = clz.name;
+                break;
+            default:
             }
             String provideDesc = ref.provideDesc;
             if (provideDesc == null && ref.parents != null && ref.parents.size() > 1) {
@@ -469,6 +472,7 @@ public class TypeTransformer implements Transformer {
                     provideAs(cst, "L");
                 }
                 break;
+            default:
             }
         }
 
@@ -528,6 +532,7 @@ public class TypeTransformer implements Transformer {
                 useAs(v, ue.type);
             }
                 break;
+            default:
             }
             if (v != null) {
                 exExpr(v);
@@ -686,6 +691,7 @@ public class TypeTransformer implements Transformer {
                     linkFromTo(vb, enExpr);
                 }
                 break;
+            default:
             }
             for (Value vb : enExpr.ops) {
                 exExpr(vb);
@@ -798,6 +804,7 @@ public class TypeTransformer implements Transformer {
             case RETURN:
                 useAs(op, method.ret);
                 break;
+            default:
             }
             exExpr(op);
         }

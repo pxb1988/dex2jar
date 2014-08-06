@@ -61,21 +61,21 @@ public class WaveTest {
                 FileSystem fs = BaseCmd.openZip(new File(WaveTest.class.getResource("/wave.jar").getPath()).toPath())) {
             w.wave(fs.getPath("/"), fs2.getPath("/"));
         }
-        URLClassLoader cl = new URLClassLoader(new URL[] { tmp.toURI().toURL() }, WaveTest.class.getClassLoader());
-        Class<?> clz = cl.loadClass("com.googlecode.d2j.tools.jar.test.res.Res");
-        List<Object> list = (List<Object>) clz.newInstance();
-        Assert.assertFalse(list.add(""));
-        Assert.assertEquals(-1, list.size());
+        try(URLClassLoader cl = new URLClassLoader(new URL[] { tmp.toURI().toURL() }, WaveTest.class.getClassLoader())) {
+            Class<?> clz = cl.loadClass("com.googlecode.d2j.tools.jar.test.res.Res");
+            List<Object> list = (List<Object>) clz.newInstance();
+            Assert.assertFalse(list.add(""));
+            Assert.assertEquals(-1, list.size());
 
-        Method m = clz.getMethod("main", String[].class);
-        System.out.println(m);
-        m.invoke(null, new Object[] { null });
-        Assert.assertTrue(appendCalled);
-        Assert.assertTrue(printlnCalled);
+            Method m = clz.getMethod("main", String[].class);
+            System.out.println(m);
+            m.invoke(null, new Object[]{null});
+            Assert.assertTrue(appendCalled);
+            Assert.assertTrue(printlnCalled);
 
-        list = null;
-        cl.close();
-        tmp.delete();
+            list = null;
+            tmp.delete();
+        }
     }
 
 }

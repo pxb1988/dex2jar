@@ -442,7 +442,7 @@ public class JasminDumper implements Opcodes {
                         }
 
                         @Override
-                        public void visitTableSwitchInsn(int min, int max, Label dflt, Label[] labels) {
+                        public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
                             pw.print("tableswitch ");
                             pw.println(min);
                             for (Label label : labels) {

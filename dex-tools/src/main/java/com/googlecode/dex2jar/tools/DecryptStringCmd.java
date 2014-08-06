@@ -37,7 +37,7 @@ import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 
 @Syntax(cmd = "d2j-decrypt-string", syntax = "[options] <jar>", desc = "Decrypt in class file", onlineHelp = "https://code.google.com/p/dex2jar/wiki/DecryptStrings")
 public class DecryptStringCmd extends BaseCmd {
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new DecryptStringCmd().doMain(args);
     }
 

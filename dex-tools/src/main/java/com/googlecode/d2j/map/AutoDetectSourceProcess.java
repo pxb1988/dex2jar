@@ -27,7 +27,6 @@ public class AutoDetectSourceProcess {
 
     public final void process(String file) throws IOException {
         Path path = new File(file).toPath();
-        final int basePathLength = path.getNameCount();
         if (Files.isDirectory(path)) {
             Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
 

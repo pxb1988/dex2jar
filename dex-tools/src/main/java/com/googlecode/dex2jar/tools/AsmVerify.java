@@ -48,7 +48,7 @@ public class AsmVerify extends BaseCmd {
         return n == -1 ? name : "o";
     }
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new AsmVerify().doMain(args);
     }
 

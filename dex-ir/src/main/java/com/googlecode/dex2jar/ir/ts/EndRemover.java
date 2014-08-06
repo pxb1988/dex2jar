@@ -1,22 +1,13 @@
 package com.googlecode.dex2jar.ir.ts;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Local;
-import com.googlecode.dex2jar.ir.expr.Value.VT;
-import com.googlecode.dex2jar.ir.stmt.GotoStmt;
-import com.googlecode.dex2jar.ir.stmt.IfStmt;
-import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
+import com.googlecode.dex2jar.ir.stmt.*;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.stmt.Stmts;
+
+import java.util.ArrayList;
 
 /**
  * Try to clean following between a {@link Trap}

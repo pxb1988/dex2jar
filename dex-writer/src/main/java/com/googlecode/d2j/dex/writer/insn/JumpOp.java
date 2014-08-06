@@ -21,6 +21,7 @@ public class JumpOp extends OpInsn {
                 CodeWriter.checkRegA(op, "vA", a);
                 CodeWriter.checkRegA(op, "vB", b);
                 break;
+            default:
         }
         this.label = label;
         this.a = a;
@@ -54,6 +55,8 @@ public class JumpOp extends OpInsn {
                 CodeWriter.checkContentShort(op, "+BBBB", offset);
                 out.put((byte) a).putShort((short) offset);
                 break;
+            default:
+                throw new RuntimeException("not support");
         }
     }
 }

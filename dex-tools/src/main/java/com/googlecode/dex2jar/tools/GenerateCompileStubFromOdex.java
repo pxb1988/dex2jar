@@ -19,7 +19,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
     private static final int MAGIC_ODEX = 0x0A796564 & 0x00FFFFFF;// hex for 'dey ', ignore the 0A
     private static final int MAGIC_DEX = 0x0A786564 & 0x00FFFFFF;// hex for 'dex ', ignore the 0A
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new GenerateCompileStubFromOdex().doMain(args);
     }
 

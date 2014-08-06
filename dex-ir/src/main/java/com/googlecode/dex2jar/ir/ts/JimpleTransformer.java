@@ -90,6 +90,7 @@ public class JimpleTransformer implements Transformer {
                 case NEW:
                 case STATIC_FIELD:
                     return tmp.newAssign(x);
+                default:
                 }
             }
             break;

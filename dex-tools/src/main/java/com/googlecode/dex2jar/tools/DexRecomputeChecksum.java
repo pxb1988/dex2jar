@@ -19,20 +19,14 @@ package com.googlecode.dex2jar.tools;
 import com.googlecode.d2j.dex.writer.DexFileWriter;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @BaseCmd.Syntax(cmd = "d2j-dex-recompute-checksum", syntax = "[options] dex", desc = "recompute crc and sha1 of dex.")
 public class DexRecomputeChecksum extends BaseCmd {
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new DexRecomputeChecksum().doMain(args);
     }
 

@@ -1,7 +1,5 @@
 package com.googlecode.dex2jar.ir;
 
-import java.util.Map;
-
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 

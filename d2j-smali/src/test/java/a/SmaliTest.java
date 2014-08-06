@@ -1,6 +1,5 @@
 package a;
 
-import com.googlecode.d2j.dex.writer.DexFileWriter;
 import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.smali.BaksmaliDumpOut;

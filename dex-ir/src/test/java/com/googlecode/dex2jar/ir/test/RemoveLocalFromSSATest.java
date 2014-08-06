@@ -1,18 +1,14 @@
 package com.googlecode.dex2jar.ir.test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
-
-import com.googlecode.dex2jar.ir.expr.Value;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.googlecode.dex2jar.ir.expr.Exprs;
-import com.googlecode.dex2jar.ir.expr.Local;
-import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 
 public class RemoveLocalFromSSATest extends BaseTransformerTest<RemoveLocalFromSSA> {
     @Test

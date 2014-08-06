@@ -78,7 +78,6 @@ import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
-import org.objectweb.asm.tree.LabelNode;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>

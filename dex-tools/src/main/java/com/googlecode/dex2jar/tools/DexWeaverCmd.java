@@ -89,6 +89,8 @@ public class DexWeaverCmd extends BaseCmd {
                                                         case INVOKE_VIRTUAL_RANGE:
                                                             super.visitMethodStmt(Op.INVOKE_STATIC_RANGE, args, replaceTo);
                                                             break;
+                                                        default:
+                                                            // impossible here
                                                         }
                                                     } else {
                                                         super.visitMethodStmt(op, args, method);

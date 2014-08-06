@@ -1,6 +1,5 @@
 package com.googlecode.d2j.tools.jar;
 
-import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.dex2jar.tools.BaseCmd;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.Remapper;
@@ -92,7 +91,7 @@ public class InvocationWeaver implements Opcodes {
     private static final String DEFAULT_RET_TYPE = "Ld/$$$/j;";
     private static final String DEFAULT_DESC = "(L;)" + DEFAULT_RET_TYPE;
     private static final Type OBJECT_TYPE = Type.getType(Object.class);
-    private static String BASE_INVOCATION_TYPE_FMT = "d2j/gen/MI_%03d";
+    private static final String BASE_INVOCATION_TYPE_FMT = "d2j/gen/MI_%03d";
     List<Callback> callbacks = new ArrayList<Callback>();
     int currentInvocationIdx = 0;
     private MtdInfo key = new MtdInfo();
@@ -272,13 +271,12 @@ public class InvocationWeaver implements Opcodes {
                         n.owner = t.owner;
                         n.name = t.name + "$$$_A_";
 
-                        int acc = 0;
                         String nDesc = t.desc;
                         boolean hasThis = opcode != INVOKESTATIC;
                         Type[] args = Type.getArgumentTypes(t.desc);
                         Type ret = Type.getReturnType(t.desc);
                         if (hasThis) {
-                            List<Type> ts = new ArrayList(5);
+                            List<Type> ts = new ArrayList<>(5);
                             ts.add(Type.getObjectType(t.owner));
                             ts.addAll(Arrays.asList(args));
                             nDesc = Type.getMethodDescriptor(ret, ts.toArray(new Type[ts.size()]));

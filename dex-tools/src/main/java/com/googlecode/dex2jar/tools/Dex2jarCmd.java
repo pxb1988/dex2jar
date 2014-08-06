@@ -28,7 +28,7 @@ import com.googlecode.dex2jar.ir.ET;
 @BaseCmd.Syntax(cmd = "d2j-dex2jar", syntax = "[options] <file0> [file1 ... fileN]", desc = "convert dex to jar")
 public class Dex2jarCmd extends BaseCmd {
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new Dex2jarCmd().doMain(args);
     }
 

@@ -34,7 +34,7 @@ public class DeObfInitCmd extends BaseCmd {
         super("d2j-init-deobf [options] <jar>", "generate an init config file for deObfuscate a jar");
     }
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new DeObfInitCmd().doMain(args);
     }
 

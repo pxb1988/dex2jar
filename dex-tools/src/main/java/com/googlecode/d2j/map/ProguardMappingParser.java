@@ -75,7 +75,6 @@ public class ProguardMappingParser {
                 String fieldNameOrMethodNameDesc = as[1];
                 String newName = as[3];
 
-                String key;
                 if (fieldNameOrMethodNameDesc.contains("(")) { // a method
 
                     int idx = fieldNameOrMethodNameDesc.indexOf('(');

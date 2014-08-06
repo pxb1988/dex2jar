@@ -23,7 +23,7 @@ import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 
 @Syntax(cmd = "d2j-jar-remap", syntax = "[options] jar", desc = "rename package/class/method/field name in a jar", onlineHelp = "https://code.google.com/p/dex2jar/wiki/DeObfuscateJarWithDexTool")
 public class JarRemap extends BaseCmd {
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new JarRemap().doMain(args);
     }
 

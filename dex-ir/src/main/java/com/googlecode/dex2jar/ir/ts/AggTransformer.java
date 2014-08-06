@@ -42,6 +42,7 @@ public class AggTransformer extends StatedTransformer {
                 case NOP:
                 case RETURN_VOID:
                     continue;
+                default:
             }
             try {
                 localCanExecFirst(local, next);
@@ -100,6 +101,7 @@ public class AggTransformer extends StatedTransformer {
                         localCanExecFirst(local, op1.getOp2());
                         localCanExecFirst(local, op2);
                         break;
+                    default:
                 }
                 break;
         }
@@ -300,6 +302,7 @@ public class AggTransformer extends StatedTransformer {
             case FCMPL:
             case NOT:
                 return true;
+            default:
         }
         return false;
     }

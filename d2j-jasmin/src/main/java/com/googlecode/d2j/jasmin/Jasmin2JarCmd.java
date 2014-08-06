@@ -16,18 +16,7 @@
  */
 package com.googlecode.d2j.jasmin;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.googlecode.dex2jar.tools.BaseCmd;
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -36,7 +25,14 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
-import com.googlecode.dex2jar.tools.BaseCmd;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 @BaseCmd.Syntax(cmd = "d2j-jasmin2jar", syntax = "[options] <jar>", desc = "Assemble .j files to .class file", onlineHelp = "https://code.google.com/p/dex2jar/wiki/Jasmin")
 public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
@@ -58,7 +54,7 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
     @Opt(opt = "cv", longOpt = "class-version", description = "default .class version, [1~9], default 6 for JAVA6")
     private int classVersion = 6;
 
-    public static void main(String[] args) throws ClassNotFoundException, SecurityException {
+    public static void main(String... args) throws ClassNotFoundException, SecurityException {
         new Jasmin2JarCmd().doMain(args);
     }
 

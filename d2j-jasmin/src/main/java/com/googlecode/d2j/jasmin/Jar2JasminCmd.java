@@ -16,21 +16,17 @@
  */
 package com.googlecode.d2j.jasmin;
 
-import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.file.*;
-import java.nio.file.FileSystem;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.googlecode.dex2jar.tools.BaseCmd;
+import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
-import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 @Syntax(cmd = "d2j-jar2jasmin", syntax = "[options] <jar>", desc = "Disassemble .class in jar file to jasmin file", onlineHelp = "https://code.google.com/p/dex2jar/wiki/Jasmin")
 public class Jar2JasminCmd extends BaseCmd {
@@ -43,7 +39,7 @@ public class Jar2JasminCmd extends BaseCmd {
     @Opt(opt = "e", longOpt = "encoding", description = "encoding for .j files, default is UTF-8", argName = "enc")
     private String encoding = "UTF-8";
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new Jar2JasminCmd().doMain(args);
     }
 

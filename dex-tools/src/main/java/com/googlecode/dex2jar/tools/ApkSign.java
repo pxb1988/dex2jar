@@ -34,7 +34,7 @@ import com.googlecode.d2j.signapk.TinySignImpl;
 
 @BaseCmd.Syntax(cmd = "d2j-apk-sign", syntax = "[options] <apk>", desc = "Sign an android apk file use a test certificate.")
 public class ApkSign extends BaseCmd {
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new ApkSign().doMain(args);
     }
 

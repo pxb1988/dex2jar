@@ -16,18 +16,13 @@
  */
 package com.googlecode.d2j.dex;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.node.DexMethodNode;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import com.googlecode.d2j.Method;
-import com.googlecode.d2j.node.DexMethodNode;
-import com.googlecode.d2j.reader.DexFileReader;
-import com.googlecode.dex2jar.ir.ET;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class BaseDexExceptionHandler implements DexExceptionHandler {
     @Override
