@@ -44,8 +44,18 @@ import java.util.List;
 
     // int,int long
     public void visit(String name, Object value) {
-        AnnotationElement ae = newAnnotationElement(name);
-        ae.value = EncodedValue.wrap(cp.wrapEncodedItem(value));
+        if (value instanceof Object[]) {
+            DexAnnotationVisitor s = visitArray(name);
+            if (s != null) {
+                for (Object v : (Object[]) value) {
+                    s.visit(null, v);
+                }
+                s.visitEnd();
+            }
+        } else {
+            AnnotationElement ae = newAnnotationElement(name);
+            ae.value = EncodedValue.wrap(cp.wrapEncodedItem(value));
+        }
     }
 
     @Override
