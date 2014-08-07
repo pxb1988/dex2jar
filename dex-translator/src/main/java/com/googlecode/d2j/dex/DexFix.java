@@ -29,7 +29,11 @@ import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 
 /**
- * Dex omit the value of static-final filed if it is the default value. this method is try to fix the problem.
+ * 1. Dex omit the value of static-final filed if it is the default value.
+ *
+ * 2. static-final field init by zero, but assigned in clinit
+ *
+ * this method is try to fix the problems.
  */
 public class DexFix {
     private static final int ACC_STATIC_FINAL = DexConstants.ACC_STATIC | DexConstants.ACC_FINAL;
@@ -44,6 +48,8 @@ public class DexFix {
 
     /**
      * init value to default if the field is static and final, and the field is not init in clinit method
+     *
+     * erase the default value if the field is init in clinit method
      * 
      * @param classNode
      */
@@ -52,17 +58,22 @@ public class DexFix {
             return;
         }
         final Map<String, DexFieldNode> fs = new HashMap<>();
+        final Map<String, DexFieldNode> shouldNotBeAssigned = new HashMap<>();
         for (DexFieldNode fn : classNode.fields) {
-            if (fn.cst == null && (fn.access & ACC_STATIC_FINAL) == ACC_STATIC_FINAL) {
-                char t = fn.field.getType().charAt(0);
-                if (t == 'L' || t == '[') {
-                    // ignore Object
-                    continue;
+            if ((fn.access & ACC_STATIC_FINAL) == ACC_STATIC_FINAL) {
+                if (fn.cst == null) {
+                    char t = fn.field.getType().charAt(0);
+                    if (t == 'L' || t == '[') {
+                        // ignore Object
+                        continue;
+                    }
+                    fs.put(fn.field.getName() + ":" + fn.field.getType(), fn);
+                } else if (isPrimitiveZero(fn.field.getType(), fn.cst)) {
+                    shouldNotBeAssigned.put(fn.field.getName() + ":" + fn.field.getType(), fn);
                 }
-                fs.put(fn.field.getName() + ":" + fn.field.getType(), fn);
             }
         }
-        if (fs.size() == 0) {
+        if (fs.isEmpty() && shouldNotBeAssigned.isEmpty()) {
             return;
         }
         DexMethodNode node = null;
@@ -88,7 +99,13 @@ public class DexFix {
                         case SPUT_SHORT:
                         case SPUT_WIDE:
                             if (field.getOwner().equals(classNode.className)) {
-                                fs.remove(field.getName() + ":" + field.getType());
+                                String key = field.getName() + ":" + field.getType();
+                                fs.remove(key);
+                                DexFieldNode dn = shouldNotBeAssigned.get(key);
+                                if (dn != null) {
+                                    //System.out.println(field.getName() + ":" + field.getType());
+                                    dn.cst = null;
+                                }
                             }
                             break;
                         default:
@@ -133,5 +150,30 @@ public class DexFix {
             return null;
             // impossible
         }
+    }
+
+    static boolean isPrimitiveZero(String desc, Object value) {
+        if (value != null && desc != null && desc.length() > 0) {
+            switch (desc.charAt(0)) {
+            // case 'V':// VOID_TYPE
+            case 'Z':// BOOLEAN_TYPE
+                return ((Boolean) value).booleanValue() == false;
+            case 'C':// CHAR_TYPE
+                return ((Character) value).charValue() == (char) 0;
+            case 'B':// BYTE_TYPE
+                return ((Byte) value).byteValue() == 0;
+            case 'S':// SHORT_TYPE
+                return ((Short) value).shortValue() == 0;
+            case 'I':// INT_TYPE
+                return ((Integer) value).intValue() == 0;
+            case 'F':// FLOAT_TYPE
+                return ((Float) value).floatValue() == 0f;
+            case 'J':// LONG_TYPE
+                return ((Long) value).longValue() == 0L;
+            case 'D':// DOUBLE_TYPE
+                return ((Double) value).doubleValue() == 0.0;
+            }
+        }
+        return false;
     }
 }
