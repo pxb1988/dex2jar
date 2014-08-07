@@ -371,8 +371,9 @@ public class Dex2Asm {
         cv.visit(Opcodes.V1_6, access, toInternalName(classNode.className), signature,
                 classNode.superClass == null ? null : toInternalName(classNode.superClass), interfaceInterNames);
 
+        List<InnerClassNode> innerClassNodes = new ArrayList<InnerClassNode>(5);
         if (clzInfo != null) {
-            searchInnerClass(clzInfo, cv, classNode.className);
+            searchInnerClass(clzInfo, innerClassNodes, classNode.className);
         }
         if (isInnerClass) {
             // build Outer Clz
@@ -386,7 +387,11 @@ public class Dex2Asm {
                     cv.visitOuterClass(toInternalName(enclosingClass.name), null, null);
                 }
             }
-            searchEnclosing(clzInfo, cv);
+            searchEnclosing(clzInfo, innerClassNodes);
+        }
+        Collections.sort(innerClassNodes, INNER_CLASS_NODE_COMPARATOR);
+        for (InnerClassNode icn : innerClassNodes) {
+            icn.accept(cv);
         }
 
         accept(classNode.anns, cv);
@@ -590,7 +595,7 @@ public class Dex2Asm {
      * to WeAreHere.class
      * 
      */
-    private static void searchEnclosing(Clz clz, ClassVisitor cv) {
+    private static void searchEnclosing(Clz clz, List<InnerClassNode> innerClassNodes) {
         for (Clz p = clz; p != null; p = p.enclosingClass) {
             Clz enclosingClass = p.enclosingClass;
             if (enclosingClass == null) {
@@ -598,10 +603,10 @@ public class Dex2Asm {
             }
             int accessInInner = clearInnerAccess(p.access);
             if (p.innerName != null) {// non-anonymous Innerclass
-                cv.visitInnerClass(Type.getType(p.name).getInternalName(), Type.getType(enclosingClass.name)
-                        .getInternalName(), p.innerName, accessInInner);
+                innerClassNodes.add(new InnerClassNode(toInternalName(p.name),
+                        toInternalName(enclosingClass.name), p.innerName, accessInInner));
             } else {// anonymous Innerclass
-                cv.visitInnerClass(Type.getType(p.name).getInternalName(), null, null, accessInInner);
+                innerClassNodes.add(new InnerClassNode(toInternalName(p.name), null, null, accessInInner));
             }
         }
     }
@@ -631,10 +636,9 @@ public class Dex2Asm {
      * 
      * @param clz
      */
-    private static void searchInnerClass(Clz clz, ClassVisitor cv, String className) {
+    private static void searchInnerClass(Clz clz, List<InnerClassNode> innerClassNodes, String className) {
         Set<Clz> visited = new HashSet<>();
         Stack<Clz> stack = new Stack<>();
-        List<InnerClassNode> innerClassNodes = new ArrayList<InnerClassNode>(5);
         stack.push(clz);
         while (!stack.empty()) {
             clz = stack.pop();
@@ -655,10 +659,6 @@ public class Dex2Asm {
                     stack.push(inner);
                 }
             }
-        }
-        Collections.sort(innerClassNodes, INNER_CLASS_NODE_COMPARATOR);
-        for (InnerClassNode icn : innerClassNodes) {
-            icn.accept(cv);
         }
     }
 
