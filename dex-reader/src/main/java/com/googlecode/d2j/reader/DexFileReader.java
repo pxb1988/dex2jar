@@ -61,11 +61,18 @@ public class DexFileReader {
      * ingore read exception
      */
     public static final int IGNORE_READ_EXCEPTION = 1 << 5;
-    // private static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
     /**
      * read all methods, even if they are glitch
      */
     public static final int KEEP_ALL_METHODS = 1 << 6;
+    /**
+     * keep clinit method when {@link #SKIP_DEBUG}
+     */
+    public static final int KEEP_CLINIT = 1 << 7;
+
+
+    // private static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
+
     static final int DBG_END_SEQUENCE = 0x00;
     static final int DBG_ADVANCE_PC = 0x01;
     static final int DBG_ADVANCE_LINE = 0x02;
@@ -952,15 +959,21 @@ public class DexFileReader {
                         }
                     }
                 }
-                if (code_off != 0 && (0 == (SKIP_CODE & config))) {
-                    DexCodeVisitor dcv = dmv.visitCode();
-                    if (dcv != null) {
-                        try {
-                            acceptCode(code_off, dcv, config, (method_access_flags & DexConstants.ACC_STATIC) != 0,
-                                    method);
-                        } catch (Exception e) {
-                            throw new DexException(e, "while accept code in method:[%s] @%08x", method.toString(),
-                                    code_off);
+                if (code_off != 0) {
+                    boolean keep = true;
+                    if (0 != (SKIP_CODE & config)) {
+                        keep = 0 != (KEEP_CLINIT & config) && method.getName().equals("<clinit>");
+                    }
+                    if(keep) {
+                        DexCodeVisitor dcv = dmv.visitCode();
+                        if (dcv != null) {
+                            try {
+                                acceptCode(code_off, dcv, config, (method_access_flags & DexConstants.ACC_STATIC) != 0,
+                                        method);
+                            } catch (Exception e) {
+                                throw new DexException(e, "while accept code in method:[%s] @%08x", method.toString(),
+                                        code_off);
+                            }
                         }
                     }
                 }

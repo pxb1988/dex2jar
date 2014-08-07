@@ -27,6 +27,7 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.googlecode.d2j.node.DexMethodNode;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -116,6 +117,13 @@ public class Dex2jar {
         };
 
         new ExDex2Asm(exceptionHandler) {
+            public void convertCode(DexMethodNode methodNode, MethodVisitor mv) {
+                if ((readerConfig & DexFileReader.SKIP_CODE) != 0 && methodNode.method.getName().equals("<clinit>")) {
+                    // also skip clinit
+                    return;
+                }
+                super.convertCode(methodNode, mv);
+            }
 
             @Override
             public void optimize(IrMethod irMethod) {
@@ -190,9 +198,9 @@ public class Dex2jar {
 
     public Dex2jar noCode(boolean b) {
         if (b) {
-            this.readerConfig |= DexFileReader.SKIP_CODE;
+            this.readerConfig |= DexFileReader.SKIP_CODE | DexFileReader.KEEP_CLINIT;
         } else {
-            this.readerConfig &= ~DexFileReader.SKIP_CODE;
+            this.readerConfig &= ~(DexFileReader.SKIP_CODE | DexFileReader.KEEP_CLINIT);
         }
         return this;
     }
