@@ -120,7 +120,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
                         }
                         try {
                             Path dist1 = dist.resolve(name + ".class");
-                            Files.createDirectories(dist1.getParent());
+                            BaseCmd.createParentDirectories(dist1);
                             Files.write(dist1, data);
                         } catch (IOException e) {
                             exceptionHandler.handleFileException(e);

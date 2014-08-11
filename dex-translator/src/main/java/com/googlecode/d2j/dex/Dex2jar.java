@@ -106,7 +106,10 @@ public class Dex2jar {
                         }
                         try {
                             Path dist1 = dist.resolve(name + ".class");
-                            Files.createDirectories(dist1.getParent());
+                            Path parent = dist1.getParent();
+                            if (parent != null && !Files.exists(parent)) {
+                                Files.createDirectories(parent);
+                            }
                             Files.write(dist1, data);
                         } catch (IOException e) {
                             e.printStackTrace(System.err);
@@ -275,8 +278,9 @@ public class Dex2jar {
         Map<String, Object> env = new HashMap<>();
         env.put("create", "true");
         Files.deleteIfExists(output);
-        if (output.getParent() != null) {
-            Files.createDirectories(output.getParent());
+        Path parent = output.getParent();
+        if (parent != null && !Files.exists(parent)) {
+            Files.createDirectories(parent);
         }
         for (FileSystemProvider p : FileSystemProvider.installedProviders()) {
             String s = p.getScheme();

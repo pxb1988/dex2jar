@@ -138,7 +138,7 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
             }
             cn.accept(cw);
             Path clzFile = output.resolve(cn.name.replace('.', '/') + ".class");
-            Files.createDirectories(clzFile.getParent());
+            createParentDirectories(clzFile);
             Files.write(clzFile, cw.toByteArray());
         } catch (RecognitionException e) {
             System.err.println("Fail to assemble " + file);

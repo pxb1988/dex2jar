@@ -64,13 +64,21 @@ public abstract class BaseCmd {
         }
     }
 
+    public static void createParentDirectories(Path p) throws IOException {
+        // merge patch from t3stwhat, fix crash on save to windows path like 'C:\\abc.jar'
+        Path parent = p.getParent();
+        if (parent != null && !Files.exists(parent)) {
+            Files.createDirectories(parent);
+        }
+    }
+
     public static FileSystem createZip(Path output) throws IOException {
         Map<String, Object> env = new HashMap<>();
         env.put("create", "true");
         Files.deleteIfExists(output);
-        if (output.getParent() != null) {
-            Files.createDirectories(output.getParent());
-        }
+
+        createParentDirectories(output);
+
         for (FileSystemProvider p : FileSystemProvider.installedProviders()) {
             String s = p.getScheme();
             if ("jar".equals(s) || "zip".equalsIgnoreCase(s)) {

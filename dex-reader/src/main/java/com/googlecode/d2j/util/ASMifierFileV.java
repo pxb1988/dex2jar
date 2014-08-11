@@ -97,7 +97,10 @@ public class ASMifierFileV extends DexFileVisitor {
             list.add(sb.toString());
         }
         try {
-            Files.createDirectories(file.getParent());
+            Path parent = file.getParent();
+            if (parent != null && !Files.exists(parent)) {
+                Files.createDirectories(parent);
+            }
             Files.write(file, list, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();

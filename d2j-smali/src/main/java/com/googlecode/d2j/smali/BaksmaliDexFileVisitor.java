@@ -45,13 +45,14 @@ public class BaksmaliDexFileVisitor extends DexFileVisitor {
 
                 Path smaliFile = dir
                         .resolve(rebuildFileName(className.substring(1, className.length() - 1)) + ".smali");
-                Path parent = smaliFile.getParent();
-                if (parent != null) {
-                    try {
+
+                try {
+                    Path parent = smaliFile.getParent();
+                    if (parent != null && !Files.exists(parent)) {
                         Files.createDirectories(parent);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
                     }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
 
                 try (BufferedWriter writer = Files.newBufferedWriter(smaliFile, StandardCharsets.UTF_8)) {

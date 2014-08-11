@@ -1,5 +1,7 @@
 package com.googlecode.d2j.tools.jar;
 
+import com.googlecode.dex2jar.tools.BaseCmd;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -80,7 +82,7 @@ public class WebApp {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Path n = clz.relativize(file);
                 Path target = tmpClz.resolve(n);
-                Files.createDirectories(target.getParent());
+                BaseCmd.createParentDirectories(target);
                 Files.copy(file, target);
                 return super.visitFile(file, attrs);
             }

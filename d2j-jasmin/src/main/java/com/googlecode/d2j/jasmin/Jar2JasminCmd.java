@@ -106,7 +106,7 @@ public class Jar2JasminCmd extends BaseCmd {
         try (InputStream is = Files.newInputStream(file)) {
             ClassReader r = new ClassReader(is);
             Path jFile = output.resolve(r.getClassName().replace('.', '/') + ".j");
-            Files.createDirectories(jFile.getParent());
+            createParentDirectories(jFile);
             try (BufferedWriter out = Files.newBufferedWriter(jFile, Charset.forName(encoding))) {
                 PrintWriter pw = new PrintWriter(out);
                 ClassNode node = new ClassNode();

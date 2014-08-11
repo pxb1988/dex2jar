@@ -398,7 +398,7 @@ public class InvocationWeaver implements Opcodes {
             public void visitFile(Path file, Path relative) throws IOException {
                 String name = relative.toString();
                 Path targetPath = to.resolve(relative);
-                Files.createDirectories(targetPath.getParent());
+                BaseCmd.createParentDirectories(targetPath);
                 if (name.endsWith(".class")) {
                     String clzName = name.substring(0, name.length() - ".class".length());
                     if (ignores.contains(clzName)) {
@@ -437,7 +437,7 @@ public class InvocationWeaver implements Opcodes {
             String type = getCurrentInvocationName();
             byte[] data = buildInvocationClz(type);
             Path target = to.resolve(type + ".class");
-            Files.createDirectories(target.getParent());
+            BaseCmd.createParentDirectories(target);
             Files.write(target, data);
             nextInvocationName();
         }

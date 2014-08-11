@@ -16,6 +16,8 @@
  */
 package com.googlecode.dex2jar.bin_gen;
 
+import com.googlecode.dex2jar.tools.BaseCmd;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -53,10 +55,7 @@ public class BinGen {
                 String fileName = file.getFileName().toString();
                 if (fileName.endsWith(".sh") || fileName.endsWith(".bat")) {
                     Path f = out.resolve(cfg.relativize(file));
-                    Path parent = f.getParent();
-                    if (parent != null) {
-                        Files.createDirectories(parent);
-                    }
+                    BaseCmd.createParentDirectories(f);
                     Files.copy(file, f, StandardCopyOption.REPLACE_EXISTING);
                 }
                 return super.visitFile(file, attrs);
@@ -66,20 +65,14 @@ public class BinGen {
         for (Object key : p.keySet()) {
             String name = key.toString();
             Path path = out.resolve(key.toString() + ".sh");
-            Path parent = path.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
+            BaseCmd.createParentDirectories(path);
             try (BufferedWriter bw = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
                     StandardOpenOption.WRITE)) {
                 String s = sh.replaceAll("__@class_name@__", p.getProperty(name));
                 bw.append(s);
             }
             path = out.resolve(key.toString() + ".bat");
-            parent = path.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
+            BaseCmd.createParentDirectories(path);
             try (BufferedWriter bw = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
                     StandardOpenOption.WRITE)) {
                 String s = bat.replaceAll("__@class_name@__", p.getProperty(name));

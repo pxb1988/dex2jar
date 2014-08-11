@@ -80,7 +80,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
                         ClassWriter cw = (ClassWriter) cv;
                         byte[] data = cw.toByteArray();
                         try {
-                            Files.createDirectories(target.getParent());
+                            BaseCmd.createParentDirectories(target);
                             Files.write(target, data);
                         } catch (IOException e) {
                             e.printStackTrace();
