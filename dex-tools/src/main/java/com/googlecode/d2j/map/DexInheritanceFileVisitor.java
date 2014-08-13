@@ -35,6 +35,9 @@ public class DexInheritanceFileVisitor extends DexFileVisitor {
     @Override
     public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
         final InheritanceTree.Clz clz = tree.addClz(access_flags, className);
+        if(clz == null) { // skip the class
+            return null;
+        }
         if (superClass != null) {
             clz.relateSuper(superClass);
         }
