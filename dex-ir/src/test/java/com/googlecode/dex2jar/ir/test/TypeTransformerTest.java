@@ -129,4 +129,19 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         transform();
         Assert.assertEquals("", b.valueType, "[F");
     }
+
+    @Test
+    public void testDefaultZI() {
+        initMethod(true, "V");
+        Local b = addLocal("b");
+        Local c = addLocal("c");
+
+        addStmt(nAssign(b, nInt(5)));
+        addStmt(nAssign(c, nOr(b, nInt(6), TypeClass.ZI.name)));
+
+        addStmt(nReturnVoid());
+        transform();
+        Assert.assertEquals("I", c.valueType);
+    }
+
 }

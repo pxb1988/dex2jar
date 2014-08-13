@@ -157,6 +157,7 @@ public class TypeTransformer implements Transformer {
 
             switch (clz) {
             case ZI:
+                return "I";
             case ZIFL:
             case ZIF:
             case ZIL:
