@@ -108,15 +108,15 @@ public class ClassDefItem extends BaseItem {
             this.annotations = annotationsDirectoryItem;
             if (classAnnotations != null) {
                 annotationsDirectoryItem.classAnnotations = cp.uniqAnnotationSetItem(classAnnotations);
-                if (fieldAnnotations.size() > 0) {
-                    annotationsDirectoryItem.fieldAnnotations = fieldAnnotations;
-                }
-                if (methodAnnotations.size() > 0) {
-                    annotationsDirectoryItem.methodAnnotations = methodAnnotations;
-                }
-                if (parameterAnnotations.size() > 0) {
-                    annotationsDirectoryItem.parameterAnnotations = parameterAnnotations;
-                }
+            }
+            if (fieldAnnotations.size() > 0) {
+                annotationsDirectoryItem.fieldAnnotations = fieldAnnotations;
+            }
+            if (methodAnnotations.size() > 0) {
+                annotationsDirectoryItem.methodAnnotations = methodAnnotations;
+            }
+            if (parameterAnnotations.size() > 0) {
+                annotationsDirectoryItem.parameterAnnotations = parameterAnnotations;
             }
         }
     }

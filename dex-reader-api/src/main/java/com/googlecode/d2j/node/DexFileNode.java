@@ -37,4 +37,10 @@ public class DexFileNode extends DexFileVisitor {
             cn.accept(dcv);
         }
     }
+
+    public void accept(DexFileVisitor dfv) {
+        for (DexClassNode cn : clzs) {
+            cn.accept(dfv);
+        }
+    }
 }
