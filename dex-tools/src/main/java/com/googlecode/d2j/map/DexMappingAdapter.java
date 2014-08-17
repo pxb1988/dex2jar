@@ -219,11 +219,13 @@ public class DexMappingAdapter extends DexFileVisitor {
         public DexDebugVisitor visitDebug() {
             DexDebugVisitor v = super.visitDebug();
             if (v != null) {
-                return new DexDebugVisitor() {
+                return new DexDebugVisitor(v) {
                     @Override
                     public void visitStartLocal(int reg, DexLabel label, String name, String type, String signature) {
-                        // FIXME map signature
-                        super.visitStartLocal(reg, label, name, mapClassName(mapper, type), null);
+                        if (signature != null) {
+                            signature = remapSignature(mapper, signature, true);
+                        }
+                        super.visitStartLocal(reg, label, name, mapClassName(mapper, type), signature);
                     }
                 };
             }
@@ -395,7 +397,7 @@ public class DexMappingAdapter extends DexFileVisitor {
                         public void visitEnd() {
                             super.visitEnd();
                             Item p = super.items.get(0);
-                            Object[] newVs = remapSignature(mapper, (Object[]) p.value, false);
+                            Object[] newVs = remapSignature(mapper, (Object[]) p.value, true);
                             dav.visit(p.name, newVs);
                             dav.visitEnd();
                         }
@@ -462,7 +464,6 @@ public class DexMappingAdapter extends DexFileVisitor {
             }
             return a;
         }
-
     }
 
     static Object[] remapSignature(final Mapper mapper, Object vs[], boolean isType) {
@@ -470,6 +471,10 @@ public class DexMappingAdapter extends DexFileVisitor {
         for (Object v0 : vs) {
             sb.append(v0);
         }
+        return Types.buildDexStyleSignature(remapSignature(mapper, sb.toString(), isType));
+    }
+
+    static String remapSignature(final Mapper mapper, String sig, boolean isType) {
         SignatureWriter w = new SignatureWriter() {
             String clzName;
 
@@ -504,11 +509,10 @@ public class DexMappingAdapter extends DexFileVisitor {
             }
         };
         if (isType) {
-            new SignatureReader(sb.toString()).acceptType(w);
+            new SignatureReader(sig).acceptType(w);
         } else {
-            new SignatureReader(sb.toString()).accept(w);
+            new SignatureReader(sig).accept(w);
         }
-        String newSignature = w.toString();
-        return Types.buildDexStyleSignature(newSignature);
+        return w.toString();
     }
 }
