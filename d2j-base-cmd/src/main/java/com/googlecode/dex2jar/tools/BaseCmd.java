@@ -166,13 +166,15 @@ public abstract class BaseCmd {
 
         public String getOptAndLongOpt() {
             StringBuilder sb = new StringBuilder();
-            if (opt != null) {
+            boolean havePrev = false;
+            if (opt != null && opt.length() > 0) {
             sb.append("-").append(opt);
+                havePrev = true;
             }
-            if (opt != null && longOpt != null) {
+            if (longOpt != null && longOpt.length() > 0) {
+                if (havePrev) {
                 sb.append(",");
             }
-            if (longOpt != null) {
                 sb.append("--").append(longOpt);
             }
             return sb.toString();
@@ -335,7 +337,6 @@ public abstract class BaseCmd {
                 }
                 Option option = new Option();
                 option.field = f;
-                option.opt = opt.opt();
                 option.description = opt.description();
                 option.hasArg = opt.hasArg();
                 option.required = opt.required();
@@ -349,6 +350,7 @@ public abstract class BaseCmd {
                     option.argName = opt.argName();
                 }
                 if (!"".equals(opt.opt())) {
+                    option.opt = opt.opt();
                     checkConflict(option, "-" + option.opt);
                 } else {
                     if (!haveLongOpt) {
