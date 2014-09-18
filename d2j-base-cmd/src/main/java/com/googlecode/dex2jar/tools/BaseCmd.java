@@ -36,6 +36,7 @@ public abstract class BaseCmd {
         int x = fn.lastIndexOf('.');
         return x >= 0 ? fn.substring(0, x) : fn;
     }
+
     public static String getBaseName(Path fn) {
         return getBaseName(fn.getFileName().toString());
     }
@@ -116,13 +117,13 @@ public abstract class BaseCmd {
     static public @interface Opt {
         String argName() default "";
 
-        String description();
+        String description() default "";
 
         boolean hasArg() default true;
 
         String longOpt() default "";
 
-        String opt();
+        String opt() default "";
 
         boolean required() default false;
     }
@@ -138,14 +139,41 @@ public abstract class BaseCmd {
 
         @Override
         public int compareTo(Option o) {
-            return this.opt.compareTo(o.opt);
+            int result = s(this.opt, o.opt);
+            if (result == 0) {
+                result = s(this.longOpt, o.longOpt);
+                if (result == 0) {
+                    result = s(this.argName, o.argName);
+                    if (result == 0) {
+                        result = s(this.description, o.description);
+                    }
+                }
+            }
+            return result;
+        }
+
+        private static int s(String a, String b) {
+            if (a != null && b != null) {
+                return a.compareTo(b);
+            } else if (a != null) {
+                return 1;
+            } else if (b != null) {
+                return -1;
+            } else {
+                return 0;
+            }
         }
 
         public String getOptAndLongOpt() {
             StringBuilder sb = new StringBuilder();
+            if (opt != null) {
             sb.append("-").append(opt);
+            }
+            if (opt != null && longOpt != null) {
+                sb.append(",");
+            }
             if (longOpt != null) {
-                sb.append(",--").append(longOpt);
+                sb.append("--").append(longOpt);
             }
             return sb.toString();
         }
@@ -243,7 +271,9 @@ public abstract class BaseCmd {
         }
 
         throw new RuntimeException("can't convert [" + value + "] to type " + type);
-    };
+    }
+
+    ;
 
     protected abstract void doCommandLine() throws Exception;
 
@@ -309,16 +339,34 @@ public abstract class BaseCmd {
                 option.description = opt.description();
                 option.hasArg = opt.hasArg();
                 option.required = opt.required();
+                boolean haveLongOpt = false;
                 if (!"".equals(opt.longOpt())) {
                     option.longOpt = opt.longOpt();
-                    optMap.put("--" + option.longOpt, option);
+                    checkConflict(option, "--" + option.longOpt);
+                    haveLongOpt = true;
                 }
                 if (!"".equals(opt.argName())) {
                     option.argName = opt.argName();
                 }
-                optMap.put("-" + option.opt, option);
+                if (!"".equals(opt.opt())) {
+                    checkConflict(option, "-" + option.opt);
+                } else {
+                    if (!haveLongOpt) {
+                        throw new RuntimeException("opt or longOpt is not set in @Opt(...) " + f);
             }
         }
+    }
+        }
+    }
+
+    private void checkConflict(Option option, String key) {
+        if (optMap.containsKey(key)) {
+            Option preOption = optMap.get(key);
+            throw new RuntimeException(String.format("[@Opt(...) %s] conflict with [@Opt(...) %s]",
+                    preOption.field.toString(), option.field
+            ));
+        }
+        optMap.put(key, option);
     }
 
     protected void initOptions() {
@@ -409,10 +457,7 @@ public abstract class BaseCmd {
         TreeSet<Option> options = new TreeSet<Option>(this.optMap.values());
         int palength = -1;
         for (Option option : options) {
-            int pa = 5 + option.opt.length();
-            if (option.longOpt != null) {
-                pa += 3 + option.longOpt.length();
-            }
+            int pa = 4 + option.getOptAndLongOpt().length();
             if (option.hasArg) {
                 pa += 3 + option.argName.length();
             }
@@ -427,10 +472,7 @@ public abstract class BaseCmd {
         StringBuilder sb = new StringBuilder();
         for (Option option : options) {
             sb.setLength(0);
-            sb.append(" -").append(option.opt);
-            if (option.longOpt != null) {
-                sb.append(",--").append(option.longOpt);
-            }
+            sb.append(" ").append(option.getOptAndLongOpt());
             if (option.hasArg) {
                 sb.append(" <").append(option.argName).append(">");
             }
