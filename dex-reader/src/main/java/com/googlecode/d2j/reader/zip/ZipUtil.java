@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -72,9 +73,9 @@ public class ZipUtil {
         if (data.length < 3) {
             throw new IOException("File too small to be a dex/zip");
         }
-        if ("dex".equals(new String(data, 0, 3))) {// dex
+        if ("dex".equals(new String(data, 0, 3, StandardCharsets.ISO_8859_1))) {// dex
             return data;
-        } else if ("PK".equals(new String(data, 0, 2))) {// ZIP
+        } else if ("PK".equals(new String(data, 0, 2, StandardCharsets.ISO_8859_1))) {// ZIP
             try (ZipFile zipFile = new ZipFile(data)) {
                 ZipEntry classes = zipFile.findFirstEntry("classes.dex");
                 if (classes != null) {

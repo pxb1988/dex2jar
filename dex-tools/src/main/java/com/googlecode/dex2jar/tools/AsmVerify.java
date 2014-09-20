@@ -18,8 +18,10 @@ package com.googlecode.dex2jar.tools;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -142,7 +144,7 @@ public class AsmVerify extends BaseCmd {
                                         + method.desc);
                                 if (detail) {
                                     ex.printStackTrace(System.err);
-                                    printAnalyzerResult(method, a, new PrintWriter(System.err));
+                                    printAnalyzerResult(method, a, new PrintWriter(new OutputStreamWriter(System.err, StandardCharsets.UTF_8)));
                                 }
                             }
                         }

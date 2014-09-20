@@ -25,12 +25,10 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
@@ -134,7 +132,7 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
                 cn.version = versions[classVersion];
             }
             if (dump) {
-                new JasminDumper(new PrintWriter(System.out, true)).dump(cn);
+                new JasminDumper(new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8), true)).dump(cn);
             }
             cn.accept(cw);
             Path clzFile = output.resolve(cn.name.replace('.', '/') + ".class");

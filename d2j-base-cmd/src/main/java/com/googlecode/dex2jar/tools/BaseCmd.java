@@ -18,6 +18,7 @@ package com.googlecode.dex2jar.tools;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,6 +27,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
@@ -443,7 +445,7 @@ public abstract class BaseCmd {
     }
 
     protected void usage() {
-        PrintWriter out = new PrintWriter(System.err, true);
+        PrintWriter out = new PrintWriter(new OutputStreamWriter(System.err, StandardCharsets.UTF_8), true);
 
         final int maxLength = 80;
         final int maxPaLength = 40;
