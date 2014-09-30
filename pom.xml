@@ -1,27 +1,30 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.googlecode.dex2jar</groupId>
+    <groupId>com.googlecode.d2j</groupId>
     <artifactId>dex2jar</artifactId>
     <packaging>pom</packaging>
     <name>dex2jar</name>
-    <version>1.1</version>
+    <version>2.0</version>
     <description>A tool for converting Android .dex format to Java .class format</description>
     <url>http://code.google.como/p/dex2jar/</url>
 
     <modules>
+        <module>dex-reader-api</module>
         <module>dex-reader</module>
+        <module>dex-writer</module>
         <module>dex-translator</module>
         <module>dex-ir</module>
         <module>dex-tools</module>
-        <module>commons-lite</module>
-        <module>jar-rename</module>
+        <module>d2j-smali</module>
+        <module>d2j-base-cmd</module>
+        <module>d2j-jasmin</module>
     </modules>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.8.2</version>
+            <version>4.11</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -50,8 +53,8 @@
                 <version>3.0</version>
                 <configuration>
                     <compilerId>eclipse</compilerId>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                     <optimize>true</optimize>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
@@ -100,49 +103,18 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.2</version>
                 <configuration>
-                    <target>
-                        <taskdef
-                            resource="net/sf/antcontrib/antcontrib.properties"
-                            classpathref="maven.plugin.classpath" />
-                        <if>
-                            <available file=".hg/hgrc" />
-                            <then>
-                                <echo>call hg kwexpand</echo>
-                                <echo file=".hg/hgrc">
-<![CDATA[
-[paths]
-default = https://dex2jar.googlecode.com/hg
-[extensions]
-keyword =
-[keyword]
-**.java =
-[keywordmaps]
-Rev = {node|short}
-]]>
-                                </echo>
-                                <exec executable="hg">
-                                    <arg value="kwexpand" />
-                                </exec>
-                            </then>
-                        </if>
-                    </target>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Implementation-Build>${maven.build.timestamp}</Implementation-Build>
+                        </manifestEntries>
+                    </archive>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>ant-contrib</groupId>
-                        <artifactId>ant-contrib</artifactId>
-                        <version>1.0b3</version>
-                        <exclusions>
-                            <exclusion>
-                                <groupId>ant</groupId>
-                                <artifactId>ant</artifactId>
-                            </exclusion>
-                        </exclusions>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>

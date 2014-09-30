@@ -15,34 +15,30 @@
  */
 package com.googlecode.dex2jar.test;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
-import java.net.URLClassLoader;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
@@ -50,18 +46,24 @@ import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.BasicVerifier;
 import org.objectweb.asm.tree.analysis.Frame;
-import org.objectweb.asm.util.AbstractVisitor;
 import org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.util.Printer;
+import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
-import com.googlecode.dex2jar.DexException;
-import com.googlecode.dex2jar.reader.DexFileReader;
-import com.googlecode.dex2jar.v3.V3;
-import com.googlecode.dex2jar.v3.V3MethodAdapter;
-import com.googlecode.dex2jar.visitors.DexClassVisitor;
-import com.googlecode.dex2jar.visitors.DexFieldVisitor;
-import com.googlecode.dex2jar.visitors.DexMethodVisitor;
-import com.googlecode.dex2jar.visitors.EmptyVisitor;
+import com.android.dx.dex.DexOptions;
+import com.android.dx.dex.cf.CfOptions;
+import com.android.dx.dex.cf.CfTranslator;
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.DexException;
+import com.googlecode.d2j.dex.ClassVisitorFactory;
+import com.googlecode.d2j.dex.Dex2Asm;
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexFileNode;
+import com.googlecode.d2j.node.DexMethodNode;
+import com.googlecode.d2j.reader.zip.ZipUtil;
+import com.googlecode.d2j.smali.BaksmaliDumper;
+import com.googlecode.d2j.visitors.DexClassVisitor;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
@@ -69,20 +71,6 @@ import com.googlecode.dex2jar.visitors.EmptyVisitor;
  */
 @Ignore
 public abstract class TestUtils {
-
-    static Field buf;
-
-    static {
-        try {
-            buf = AbstractVisitor.class.getDeclaredField("buf");
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        }
-        buf.setAccessible(true);
-
-    }
 
     public static void breakPoint() {
     }
@@ -94,11 +82,9 @@ public abstract class TestUtils {
             if (entry.getName().endsWith(".class")) {
                 StringWriter sw = new StringWriter();
                 // PrintWriter pw = new PrintWriter(sw);
-                InputStream is = zipFile.getInputStream(entry);
-                try {
-                    verify(new ClassReader(IOUtils.toByteArray(is)));
-                } finally {
-                    IOUtils.closeQuietly(is);
+
+                try (InputStream is = zipFile.getInputStream(entry)) {
+                    verify(new ClassReader(ZipUtil.toByteArray(is)));
                 }
                 Assert.assertTrue(sw.toString(), sw.toString().length() == 0);
             }
@@ -117,14 +103,24 @@ public abstract class TestUtils {
         return dex(Arrays.asList(files), distFile);
     }
 
-    public static File dex(List<File> files, File distFile) throws Exception {
-        String dxJar = "src/test/resources/dx.jar";
-        File dxFile = new File(dxJar);
-        if (!dxFile.exists()) {
-            throw new RuntimeException("dx.jar文件不存在");
+    public static File dexP(List<Path> files, File distFile) throws Exception {
+        Class<?> c = com.android.dx.command.Main.class;
+        Method m = c.getMethod("main", String[].class);
+
+        if (distFile == null) {
+            distFile = File.createTempFile("dex", ".dex");
         }
-        URLClassLoader cl = new URLClassLoader(new URL[] { dxFile.toURI().toURL() });
-        Class<?> c = cl.loadClass("com.android.dx.command.Main");
+        List<String> args = new ArrayList<String>();
+        args.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + distFile.getCanonicalPath()));
+        for (Path f : files) {
+            args.add(f.toAbsolutePath().toString());
+        }
+        m.invoke(null, new Object[] { args.toArray(new String[0]) });
+        return distFile;
+    }
+
+    public static File dex(List<File> files, File distFile) throws Exception {
+        Class<?> c = com.android.dx.command.Main.class;
         Method m = c.getMethod("main", String[].class);
 
         if (distFile == null) {
@@ -144,48 +140,66 @@ public abstract class TestUtils {
         return n == -1 ? name : "o";
     }
 
-    public static Collection<File> listTestDexFiles() {
-        return listTestDexFiles(false);
+    public static List<Path> listTestDexFiles() {
+
+        Class<?> testClass = TestUtils.class;
+        URL url = testClass.getResource("/" + testClass.getName().replace('.', '/') + ".class");
+        Assert.assertNotNull(url);
+
+        final String fileStr = url.getFile();
+        Assert.assertNotNull(fileStr);
+        String dirx = fileStr.substring(0, fileStr.length() - testClass.getName().length() - ".class".length());
+
+        System.out.println("dirx is " + dirx);
+
+        File file = new File(dirx, "dexes");
+
+        return listPath(file, ".apk", ".dex", ".zip");
     }
 
-    /**
-     * construct a DexFileReader and set apiLevel if possible
-     * 
-     * @param f
-     * @return
-     * @throws IOException
-     */
-    public static DexFileReader initDexFileReader(File f) throws IOException {
-        DexFileReader r = new DexFileReader(f);
-        if (r.isOdex()) {
-            try {
-                r.setApiLevel(Integer.parseInt(f.getParentFile().getName()));
-            } catch (Exception ignore) {
-            }
-        }
-        return r;
-    }
+    public static List<Path> listPath(File file, final String... exts) {
+        final List<Path> list = new ArrayList<>();
 
-    public static Collection<File> listTestDexFiles(boolean withOdex) {
-        File file = new File("target/test-classes/dexes");
-        List<File> list = new ArrayList<File>();
-        if (file.exists()) {
-            list.addAll(FileUtils.listFiles(file, new String[] { "dex", "zip", "apk", "odex" }, false));
-        }
-        if (withOdex) {
-            list = new ArrayList<File>();
-            file = new File("target/test-classes/odexes");
-            if (file.exists()) {
-                list.addAll(FileUtils.listFiles(file, new String[] { "odex" }, true));
-            }
+        try {
+            Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String name = file.getFileName().toString();
+                    boolean add = false;
+                    for (String ext : exts) {
+                        if (name.endsWith(ext)) {
+                            add = true;
+                            break;
+                        }
+                    }
+                    if (add) {
+                        list.add(file);
+                    }
+                    return super.visitFile(file, attrs);
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return list;
+    }
+
+    static Field buf;
+    static {
+        try {
+            buf = Printer.class.getDeclaredField("buf");
+        } catch (NoSuchFieldException | SecurityException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        buf.setAccessible(true);
     }
 
     static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)
             throws IllegalArgumentException, IllegalAccessException {
         Frame[] frames = a.getFrames();
-        TraceMethodVisitor mv = new TraceMethodVisitor();
+        Textifier t = new Textifier();
+        TraceMethodVisitor mv = new TraceMethodVisitor(t);
         String format = "%05d %-" + (method.maxStack + method.maxLocals + 6) + "s|%s";
         for (int j = 0; j < method.instructions.size(); ++j) {
             method.instructions.get(j).accept(mv);
@@ -203,11 +217,11 @@ public abstract class TestUtils {
                     s.append(getShortName(f.getStack(k).toString()));
                 }
             }
-            pw.printf(format, j, s, buf.get(mv)); // mv.text.get(j));
+            pw.printf(format, j, s, buf.get(t)); // mv.text.get(j));
         }
         for (int j = 0; j < method.tryCatchBlocks.size(); ++j) {
             ((TryCatchBlockNode) method.tryCatchBlocks.get(j)).accept(mv);
-            pw.print(" " + buf.get(mv));
+            pw.print(" " + buf.get(t));
         }
         pw.println();
         pw.flush();
@@ -261,36 +275,71 @@ public abstract class TestUtils {
     }
 
     public static byte[] testDexASMifier(Class<?> clz, String methodName, String generateClassName) throws Exception {
-        final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        cw.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, generateClassName, null, "java/lang/Object", null);
-        EmptyVisitor em = new EmptyVisitor() {
-            public DexMethodVisitor visitMethod(int accessFlags, com.googlecode.dex2jar.Method method) {
-                return new V3MethodAdapter(accessFlags, method, null, V3.OPTIMIZE_SYNCHRONIZED | V3.TOPOLOGICAL_SORT) {
-                    @Override
-                    public void visitEnd() {
-                        super.visitEnd();
-                        methodNode.accept(cw);
-                    }
-                };
-            }
-
-            @Override
-            public DexFieldVisitor visitField(int accessFlags, com.googlecode.dex2jar.Field field, Object value) {
-                FieldVisitor fv = cw.visitField(accessFlags, field.getName(), field.getType(), null, value);
-                fv.visitEnd();
-                return null;
-            }
-        };
+        DexClassNode clzNode = new DexClassNode(DexConstants.ACC_PUBLIC, "L" + generateClassName + ";",
+                "Ljava/lang/Object;", null);
         Method m = clz.getMethod(methodName, DexClassVisitor.class);
         if (m == null) {
             throw new java.lang.NoSuchMethodException(methodName);
         }
         m.setAccessible(true);
-        m.invoke(null, em);
+        if (Modifier.isStatic(m.getModifiers())) {
+            m.invoke(null, clzNode);
+        } else {
+            m.invoke(clz.newInstance(), clzNode);
+        }
+        return translateAndCheck(clzNode);
+    }
+
+    public static byte[] translateAndCheck(DexFileNode fileNode, DexClassNode clzNode) throws AnalyzerException,
+            IllegalAccessException {
+        // 1. convert to .class
+        Dex2Asm dex2Asm = new Dex2Asm() {
+            @Override
+            public void convertCode(DexMethodNode methodNode, MethodVisitor mv) {
+                try {
+                    super.convertCode(methodNode, mv);
+                } catch (Exception ex) {
+                    BaksmaliDumper d = new BaksmaliDumper();
+                    try {
+                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(System.err, "UTF-8"));
+                        d.baksmaliMethod(methodNode, out);
+                        out.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    throw new DexException(ex, "fail convert code %s", methodNode.method);
+                }
+            }
+        };
+        final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        ClassVisitorFactory cvf = new ClassVisitorFactory() {
+            @Override
+            public ClassVisitor create(String classInternalName) {
+                return cw;
+            }
+        };
+        if (fileNode != null) {
+            dex2Asm.convertClass(clzNode, cvf, fileNode);
+        } else {
+            dex2Asm.convertClass(clzNode, cvf);
+        }
         byte[] data = cw.toByteArray();
+
+        // 2. verify .class
         ClassReader cr = new ClassReader(data);
         TestUtils.verify(cr);
+
+        // 3. convert back to dex
+        CfOptions cfOptions = new CfOptions();
+        cfOptions.strictNameCheck = false;
+        DexOptions dexOptions = new DexOptions();
+
+        CfTranslator.translate("", data, cfOptions, dexOptions);
         return data;
+    }
+
+    public static byte[] translateAndCheck(DexClassNode clzNode) throws AnalyzerException, IllegalAccessException {
+        return translateAndCheck(null, clzNode);
     }
 
     public static Class<?> defineClass(String type, byte[] data) {

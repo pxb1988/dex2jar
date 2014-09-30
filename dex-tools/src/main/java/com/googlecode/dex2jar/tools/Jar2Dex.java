@@ -17,32 +17,25 @@
 package com.googlecode.dex2jar.tools;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-
-import p.rn.util.FileOut;
-import p.rn.util.FileOut.OutHandler;
-import p.rn.util.FileWalker;
-import p.rn.util.FileWalker.OutAdapter;
-
+@BaseCmd.Syntax(cmd = "d2j-jar2dex", syntax = "[options] <dir>", desc = "Convert jar to dex by invoking dx.")
 public class Jar2Dex extends BaseCmd {
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new Jar2Dex().doMain(args);
     }
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
     @Opt(opt = "o", longOpt = "output", description = "output .dex file, default is $current_dir/[jar-name]-jar2dex.dex", argName = "out-dex-file")
-    private File output;
-
-    public Jar2Dex() {
-        super("d2j-jar2dex [options] <dir>", "Convert jar to dex by invoking dx.");
-    }
+    private Path output;
 
     @Override
     protected void doCommandLine() throws Exception {
@@ -51,52 +44,64 @@ public class Jar2Dex extends BaseCmd {
             return;
         }
 
-        File jar = new File(remainingArgs[0]);
-        if (!jar.exists()) {
+        Path jar = new File(remainingArgs[0]).toPath();
+        if (!Files.exists(jar)) {
             System.err.println(jar + " is not exists");
             usage();
             return;
         }
 
         if (output == null) {
-            if (jar.isDirectory()) {
-                output = new File(jar.getName() + "-jar2dex.dex");
+            if (Files.isDirectory(jar)) {
+                output = new File(jar.getFileName() + "-jar2dex.dex").toPath();
             } else {
-                output = new File(FilenameUtils.getBaseName(jar.getName()) + "-jar2dex.dex");
+                output = new File(getBaseName(jar.getFileName().toString()) + "-jar2dex.dex").toPath();
             }
         }
 
-        if (output.exists() && !forceOverwrite) {
+        if (Files.exists(output) && !forceOverwrite) {
             System.err.println(output + " exists, use --force to overwrite");
             usage();
             return;
         }
 
-        File realJar;
-        if (jar.isDirectory()) {
-            realJar = File.createTempFile("d2j", ".jar");
-            realJar.deleteOnExit();
-            System.out.println("zipping " + jar + " -> " + realJar);
-            OutHandler out = FileOut.create(realJar, true);
-            try {
-                new FileWalker().withStreamHandler(new OutAdapter(out)).walk(jar);
-            } finally {
-                IOUtils.closeQuietly(out);
+        Path tmp = null;
+        final Path realJar;
+        try {
+            if (Files.isDirectory(jar)) {
+                realJar = Files.createTempFile("d2j", ".jar");
+                tmp = realJar;
+                System.out.println("zipping " + jar + " -> " + realJar);
+                try (FileSystem fs = createZip(realJar)) {
+                    final Path outRoot = fs.getPath("/");
+                    walkJarOrDir(jar, new FileVisitorX() {
+                        @Override
+                        public void visitFile(Path file, Path relative) throws IOException {
+                            if (file.getFileName().toString().endsWith(".class")) {
+                                Files.copy(file, outRoot.resolve(relative));
+                            }
+                        }
+                    });
+                }
+            } else {
+                realJar = jar;
             }
-        } else {
-            realJar = jar;
+
+            System.out.println("jar2dex " + realJar + " -> " + output);
+
+            Class<?> c = Class.forName("com.android.dx.command.Main");
+            Method m = c.getMethod("main", String[].class);
+
+            List<String> ps = new ArrayList<String>();
+            ps.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + output.toAbsolutePath().toString(), realJar
+                    .toAbsolutePath().toString()));
+            System.out.println("call com.android.dx.command.Main.main" + ps);
+            m.invoke(null, new Object[] { ps.toArray(new String[ps.size()]) });
+        } finally {
+            if (tmp != null) {
+                Files.deleteIfExists(tmp);
+            }
         }
 
-        System.out.println("jar2dex " + realJar + " -> " + output);
-
-        Class<?> c = Class.forName("com.android.dx.command.Main");
-        Method m = c.getMethod("main", String[].class);
-
-        List<String> ps = new ArrayList<String>();
-        ps.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + output.getCanonicalPath(),
-                realJar.getCanonicalPath()));
-        System.out.println("call com.android.dx.command.Main.main" + ps);
-        m.invoke(null, new Object[] { ps.toArray(new String[0]) });
     }
-
 }

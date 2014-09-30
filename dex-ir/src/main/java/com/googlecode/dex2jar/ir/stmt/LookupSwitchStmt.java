@@ -15,9 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
-
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value;
 
 /**
  * Represent a LOOKUP_SWITCH statement
@@ -31,7 +30,7 @@ public class LookupSwitchStmt extends BaseSwitchStmt {
 
     public int[] lookupValues;
 
-    public LookupSwitchStmt(ValueBox key, int[] lookupValues, LabelStmt[] targets, LabelStmt defaultTarget) {
+    public LookupSwitchStmt(Value key, int[] lookupValues, LabelStmt[] targets, LabelStmt defaultTarget) {
         super(ST.LOOKUP_SWITCH, key);
         this.lookupValues = lookupValues;
         this.targets = targets;
@@ -39,16 +38,15 @@ public class LookupSwitchStmt extends BaseSwitchStmt {
     }
 
     @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
+    public Stmt clone(LabelAndLocalMapper mapper) {
         LabelStmt[] nTargets = new LabelStmt[targets.length];
         for (int i = 0; i < nTargets.length; i++) {
-            nTargets[i] = cloneLabel(map, targets[i]);
+            nTargets[i] = mapper.map(targets[i]);
         }
         int nLookupValues[] = new int[lookupValues.length];
         System.arraycopy(lookupValues, 0, nLookupValues, 0, nLookupValues.length);
 
-        return new LookupSwitchStmt(new ValueBox(op.value.clone()), nLookupValues, nTargets, cloneLabel(map,
-                defaultTarget));
+        return new LookupSwitchStmt(op.clone(mapper), nLookupValues, nTargets, mapper.map(defaultTarget));
     }
 
     @Override

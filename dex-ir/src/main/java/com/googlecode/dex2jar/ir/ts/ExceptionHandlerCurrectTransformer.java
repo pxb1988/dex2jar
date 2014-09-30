@@ -15,42 +15,58 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
-import org.objectweb.asm.Type;
-
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.Local;
 import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.Value.VT;
 import com.googlecode.dex2jar.ir.expr.Exprs;
-import com.googlecode.dex2jar.ir.stmt.AssignStmt;
-import com.googlecode.dex2jar.ir.stmt.JumpStmt;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.Value.VT;
+import com.googlecode.dex2jar.ir.stmt.GotoStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * issue 63
+ * <p/>
  * 
  * <pre>
- * L1: 
+ * L1:
  *    STMTs
  * L2:
  *    RETURN
  * L1~L2 > L2 Exception
  * </pre>
- * 
+ * <p/>
  * currect to
+ * <p/>
  * 
  * <pre>
- * L1: 
+ * L1:
  *    STMTs
- *    GOTO L3
  * L2:
- *    MOVE-EXCEPTION
- * L3:
  *    RETURN
- * L1~L2 > L2 Exception
+ * L3:
+ *    MOVE-EXCEPTION
+ *    GOTO L2:
+ * L1~L2 > L3 Exception
+ * </pre>
+ * 
+ * we insert MOVE-EXCEPTION at tail of code to prevent the following
+ * 
+ * <pre>
+ *     L1:
+ *        ...
+ *        goto L2:
+ *        ...
+ *     L2:
+ *        return;
+ *     L1~L2 > L3 Exception
  * </pre>
  * 
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
@@ -60,50 +76,53 @@ public class ExceptionHandlerCurrectTransformer implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
+        if (irMethod.traps.size() == 0) {
+            return;
+        }
         Local ex = null;
+        Set<LabelStmt> handlers=new HashSet<>();
+        Map<LabelStmt, LabelStmt> newLocations = new HashMap<>();
         for (Trap t : irMethod.traps) {
             for (int i = 0; i < t.handlers.length; i++) {
                 LabelStmt handler = t.handlers[i];
-                Type type = t.types[i];
                 Stmt st = handler.getNext();
-                Stmt pre = handler.getPre();
                 while (st.st == ST.LABEL) {
                     st = st.getNext();
                 }
-                while (pre.st == ST.LABEL) {
-                    pre = pre.getPre();
-                }
-                if (needInsertMoveExceptionRef(st) && needInsertGoto(pre)) {
+                LabelStmt x = (LabelStmt) st.getPre();
+                if (needInsertMoveExceptionRef(st)) {
+                    LabelStmt newHandler = newLocations.get(x);
+                    if (newHandler == null) {
+                        if (ex == null) {
+                            ex = Exprs.nLocal("unRefEx");
+                        }
 
-                    LabelStmt lbl = Stmts.nLabel();
-                    JumpStmt g = Stmts.nGoto(lbl);
-                    irMethod.stmts.insertAfter(pre, g);
-                    irMethod.stmts.insertBefore(st, lbl);
-                    if (ex == null) {
-                        ex = Exprs.nLocal("unRefEx");
+                        newHandler = Stmts.nLabel();
+                        GotoStmt g = Stmts.nGoto(x);
+
+                        irMethod.stmts.add(newHandler);
+                        irMethod.stmts.add(Stmts.nIdentity(ex, Exprs.nExceptionRef("Ljava/lang/Throwable;")));
+                        irMethod.stmts.add(g);
+                        newLocations.put(x, newHandler);
                     }
-                    irMethod.stmts.insertBefore(lbl, Stmts.nAssign(ex, Exprs.nExceptionRef(type)));
+                    t.handlers[i] = newHandler;
+                } else if (x != handler) {
+                    t.handlers[i] = x;
                 }
+                handlers.add(t.handlers[i]);
             }
         }
+        newLocations.clear();
         if (ex != null) {
             irMethod.locals.add(ex);
         }
-    }
 
-    private boolean needInsertGoto(Stmt pre) {
-        switch (pre.st) {
-        case RETURN:
-        case GOTO:
-        case RETURN_VOID:
-        case THROW:
-            return false;
-        }
-        return true;
+
+
     }
 
     private boolean needInsertMoveExceptionRef(Stmt st) {
-        return st.st != ST.ASSIGN || ((AssignStmt) st).op2.value.vt != VT.EXCEPTION_REF;
+        return st.st != ST.IDENTITY || st.getOp2().vt != VT.EXCEPTION_REF;
     }
 
 }

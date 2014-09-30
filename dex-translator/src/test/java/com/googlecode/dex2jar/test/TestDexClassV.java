@@ -1,16 +1,16 @@
 package com.googlecode.dex2jar.test;
 
+import com.googlecode.d2j.node.DexMethodNode;
 import org.junit.Ignore;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 
-import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.v3.V3MethodAdapter;
-import com.googlecode.dex2jar.visitors.DexMethodVisitor;
-import com.googlecode.dex2jar.visitors.EmptyVisitor;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.visitors.DexClassVisitor;
+import com.googlecode.d2j.visitors.DexMethodVisitor;
 
 @Ignore
-public class TestDexClassV extends EmptyVisitor {
+public class TestDexClassV extends DexClassVisitor {
     private int config;
     private ClassWriter cw;
 
@@ -28,12 +28,13 @@ public class TestDexClassV extends EmptyVisitor {
 
     @Override
     public DexMethodVisitor visitMethod(int accessFlags, Method method) {
-        return new V3MethodAdapter(accessFlags, method, null, config) {
+        return new DexMethodNode(accessFlags, method) {
 
             @Override
             public void visitEnd() {
                 super.visitEnd();
-                methodNode.accept(cw);
+                // FIXME impl
+                //methodNode.accept(cw);
             }
         };
     }

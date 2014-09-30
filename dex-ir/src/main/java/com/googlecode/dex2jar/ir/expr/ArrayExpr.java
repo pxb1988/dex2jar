@@ -15,9 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.E2Expr;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value.E2Expr;
 
 /**
  * Represent an Array expression
@@ -33,17 +32,25 @@ public class ArrayExpr extends E2Expr {
         super(VT.ARRAY, null, null);
     }
 
-    public ArrayExpr(Value base, Value index) {
-        super(VT.ARRAY, new ValueBox(base), new ValueBox(index));
+    public String elementType;
+
+    public ArrayExpr(Value base, Value index, String elementType) {
+        super(VT.ARRAY, base, index);
+        this.elementType = elementType;
     }
 
     @Override
     public Value clone() {
-        return new ArrayExpr(op1.value.clone(), op2.value.clone());
+        return new ArrayExpr(op1.trim().clone(), op2.trim().clone(), this.elementType);
     }
 
     @Override
-    public String toString() {
+    public Value clone(LabelAndLocalMapper mapper) {
+        return new ArrayExpr(op1.clone(mapper), op2.clone(mapper), this.elementType);
+    }
+
+    @Override
+    public String toString0() {
         return op1 + "[" + op2 + "]";
     }
 }

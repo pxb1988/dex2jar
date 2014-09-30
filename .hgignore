@@ -1,6 +1,8 @@
 syntax: glob
 */target/*
 target/*
+*/build
+build
 */.project
 */.classpath
 */.*

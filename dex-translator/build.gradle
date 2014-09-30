@@ -1,0 +1,16 @@
+description = 'Dex Translator'
+
+dependencies {
+  compile project(':dex-reader')
+  compile project(':dex-ir')
+  compile project(':d2j-base-cmd')
+  compile group: 'org.ow2.asm', name: 'asm-debug-all', version:'4.1'
+  provided "com.google.android.tools:dx:1.7"
+  testCompile project(':d2j-smali')
+}
+
+sourceSets {
+  test {
+    output.resourcesDir = "build/classes/test"
+  }
+}

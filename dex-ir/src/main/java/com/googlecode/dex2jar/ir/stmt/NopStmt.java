@@ -15,10 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
-
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E0Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 
 /**
  * Represent a NOP statement
@@ -35,7 +33,7 @@ public class NopStmt extends E0Stmt {
     }
 
     @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
+    public Stmt clone(LabelAndLocalMapper mapper) {
         return new NopStmt();
     }
 

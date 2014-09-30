@@ -18,37 +18,22 @@ package com.googlecode.dex2jar.tools;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-import org.objectweb.asm.ClassAdapter;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 
-import p.rn.util.FileOut;
-import p.rn.util.FileOut.OutHandler;
-import p.rn.util.FileWalker;
-import p.rn.util.FileWalker.StreamHandler;
-import p.rn.util.FileWalker.StreamOpener;
-
-public class JarAccessCmd extends BaseCmd {
-    public static void main(String[] args) {
+@BaseCmd.Syntax(cmd = "d2j-jar-access", syntax = "[options] <jar>", desc = "add or remove class/method/field access in jar file")
+public class JarAccessCmd extends BaseCmd implements Opcodes {
+    public static void main(String... args) {
         new JarAccessCmd().doMain(args);
-    }
-
-    public JarAccessCmd() {
-        super("d2j-jar-access [options] <jar>", "add or remove class/method/field access in jar file");
     }
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
     @Opt(opt = "o", longOpt = "output", description = "output dir of .j files, default is $current_dir/[jar-name]-access.jar", argName = "out-dir")
-    private File output;
+    private Path output;
 
     @Opt(opt = "rd", longOpt = "remove-debug", hasArg = false, description = "remove debug info")
     private boolean removeDebug = false;
@@ -139,22 +124,22 @@ public class JarAccessCmd extends BaseCmd {
             return;
         }
 
-        File jar = new File(remainingArgs[0]);
-        if (!jar.exists()) {
+        Path jar = new File(remainingArgs[0]).toPath();
+        if (!Files.exists(jar)) {
             System.err.println(jar + " is not exists");
             usage();
             return;
         }
 
         if (output == null) {
-            if (jar.isDirectory()) {
-                output = new File(jar.getName() + "-access.jar");
+            if (Files.isDirectory(jar)) {
+                output = new File(jar.getFileName() + "-access.jar").toPath();
             } else {
-                output = new File(FilenameUtils.getBaseName(jar.getName()) + "-access.jar");
+                output = new File(getBaseName(jar.getFileName().toString()) + "-access.jar").toPath();
             }
         }
 
-        if (output.exists() && !forceOverwrite) {
+        if (Files.exists(output) && !forceOverwrite) {
             System.err.println(output + " exists, use --force to overwrite");
             usage();
             return;
@@ -169,24 +154,18 @@ public class JarAccessCmd extends BaseCmd {
         final int ac = str2acc(addClassAccess);
 
         final int flags = removeDebug ? ClassReader.SKIP_DEBUG : 0;
-        final OutHandler fo = FileOut.create(output, true);
-        try {
-            new FileWalker().withStreamHandler(new StreamHandler() {
 
+        try (FileSystem outFileSystem = createZip(output)) {
+            final Path outRoot = outFileSystem.getPath("/");
+            walkJarOrDir(jar, new FileVisitorX() {
                 @Override
-                public void handle(boolean isDir, String name, StreamOpener current, Object nameObject)
-                        throws IOException {
-                    if (isDir || !name.endsWith(".class")) {
-                        fo.write(isDir, name, current == null ? null : current.get(), nameObject);
-                        return;
-                    }
+                public void visitFile(Path file, Path relative) throws IOException {
+                    if (file.getFileName().toString().endsWith(".class")) {
 
-                    OutputStream os = null;
-                    try {
-                        InputStream is = current.get();
-                        final ClassReader r = new ClassReader(is);
+                        final ClassReader r = new ClassReader(Files.readAllBytes(file));
+
                         ClassWriter cr = new ClassWriter(0);
-                        r.accept(new ClassAdapter(cr) {
+                        r.accept(new ClassVisitor(ASM4, cr) {
 
                             @Override
                             public void visit(int version, int access, String name, String signature, String superName,
@@ -219,17 +198,13 @@ public class JarAccessCmd extends BaseCmd {
                             }
 
                         }, flags | ClassReader.EXPAND_FRAMES);
-                        fo.write(isDir, name, cr.toByteArray(), nameObject);
-                    } catch (IOException ioe) {
-                        System.err.println("error in " + name);
-                        ioe.printStackTrace(System.err);
-                    } finally {
-                        IOUtils.closeQuietly(os);
+                        Files.write(outRoot.resolve(relative), cr.toByteArray());
+
+                    } else {
+                        Files.copy(file, outRoot.resolve(relative));
                     }
                 }
-            }).walk(jar);
-        } finally {
-            IOUtils.closeQuietly(fo);
+            });
         }
     }
 }

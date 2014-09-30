@@ -15,20 +15,19 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
-
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
 public class UnopStmt extends E1Stmt {
 
-    public UnopStmt(ST type, ValueBox op) {
+    public UnopStmt(ST type, Value op) {
         super(type, op);
     }
 
     @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
-        return new UnopStmt(st, new ValueBox(op.value.clone()));
+    public Stmt clone(LabelAndLocalMapper mapper) {
+        return new UnopStmt(st, op.clone(mapper));
     }
 
     @Override
@@ -42,8 +41,10 @@ public class UnopStmt extends E1Stmt {
             return "throw " + op;
         case RETURN:
             return "return " + op;
+        case LOCAL_END:
+            return op + " ::END";
+        default:
         }
         return super.toString();
     }
-
 }

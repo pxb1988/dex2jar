@@ -16,22 +16,15 @@
  */
 package com.googlecode.dex2jar.tools;
 
+import com.googlecode.d2j.tools.jar.InitOut;
+
 import java.io.File;
 
-import org.apache.commons.io.FilenameUtils;
-
-import p.rn.name.InitOut;
-
 public class DeObfInitCmd extends BaseCmd {
-    public static void main(String[] args) {
-        new DeObfInitCmd().doMain(args);
-    }
-
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
     @Opt(opt = "o", longOpt = "output", description = "output .jar file, default is $current_dir/[file-name]-deobf-init.txt", argName = "out-file")
     private File output;
-
     @Opt(opt = "min", longOpt = "min-length", description = "do the rename if the length < MIN, default is 2", argName = "MIN")
     private int min = 2;
     @Opt(opt = "max", longOpt = "max-length", description = "do the rename if the length > MIN, default is 40", argName = "MAX")
@@ -39,6 +32,10 @@ public class DeObfInitCmd extends BaseCmd {
 
     public DeObfInitCmd() {
         super("d2j-init-deobf [options] <jar>", "generate an init config file for deObfuscate a jar");
+    }
+
+    public static void main(String... args) {
+        new DeObfInitCmd().doMain(args);
     }
 
     @Override
@@ -58,7 +55,7 @@ public class DeObfInitCmd extends BaseCmd {
             if (jar.isDirectory()) {
                 output = new File(jar.getName() + "-deobf-init.txt");
             } else {
-                output = new File(FilenameUtils.getBaseName(jar.getName()) + "-deobf-init.txt");
+                output = new File(getBaseName(jar.getName()) + "-deobf-init.txt");
             }
         }
 
@@ -68,7 +65,7 @@ public class DeObfInitCmd extends BaseCmd {
             return;
         }
         System.out.println("generate " + jar + " -> " + output);
-        new InitOut().from(jar).maxLength(max).minLength(min).to(output);
+        new InitOut().from(jar).maxLength(max).minLength(min).to(output.toPath());
     }
 
 }

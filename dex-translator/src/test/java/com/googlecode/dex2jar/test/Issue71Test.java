@@ -17,36 +17,35 @@ package com.googlecode.dex2jar.test;
 
 import org.junit.Test;
 
-import com.googlecode.dex2jar.DexOpcodes;
-import com.googlecode.dex2jar.Method;
-import com.googlecode.dex2jar.visitors.DexClassVisitor;
-import com.googlecode.dex2jar.visitors.DexCodeVisitor;
-import com.googlecode.dex2jar.visitors.DexMethodVisitor;
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.visitors.DexClassVisitor;
+import com.googlecode.d2j.visitors.DexCodeVisitor;
+import com.googlecode.d2j.visitors.DexMethodVisitor;
+import org.junit.runner.RunWith;
+
+import static com.googlecode.d2j.reader.Op.*;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * 
  */
-public class Issue71Test implements DexOpcodes {
+@RunWith(DexTranslatorRunner.class)
+public class Issue71Test implements DexConstants {
+    @Test
     public static void i71(DexClassVisitor cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_STATIC, new Method("La;", "test", new String[] {}, "V"));
         if (mv != null) {
             DexCodeVisitor code = mv.visitCode();
             if (code != null) {
-                code.visitArguments(2, new int[] {});
-                code.visitConstStmt(OP_CONST, 0, 0L, TYPE_WIDE);
-                code.visitConstStmt(OP_CONST, 1, 2L, TYPE_WIDE);
-                code.visitBinopStmt(OP_ADD, 0, 0, 1, TYPE_LONG);
-                code.visitReturnStmt(OP_RETURN_VOID);
+                code.visitRegister(2);
+                code.visitConstStmt(CONST_WIDE, 0, 0L);
+                code.visitConstStmt(CONST_WIDE, 1, 2L);
+                code.visitStmt3R(ADD_LONG, 0, 0, 1);
+                code.visitStmt0R(RETURN_VOID);
                 code.visitEnd();
             }
             mv.visitEnd();
         }
     }
-
-    @Test
-    public void shortTest() throws Exception {
-        TestUtils.testDexASMifier(getClass(), "i71");
-    }
-
 }

@@ -1,0 +1,8 @@
+description = 'Dex Reader'
+
+dependencies {
+    compile project(':dex-reader-api')
+    testCompile (group: 'org.apache.commons', name: 'commons-compress', version:'1.4.1')
+}
+
+

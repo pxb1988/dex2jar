@@ -15,52 +15,58 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
-import org.objectweb.asm.Type;
-
-import com.googlecode.dex2jar.ir.ToStringUtil;
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.E1Expr;
-import com.googlecode.dex2jar.ir.Value.VT;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value.E1Expr;
 
 /**
- * Represent a Field expression. represent a static file if op is null
+ * Represent a non-static Field expression.
  * 
  * @see VT#FIELD
  * 
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
- * @version $Rev$
+ * @version $Rev: 9fd8005bbaa4 $
  */
 public class FieldExpr extends E1Expr {
 
     /**
      * Field name
      */
-    public String fieldName;
+    public String name;
     /**
-     * Field owner type
+     * Field owner type descriptor
      */
-    public Type fieldOwnerType;
+    public String owner;
     /**
-     * Field type
+     * Field type descriptor
      */
-    public Type fieldType;
+    public String type;
 
-    public FieldExpr(ValueBox object, Type ownerType, String fieldName, Type fieldType) {
+    public FieldExpr(Value object, String ownerType, String fieldName, String fieldType) {
         super(VT.FIELD, object);
-        this.fieldType = fieldType;
-        this.fieldName = fieldName;
-        this.fieldOwnerType = ownerType;
+        this.type = fieldType;
+        this.name = fieldName;
+        this.owner = ownerType;
+    }
+
+    @Override
+    protected void releaseMemory() {
+        name = null;
+        owner = type = null;
+        super.releaseMemory();
     }
 
     @Override
     public Value clone() {
-        return new FieldExpr(op == null ? null : new ValueBox(op.value.clone()), fieldOwnerType, fieldName, fieldType);
+        return new FieldExpr(op.trim().clone(), owner, name, type);
+    }
+    @Override
+    public Value clone(LabelAndLocalMapper mapper) {
+        return new FieldExpr(op.clone(mapper), owner, name, type);
     }
 
     @Override
-    public String toString() {
-        return (op == null ? ToStringUtil.toShortClassName(fieldOwnerType) : op) + "." + fieldName;
+    public String toString0() {
+        return op + "." + name;
     }
 
 }

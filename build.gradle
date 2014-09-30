@@ -1,0 +1,60 @@
+allprojects  {
+  apply plugin: 'maven'
+  apply plugin: 'idea'
+  apply plugin: 'eclipse'
+  group = 'com.googlecode.d2j'
+  version = '2.0'
+}
+
+subprojects {
+  apply plugin: 'java'
+  apply plugin: 'maven'
+  sourceCompatibility = 1.7
+  targetCompatibility = 1.7
+
+  task packageSources(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
+  artifacts.archives packageSources
+  repositories {
+    mavenCentral()
+  }
+
+// == support provided scope
+  configurations {
+    provided
+  }
+  sourceSets {
+      main { compileClasspath += configurations.provided }
+      test { compileClasspath += configurations.provided }
+  }
+
+  test.classpath += configurations.provided
+// == end
+
+// TODO gradle 2.0 fail on 'Compile'
+//  tasks.withType(Compile) {
+//    options.encoding = 'UTF-8'
+//  }
+  [compileJava, compileTestJava]*.options.collect {options ->options.encoding = 'UTF-8'}
+    dependencies {
+    testCompile group: 'junit', name: 'junit', version:'4.11'
+  }
+
+  jar {
+    manifest {
+      attributes("Implementation-Title": project.name,
+                 "Implementation-Version": project.version,
+                 "Build-Time": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                 "Revision": System.env.BUILD_REVISION?System.env.BUILD_REVISION:System.env.MERCURIAL_REVISION?System.env.MERCURIAL_REVISION:"HEAD",
+                 "Build-Number": System.env.BUILD_NUMBER?System.env.BUILD_NUMBER:"-1",
+      )
+    }
+    from (project.parent.projectDir)  {
+      include 'NOTICE.txt'
+      include 'LICENSE.txt'
+      into('META-INF')
+    }
+  }
+}

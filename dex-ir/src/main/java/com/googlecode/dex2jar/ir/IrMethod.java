@@ -18,8 +18,8 @@ package com.googlecode.dex2jar.ir;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.objectweb.asm.Type;
-
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 
 /**
@@ -29,35 +29,66 @@ import com.googlecode.dex2jar.ir.stmt.StmtList;
  */
 public class IrMethod {
 
-    public int access;
-    public Type[] args;
+    public boolean isStatic;
+    public String[] args;
     public List<Local> locals = new ArrayList<Local>();
     public String name;
 
-    public Type owner;
+    public String owner;
 
-    public Type ret;
+    public String ret;
 
     public StmtList stmts = new StmtList();
 
     public List<Trap> traps = new ArrayList<Trap>();
     public List<LocalVar> vars = new ArrayList<LocalVar>();
+    public List<LabelStmt> phiLabels;
+
+    public IrMethod clone() {
+        IrMethod n = new IrMethod();
+        LabelAndLocalMapper mapper = new LabelAndLocalMapper();
+        n.name = name;
+        n.args = args;
+        n.isStatic = isStatic;
+        n.owner = owner;
+        n.ret = ret;
+        n.stmts = stmts.clone(mapper);
+        for (Trap trap : traps) {
+            n.traps.add(trap.clone(mapper));
+        }
+        for (LocalVar var : vars) {
+            n.vars.add(var.clone(mapper));
+        }
+        if (phiLabels != null) {
+            List<LabelStmt> nPhiLabels = new ArrayList<>(phiLabels.size());
+            for (LabelStmt labelStmt : phiLabels) {
+                nPhiLabels.add(labelStmt.clone(mapper));
+            }
+            n.phiLabels = nPhiLabels;
+        }
+        for(Local local:locals){
+            n.locals.add((Local) local.clone(mapper));
+        }
+        return n;
+    }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("// ").append(this.owner == null ? null : this.owner.getClassName()).append("\n");
-        sb.append(ToStringUtil.getAccDes(access)).append(ret == null ? null : ToStringUtil.toShortClassName(ret))
-                .append(' ').append(this.name).append('(');
+        sb.append("// ").append(this.owner).append("\n");
+        if (isStatic) {
+            sb.append(" static ");
+        }
+        sb.append(ret == null ? null : Util.toShortClassName(ret)).append(' ').append(this.name).append('(');
         if (args != null) {
             boolean first = true;
-            for (Type arg : args) {
+            for (String arg : args) {
                 if (first) {
                     first = false;
                 } else {
                     sb.append(',');
                 }
-                sb.append(ToStringUtil.toShortClassName(arg));
+                sb.append(Util.toShortClassName(arg));
             }
         }
         sb.append(") {\n\n").append(stmts).append("\n");

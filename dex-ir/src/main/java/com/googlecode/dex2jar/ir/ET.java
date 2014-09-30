@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar.ir;
 
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 
 /**

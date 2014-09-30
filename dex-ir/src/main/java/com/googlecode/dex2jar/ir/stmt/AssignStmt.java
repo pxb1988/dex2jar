@@ -15,9 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
-
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 
 /**
@@ -25,19 +24,20 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
  * 
  * @see ST#ASSIGN
  * @see ST#IDENTITY
+ * @see ST#FILL_ARRAY_DATA
  * 
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
- * @version $Rev$
+ * @version $Rev: 8da5a5faa6bd $
  */
 public class AssignStmt extends E2Stmt {
 
-    public AssignStmt(ST type, ValueBox left, ValueBox right) {
+    public AssignStmt(ST type, Value left, Value right) {
         super(type, left, right);
     }
 
     @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
-        return new AssignStmt(st, new ValueBox(op1.value.clone()), new ValueBox(op2.value.clone()));
+    public Stmt clone(LabelAndLocalMapper mapper) {
+        return new AssignStmt(st, op1.clone(mapper), op2.clone(mapper));
     }
 
     @Override
@@ -45,8 +45,12 @@ public class AssignStmt extends E2Stmt {
         switch (st) {
         case ASSIGN:
             return op1 + " = " + op2;
+        case LOCAL_START:
         case IDENTITY:
             return op1 + " := " + op2;
+        case FILL_ARRAY_DATA:
+            return op1 + " <- " + op2;
+        default:
         }
         return super.toString();
     }

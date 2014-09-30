@@ -15,13 +15,9 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
-import org.objectweb.asm.Type;
-
-import com.googlecode.dex2jar.ir.ToStringUtil;
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.E1Expr;
-import com.googlecode.dex2jar.ir.Value.VT;
-import com.googlecode.dex2jar.ir.ValueBox;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.Util;
+import com.googlecode.dex2jar.ir.expr.Value.E1Expr;
 
 /**
  * Represent a Type expression
@@ -35,37 +31,54 @@ import com.googlecode.dex2jar.ir.ValueBox;
  */
 public class TypeExpr extends E1Expr {
 
-    public Type type;
+    public String type;
 
-    public TypeExpr(VT vt, Value value, Type type) {
-        super(vt, new ValueBox(value));
-        this.type = type;
+    @Override
+    protected void releaseMemory() {
+        type = null;
+        super.releaseMemory();
+    }
+
+    public TypeExpr(VT vt, Value value, String desc) {
+        super(vt, value);
+        this.type = desc;
 
     }
 
     @Override
     public Value clone() {
-        return new TypeExpr(vt, op.value.clone(), type);
+        return new TypeExpr(vt, op.trim().clone(), type);
     }
 
     @Override
-    public String toString() {
+    public Value clone(LabelAndLocalMapper mapper) {
+        return new TypeExpr(vt, op.clone(mapper), type);
+    }
+
+
+    @Override
+    public String toString0() {
         switch (super.vt) {
         case CHECK_CAST:
-            return "((" + ToStringUtil.toShortClassName(type) + ")" + op + ")";
+            return "((" + Util.toShortClassName(type) + ")" + op + ")";
         case INSTANCE_OF:
-            return "(" + op + " instanceof " + ToStringUtil.toShortClassName(type) + ")";
+            return "(" + op + " instanceof " + Util.toShortClassName(type) + ")";
         case NEW_ARRAY:
-            if (type.getSort() == Type.ARRAY) {
+            if (type.charAt(0) == '[') {
+                int dimension = 1;
+                while (type.charAt(dimension) == '[') {
+                    dimension++;
+                }
                 StringBuilder sb = new StringBuilder("new ")
-                        .append(ToStringUtil.toShortClassName(type.getElementType())).append("[").append(op)
+                        .append(Util.toShortClassName(type.substring(dimension))).append("[").append(op)
                         .append("]");
-                for (int i = 0; i < type.getDimensions(); i++) {
+                for (int i = 0; i < dimension; i++) {
                     sb.append("[]");
                 }
                 return sb.toString();
             }
-            return "new " + ToStringUtil.toShortClassName(type) + "[" + op + "]";
+            return "new " + Util.toShortClassName(type) + "[" + op + "]";
+        default:
         }
         return "UNKNOW";
     }

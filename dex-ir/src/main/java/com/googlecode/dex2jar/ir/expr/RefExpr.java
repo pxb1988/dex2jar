@@ -15,11 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
-import org.objectweb.asm.Type;
-
-import com.googlecode.dex2jar.ir.Value;
-import com.googlecode.dex2jar.ir.Value.E0Expr;
-import com.googlecode.dex2jar.ir.Value.VT;
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.expr.Value.E0Expr;
 
 /**
  * Represent a Reference expression
@@ -35,9 +32,15 @@ public class RefExpr extends E0Expr {
 
     public int parameterIndex;
 
-    public Type type;
+    public String type;
 
-    public RefExpr(VT vt, Type refType, int index) {
+    @Override
+    protected void releaseMemory() {
+        type = null;
+        super.releaseMemory();
+    }
+
+    public RefExpr(VT vt, String refType, int index) {
         super(vt);
         this.type = refType;
         this.parameterIndex = index;
@@ -47,9 +50,13 @@ public class RefExpr extends E0Expr {
     public Value clone() {
         return new RefExpr(vt, type, parameterIndex);
     }
+    @Override
+    public Value clone(LabelAndLocalMapper mapper) {
+        return new RefExpr(vt, type, parameterIndex);
+    }
 
     @Override
-    public String toString() {
+    public String toString0() {
         switch (vt) {
         case THIS_REF:
             return "@this";
@@ -57,6 +64,7 @@ public class RefExpr extends E0Expr {
             return "@parameter_" + parameterIndex;
         case EXCEPTION_REF:
             return "@Exception";
+        default:
         }
         return super.toString();
     }

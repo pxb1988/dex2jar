@@ -17,36 +17,31 @@
 package com.googlecode.dex2jar.tools;
 
 import java.io.File;
-import java.lang.reflect.Method;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
+import com.googlecode.d2j.reader.zip.ZipUtil;
+import com.googlecode.d2j.signapk.AbstractJarSign;
+import com.googlecode.d2j.signapk.SunJarSignImpl;
+import com.googlecode.d2j.signapk.TinySignImpl;
 
-import p.rn.util.FileOut;
-import p.rn.util.FileWalker;
-import p.rn.util.FileOut.OutHandler;
-import p.rn.util.FileWalker.OutAdapter;
-
+@BaseCmd.Syntax(cmd = "d2j-apk-sign", syntax = "[options] <apk>", desc = "Sign an android apk file use a test certificate.")
 public class ApkSign extends BaseCmd {
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new ApkSign().doMain(args);
     }
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
     @Opt(opt = "o", longOpt = "output", description = "output .apk file, default is $current_dir/[apk-name]-signed.apk", argName = "out-apk-file")
-    private File output;
-    @Opt(opt = "w", longOpt = "sign-whole", hasArg = false, description = "Sign whole apk file")
-    private boolean signWhole = false;
-
-    public ApkSign() {
-        super("d2j-apk-sign [options] <apk>", "Sign an android apk file use a test certificate.");
-    }
+    private Path output;
 
     @Override
     protected void doCommandLine() throws Exception {
@@ -55,60 +50,67 @@ public class ApkSign extends BaseCmd {
             return;
         }
 
-        File apkIn = new File(remainingArgs[0]);
-        if (!apkIn.exists()) {
+        Path apkIn = new File(remainingArgs[0]).toPath();
+        if (!Files.exists(apkIn)) {
             System.err.println(apkIn + " is not exists");
             usage();
             return;
         }
 
         if (output == null) {
-            if (apkIn.isDirectory()) {
-                output = new File(apkIn.getName() + "-signed.apk");
+            if (Files.isDirectory(apkIn)) {
+                output = new File(apkIn.getFileName() + "-signed.apk").toPath();
             } else {
-                output = new File(FilenameUtils.getBaseName(apkIn.getName()) + "-signed.apk");
+                output = new File(getBaseName(apkIn.getFileName().toString()) + "-signed.apk").toPath();
             }
         }
 
-        if (output.exists() && !forceOverwrite) {
+        if (Files.exists(output) && !forceOverwrite) {
             System.err.println(output + " exists, use --force to overwrite");
             usage();
             return;
         }
-        File realJar;
-        if (apkIn.isDirectory()) {
-            realJar = File.createTempFile("d2j", ".jar");
-            realJar.deleteOnExit();
-            System.out.println("zipping " + apkIn + " -> " + realJar);
-            OutHandler out = FileOut.create(realJar, true);
-            try {
-                new FileWalker().withStreamHandler(new OutAdapter(out)).walk(apkIn);
-            } finally {
-                IOUtils.closeQuietly(out);
-            }
-        } else {
-            realJar = apkIn;
-        }
-
-        CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-        X509Certificate cert = (X509Certificate) certificateFactory.generateCertificate(ApkSign.class
-                .getResourceAsStream("ApkSign.cer"));
-        KeyFactory rSAKeyFactory = KeyFactory.getInstance("RSA");
-        PrivateKey privateKey = rSAKeyFactory.generatePrivate(new PKCS8EncodedKeySpec(IOUtils.toByteArray(ApkSign.class
-                .getResourceAsStream("ApkSign.private"))));
-
-        Class<?> clz;
+        Path tmp = null;
         try {
-            clz = Class.forName("com.android.signapk.SignApk");
-        } catch (ClassNotFoundException cnfe) {
-            System.err.println("please run d2j-apk-sign in a sun compatible JRE (contains sun.security.*)");
-            return;
-        }
-        Method m = clz
-                .getMethod("sign", X509Certificate.class, PrivateKey.class, boolean.class, File.class, File.class);
-        m.setAccessible(true);
+            final Path realJar;
+            if (Files.isDirectory(apkIn)) {
+                realJar = Files.createTempFile("d2j", ".jar");
+                tmp = realJar;
+                System.out.println("zipping " + apkIn + " -> " + realJar);
+                try (FileSystem fs = createZip(realJar)) {
+                    final Path outRoot = fs.getPath("/");
+                    walkJarOrDir(apkIn, new FileVisitorX() {
+                        @Override
+                        public void visitFile(Path file, Path relative) throws IOException {
+                            Files.copy(file, outRoot);
+                        }
+                    });
+                }
+            } else {
+                realJar = apkIn;
+            }
 
-        System.out.println("sign " + realJar + " -> " + output);
-        m.invoke(null, cert, privateKey, this.signWhole, realJar, output);
+            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+            X509Certificate cert = (X509Certificate) certificateFactory.generateCertificate(ApkSign.class
+                    .getResourceAsStream("ApkSign.cer"));
+            KeyFactory rSAKeyFactory = KeyFactory.getInstance("RSA");
+            PrivateKey privateKey = rSAKeyFactory.generatePrivate(new PKCS8EncodedKeySpec(ZipUtil
+                    .toByteArray(ApkSign.class.getResourceAsStream("ApkSign.private"))));
+
+            AbstractJarSign signer;
+
+            try {
+                signer = new SunJarSignImpl(cert, privateKey);
+            } catch (Exception cnfe) {
+                signer = new TinySignImpl();
+            }
+            signer.sign(apkIn.toFile(), output.toFile());
+
+            System.out.println("sign " + realJar + " -> " + output);
+        } finally {
+            if (tmp != null) {
+                Files.deleteIfExists(tmp);
+            }
+        }
     }
 }

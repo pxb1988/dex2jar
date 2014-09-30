@@ -15,8 +15,7 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Map;
-
+import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E0Stmt;
 
 /**
@@ -34,7 +33,7 @@ public class ReturnVoidStmt extends E0Stmt {
     }
 
     @Override
-    public Stmt clone(Map<LabelStmt, LabelStmt> map) {
+    public Stmt clone(LabelAndLocalMapper mapper) {
         return new ReturnVoidStmt();
     }
 
