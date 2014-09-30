@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>dex-translator</artifactId>
-    <version>2.0-SNAPSHOT</version>
+    <version>2.1-SNAPSHOT</version>
     <name>Dex Translator</name>
     <description>Tools to work with android .dex and java .class files</description>
     <url>http://code.google.como/p/dex2jar/</url>
@@ -17,17 +17,17 @@
         <dependency>
             <groupId>com.googlecode.d2j</groupId>
             <artifactId>dex-reader</artifactId>
-            <version>2.0-SNAPSHOT</version>
+            <version>2.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.d2j</groupId>
             <artifactId>dex-ir</artifactId>
-            <version>2.0-SNAPSHOT</version>
+            <version>2.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.d2j</groupId>
             <artifactId>d2j-smali</artifactId>
-            <version>2.0-SNAPSHOT</version>
+            <version>2.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>com.googlecode.d2j</groupId>
             <artifactId>d2j-base-cmd</artifactId>
-            <version>2.0-SNAPSHOT</version>
+            <version>2.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>
