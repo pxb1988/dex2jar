@@ -590,7 +590,10 @@ public class TypeTransformer implements Transformer {
                 break;
             case ADD:
             case SUB:
-            case DIV:
+            case IDIV:
+            case LDIV:
+            case FDIV:
+            case DDIV:
             case MUL:
             case REM: {
                 BinopExpr be = (BinopExpr) e2;

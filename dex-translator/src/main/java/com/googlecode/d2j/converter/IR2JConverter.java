@@ -814,7 +814,10 @@ public class IR2JConverter implements Opcodes {
         case SUB:
             asm.visitInsn(getOpcode(type, ISUB));
             break;
-        case DIV:
+        case IDIV:
+        case LDIV:
+        case FDIV:
+        case DDIV:
             asm.visitInsn(getOpcode(type, IDIV));
             break;
         case MUL:

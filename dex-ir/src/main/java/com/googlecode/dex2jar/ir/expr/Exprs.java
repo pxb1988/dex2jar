@@ -106,7 +106,18 @@ public final class Exprs {
     }
 
     public static BinopExpr nDiv(Value a, Value b, String type) {
-        return new BinopExpr(VT.DIV, a, b, type);
+        switch (type){
+            case "I":
+                return new BinopExpr(VT.IDIV, a, b, type);
+            case "J":
+                return new BinopExpr(VT.LDIV, a, b, type);
+            case "F":
+                return new BinopExpr(VT.FDIV, a, b, type);
+            case "D":
+                return new BinopExpr(VT.DDIV, a, b, type);
+            default:
+                throw new RuntimeException("type must set to one of I/J/F/D");
+        }
     }
 
     public static BinopExpr nEq(Value a, Value b, String type) {
