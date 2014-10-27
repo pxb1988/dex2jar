@@ -17,6 +17,18 @@
             <outputDirectory>/</outputDirectory>
         </fileSet>
     </fileSets>
+    <files>
+        <file>
+            <source>../LICENSE.txt</source>
+            <fileMode>664</fileMode>
+            <outputDirectory>/</outputDirectory>
+        </file>
+        <file>
+            <source>../NOTICE.txt</source>
+            <fileMode>664</fileMode>
+            <outputDirectory>/</outputDirectory>
+        </file>
+    </files>
     <dependencySets>
         <dependencySet>
             <outputDirectory>/lib</outputDirectory>
