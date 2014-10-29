@@ -1,4 +1,4 @@
-==== commons-codec-*.jar/commons-compress-*.jar/commons-io-*.jar
+==== dx-*.jar
 Apache 2.0 http://www.apache.org/licenses/LICENSE-2.0.html
 
 

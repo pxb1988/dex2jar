@@ -28,6 +28,11 @@
             <fileMode>664</fileMode>
             <outputDirectory>/</outputDirectory>
         </file>
+        <file>
+            <source>open-source-license.txt</source>
+            <fileMode>664</fileMode>
+            <outputDirectory>/lib</outputDirectory>
+        </file>
     </files>
     <dependencySets>
         <dependencySet>
