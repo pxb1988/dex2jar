@@ -34,7 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-@Syntax(cmd = "d2j-decrypt-string", syntax = "[options] <jar>", desc = "Decrypt in class file", onlineHelp = "https://code.google.com/p/dex2jar/wiki/DecryptStrings")
+@Syntax(cmd = "d2j-decrypt-string", syntax = "[options] <jar>", desc = "Decrypt in class file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/DecryptStrings\nhttps://bitbucket.org/pxb1988/dex2jar/wiki/DecryptStrings\nhttps://code.google.com/p/dex2jar/wiki/DecryptStrings")
 public class DecryptStringCmd extends BaseCmd {
     public static void main(String... args) {
         new DecryptStringCmd().doMain(args);
@@ -52,11 +52,11 @@ public class DecryptStringCmd extends BaseCmd {
     private String methodName;
     @Opt(opt = "cp", longOpt = "classpath", description = "add extra lib to classpath", argName = "cp")
     private String classpath;
-    @Opt(opt = "t", longOpt = "arg-type", description = "ignored")
-    private String type = null;
-
-    @Opt(opt = "pt", longOpt = "parameter-type", description = "the descript for the method which can decrypt the stings, example1: Ljava/lang/String; example2:III, default is Ljava/lang/String;", argName = "type")
-    private String parameterType = "Ljava/lang/String;";
+    //extended parameter option: e.g. '-t int,byte,string' to specify a routine such as decryptionRoutine(int a, byte b, String c)
+    @Opt(opt = "t", longOpt = "arg-types", description = "comma-separated list of types:boolean,byte,short,char,int,long,float,double,string. Default is string", argName = "type")
+    private String parameterJTypes;
+    @Opt(opt = "pd", longOpt = "parameters-descriptor", description = "the descriptor for the method which can decrypt the stings, example1: Ljava/lang/String; example2: III, default is Ljava/lang/String;", argName = "type")
+    private String parametersDescriptor;
     @Opt(opt = "d", longOpt = "delete", hasArg = false, description = "delete the method which can decrypt the stings")
     private boolean deleteMethod = false;
 
@@ -166,55 +166,13 @@ public class DecryptStringCmd extends BaseCmd {
 
         System.err.println(jar + " -> " + output);
 
-        List<MethodConfig> methodConfigs = new ArrayList<MethodConfig>();
-        if (this.method != null) {
-            for (String line : Files.readAllLines(this.method, StandardCharsets.UTF_8)) {
-                if (line.length() == 0 || line.startsWith("#")) {
-                    continue;
-                }
-                methodConfigs.add(this.build(line));
-            }
-        } else {
-            if (methodOwner == null || methodName == null) {
-                System.err.println("-mo/--decrypt-method-owner or -mn/decrypt-method-name is null");
+        List<MethodConfig> methodConfigs = collectMethodConfigs();
+        if (methodConfigs == null || methodConfigs.size() == 0) {
+            System.err.println("No method selected !");
                 return;
             }
-            methodConfigs.add(this.build("L" + methodOwner.replace('.', '/') + ";->" + methodName + "("
-                    + this.parameterType + ")Ljava/lang/String;"));
-        }
 
-        final Map<MethodConfig, MethodConfig> map = new HashMap<MethodConfig, MethodConfig>();
-        {
-        List<String> list = new ArrayList<String>();
-        if (classpath != null) {
-            list.addAll(Arrays.asList(classpath.split(";|:")));
-        }
-        list.add(jar.toAbsolutePath().toString());
-        URL[] urls = new URL[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            urls[i] = new File(list.get(i)).toURI().toURL();
-        }
-
-            URLClassLoader cl = new URLClassLoader(urls);
-            for (MethodConfig config : methodConfigs) {
-        try {
-                    Class<?> clz = cl.loadClass(config.owner.replace('/', '.'));
-                    if (clz == null) {
-                        System.err.println("clz is null:" + config.owner);
-                    }
-                    Method jmethod = findAnyMethodMatch(clz, config.name,
-                            toJavaType(Type.getArgumentTypes(config.desc)));
-            jmethod.setAccessible(true);
-                    config.jmethod = jmethod;
-                    map.put(config, config);
-        } catch (Exception ex) {
-                    System.err.println("can't load method: L" + config.owner + ";->" + config.name + config.desc);
-                    ex.printStackTrace();
-            return;
-        }
-            }
-        }
-        final String methodOwnerInternalType = this.methodOwner.replace('.', '/');
+        final Map<MethodConfig, MethodConfig> map = loadMethods(jar, methodConfigs);
         try (FileSystem outputFileSystem = createZip(output)) {
             final Path outputBase = outputFileSystem.getPath("/");
             walkJarOrDir(jar, new FileVisitorX() {
@@ -248,27 +206,23 @@ public class DecryptStringCmd extends BaseCmd {
                                     key.desc = mn.desc;
                                     MethodConfig config = map.get(key);
                                     if (config != null) {
+                                        //here we are, given that the decryption method is successfully recognised
                                         Method jmethod = config.jmethod;
                                                 try {
-                                            AbstractInsnNode q = p;
                                             int pSize = jmethod.getParameterTypes().length;
-                                            Object[] as = new Object[pSize];
-                                            for (int i = pSize - 1; i >= 0; i--) {
-                                                q = q.getPrevious();
-                                                Object object = readCst(q);
-                                                as[i] = convert(object, jmethod.getParameterTypes()[i]);
-                                                }
+                                            // arguments' list. each parameter's value is retrieved by reading bytecode backwards, starting from the INVOKESTATIC statement
+                                            Object[] as = readArgumentValues(mn, jmethod, pSize);
+                                            //decryption routine invocation
                                             String newValue = (String) jmethod.invoke(null, as);
+                                            //LDC statement generation
                                             LdcInsnNode nLdc = new LdcInsnNode(newValue);
-                                            m.instructions.insert(p, nLdc);
-                                            q = p;
-                                            for (int i = 0; i <= pSize; i++) {
-                                                AbstractInsnNode z = q.getPrevious();
-                                                m.instructions.remove(q);
-                                                q = z;
-                                            }
+                                            //insertion of the decrypted string's LDC statement, after INVOKESTATIC statement
+                                            m.instructions.insert(mn, nLdc);
+                                            //removal of INVOKESTATIC and previous push statements
+                                            removeInsts(m, mn, pSize);
                                             p = nLdc;
                                         } catch (Exception ex) {
+                                            // ignore
                                         }
                                     }
                                 }
@@ -278,13 +232,46 @@ public class DecryptStringCmd extends BaseCmd {
 
                         ClassWriter cw = new ClassWriter(0);
                         cn.accept(cw);
-                        Files.write(outputBase.resolve(relative), cw.toByteArray());
+                        Path dist1 = outputBase.resolve(relative);
+                        Path parent = dist1.getParent();
+                        if (parent != null && !Files.exists(parent)) {
+                            Files.createDirectories(parent);
+                        }
+                        Files.write(dist1, cw.toByteArray());
                     } else {
-                        Files.copy(file, outputBase.resolve(relative));
+                        Path dist1 = outputBase.resolve(relative);
+                        Path parent = dist1.getParent();
+                        if (parent != null && !Files.exists(parent)) {
+                            Files.createDirectories(parent);
+                        }
+                        Files.copy(file, dist1);
                     }
                 }
+            });
+        }
+    }
 
-                private Object convert(Object object, Class<?> type) {
+    void removeInsts(MethodNode m, MethodInsnNode mn, int pSize) {
+        // remove args
+        for (int i = 0; i < pSize; i++) {
+            m.instructions.remove(mn.getPrevious());
+        }
+        // remove INVOKESTATIC
+        m.instructions.remove(mn);
+    }
+
+    Object[] readArgumentValues(MethodInsnNode mn, Method jmethod, int pSize) {
+        AbstractInsnNode q = mn;
+                                            Object[] as = new Object[pSize];
+                                            for (int i = pSize - 1; i >= 0; i--) {
+                                                q = q.getPrevious();
+                                                Object object = readCst(q);
+                                                as[i] = convert(object, jmethod.getParameterTypes()[i]);
+                                                }
+        return as;
+                        }
+
+    Object convert(Object object, Class<?> type) {
                     if (int.class.equals(type)) {
                         return ((Number) object).intValue();
                     }
@@ -297,10 +284,128 @@ public class DecryptStringCmd extends BaseCmd {
                     if (char.class.equals(type)) {
                         return (char) ((Number) object).intValue();
                     }
+        if (boolean.class.equals(type)) {
+            return (char) ((Number) object).intValue() != 0;
+        }
+        if (long.class.equals(type)) {
+            return (char) ((Number) object).longValue();
+        }
+        if (float.class.equals(type)) {
+            return (char) ((Number) object).floatValue();
+        }
+        if (double.class.equals(type)) {
+            return (char) ((Number) object).doubleValue();
+        }
                     return object;
                 }
-            });
+
+    /**
+     * load java methods from jar and --classpath
+     *
+     * @param jar
+     * @param methodConfigs
+     * @return
+     * @throws Exception
+     */
+    private Map<MethodConfig, MethodConfig> loadMethods(Path jar, List<MethodConfig> methodConfigs) throws Exception {
+        final Map<MethodConfig, MethodConfig> map = new HashMap<>();
+        List<String> list = new ArrayList<>();
+        if (classpath != null) {
+            list.addAll(Arrays.asList(classpath.split(";|:")));
         }
+        list.add(jar.toAbsolutePath().toString());
+        URL[] urls = new URL[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            urls[i] = new File(list.get(i)).toURI().toURL();
+        }
+
+        URLClassLoader cl = new URLClassLoader(urls);
+        for (MethodConfig config : methodConfigs) {
+            try {
+                Class<?> clz = cl.loadClass(config.owner.replace('/', '.'));
+                if (clz == null) {
+                    System.err.println("clz is null:" + config.owner);
+                }
+                Method jmethod = findAnyMethodMatch(clz, config.name,
+                        toJavaType(Type.getArgumentTypes(config.desc)));
+                jmethod.setAccessible(true);
+                config.jmethod = jmethod;
+                map.put(config, config);
+            } catch (Exception ex) {
+                System.err.println("can't load method: L" + config.owner + ";->" + config.name + config.desc);
+                throw ex;
+            }
+        }
+        return map;
+    }
+
+    /**
+     * collect methods from --methods and --method-owner,--method-name
+     *
+     * @return
+     * @throws IOException
+     */
+    private List<MethodConfig> collectMethodConfigs() throws IOException {
+        List<MethodConfig> methodConfigs = new ArrayList<>();
+        if (this.method != null) {
+            for (String line : Files.readAllLines(this.method, StandardCharsets.UTF_8)) {
+                if (line.length() == 0 || line.startsWith("#")) {
+                    continue;
+                }
+                methodConfigs.add(this.build(line));
+            }
+        }
+        if (methodOwner != null && methodName != null) {
+            if (this.parametersDescriptor != null) {
+                methodConfigs.add(this.build("L" + methodOwner.replace('.', '/') + ";->" + methodName + "("
+                        + this.parametersDescriptor + ")Ljava/lang/String;"));
+            } else if (this.parameterJTypes != null) {
+
+                //parameterJTypes is a comma-separated list of the decryption method's parameters
+                String[] type_list = parameterJTypes.split(",|;|:");
+                //switch for all the supported types. String is default
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < type_list.length; i++) {
+                    switch (type_list[i]) {
+                        case "boolean":
+                            sb.append("Z");
+                            break;
+                        case "byte":
+                            sb.append("B");
+                            break;
+                        case "short":
+                            sb.append("S");
+                            break;
+                        case "char":
+                            sb.append("C");
+                            break;
+                        case "int":
+                            sb.append("I");
+                            break;
+                        case "long":
+                            sb.append("J");
+                            break;
+                        case "float":
+                            sb.append("F");
+                            break;
+                        case "double":
+                            sb.append("D");
+                            break;
+                        case "string":
+                            sb.append("Ljava/lang/String;");
+                            break;
+
+                        default:
+                            throw new RuntimeException("not support type " + type_list[i] + " on -t/--arg-types");
+                    }
+                }
+                methodConfigs.add(this.build("L" + methodOwner.replace('.', '/') + ";->" + methodName + "("
+                        + sb + ")Ljava/lang/String;"));
+            } else {
+                methodConfigs.add(this.build("L" + methodOwner.replace('.', '/') + ";->" + methodName + "(Ljava/lang/String;)Ljava/lang/String;"));
+            }
+        }
+        return methodConfigs;
     }
 
     /**
@@ -335,14 +440,25 @@ public class DecryptStringCmd extends BaseCmd {
     }
 
     Object readCst(AbstractInsnNode q) {
-        if (q.getOpcode() == Opcodes.LDC) {
+
+        switch (q.getOpcode()) {
+            case Opcodes.LDC:
+                // LDC: String, integer, long and double cases (Opcodes.LDC comprehends LDC_W and LDC2_W)
+                // push 32bit or 64bit int/float
+                // push string/type
             LdcInsnNode ldc = (LdcInsnNode) q;
+                if (ldc.cst instanceof Type) {
+                    throw new RuntimeException("not support .class value yet!");
+                }
             return ldc.cst;
-        } else if (q.getType() == AbstractInsnNode.INT_INSN) {
+
+            case Opcodes.BIPUSH:
+            case Opcodes.SIPUSH:
+                // INT_INSN ("instruction with a single int operand")
+                // push 8bit or 16bit int
             IntInsnNode in = (IntInsnNode) q;
             return in.operand;
-        } else {
-            switch (q.getOpcode()) {
+
             case Opcodes.ICONST_M1:
             case Opcodes.ICONST_0:
             case Opcodes.ICONST_1:
@@ -350,14 +466,24 @@ public class DecryptStringCmd extends BaseCmd {
             case Opcodes.ICONST_3:
             case Opcodes.ICONST_4:
             case Opcodes.ICONST_5:
-                int x = ((InsnNode) q).getOpcode() - Opcodes.ICONST_0;
-                return x;
+                // ICONST_*: push a tiny int, -1 <= value <= 5
+                return q.getOpcode() - Opcodes.ICONST_0;
+            case Opcodes.LCONST_0:
+            case Opcodes.LCONST_1:
+                return (long) (q.getOpcode() - Opcodes.LCONST_0);
+            case Opcodes.FCONST_0:
+            case Opcodes.FCONST_1:
+            case Opcodes.FCONST_2:
+                return (float) (q.getOpcode() - Opcodes.FCONST_0);
+            case Opcodes.DCONST_0:
+            case Opcodes.DCONST_1:
+                return (double) (q.getOpcode() - Opcodes.DCONST_0);
             }
-        }
+
         throw new RuntimeException();
     }
 
-    private Class<?>[] toJavaType(Type[] pt) throws ClassNotFoundException {
+    Class<?>[] toJavaType(Type[] pt) throws ClassNotFoundException {
         Class<?> jt[] = new Class<?>[pt.length];
         for (int i = 0; i < pt.length; i++) {
             jt[i] = toJavaType(pt[i]);
@@ -365,7 +491,7 @@ public class DecryptStringCmd extends BaseCmd {
         return jt;
     }
 
-    private Class<?> toJavaType(Type t) throws ClassNotFoundException {
+    Class<?> toJavaType(Type t) throws ClassNotFoundException {
         switch (t.getSort()) {
         case Type.BOOLEAN:
             return boolean.class;
