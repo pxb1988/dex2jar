@@ -13,13 +13,13 @@ My googlecode account is banned, and seams it is not possible to recover.
 Tools to work with android .dex and java .class files
 
 1. dex-reader/writer:
-    Read/write the Dalvik Executable (.dex) file. It has a [light weight API similar with ASM](Faq#markdown-header-want-to-read-dex-file-using-dex2jar).
+    Read/write the Dalvik Executable (.dex) file. It has a [light weight API similar with ASM](https://sourceforge.net/p/dex2jar/wiki/Faq#markdown-header-want-to-read-dex-file-using-dex2jar).
 2. d2j-dex2jar:
     Convert .dex file to .class files (zipped as jar)
 3. smali/baksmali:
     disassemble dex to smali files and assemble dex from smali files. different implementation to [smali/baksmali](http://code.google.com/p/smali), same syntax, but we support escape in type desc "Lcom/dex2jar\t\u1234;"
 4. other tools:
-    [d2j-decrypt-string](DecryptStrings)
+    [d2j-decrypt-string](https://sourceforge.net/p/dex2jar/wiki/DecryptStrings)
 
 ## Need help ?
 send email to dex2jar@googlegroups.com 
