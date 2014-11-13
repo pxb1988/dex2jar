@@ -22,7 +22,7 @@ Tools to work with android .dex and java .class files
     [d2j-decrypt-string](DecryptStrings)
 
 ## Need help ?
-send email to dex2jar@googlegroup.com 
+send email to dex2jar@googlegroups.com 
 
 or post at https://sourceforge.net/p/dex2jar/tickets/
 
