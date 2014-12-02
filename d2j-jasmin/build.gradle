@@ -2,11 +2,11 @@ configurations {
   antlr2java
 }
 dependencies {
-  compile(group: 'org.antlr', name: 'antlr-runtime', version:'3.5.1') {
+  compile(group: 'org.antlr', name: 'antlr-runtime', version:'3.5.2') {
         exclude(module: 'stringtemplate')
   }
   compile "org.ow2.asm:asm-debug-all:4.1"
-  antlr2java "org.antlr:antlr:3.5.1"
+  antlr2java "org.antlr:antlr:3.5.2"
   provided project(':d2j-base-cmd')
 }
 
