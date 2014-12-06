@@ -177,7 +177,7 @@ public class DecryptStringCmd extends BaseCmd {
             final Path outputBase = outputFileSystem.getPath("/");
             walkJarOrDir(jar, new FileVisitorX() {
                 @Override
-                public void visitFile(Path file, Path relative) throws IOException {
+                public void visitFile(Path file, String relative) throws IOException {
                     if (file.getFileName().toString().endsWith(".class")) {
                         MethodConfig key = new MethodConfig();
                         ClassReader cr = new ClassReader(Files.readAllBytes(file));

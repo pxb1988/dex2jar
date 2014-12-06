@@ -44,14 +44,16 @@ public abstract class BaseCmd {
     }
 
     public interface FileVisitorX {
-        void visitFile(Path file, Path relative) throws IOException;
+        // change the relative from Path to String
+        // java.nio.file.ProviderMismatchException on jdk8
+        void visitFile(Path file, String relative) throws IOException;
     }
 
     public static void walkFileTreeX(final Path base, final FileVisitorX fv) throws IOException {
         Files.walkFileTree(base, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                fv.visitFile(file, base.relativize(file));
+                fv.visitFile(file, base.relativize(file).toString());
                 return super.visitFile(file, attrs);
             }
         });

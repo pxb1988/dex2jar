@@ -129,7 +129,7 @@ public class AsmVerify extends BaseCmd {
             System.out.println("verify " + file);
             walkJarOrDir(file, new FileVisitorX() {
                 @Override
-                public void visitFile(Path file, Path relative) throws IOException {
+                public void visitFile(Path file, String relative) throws IOException {
                     if (file.getFileName().toString().endsWith(".class")) {
                         ClassReader cr = new ClassReader(Files.readAllBytes(file));
                         ClassNode cn = new ClassNode();

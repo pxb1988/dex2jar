@@ -76,7 +76,7 @@ public class Jar2Dex extends BaseCmd {
                     final Path outRoot = fs.getPath("/");
                     walkJarOrDir(jar, new FileVisitorX() {
                         @Override
-                        public void visitFile(Path file, Path relative) throws IOException {
+                        public void visitFile(Path file, String relative) throws IOException {
                             if (file.getFileName().toString().endsWith(".class")) {
                                 Files.copy(file, outRoot.resolve(relative));
                             }

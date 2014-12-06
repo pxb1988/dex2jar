@@ -159,7 +159,7 @@ public class JarAccessCmd extends BaseCmd implements Opcodes {
             final Path outRoot = outFileSystem.getPath("/");
             walkJarOrDir(jar, new FileVisitorX() {
                 @Override
-                public void visitFile(Path file, Path relative) throws IOException {
+                public void visitFile(Path file, String relative) throws IOException {
                     if (file.getFileName().toString().endsWith(".class")) {
 
                         final ClassReader r = new ClassReader(Files.readAllBytes(file));

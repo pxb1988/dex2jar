@@ -395,8 +395,8 @@ public class InvocationWeaver implements Opcodes {
 
         BaseCmd.walkJarOrDir(from, new BaseCmd.FileVisitorX() {
             @Override
-            public void visitFile(Path file, Path relative) throws IOException {
-                String name = relative.toString();
+            public void visitFile(Path file, String relative) throws IOException {
+                String name = relative;
                 Path targetPath = to.resolve(relative);
                 BaseCmd.createParentDirectories(targetPath);
                 if (name.endsWith(".class")) {

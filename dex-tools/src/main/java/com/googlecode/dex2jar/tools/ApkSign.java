@@ -81,7 +81,7 @@ public class ApkSign extends BaseCmd {
                     final Path outRoot = fs.getPath("/");
                     walkJarOrDir(apkIn, new FileVisitorX() {
                         @Override
-                        public void visitFile(Path file, Path relative) throws IOException {
+                        public void visitFile(Path file, String relative) throws IOException {
                             Files.copy(file, outRoot);
                         }
                     });
