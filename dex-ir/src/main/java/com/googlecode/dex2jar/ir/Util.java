@@ -142,8 +142,7 @@ public class Util {
                     break;
                 }
             }
-            int i = desc.lastIndexOf('/');
-            StringBuilder sb = new StringBuilder().append(desc.substring(i < 0 ? d : i + 1, desc.length() - 1));
+            StringBuilder sb = new StringBuilder().append(toShortClassName(desc.substring(d)));
             for (int t = 0; t < d; t++) {
                 sb.append("[]");
             }
