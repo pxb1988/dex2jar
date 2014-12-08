@@ -233,7 +233,7 @@ sFieldValue returns[Object s]
 	:	a=sBaseValue {$s=$a.v;};
 sParameter[DexMethodVisitor dmv, int paramIndex, DexDebugVisitor debugVisitor]
 	:	('.parameter' (a=STRING { debugVisitor.visitParameterName(paramIndex,unescapeStr($a.text)); } )?  ( ( {dexAnnotationAble=dmv.visitParameterAnnotation(paramIndex);} sAnnotation {dexAnnotationAble=null;})* '.end parameter')?)
-		| ('.param' { if(true){throw new RuntimeException("not support '.param' yet");} } REGISTER (',' STRING)? (({dexAnnotationAble=dmv.visitParameterAnnotation(paramIndex);} sAnnotation {dexAnnotationAble=null;})* '.end param')?)
+		| ('.param' r1=REGISTER (',' a=STRING {  debugVisitor.visitParameterName(getReg($r1.text), unescapeStr($a.text)); } )? (({dexAnnotationAble=dmv.visitParameterAnnotation(getReg($r1.text));} sAnnotation {dexAnnotationAble=null;})* '.end param')?)
 	;
 sAnnotationKeyName
 	:	sBaseMemberName|ACC;
