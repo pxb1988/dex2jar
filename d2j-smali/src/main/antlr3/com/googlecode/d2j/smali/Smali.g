@@ -259,9 +259,9 @@ sEnumValue returns[Field f]
 	:	'.enum' a=sFieldF{$f=a;};
 sFloat: BASE_FLOAT| FLOAT_INFINITY | FLOAT_NAN;
 sDouble: BASE_DOUBLE|DOUBLE_INFINITY|DOUBLE_NAN;
-sDebug[SmaliCodeVisitor dcv, DexDebugVisitor ddv]	@init{ String sig=null;}
+sDebug[SmaliCodeVisitor dcv, DexDebugVisitor ddv]	@init{ String sig=null; String varName=null;}
                                 :'.line' a=INT { DexLabel label=new DexLabel(); label.displayName=".line " + $a.text ; dcv.visitLabel(label); ddv.visitLineNumber(parseInt($a.text),label);  }
-                                |'.local' r1=REGISTER ',' key=sAnnotationKeyName ':' desc=sType {sig=null;} (',' ss=STRING { sig=unEscape($ss.text); })?   { DexLabel label=new DexLabel(); label.displayName=".local " + $r1.text ; dcv.visitLabel(label); ddv.visitStartLocal(getReg($r1.text),label,$key.text,$desc.text,sig); }
+                                |'.local' r1=REGISTER ',' (key1=sAnnotationKeyName { varName=unEscape($key1.text); } | key2= STRING { varName=unescapeStr($key2.text); }) ':' desc=sType {sig=null;} (',' ss=STRING { sig=unEscape($ss.text); })?   { DexLabel label=new DexLabel(); label.displayName=".local " + $r1.text ; dcv.visitLabel(label);  ddv.visitStartLocal(getReg($r1.text),label,varName,$desc.text,sig); }
                                 | '.end local' r1=REGISTER  { DexLabel label=new DexLabel(); label.displayName=".end local " + $r1.text ; dcv.visitLabel(label); ddv.visitEndLocal(getReg($r1.text),label);  }
                                 |'.restart local'  r1=REGISTER  { DexLabel label=new DexLabel(); label.displayName=".restart local " + $r1.text ; dcv.visitLabel(label); ddv.visitRestartLocal(getReg($r1.text),label);  }
                                 |'.prologue' { DexLabel label=new DexLabel(); label.displayName=".prologue"  ; dcv.visitLabel(label); ddv.visitPrologue(label);  }
@@ -277,8 +277,7 @@ sInstruction[SmaliCodeVisitor dcv]
 	|f1t r1=REGISTER ',' sLabel { dcv.visitJumpStmt(getOp($f1t.text),getReg($r1.text),-1,getLabel($sLabel.text)); }
 	|f2t r1=REGISTER ',' r2=REGISTER ',' sLabel { dcv.visitJumpStmt(getOp($f2t.text),getReg($r1.text),getReg($r2.text),getLabel($sLabel.text)); }
 	|f1x r1=REGISTER { dcv.visitStmt1R(getOp($f1x.text),getReg($r1.text)); }
-	|ficonst r1=REGISTER ',' d1=INT { dcv.visitConstStmt(getOp($ficonst.text),getReg($r1.text),parseInt($d1.text)); }
-	|flconst r1=REGISTER ',' d1=LONG { dcv.visitConstStmt(getOp($flconst.text),getReg($r1.text),parseLong($d1.text)); }
+	|fconst r1=REGISTER ',' (d1=INT { dcv.visitConstStmt(getOp($fconst.text),getReg($r1.text),parseInt($d1.text)); } | d2=LONG { dcv.visitConstStmt(getOp($fconst.text),getReg($r1.text),parseLong($d2.text)); } )
 	|fconstString  r1=REGISTER ',' str=STRING { dcv.visitConstStmt(getOp($fconstString.text),getReg($r1.text),unEscape($str.text)); }
 	|ft1c r1=REGISTER ',' obj=(OBJECT_TYPE | ARRAY_TYPE)  { String t=$ft1c.text; if(t.equals("const-class")){ 
 				dcv.visitConstStmt(getOp(t),getReg($r1.text),new DexType($obj.text)); 
@@ -328,10 +327,9 @@ f1x	:	'move-result'|'move-result-wide'|'move-result-object'
 	|	THROW
 	|	'monitor-enter' | 'monitor-exit'
 	;
-ficonst	:	'const/4'|'const/16'|CONST|'const/high16'
-	|	'const-wide/16'|'const-wide/32'|'const-wide/high16'
+fconst	:	'const/4'|'const/16'|CONST|'const/high16'
+	|	'const-wide/16'|'const-wide/32'|'const-wide/high16' | 'const-wide'
 	;
-flconst: 'const-wide';
 fconstString
 	:	'const-string'|'const-string/jumbo';
 ft1c

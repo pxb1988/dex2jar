@@ -34,30 +34,45 @@ public class SmaliCodeVisitor extends DexCodeNode {
     public void visitConstStmt(Op op, int ra, Object value) {
         switch (op) {
         case CONST_WIDE_16: {
-            short v = ((Number) value).shortValue();
-            super.visitConstStmt(op, ra, (long) v);
+            if(value instanceof Integer) {
+                short v = ((Number) value).shortValue();
+                super.visitConstStmt(op, ra, (long) v);
+            } else {
+                super.visitConstStmt(op, ra, value);
+            }
         }
             break;
         case CONST_WIDE_HIGH16: {
-            short v = ((Number) value).shortValue();
-            super.visitConstStmt(op, ra, ((long) v) << 48);
+            if(value instanceof Integer) {
+                short v = ((Number) value).shortValue();
+                super.visitConstStmt(op, ra, ((long) v) << 48);
+            } else {
+                super.visitConstStmt(op, ra, value);
+            }
         }
             break;
         case CONST_WIDE_32: {
-            int v = ((Number) value).intValue();
-            super.visitConstStmt(op, ra, (long) v);
+            if(value instanceof Integer) {
+                int v = ((Number) value).intValue();
+                super.visitConstStmt(op, ra, (long) v);
+            } else {
+                super.visitConstStmt(op, ra, value);
+            }
         }
             break;
         case CONST_HIGH16: {
             int v = ((Number) value).intValue();
-            super.visitConstStmt(op, ra, v << 16);
+            if(0 != (v & 0xFFff0000)){
+                super.visitConstStmt(op, ra, v);
+            } else {
+                super.visitConstStmt(op, ra, v << 16);
+            }
         }
             break;
         default:
             super.visitConstStmt(op, ra, value);
             break;
         }
-
     }
 
     public static class ArrayDataStmt extends DexStmtNode {
