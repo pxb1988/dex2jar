@@ -34,7 +34,7 @@
             <groupId>com.google.android.tools</groupId>
             <artifactId>dx</artifactId>
             <version>1.7</version>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
