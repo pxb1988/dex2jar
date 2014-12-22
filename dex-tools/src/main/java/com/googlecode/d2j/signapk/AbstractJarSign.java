@@ -22,7 +22,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestOutputStream;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -94,6 +94,9 @@ public abstract class AbstractJarSign {
 
     // Files matching this pattern are not copied to the output.
     private static Pattern stripPattern = Pattern.compile("^META-INF/(.*)[.](SF|RSA|DSA)$");
+    private static final byte[] EOL = "\r\n".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] COL = ": ".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] NAMES = "Name: ".getBytes(StandardCharsets.UTF_8);
 
     /**
      * Copy all the files in a manifest from input to output. We set the
@@ -156,7 +159,7 @@ public abstract class AbstractJarSign {
             main.putAll(input.getMainAttributes());
         }
         main.putValue("Manifest-Version", "1.0");
-        main.putValue("Created-By", "d2j-apk-sign " + AbstractJarSign.class.getPackage().getImplementationVersion());
+        main.putValue("Created-By", "1.6.0_21 (d2j-" + AbstractJarSign.class.getPackage().getImplementationVersion() + ")");
 
         MessageDigest md = MessageDigest.getInstance(digestAlg);
         byte[] buffer = new byte[4096];
@@ -196,7 +199,7 @@ public abstract class AbstractJarSign {
     }
 
     protected String encodeBase64(byte[] data) {
-       return Base64.encodeToString(data, Base64.DEFAULT);
+       return Base64.encodeToString(data, Base64.NO_WRAP);
     }
 
     public void sign(File in, File out) throws IOException, GeneralSecurityException {
@@ -277,10 +280,10 @@ public abstract class AbstractJarSign {
         Manifest sf = new Manifest();
         Attributes main = sf.getMainAttributes();
         main.putValue("Signature-Version", "1.0");
-        main.putValue("Created-By", "1.0 (Android SignApk)");
+        main.putValue("Created-By", "1.6.0_21 (d2j-" + AbstractJarSign.class.getPackage().getImplementationVersion() + ")");
 
         MessageDigest md = MessageDigest.getInstance(digestAlg);
-        PrintStream print = new PrintStream(new DigestOutputStream(new OutputStream() {
+        DigestOutputStream print = new DigestOutputStream(new OutputStream() {
 
             @Override
             public void write(byte[] b) throws IOException {
@@ -296,22 +299,39 @@ public abstract class AbstractJarSign {
             public void write(int b) throws IOException {
 
             }
-        }, md), true, "UTF-8");
+        }, md);
 
         // Digest of the entire manifest
         manifest.write(print);
         print.flush();
         main.putValue(digestAlg + "-Digest-Manifest", encodeBase64(md.digest()));
 
+        // digest main attribute
+        for (Map.Entry<Object, Object> att : manifest.getMainAttributes().entrySet()) {
+            print.write(att.getKey().toString().getBytes(StandardCharsets.UTF_8));
+            print.write(COL);
+            print.write(att.getKey().toString().getBytes(StandardCharsets.UTF_8));
+            print.write(EOL);
+        }
+        print.write(EOL);
+        print.flush();
+        main.putValue(digestAlg + "-Digest-Manifest-Main-Attributes", encodeBase64(md.digest()));
+
         String digName = digestAlg + "-Digest";
         Map<String, Attributes> entries = manifest.getEntries();
+
         for (Map.Entry<String, Attributes> entry : entries.entrySet()) {
             // Digest of the manifest stanza for this entry.
-            print.print("Name: " + entry.getKey() + "\r\n");
+            print.write(NAMES);
+            print.write(entry.getKey().getBytes(StandardCharsets.UTF_8));
+            print.write(EOL);
             for (Map.Entry<Object, Object> att : entry.getValue().entrySet()) {
-                print.print(att.getKey() + ": " + att.getValue() + "\r\n");
+                print.write(att.getKey().toString().getBytes(StandardCharsets.UTF_8));
+                print.write(COL);
+                print.write(att.getKey().toString().getBytes(StandardCharsets.UTF_8));
+                print.write(EOL);
             }
-            print.print("\r\n");
+            print.write(EOL);
             print.flush();
 
             Attributes sfAttr = new Attributes();
@@ -326,8 +346,7 @@ public abstract class AbstractJarSign {
         // if the length of the signature file is a multiple of 1024 bytes.
         // As a workaround, add an extra CRLF in this case.
         if ((out.size() % 1024) == 0) {
-            out.write('\r');
-            out.write('\n');
+            out.write(EOL);
         }
     }
 }

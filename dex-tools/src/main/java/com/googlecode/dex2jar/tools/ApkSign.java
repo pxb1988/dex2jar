@@ -42,6 +42,8 @@ public class ApkSign extends BaseCmd {
     private boolean forceOverwrite = false;
     @Opt(opt = "o", longOpt = "output", description = "output .apk file, default is $current_dir/[apk-name]-signed.apk", argName = "out-apk-file")
     private Path output;
+    @Opt(opt = "t", longOpt = "tiny", hasArg = false, description = "use tiny sign")
+    private boolean tiny = false;
 
     @Override
     protected void doCommandLine() throws Exception {
@@ -82,7 +84,9 @@ public class ApkSign extends BaseCmd {
                     walkJarOrDir(apkIn, new FileVisitorX() {
                         @Override
                         public void visitFile(Path file, String relative) throws IOException {
-                            Files.copy(file, outRoot);
+                            Path target = outRoot.resolve(relative);
+                            createParentDirectories(target);
+                            Files.copy(file, target);
                         }
                     });
                 }
@@ -90,19 +94,23 @@ public class ApkSign extends BaseCmd {
                 realJar = apkIn;
             }
 
-            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-            X509Certificate cert = (X509Certificate) certificateFactory.generateCertificate(ApkSign.class
-                    .getResourceAsStream("ApkSign.cer"));
-            KeyFactory rSAKeyFactory = KeyFactory.getInstance("RSA");
-            PrivateKey privateKey = rSAKeyFactory.generatePrivate(new PKCS8EncodedKeySpec(ZipUtil
-                    .toByteArray(ApkSign.class.getResourceAsStream("ApkSign.private"))));
-
             AbstractJarSign signer;
 
-            try {
-                signer = new SunJarSignImpl(cert, privateKey);
-            } catch (Exception cnfe) {
+            if (tiny) {
                 signer = new TinySignImpl();
+            } else {
+                try {
+                    CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+                    X509Certificate cert = (X509Certificate) certificateFactory.generateCertificate(ApkSign.class
+                            .getResourceAsStream("ApkSign.cer"));
+                    KeyFactory rSAKeyFactory = KeyFactory.getInstance("RSA");
+                    PrivateKey privateKey = rSAKeyFactory.generatePrivate(new PKCS8EncodedKeySpec(ZipUtil
+                            .toByteArray(ApkSign.class.getResourceAsStream("ApkSign.private"))));
+
+                    signer = new SunJarSignImpl(cert, privateKey);
+                } catch (Exception cnfe) {
+                    signer = new TinySignImpl();
+                }
             }
             signer.sign(apkIn.toFile(), output.toFile());
 
