@@ -42,7 +42,7 @@ public class BaksmaliBaseDexExceptionHandler extends BaseDexExceptionHandler {
     private Map<DexMethodNode, Exception> exceptionMap = new HashMap<>();
     private List<Exception> fileExceptions = new ArrayList<>();
 
-    boolean hasException() {
+    public boolean hasException() {
         return exceptionMap.size() > 0 || fileExceptions.size() > 0;
     }
 
