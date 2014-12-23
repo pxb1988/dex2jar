@@ -307,14 +307,9 @@ public abstract class AbstractJarSign {
         main.putValue(digestAlg + "-Digest-Manifest", encodeBase64(md.digest()));
 
         // digest main attribute
-        for (Map.Entry<Object, Object> att : manifest.getMainAttributes().entrySet()) {
-            print.write(att.getKey().toString().getBytes(StandardCharsets.UTF_8));
-            print.write(COL);
-            print.write(att.getKey().toString().getBytes(StandardCharsets.UTF_8));
-            print.write(EOL);
-        }
-        print.write(EOL);
-        print.flush();
+        Manifest m2 = new Manifest();
+        m2.getMainAttributes().putAll(manifest.getMainAttributes());
+        m2.write(print);
         main.putValue(digestAlg + "-Digest-Manifest-Main-Attributes", encodeBase64(md.digest()));
 
         String digName = digestAlg + "-Digest";
