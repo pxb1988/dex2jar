@@ -25,6 +25,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.junit.Assert;
 import org.junit.runner.Description;
@@ -66,7 +68,7 @@ public class Smali2jTest {
 
             System.out.println("dirx is " + dirx);
             final Path basePath = new File(dirx, "smalis").toPath();
-            final List<Path> files = new ArrayList<>();
+            final Set<Path> files = new TreeSet<>();
             try {
                 Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
                     @Override
