@@ -324,6 +324,21 @@ public class Dex2Asm {
         convertClass(classNode, cvf, new HashMap<String, Clz>());
     }
 
+    private static boolean isJavaIdentifier(String str) {
+        if (str.length() < 1) {
+            return false;
+        }
+        if (!Character.isJavaIdentifierStart(str.charAt(0))) {
+            return false;
+        }
+        for (int i = 1; i < str.length(); i++) {
+            if (!Character.isJavaIdentifierPart(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void convertClass(DexClassNode classNode, ClassVisitorFactory cvf, Map<String, Clz> classes) {
         ClassVisitor cv = cvf.create(toInternalName(classNode.className));
         if (cv == null) {
@@ -391,6 +406,11 @@ public class Dex2Asm {
         }
         Collections.sort(innerClassNodes, INNER_CLASS_NODE_COMPARATOR);
         for (InnerClassNode icn : innerClassNodes) {
+            if (icn.innerName != null && !isJavaIdentifier(icn.innerName)) {
+                System.err.println("WARN: ignored invalid inner class name " + ", treat as anonymous inner class.");
+                icn.innerName = null;
+                icn.outerName = null;
+            }
             icn.accept(cv);
         }
 
