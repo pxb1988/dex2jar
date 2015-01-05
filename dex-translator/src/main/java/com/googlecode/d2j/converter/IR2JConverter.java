@@ -140,26 +140,27 @@ public class IR2JConverter implements Opcodes {
                     Local local = ((Local) v1);
                     int i = local._ls_index;
 
-                    if (v2.vt == VT.LOCAL && (i == ((Local) v2)._ls_index)) {//
-                        continue;
-                    }
-
                     boolean skipOrg = false;
-                    if (v1.valueType.charAt(0) == 'I') {// check for IINC
+                    if (v2.vt == VT.LOCAL && (i == ((Local) v2)._ls_index)) {// check for a=a
+                        skipOrg = true;
+                    } else if (v1.valueType.charAt(0) == 'I') {// check for IINC
                         if (v2.vt == VT.ADD) {
-                            E2Expr e = (E2Expr) v2;
-                            if ((e.op1 == local && e.op2.vt == VT.CONSTANT)
-                                    || (e.op2 == local && e.op1.vt == VT.CONSTANT)) {
-                                int increment = (Integer) ((Constant) (e.op1 == local ? e.op2 : e.op1)).value;
+                            if (isLocalWithIndex(v2.getOp1(), i) && v2.getOp2().vt == VT.CONSTANT) { // a=a+1;
+                                int increment = (Integer) ((Constant) v2.getOp2()).value;
+                                if (increment >= Short.MIN_VALUE && increment <= Short.MAX_VALUE) {
+                                    asm.visitIincInsn(i, increment);
+                                    skipOrg = true;
+                                }
+                            } else if (isLocalWithIndex(v2.getOp2(), i) && v2.getOp1().vt == VT.CONSTANT) { // a=1+a;
+                                int increment = (Integer) ((Constant) v2.getOp1()).value;
                                 if (increment >= Short.MIN_VALUE && increment <= Short.MAX_VALUE) {
                                     asm.visitIincInsn(i, increment);
                                     skipOrg = true;
                                 }
                             }
                         } else if (v2.vt == VT.SUB) {
-                            E2Expr e = (E2Expr) v2;
-                            if (e.op1 == local && e.op2.vt == VT.CONSTANT) {
-                                int increment = -(Integer) ((Constant) e.op2).value;
+                            if (isLocalWithIndex(v2.getOp1(), i) && v2.getOp2().vt == VT.CONSTANT) { // a=a-1;
+                                int increment = -(Integer) ((Constant) v2.getOp2()).value;
                                 if (increment >= Short.MIN_VALUE && increment <= Short.MAX_VALUE) {
                                     asm.visitIincInsn(i, increment);
                                     skipOrg = true;
@@ -379,6 +380,10 @@ public class IR2JConverter implements Opcodes {
             }
 
         }
+    }
+
+    private static boolean isLocalWithIndex(Value v, int i) {
+        return v.vt == VT.LOCAL && ((Local) v)._ls_index == i;
     }
 
     private int[] buildLocalUsage(IrMethod ir) {
