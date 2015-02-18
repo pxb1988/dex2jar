@@ -49,6 +49,9 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
     @Opt(opt = "d", longOpt = "dump", description = "dump to stdout", hasArg = false)
     private boolean dump;
 
+    @Opt( longOpt = "no-compute-max", description = "", hasArg = false)
+    private boolean noComputeMax;
+
     @Opt(opt = "cv", longOpt = "class-version", description = "default .class version, [1~9], default 6 for JAVA6")
     private int classVersion = 6;
 
@@ -126,7 +129,7 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
             CommonTokenStream ts = new CommonTokenStream(lexer);
             JasminParser parser = new JasminParser(ts);
             parser.rebuildLine = autogenLines;
-            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+            ClassWriter cw = new ClassWriter(noComputeMax?0:ClassWriter.COMPUTE_MAXS);
             ClassNode cn = parser.parse();
             if (cn.version == 0) {
                 cn.version = versions[classVersion];

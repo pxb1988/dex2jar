@@ -4,9 +4,10 @@ dependencies {
   compile project(':dex-reader')
   compile project(':dex-ir')
   compile project(':d2j-base-cmd')
-  compile group: 'org.ow2.asm', name: 'asm-debug-all', version:'4.1'
+  compile 'org.ow2.asm:asm-debug-all:5.0.3'
   testCompile "com.google.android.tools:dx:1.7"
   testCompile project(':d2j-smali')
+  testCompile project(':d2j-jasmin')
 }
 
 sourceSets {

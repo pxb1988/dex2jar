@@ -114,7 +114,7 @@ public class JasminDumper implements Opcodes {
         pw.println(cn.version >>> 16);
         println(".source ", cn.sourceFile);
         pw.print(".class");
-        pw.print(access(cn.access));
+        pw.print(access_clz(cn.access));
         pw.print(' ');
         pw.println(cn.name);
         if (cn.superName != null) {
@@ -155,7 +155,7 @@ public class JasminDumper implements Opcodes {
 
         for (InnerClassNode in : cn.innerClasses) {
             pw.print(".inner class");
-            pw.print(access(in.access));
+            pw.print(access_clz(in.access & (~Opcodes.ACC_SUPER)));
             if (in.innerName != null) {
                 pw.print(' ');
                 pw.print(in.innerName);
@@ -181,16 +181,11 @@ public class JasminDumper implements Opcodes {
             }
             boolean deprecated = (fn.access & Opcodes.ACC_DEPRECATED) != 0;
             pw.print("\n.field");
-            pw.print(access(fn.access));
+            pw.print(access_fld(fn.access));
             pw.print(" '");
             pw.print(fn.name);
             pw.print("' ");
             pw.print(fn.desc);
-            if (fn.signature != null && (!deprecated && !annotations)) {
-                pw.print(" signature \"");
-                pw.print(fn.signature);
-                pw.print("\"");
-            }
             if (fn.value instanceof String) {
                 StringBuffer buf = new StringBuffer();
                 Printer.appendString(buf, (String) fn.value);
@@ -199,10 +194,9 @@ public class JasminDumper implements Opcodes {
             } else if (fn.value != null) {
                 pw.print(" = ");
                 print(fn.value);
-                pw.println();
             }
             pw.println();
-            if (fn.signature != null && (deprecated || annotations)) {
+            if (fn.signature != null) {
                 pw.print(".signature \"");
                 pw.print(fn.signature);
                 pw.println("\"");
@@ -220,14 +214,14 @@ public class JasminDumper implements Opcodes {
                     printAnnotation(an, 2, -1);
                 }
             }
-            if (deprecated || annotations) {
+            if (fn.signature != null || deprecated || annotations) {
                 pw.println(".end field");
             }
         }
 
         for (MethodNode mn : cn.methods) {
             pw.print("\n.method");
-            pw.print(access(mn.access));
+            pw.print(access_mtd(mn.access));
             pw.print(' ');
             pw.print(mn.name);
             pw.println(mn.desc);
@@ -294,26 +288,14 @@ public class JasminDumper implements Opcodes {
                 }
                 for (int j = 0; j < mn.instructions.size(); ++j) {
                     AbstractInsnNode in = mn.instructions.get(j);
+                    if (in.getType() != AbstractInsnNode.LINE && in.getType() != AbstractInsnNode.FRAME) {
+                       if(in.getType()==AbstractInsnNode.LABEL){
+                           pw.print("  ");
+                       }else {
+                           pw.print("    ");
+                       }
+                    }
                     in.accept(new MethodVisitor(ASM4) {
-
-                        @Override
-                        public void visitFrame(int type, int local, Object[] locals, int stack, Object[] stacks) {
-                            if (type != Opcodes.F_FULL && type != Opcodes.F_NEW) {
-                                throw new RuntimeException("Compressed frames unsupported, use EXPAND_FRAMES option");
-                            }
-                            pw.println(".stack");
-                            for (int i = 0; i < local; ++i) {
-                                pw.print("locals ");
-                                printFrameType(locals[i]);
-                                pw.println();
-                            }
-                            for (int i = 0; i < stack; ++i) {
-                                pw.print("stack ");
-                                printFrameType(stacks[i]);
-                                pw.println();
-                            }
-                            pw.println(".end stack");
-                        }
 
                         @Override
                         public void visitInsn(int opcode) {
@@ -458,12 +440,13 @@ public class JasminDumper implements Opcodes {
                         public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
                             pw.println("lookupswitch");
                             for (int i = 0; i < keys.length; ++i) {
+                                pw.print("      ");
                                 pw.print(keys[i]);
                                 pw.print(" : ");
                                 print(labels[i]);
                                 pw.println();
                             }
-                            pw.print("default : ");
+                            pw.print("      default : ");
                             print(dflt);
                             pw.println();
                         }
@@ -516,8 +499,72 @@ public class JasminDumper implements Opcodes {
             pw.println(arg);
         }
     }
-
-    protected String access(final int access) {
+    protected String access_clz(final int access) {
+        StringBuilder b = new StringBuilder();
+        if ((access & Opcodes.ACC_PUBLIC) != 0) {
+            b.append(" public");
+        }
+        if ((access & Opcodes.ACC_PRIVATE) != 0) {
+            b.append(" private");
+        }
+        if ((access & Opcodes.ACC_PROTECTED) != 0) {
+            b.append(" protected");
+        }
+        if ((access & Opcodes.ACC_FINAL) != 0) {
+            b.append(" final");
+        }
+        if ((access & Opcodes.ACC_SUPER) != 0) {
+            b.append(" super");
+        }
+        if ((access & Opcodes.ACC_ABSTRACT) != 0) {
+            b.append(" abstract");
+        }
+        if ((access & Opcodes.ACC_INTERFACE) != 0) {
+            b.append(" interface");
+        }
+        if ((access & Opcodes.ACC_SYNTHETIC) != 0) {
+            b.append(" synthetic");
+        }
+        if ((access & Opcodes.ACC_ANNOTATION) != 0) {
+            b.append(" annotation");
+        }
+        if ((access & Opcodes.ACC_ENUM) != 0) {
+            b.append(" enum");
+        }
+        return b.toString();
+    }
+    protected String access_fld(final int access) {
+        StringBuilder b = new StringBuilder();
+        if ((access & Opcodes.ACC_PUBLIC) != 0) {
+            b.append(" public");
+        }
+        if ((access & Opcodes.ACC_PRIVATE) != 0) {
+            b.append(" private");
+        }
+        if ((access & Opcodes.ACC_PROTECTED) != 0) {
+            b.append(" protected");
+        }
+        if ((access & Opcodes.ACC_STATIC) != 0) {
+            b.append(" static");
+        }
+        if ((access & Opcodes.ACC_FINAL) != 0) {
+            b.append(" final");
+        }
+        if ((access & Opcodes.ACC_VOLATILE) != 0) {
+            b.append(" volatile");
+        }
+        if ((access & Opcodes.ACC_TRANSIENT) != 0) {
+            b.append(" transient");
+        }
+        if ((access & Opcodes.ACC_SYNTHETIC) != 0) {
+            b.append(" synthetic");
+        }
+        if ((access & Opcodes.ACC_ENUM) != 0) {
+            b.append(" enum");
+        }
+        return b.toString();
+    }
+    protected String access_mtd(final int access) {
         StringBuilder b = new StringBuilder();
         if ((access & Opcodes.ACC_PUBLIC) != 0) {
             b.append(" public");
@@ -537,11 +584,11 @@ public class JasminDumper implements Opcodes {
         if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {
             b.append(" synchronized");
         }
-        if ((access & Opcodes.ACC_VOLATILE) != 0) {
-            b.append(" volatile");
+        if ((access & Opcodes.ACC_BRIDGE) != 0) {
+            b.append(" bridge");
         }
-        if ((access & Opcodes.ACC_TRANSIENT) != 0) {
-            b.append(" transient");
+        if ((access & Opcodes.ACC_VARARGS) != 0) {
+            b.append(" varargs");
         }
         if ((access & Opcodes.ACC_NATIVE) != 0) {
             b.append(" native");
@@ -550,19 +597,10 @@ public class JasminDumper implements Opcodes {
             b.append(" abstract");
         }
         if ((access & Opcodes.ACC_STRICT) != 0) {
-            b.append(" fpstrict");
+            b.append(" strict");
         }
         if ((access & Opcodes.ACC_SYNTHETIC) != 0) {
             b.append(" synthetic");
-        }
-        if ((access & Opcodes.ACC_INTERFACE) != 0) {
-            b.append(" interface");
-        }
-        if ((access & Opcodes.ACC_ANNOTATION) != 0) {
-            b.append(" annotation");
-        }
-        if ((access & Opcodes.ACC_ENUM) != 0) {
-            b.append(" enum");
         }
         return b.toString();
     }

@@ -257,333 +257,337 @@ package com.googlecode.d2j.jasmin;
             return ACC_ABSTRACT;
         } else if (name.equals("strict")) {
             return ACC_STRICT;
+        } else if (name.equals("strictfp")) {
+            return ACC_STRICT;
         } else if (name.equals("synthetic")) {
             return ACC_SYNTHETIC;
         } else if (name.equals("annotation")) {
             return ACC_ANNOTATION;
         } else if (name.equals("enum")) {
             return ACC_ENUM;
+        } else if (name.equals("super")) {
+            return ACC_SUPER;
         }
         throw new RuntimeException("not support access flags " + name);
     }
     private static int getOp(String str) {
             switch (str) {
             case "nop":
-                return NOP;
+                return Opcodes.NOP;
             case "aconst_null":
-                return ACONST_NULL;
+                return Opcodes.ACONST_NULL;
             case "iconst_m1":
-                return ICONST_M1;
+                return Opcodes.ICONST_M1;
             case "iconst_0":
-                return ICONST_0;
+                return Opcodes.ICONST_0;
             case "iconst_1":
-                return ICONST_1;
+                return Opcodes.ICONST_1;
             case "iconst_2":
-                return ICONST_2;
+                return Opcodes.ICONST_2;
             case "iconst_3":
-                return ICONST_3;
+                return Opcodes.ICONST_3;
             case "iconst_4":
-                return ICONST_4;
+                return Opcodes.ICONST_4;
             case "iconst_5":
-                return ICONST_5;
+                return Opcodes.ICONST_5;
             case "lconst_0":
-                return LCONST_0;
+                return Opcodes.LCONST_0;
             case "lconst_1":
-                return LCONST_1;
+                return Opcodes.LCONST_1;
             case "fconst_0":
-                return FCONST_0;
+                return Opcodes.FCONST_0;
             case "fconst_1":
-                return FCONST_1;
+                return Opcodes.FCONST_1;
             case "fconst_2":
-                return FCONST_2;
+                return Opcodes.FCONST_2;
             case "dconst_0":
-                return DCONST_0;
+                return Opcodes.DCONST_0;
             case "dconst_1":
-                return DCONST_1;
+                return Opcodes.DCONST_1;
             case "bipush":
-                return BIPUSH;
+                return Opcodes.BIPUSH;
             case "sipush":
-                return SIPUSH;
+                return Opcodes.SIPUSH;
             case "ldc_w":
             case "ldc2_w":
             case "ldc":
-                return LDC;
+                return Opcodes.LDC;
             case "iload":
-                return ILOAD;
+                return Opcodes.ILOAD;
             case "lload":
-                return LLOAD;
+                return Opcodes.LLOAD;
             case "fload":
-                return FLOAD;
+                return Opcodes.FLOAD;
             case "dload":
-                return DLOAD;
+                return Opcodes.DLOAD;
             case "aload":
-                return ALOAD;
+                return Opcodes.ALOAD;
             case "iaload":
-                return IALOAD;
+                return Opcodes.IALOAD;
             case "laload":
-                return LALOAD;
+                return Opcodes.LALOAD;
             case "faload":
-                return FALOAD;
+                return Opcodes.FALOAD;
             case "daload":
-                return DALOAD;
+                return Opcodes.DALOAD;
             case "aaload":
-                return AALOAD;
+                return Opcodes.AALOAD;
             case "baload":
-                return BALOAD;
+                return Opcodes.BALOAD;
             case "caload":
-                return CALOAD;
+                return Opcodes.CALOAD;
             case "saload":
-                return SALOAD;
+                return Opcodes.SALOAD;
             case "istore":
-                return ISTORE;
+                return Opcodes.ISTORE;
             case "lstore":
-                return LSTORE;
+                return Opcodes.LSTORE;
             case "fstore":
-                return FSTORE;
+                return Opcodes.FSTORE;
             case "dstore":
-                return DSTORE;
+                return Opcodes.DSTORE;
             case "astore":
-                return ASTORE;
+                return Opcodes.ASTORE;
             case "iastore":
-                return IASTORE;
+                return Opcodes.IASTORE;
             case "lastore":
-                return LASTORE;
+                return Opcodes.LASTORE;
             case "fastore":
-                return FASTORE;
+                return Opcodes.FASTORE;
             case "dastore":
-                return DASTORE;
+                return Opcodes.DASTORE;
             case "aastore":
-                return AASTORE;
+                return Opcodes.AASTORE;
             case "bastore":
-                return BASTORE;
+                return Opcodes.BASTORE;
             case "castore":
-                return CASTORE;
+                return Opcodes.CASTORE;
             case "sastore":
-                return SASTORE;
+                return Opcodes.SASTORE;
             case "pop":
-                return POP;
+                return Opcodes.POP;
             case "pop2":
-                return POP2;
+                return Opcodes.POP2;
             case "dup":
-                return DUP;
+                return Opcodes.DUP;
             case "dup_x1":
-                return DUP_X1;
+                return Opcodes.DUP_X1;
             case "dup_x2":
-                return DUP_X2;
+                return Opcodes.DUP_X2;
             case "dup2":
-                return DUP2;
+                return Opcodes.DUP2;
             case "dup2_x1":
-                return DUP2_X1;
+                return Opcodes.DUP2_X1;
             case "dup2_x2":
-                return DUP2_X2;
+                return Opcodes.DUP2_X2;
             case "swap":
-                return SWAP;
+                return Opcodes.SWAP;
             case "iadd":
-                return IADD;
+                return Opcodes.IADD;
             case "ladd":
-                return LADD;
+                return Opcodes.LADD;
             case "fadd":
-                return FADD;
+                return Opcodes.FADD;
             case "dadd":
-                return DADD;
+                return Opcodes.DADD;
             case "isub":
-                return ISUB;
+                return Opcodes.ISUB;
             case "lsub":
-                return LSUB;
+                return Opcodes.LSUB;
             case "fsub":
-                return FSUB;
+                return Opcodes.FSUB;
             case "dsub":
-                return DSUB;
+                return Opcodes.DSUB;
             case "imul":
-                return IMUL;
+                return Opcodes.IMUL;
             case "lmul":
-                return LMUL;
+                return Opcodes.LMUL;
             case "fmul":
-                return FMUL;
+                return Opcodes.FMUL;
             case "dmul":
-                return DMUL;
+                return Opcodes.DMUL;
             case "idiv":
-                return IDIV;
+                return Opcodes.IDIV;
             case "ldiv":
-                return LDIV;
+                return Opcodes.LDIV;
             case "fdiv":
-                return FDIV;
+                return Opcodes.FDIV;
             case "ddiv":
-                return DDIV;
+                return Opcodes.DDIV;
             case "irem":
-                return IREM;
+                return Opcodes.IREM;
             case "lrem":
-                return LREM;
+                return Opcodes.LREM;
             case "frem":
-                return FREM;
+                return Opcodes.FREM;
             case "drem":
-                return DREM;
+                return Opcodes.DREM;
             case "ineg":
-                return INEG;
+                return Opcodes.INEG;
             case "lneg":
-                return LNEG;
+                return Opcodes.LNEG;
             case "fneg":
-                return FNEG;
+                return Opcodes.FNEG;
             case "dneg":
-                return DNEG;
+                return Opcodes.DNEG;
             case "ishl":
-                return ISHL;
+                return Opcodes.ISHL;
             case "lshl":
-                return LSHL;
+                return Opcodes.LSHL;
             case "ishr":
-                return ISHR;
+                return Opcodes.ISHR;
             case "lshr":
-                return LSHR;
+                return Opcodes.LSHR;
             case "iushr":
-                return IUSHR;
+                return Opcodes.IUSHR;
             case "lushr":
-                return LUSHR;
+                return Opcodes.LUSHR;
             case "iand":
-                return IAND;
+                return Opcodes.IAND;
             case "land":
-                return LAND;
+                return Opcodes.LAND;
             case "ior":
-                return IOR;
+                return Opcodes.IOR;
             case "lor":
-                return LOR;
+                return Opcodes.LOR;
             case "ixor":
-                return IXOR;
+                return Opcodes.IXOR;
             case "lxor":
-                return LXOR;
+                return Opcodes.LXOR;
             case "iinc":
-                return IINC;
+                return Opcodes.IINC;
             case "i2l":
-                return I2L;
+                return Opcodes.I2L;
             case "i2f":
-                return I2F;
+                return Opcodes.I2F;
             case "i2d":
-                return I2D;
+                return Opcodes.I2D;
             case "l2i":
-                return L2I;
+                return Opcodes.L2I;
             case "l2f":
-                return L2F;
+                return Opcodes.L2F;
             case "l2d":
-                return L2D;
+                return Opcodes.L2D;
             case "f2i":
-                return F2I;
+                return Opcodes.F2I;
             case "f2l":
-                return F2L;
+                return Opcodes.F2L;
             case "f2d":
-                return F2D;
+                return Opcodes.F2D;
             case "d2i":
-                return D2I;
+                return Opcodes.D2I;
             case "d2l":
-                return D2L;
+                return Opcodes.D2L;
             case "d2f":
-                return D2F;
+                return Opcodes.D2F;
             case "i2b":
-                return I2B;
+                return Opcodes.I2B;
             case "i2c":
-                return I2C;
+                return Opcodes.I2C;
             case "i2s":
-                return I2S;
+                return Opcodes.I2S;
             case "lcmp":
-                return LCMP;
+                return Opcodes.LCMP;
             case "fcmpl":
-                return FCMPL;
+                return Opcodes.FCMPL;
             case "fcmpg":
-                return FCMPG;
+                return Opcodes.FCMPG;
             case "dcmpl":
-                return DCMPL;
+                return Opcodes.DCMPL;
             case "dcmpg":
-                return DCMPG;
+                return Opcodes.DCMPG;
             case "ifeq":
-                return IFEQ;
+                return Opcodes.IFEQ;
             case "ifne":
-                return IFNE;
+                return Opcodes.IFNE;
             case "iflt":
-                return IFLT;
+                return Opcodes.IFLT;
             case "ifge":
-                return IFGE;
+                return Opcodes.IFGE;
             case "ifgt":
-                return IFGT;
+                return Opcodes.IFGT;
             case "ifle":
-                return IFLE;
+                return Opcodes.IFLE;
             case "if_icmpeq":
-                return IF_ICMPEQ;
+                return Opcodes.IF_ICMPEQ;
             case "if_icmpne":
-                return IF_ICMPNE;
+                return Opcodes.IF_ICMPNE;
             case "if_icmplt":
-                return IF_ICMPLT;
+                return Opcodes.IF_ICMPLT;
             case "if_icmpge":
-                return IF_ICMPGE;
+                return Opcodes.IF_ICMPGE;
             case "if_icmpgt":
-                return IF_ICMPGT;
+                return Opcodes.IF_ICMPGT;
             case "if_icmple":
-                return IF_ICMPLE;
+                return Opcodes.IF_ICMPLE;
             case "if_acmpeq":
-                return IF_ACMPEQ;
+                return Opcodes.IF_ACMPEQ;
             case "if_acmpne":
-                return IF_ACMPNE;
+                return Opcodes.IF_ACMPNE;
             case "goto":
-                return GOTO;
+                return Opcodes.GOTO;
             case "jsr":
-                return JSR;
+                return Opcodes.JSR;
             case "ret":
-                return RET;
+                return Opcodes.RET;
             case "tableswitch":
-                return TABLESWITCH;
+                return Opcodes.TABLESWITCH;
             case "lookupswitch":
-                return LOOKUPSWITCH;
+                return Opcodes.LOOKUPSWITCH;
             case "ireturn":
-                return IRETURN;
+                return Opcodes.IRETURN;
             case "lreturn":
-                return LRETURN;
+                return Opcodes.LRETURN;
             case "freturn":
-                return FRETURN;
+                return Opcodes.FRETURN;
             case "dreturn":
-                return DRETURN;
+                return Opcodes.DRETURN;
             case "areturn":
-                return ARETURN;
+                return Opcodes.ARETURN;
             case "return":
-                return RETURN;
+                return Opcodes.RETURN;
             case "getstatic":
-                return GETSTATIC;
+                return Opcodes.GETSTATIC;
             case "putstatic":
-                return PUTSTATIC;
+                return Opcodes.PUTSTATIC;
             case "getfield":
-                return GETFIELD;
+                return Opcodes.GETFIELD;
             case "putfield":
-                return PUTFIELD;
+                return Opcodes.PUTFIELD;
             case "invokevirtual":
-                return INVOKEVIRTUAL;
+                return Opcodes.INVOKEVIRTUAL;
             case "invokespecial":
-                return INVOKESPECIAL;
+                return Opcodes.INVOKESPECIAL;
             case "invokestatic":
-                return INVOKESTATIC;
+                return Opcodes.INVOKESTATIC;
             case "invokeinterface":
-                return INVOKEINTERFACE;
+                return Opcodes.INVOKEINTERFACE;
             case "invokedynamic":
-                return INVOKEDYNAMIC;
+                return Opcodes.INVOKEDYNAMIC;
             case "new":
-                return NEW;
+                return Opcodes.NEW;
             case "newarray":
-                return NEWARRAY;
+                return Opcodes.NEWARRAY;
             case "anewarray":
-                return ANEWARRAY;
+                return Opcodes.ANEWARRAY;
             case "arraylength":
-                return ARRAYLENGTH;
+                return Opcodes.ARRAYLENGTH;
             case "athrow":
-                return ATHROW;
+                return Opcodes.ATHROW;
             case "checkcast":
-                return CHECKCAST;
+                return Opcodes.CHECKCAST;
             case "instanceof":
-                return INSTANCEOF;
+                return Opcodes.INSTANCEOF;
             case "monitorenter":
-                return MONITORENTER;
+                return Opcodes.MONITORENTER;
             case "monitorexit":
-                return MONITOREXIT;
+                return Opcodes.MONITOREXIT;
             case "multianewarray":
-                return MULTIANEWARRAY;
+                return Opcodes.MULTIANEWARRAY;
             case "ifnull":
-                return IFNULL;
+                return Opcodes.IFNULL;
             case "ifnonnull":
-                return IFNONNULL;
+                return Opcodes.IFNONNULL;
             case "iload_0":
                 return 26;
             case "iload_1":
@@ -819,7 +823,7 @@ STRING
     :  '"' ( ESC_SEQ | ~('\\'|'"') )* '"'
     ;
 DSTRING
-    :  '\'' ( ESC_SEQ | ~('\\'|'"') )* '\''
+    :  '\'' ( ESC_SEQ | ~('\\'|'\'') )* '\''
     ;
 	
 fragment
@@ -847,7 +851,7 @@ METHOD_DESC_WITHOUT_RET: '(' ('['*(FRAGMENT_PRIMITIVE_TYPE|FRAGMENT_OBJECT_TYPE)
 OBJECT_TYPE: 'L' (ESC_SEQ |~(';'|':'|'\\'|' '|'\n'|'\t'|'\r'|'('|')'))+ ';' ;
 ACC:	'public' | 'private' | 'protected' | 'static' | 'final' | 'synchronized' | 'bridge' | 'varargs' | 'native' |
     'abstract' | 'strictfp' | 'synthetic' | 'constructor' | 'interface' | 'enum' |
-    'annotation' | 'volatile' | 'transient' | 'declared-synchronized' ;
+    'annotation' | 'volatile' | 'transient' | 'declared-synchronized' | 'super' | 'strict';
 ANNOTATION_VISIBLITY: 'visible' | 'invisible' ;
 METHOD_ANNOTATION_VISIBLITY: 'visibleparam' | 'invisibleparam';
 INNER	:	'inner';
@@ -862,7 +866,7 @@ OP0	:	'nop'|'monitorenter'|'monitorexit'|'pop2'|'pop'
 	|('a'|'d'|'f'|'i'|'l') ('astore'|'aload')
 	|'dcmpg'|'dcmpl' | 'lcmp' |'fcmpg'|'fcmpl'
 	|'athrow'
-	|('i'|'f'|'d'|'l')'add'|'div'|'sub'|'mul'|'rem'|'shl'|'shr'|'ushr'|'and'|'or'|'xor'|'neg'
+	|('i'|'f'|'d'|'l')('add'|'div'|'sub'|'mul'|'rem'|'shl'|'shr'|'ushr'|'and'|'or'|'xor'|'neg')
 	|'arraylength'
 	|'dup'|'dup2'|'dup_x2'|'dup2_x2'|'dup2_x1'
 	|'swap'
@@ -896,7 +900,9 @@ TABLESWITCH:	'tableswitch';
 XINVOKE	:	'invokestatic'
 	|	'invokevirtual'
 	|       'invokespecial'
-	|       'invokeinterface'
+	;
+INVOKEINTERFACE  :
+	       'invokeinterface'
 	;
 INVOKEDYNAMIC
 	:	'invokedynamic';
@@ -962,7 +968,7 @@ sHead   :  '.bytecode' ( a=INT { int v=parseInt($a.text); cn.version=versions[v>
                         |a=DOUBLE {double v=parseDouble($a.text); cn.version=versions[(int)(v<2.0?(v*10)\%10:(v-44))]; }
                        )
         |  '.source' a4=sId  { cn.sourceFile=$a4.text; }
-		|  '.class' i=sAccList {cn.access|=$i.acc;} b=sId { cn.name=$b.text; }
+		|  '.class' i=sAccList {cn.access|=$i.acc; if ((cn.access & Opcodes.ACC_INTERFACE) == 0) {cn.access |= Opcodes.ACC_SUPER;} else { cn.access &= ~Opcodes.ACC_SUPER; } } b=sId { cn.name=$b.text; }
 		|  '.interface' i=sAccList {cn.access|=ACC_INTERFACE|$i.acc;} b=sId { cn.name=$b.text; }
 		|  '.super' a1=sId  {  cn.superName=$a1.text; }
 		|  '.implements' a2=sId { if(cn.interfaces==null){cn.interfaces=new ArrayList<>();}  cn.interfaces.add($a2.text); }
@@ -971,15 +977,14 @@ sHead   :  '.bytecode' ( a=INT { int v=parseInt($a.text); cn.version=versions[v>
 		|  '.debug' a=STRING  { cn.sourceDebug=unEscapeString($a.text); }
 		|  '.attribute' sId STRING     { System.err.println("ignore .attribute"); }
 		|  '.inner class' (i=sAccList sId{tmpInt=$i.acc;})? {tmp=null;tmp2=null;} ('inner' a3=sId{tmp=$a3.text;})? ('outer' a4=sId{tmp2=$a4.text;})?   { cn.visitInnerClass(null,tmp2,tmp,tmpInt); }
-		|  '.signature' a=STRING { cn.signature=unEscapeString($a.text); }
 		|  '.no_super' {cn.superName=null;}
 		|  '.class_attribute' sId STRING    { System.err.println("ignore .class_attribute"); }
 		|  '.enclosing_method_attr' a=STRING b1=STRING c=STRING   {cn.visitOuterClass($a.text,$b1.text,$c.text);}
 		|  '.inner_class_attr' ('.inner_class_spec_attr' a=STRING b2=STRING i=sAccList '.end' '.inner_class_spec_attr' { cn.visitInnerClass(null,unEscape($a.text),unEscape($b2.text),i); } )* '.end' '.inner_class_attr'
-		|  s=sSigAttr  { cn.signature=$s.s; }
+		|  s=sSigAttr  { cn.signature=$s.sig; }
 		|  sSynthetic   {cn.access|=ACC_SYNTHETIC;}
 		;
-sSigAttr returns[String s]:	'.signature_attr' a=STRING{ $s=$a.text; };
+sSigAttr returns[String sig]:	('.signature_attr' | '.signature') a=STRING{ $sig=unEscapeString($a.text); };
 sDeprecateAttr:	'.deprecated';
 sSynthetic
 	:	'.synthetic'
@@ -991,7 +996,7 @@ sClassDesc
 	:	sArrayType|OBJECT_TYPE|UP_Z|UP_B|UP_S|UP_C|UP_I|UP_J|UP_D|UP_F
 	;
 sId	:	ID|LOW_E|LOW_S|LOW_C|AT|AND|UP_Z|UP_B|UP_S|UP_C|UP_I|UP_F|UP_D|UP_J|ANNOTATION_VISIBLITY|METHOD_ANNOTATION_VISIBLITY|INNER|OUTTER
-	|	IIOP|IOP|JOP|OP0|LDC|XFIELD|XTYPE|XINVOKE|MULTIANEWARRAY|LOOKUPSWITCH|TABLESWITCH|DEFAULT|FROM|TO|USING|STACK|LOCALS|HIGH|INVOKEDYNAMIC|VOID_TYPE
+	|	IIOP|IOP|JOP|OP0|LDC|XFIELD|XTYPE|XINVOKE|INVOKEINTERFACE|MULTIANEWARRAY|LOOKUPSWITCH|TABLESWITCH|DEFAULT|FROM|TO|USING|STACK|LOCALS|HIGH|INVOKEDYNAMIC|VOID_TYPE
 	| WBOOLEAN| WBYTE | WSHORT|WCHAR|WINTEGER|WLONG|WFLOAT|WDOUBLE |XNEWARRAY
 	;
 sWord : sId ;
@@ -1085,7 +1090,7 @@ sField	@init {
               )
         )?
             (
-            s=sSigAttr{fn.signature=$s.s;}
+            s=sSigAttr{fn.signature=$s.sig;}
             |sDeprecateAttr{ fn.access|=ACC_DEPRECATED; }
             |sSynthetic {cn.access|=ACC_SYNTHETIC;}
             |sVisibiltyAnnotation
@@ -1107,7 +1112,7 @@ sMethod	@init{
     }
 }
     :	'.method' i=sAccList n=sMemberName t=sMethodDesc {mn.access|=i;mn.name=$n.name;mn.desc=unEscape($t.text);}
-            (s=sSigAttr{mn.signature=s;}
+            (s=sSigAttr{mn.signature=$s.sig;}
                 |sDeprecateAttr{ cn.access|=ACC_DEPRECATED; }
                 |sSynthetic {cn.access|=ACC_SYNTHETIC;}
                 |sVisibiltyAnnotation
@@ -1159,13 +1164,17 @@ code
 	                    String oa[]=parseOwnerAndName($e.text);
 	                    mn.visitMethodInsn(getOp($a.text),oa[0],oa[1],unEscape($m.text));
 	                  }
+	|	a=INVOKEINTERFACE e=sId  m=sMethodDesc INT?  {line($a.line);
+	                    String oa[]=parseOwnerAndName($e.text);
+	                    mn.visitMethodInsn(getOp($a.text),oa[0],oa[1],unEscape($m.text));
+	                  }
 	|	a=INVOKEDYNAMIC sId sMethodDesc sId sMethodDesc '(' sInvokeDynamicE (',' sInvokeDynamicE)* ')'  {line($a.line); if(1==1) throw new RuntimeException("not support Yet!");}
 	|	a=MULTIANEWARRAY ff=sClassDesc c=INT   {line($a.line); mn.visitMultiANewArrayInsn(unEscape($ff.text),parseInt($c.text)); }
-	|   z=sLabel { Label label=getLabel($z.text); mn.visitLabel(label); if(rebuildLine) {mn.visitLineNumber($z.start.getLine(),label);}
+	|   z=sLabel ':' { Label label=getLabel($z.text); mn.visitLabel(label); if(rebuildLine) {mn.visitLineNumber($z.start.getLine(),label);}
 	 }
 	|	'.catch' e=sId 'from' z1=sLabel 'to' z2=sLabel 'using' z3=sLabel { String type="all".equals($e.text)?null:unEscape($e.text); mn.visitTryCatchBlock(getLabel($z1.text),getLabel($z2.text),getLabel($z3.text),type); }
-	|	'.limit' 'stack' ('?' | INT)
-	|	'.limit' 'locals' ('?'| INT)
+	|	'.limit' 'stack' ('?' { mn.maxStack=-1; } | i1=INT { mn.maxStack=parseInt($i1.text); })
+	|	'.limit' 'locals' ('?' {mn.maxLocals=-1;}| i1=INT { mn.maxLocals=parseInt($i1.text);})
 	|	'.code_attribute' sId STRING   { System.err.println("ignore .code_attribute"); }
 	|	'.line' b=INT  { if(!rebuildLine) { Label label=new Label(); mn.visitLabel(label); mn.visitLineNumber(parseInt($b.text),label); } }
 	|   '.var' var=INT 'is' mber=sMemberName desc=sClassDesc ('signature' sig=STRING)? 'from' z1=sLabel 'to' z2=sLabel  { mn.visitLocalVariable($mber.name,unEscape($desc.text),unEscapeString($sig.text),getLabel($z1.text),getLabel($z2.text),parseInt($var.text)); }

@@ -103,17 +103,15 @@ public class Jar2JasminCmd extends BaseCmd {
     }
 
     private void disassemble1(Path file, Path output) throws IOException {
-        try (InputStream is = Files.newInputStream(file)) {
-            ClassReader r = new ClassReader(is);
-            Path jFile = output.resolve(r.getClassName().replace('.', '/') + ".j");
-            createParentDirectories(jFile);
-            try (BufferedWriter out = Files.newBufferedWriter(jFile, Charset.forName(encoding))) {
-                PrintWriter pw = new PrintWriter(out);
-                ClassNode node = new ClassNode();
-                r.accept(node, (debugInfo ? 0 : ClassReader.SKIP_DEBUG) | ClassReader.EXPAND_FRAMES);
-                new JasminDumper(pw).dump(node);
-                pw.flush();
-            }
+        ClassReader r = new ClassReader(Files.readAllBytes(file));
+        Path jFile = output.resolve(r.getClassName().replace('.', '/') + ".j");
+        createParentDirectories(jFile);
+        try (BufferedWriter out = Files.newBufferedWriter(jFile, Charset.forName(encoding))) {
+            PrintWriter pw = new PrintWriter(out);
+            ClassNode node = new ClassNode();
+            r.accept(node, (debugInfo ? 0 : ClassReader.SKIP_DEBUG) | ClassReader.EXPAND_FRAMES | ClassReader.SKIP_FRAMES);
+            new JasminDumper(pw).dump(node);
+            pw.flush();
         }
     }
 }
