@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
@@ -74,6 +76,12 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
 
     public void add(Stmt stmt) {
         insertLast(stmt);
+    }
+
+    public void addAll(Collection<Stmt> list) {
+        for (Stmt stmt : list) {
+            insertLast(stmt);
+        }
     }
 
     public StmtList clone(LabelAndLocalMapper mapper) {

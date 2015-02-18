@@ -4,39 +4,37 @@ import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
-import com.googlecode.dex2jar.ir.expr.Value;
-import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.stmt.Stmts;
+import com.googlecode.dex2jar.ir.stmt.*;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.Interpreter;
+import org.objectweb.asm.tree.analysis.Value;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Convert Instruction in Asm to IRMethod,
- * please set <code>ClassReader.EXPAND_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES</code> where build
- * the ClassNode
- *
- * @author bob
- */
-public class J2IRConverter implements Opcodes {
+import static org.objectweb.asm.Opcodes.*;
 
-    public static final Value PLACEHOLDER = Exprs.nByte((byte) 0);
-    Map<Label, LabelStmt> map = new HashMap<Label, LabelStmt>();
+public class J2IRConverter {
+    Map<Label, LabelStmt> map = new HashMap<>();
+    InsnList insnList;
+    int[] parentCount;
+    JvmFrame[] frames;
+    MethodNode methodNode;
+    IrMethod target;
+    List<Stmt> emitStmts[];
+    List<Stmt> preEmit = new ArrayList<>();
+    List<Stmt> currentEmit;
 
-    public static String[] toDescArray(Type[] ts) {
-        String[] ds = new String[ts.length];
-        for (int i = 0; i < ts.length; i++) {
-            ds[i] = ts[i].getDescriptor();
-        }
-        return ds;
+    private J2IRConverter() {
+    }
+
+    public static IrMethod convert(String owner, MethodNode methodNode) throws AnalyzerException {
+        return new J2IRConverter().convert0(owner, methodNode);
     }
 
     LabelStmt getLabel(LabelNode labelNode) {
@@ -49,127 +47,283 @@ public class J2IRConverter implements Opcodes {
         return ls;
     }
 
-    /**
-     * convert the asm code into ir
-     *
-     * @param owner  class internal name
-     * @param source src method node
-     * @return the converted IR
-     */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public IrMethod convert(String owner, final MethodNode source) {
-        IrMethod target = populate(owner, source);
-        if (source.instructions.size() == 0) {
+    void emit(Stmt stmt) {
+        currentEmit.add(stmt);
+    }
+
+    IrMethod populate(String owner, MethodNode source) {
+        IrMethod target = new IrMethod();
+        target.name = source.name;
+        target.owner = "L" + owner + ";";
+        target.ret = Type.getReturnType(source.desc).getDescriptor();
+        Type[] args = Type.getArgumentTypes(source.desc);
+        String sArgs[] = new String[args.length];
+        target.args = sArgs;
+        for (int i = 0; i < args.length; i++) {
+            sArgs[i] = args[i].getDescriptor();
+        }
+        target.isStatic = 0 != (source.access & Opcodes.ACC_STATIC);
+        return target;
+    }
+
+    IrMethod convert0(String owner, MethodNode methodNode) throws AnalyzerException {
+        this.methodNode = methodNode;
+        target = populate(owner, methodNode);
+        if (methodNode.instructions.size() == 0) {
             return target;
         }
-        for (TryCatchBlockNode tc : source.tryCatchBlocks) {
-        target.traps.add(new Trap(getLabel(tc.start), getLabel(tc.end), new LabelStmt[] { getLabel(tc.handler) },
-        new String[] { tc.type }));
-        }
 
-        Analyzer an = new Analyzer(new BasicInterpreter());
-        Frame[] frames;
-        try {
-            frames = an.analyze(owner, source);
-        } catch (AnalyzerException ex) {
-            throw new RuntimeException(ex);
-        }
+        insnList = methodNode.instructions;
+        BitSet[] exBranch = new BitSet[insnList.size()];
+        parentCount = new int[insnList.size()];
 
-        final Value[] values = new Value[source.maxLocals + source.maxStack];
-        for (int i = 0; i < values.length; i++) {
-            Local local = Exprs.nLocal("a" + i);
-            target.locals.add(local);
-            values[i] = local;
-        }
+        initParentCount(parentCount);
 
-        int x = 0;
-        final StmtList stmts = target.stmts;
-        if (!target.isStatic) {// not static
-            stmts.add(Stmts.nIdentity(values[x++], Exprs.nThisRef(target.owner)));
-        }
-        for (int i = 0; i < target.args.length; i++) {
-            stmts.add(Stmts.nIdentity(values[x++], Exprs.nParameterRef(target.args[i], i)));
-        }
-        final Local voidLocal = Exprs.nLocal("ignore");
-        target.locals.add(voidLocal);
-        // FIXME clean all Label.info
 
-        Frame fx = new Frame(source.maxLocals, source.maxStack) {
+        BitSet handlers = new BitSet(insnList.size());
+        if (methodNode.tryCatchBlocks != null) {
+            for (TryCatchBlockNode tcb : methodNode.tryCatchBlocks) {
+                target.traps.add(new Trap(getLabel(tcb.start), getLabel(tcb.end), new LabelStmt[]{getLabel(tcb.handler)},
+                        new String[]{tcb.type}));
+                int handlerIdx = insnList.indexOf(tcb.handler);
+                handlers.set(handlerIdx);
 
-            public XValue pop() throws IndexOutOfBoundsException {
-                org.objectweb.asm.tree.analysis.Value v = super.pop();
-                int top = super.getStackSize();
-                return new XValue(v.getSize(), values[top + super.getLocals()]);
-            }
+                for (AbstractInsnNode p = tcb.start.getNext(); p != tcb.end; p = p.getNext()) {
 
-            @Override
-            public org.objectweb.asm.tree.analysis.Value getStack(int i) throws IndexOutOfBoundsException {
-                org.objectweb.asm.tree.analysis.Value v = super.getStack(i);
-                return new XValue(v.getSize(), values[i + super.getLocals()]);
-            }
-
-            @Override
-            public XValue getLocal(int i) throws IndexOutOfBoundsException {
-                org.objectweb.asm.tree.analysis.Value v = super.getLocal(i);
-                return new XValue(v.getSize(), values[i]);
-            }
-
-            @Override
-            public void execute(AbstractInsnNode insn, Interpreter interpreter) throws AnalyzerException {
-                switch (insn.getOpcode()) {
-                    case DUP_X1:
-                        // BEFORE: ..AB
-                        // AFTER:  ..BAB
-                        int stack = getStackSize() + getLocals();
-                        Value A = values[stack - 2];
-                        Value B = values[stack - 1]; // tos now
-                        Value C = values[stack - 0]; // next stack position
-
-                        stmts.add(Stmts.nAssign(C, B));
-                        stmts.add(Stmts.nAssign(B, A));
-                        stmts.add(Stmts.nAssign(A, C));
-
-                        return;
-                    case DUP_X2:
-                    case DUP2:
-                    case DUP2_X1:
-                    case DUP2_X2:
-                        throw new RuntimeException("not support opcode" + insn.getOpcode());
-
+                    BitSet x = exBranch[insnList.indexOf(p)];
+                    if (x == null) {
+                        x = exBranch[insnList.indexOf(p)] = new BitSet(insnList.size());
+                    }
+                    x.set(handlerIdx);
+                    parentCount[handlerIdx]++;
                 }
-                super.execute(insn, interpreter);
             }
+        }
 
-            @Override
-            public void setLocal(int i, org.objectweb.asm.tree.analysis.Value value) throws IndexOutOfBoundsException {
-                Value v = ((XValue) value).value;
-                if (v != PLACEHOLDER) {
-                    stmts.add(Stmts.nAssign(values[i], v));
+        Interpreter<JvmValue> interpreter = buildInterpreter();
+        frames = new JvmFrame[insnList.size()];
+        emitStmts = new ArrayList[insnList.size()];
+        BitSet access = new BitSet(insnList.size());
+
+        dfs(exBranch, handlers, access, interpreter);
+
+        StmtList stmts = target.stmts;
+        stmts.addAll(preEmit);
+        for (int i = 0; i < insnList.size(); i++) {
+            AbstractInsnNode p = insnList.get(i);
+            if (access.get(i)) {
+                List<Stmt> es = emitStmts[i];
+                if (es != null) {
+                    stmts.addAll(es);
+                }
+            } else {
+                if (p.getType() == AbstractInsnNode.LABEL) {
+                    stmts.add(getLabel((LabelNode) p));
+                }
+            }
+        }
+        emitStmts = null;
+
+
+        Queue<JvmValue> queue = new LinkedList<>();
+
+        for (int i1 = 0; i1 < frames.length; i1++) {
+            JvmFrame frame = frames[i1];
+            if (parentCount[i1] > 1 && frame != null && access.get(i1)) {
+                for (int j = 0; j < frame.getLocals(); j++) {
+                    JvmValue v = frame.getLocal(j);
+                    addToQueue(queue, v);
+                }
+                for (int j = 0; j < frame.getStackSize(); j++) {
+                    addToQueue(queue, frame.getStack(j));
                 }
             }
 
-            public void push(org.objectweb.asm.tree.analysis.Value v) throws IndexOutOfBoundsException {
-                int top = super.getStackSize();
-                stmts.add(Stmts.nAssign(values[top + super.getLocals()], ((XValue) v).value));
-                super.push(v);
+        }
+
+        while (!queue.isEmpty()) {
+            JvmValue v = queue.poll();
+            getLocal(v);
+            if (v.parent != null) {
+                if (v.parent.local == null) {
+                    queue.add(v.parent);
+                }
+            }
+            if (v.otherParent != null) {
+                for (JvmValue v2 : v.otherParent) {
+                    if (v2.local == null) {
+                        queue.add(v2);
+                    }
+                }
+            }
+        }
+
+        Set<com.googlecode.dex2jar.ir.expr.Value> phiValues = new HashSet<>();
+        List<LabelStmt> phiLabels = new ArrayList<>();
+        for (int i = 0; i < frames.length; i++) {
+            JvmFrame frame = frames[i];
+            if (parentCount[i] > 1 && frame != null && access.get(i)) {
+                AbstractInsnNode p = insnList.get(i);
+                LabelStmt labelStmt = getLabel((LabelNode) p);
+                List<AssignStmt> phis = new ArrayList<>();
+                for (int j = 0; j < frame.getLocals(); j++) {
+                    JvmValue v = frame.getLocal(j);
+                    addPhi(v, phiValues, phis);
+                }
+                for (int j = 0; j < frame.getStackSize(); j++) {
+                    addPhi(frame.getStack(j), phiValues, phis);
+                }
+                labelStmt.phis = phis;
+                phiLabels.add(labelStmt);
+            }
+        }
+        if (phiLabels.size() > 0) {
+            target.phiLabels = phiLabels;
+        }
+
+        return target;
+
+    }
+
+    private void addPhi(JvmValue v, Set<com.googlecode.dex2jar.ir.expr.Value> phiValues, List<AssignStmt> phis) {
+        if (v != null) {
+            if (v.local != null) {
+                if (v.parent != null) {
+                    phiValues.add(getLocal(v.parent));
+                }
+                if (v.otherParent != null) {
+                    for (JvmValue v2 : v.otherParent) {
+                        phiValues.add(getLocal(v2));
+                    }
+                }
+                if (phiValues.size() > 0) {
+                    phis.add(Stmts.nAssign(v.local, Exprs.nPhi(phiValues.toArray(new com.googlecode.dex2jar.ir.expr.Value[phiValues.size()]))));
+                    phiValues.clear();
+                }
+            }
+        }
+    }
+
+    private void addToQueue(Queue<JvmValue> queue, JvmValue v) {
+        if (v != null) {
+            if (v.local != null) {
+                if (v.parent != null) {
+                    if (v.parent.local == null) {
+                        queue.add(v.parent);
+                    }
+                }
+                if (v.otherParent != null) {
+                    for (JvmValue v2 : v.otherParent) {
+                        if (v2.local == null) {
+                            queue.add(v2);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void dfs(BitSet[] exBranch, BitSet handlers, BitSet access, Interpreter<JvmValue> interpreter) throws AnalyzerException {
+        currentEmit = preEmit;
+        JvmFrame first = initFirstFrame(methodNode, target);
+        frames[0] = first;
+        Stack<AbstractInsnNode> stack = new Stack<>();
+        stack.push(insnList.getFirst());
+
+        JvmFrame tmp = new JvmFrame(methodNode.maxLocals, methodNode.maxStack);
+
+        while (!stack.isEmpty()) {
+            AbstractInsnNode p = stack.pop();
+            int index = insnList.indexOf(p);
+            if (!access.get(index)) {
+                access.set(index);
+            } else {
+                continue;
+            }
+            JvmFrame frame = frames[index];
+            setCurrentEmit(index);
+
+            if (p.getType() == AbstractInsnNode.LABEL) {
+                emit(getLabel((LabelNode) p));
+                if (handlers.get(index)) {
+                    Local ex = newLocal();
+                    emit(Stmts.nIdentity(ex, Exprs.nExceptionRef("Ljava/lang/Throwable;")));
+                    frame.clearStack();
+                    frame.push(new JvmValue(1, ex));
+                }
+            }
+            BitSet ex = exBranch[index];
+            if (ex != null) {
+                for (int i = ex.nextSetBit(0); i >= 0; i = ex.nextSetBit(i + 1)) {
+                    mergeEx(frame, i);
+                    stack.push(insnList.get(i));
+                }
             }
 
-            public String toString() {
-                return "[Frame]";
-            }
-        };
+            tmp.init(frame);
+            tmp.execute(p, interpreter);
 
-        Interpreter<XValue> interpreter = new Interpreter<XValue>(Opcodes.ASM4) {
+            int op = p.getOpcode();
+            if (p.getType() == AbstractInsnNode.JUMP_INSN) {
+                JumpInsnNode jump = (JumpInsnNode) p;
+                stack.push(jump.label);
+                merge(tmp, insnList.indexOf(jump.label));
+            }
+
+            if (op == Opcodes.TABLESWITCH || op == Opcodes.LOOKUPSWITCH) {
+                if (op == Opcodes.TABLESWITCH) {
+                    TableSwitchInsnNode tsin = (TableSwitchInsnNode) p;
+                    for (LabelNode label : tsin.labels) {
+                        stack.push(label);
+                        merge(tmp, insnList.indexOf(label));
+                    }
+                    stack.push(tsin.dflt);
+                    merge(tmp, insnList.indexOf(tsin.dflt));
+
+                } else {
+                    LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) p;
+                    for (LabelNode label : lsin.labels) {
+                        stack.push(label);
+                        merge(tmp, insnList.indexOf(label));
+                    }
+                    stack.push(lsin.dflt);
+                    merge(tmp, insnList.indexOf(lsin.dflt));
+                }
+            }
+            if ((op >= Opcodes.GOTO && op <= Opcodes.RETURN) || op == Opcodes.ATHROW) {
+                // can't continue
+            } else {
+                stack.push(p.getNext());
+                merge(tmp, index + 1);
+            }
+
+            // cleanup frame it is useless
+            if (parentCount[index] <= 1) {
+                frames[index] = null;
+            }
+
+        }
+    }
+
+    private void setCurrentEmit(int index) {
+        currentEmit = emitStmts[index];
+        if (currentEmit == null) {
+            currentEmit = emitStmts[index] = new ArrayList<>(1);
+        }
+    }
+
+    private Interpreter<JvmValue> buildInterpreter() {
+        return new Interpreter<JvmValue>(Opcodes.ASM4) {
             @Override
-            public XValue newValue(Type type) {
-                return new XValue(1, PLACEHOLDER);
+            public JvmValue newValue(Type type) {
+                return null;
             }
 
             @Override
-            public XValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
+            public JvmValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
                 switch (insn.getOpcode()) {
                     case ACONST_NULL:
-                        return new XValue(1, Exprs.nNull());
+                        return b(1, Exprs.nNull());
                     case ICONST_M1:
                     case ICONST_0:
                     case ICONST_1:
@@ -177,37 +331,37 @@ public class J2IRConverter implements Opcodes {
                     case ICONST_3:
                     case ICONST_4:
                     case ICONST_5:
-                        return new XValue(1, Exprs.nInt(insn.getOpcode() - ICONST_0));
+                        return b(1, Exprs.nInt(insn.getOpcode() - ICONST_0));
                     case LCONST_0:
                     case LCONST_1:
-                        return new XValue(2, Exprs.nLong(insn.getOpcode() - LCONST_0));
+                        return b(2, Exprs.nLong(insn.getOpcode() - LCONST_0));
                     case FCONST_0:
                     case FCONST_1:
                     case FCONST_2:
-                        return new XValue(1, Exprs.nFloat(insn.getOpcode() - FCONST_0));
+                        return b(1, Exprs.nFloat(insn.getOpcode() - FCONST_0));
                     case DCONST_0:
                     case DCONST_1:
-                        return new XValue(2, Exprs.nDouble(insn.getOpcode() - DCONST_0));
+                        return b(2, Exprs.nDouble(insn.getOpcode() - DCONST_0));
                     case BIPUSH:
                     case SIPUSH:
-                        return new XValue(1, Exprs.nInt(((IntInsnNode) insn).operand));
+                        return b(1, Exprs.nInt(((IntInsnNode) insn).operand));
                     case LDC:
                         Object cst = ((LdcInsnNode) insn).cst;
                         if (cst instanceof Integer) {
-                            return new XValue(1, Exprs.nInt((Integer) cst));
+                            return b(1, Exprs.nInt((Integer) cst));
                         } else if (cst instanceof Float) {
-                            return new XValue(1, Exprs.nFloat((Float) cst));
+                            return b(1, Exprs.nFloat((Float) cst));
                         } else if (cst instanceof Long) {
-                            return new XValue(2, Exprs.nLong((Long) cst));
+                            return b(2, Exprs.nLong((Long) cst));
                         } else if (cst instanceof Double) {
-                            return new XValue(2, Exprs.nDouble((Double) cst));
+                            return b(2, Exprs.nDouble((Double) cst));
                         } else if (cst instanceof String) {
-                            return new XValue(1, Exprs.nString((String) cst));
+                            return b(1, Exprs.nString((String) cst));
                         } else if (cst instanceof Type) {
                             Type type = (Type) cst;
                             int sort = type.getSort();
                             if (sort == Type.OBJECT || sort == Type.ARRAY) {
-                                return new XValue(1, Exprs.nType(type.getDescriptor()));
+                                return b(1, Exprs.nType(type.getDescriptor()));
                             } else if (sort == Type.METHOD) {
                                 throw new UnsupportedOperationException("Not supported yet.");
                             } else {
@@ -222,86 +376,86 @@ public class J2IRConverter implements Opcodes {
                         throw new UnsupportedOperationException("Not supported yet.");
                     case GETSTATIC:
                         FieldInsnNode fin = (FieldInsnNode) insn;
-                        return new XValue(Type.getType(fin.desc).getSize(), Exprs.nStaticField("L" + fin.owner + ";", fin.name,
+                        return b(Type.getType(fin.desc).getSize(), Exprs.nStaticField("L" + fin.owner + ";", fin.name,
                                 fin.desc));
                     case NEW:
-                        return new XValue(1, Exprs.nNew("L" + ((TypeInsnNode) insn).desc + ";"));
+                        return b(1, Exprs.nNew("L" + ((TypeInsnNode) insn).desc + ";"));
                     default:
                         throw new Error("Internal error.");
                 }
             }
 
             @Override
-            public XValue copyOperation(AbstractInsnNode insn, XValue value) throws AnalyzerException {
-                return value;
+            public JvmValue copyOperation(AbstractInsnNode insn, JvmValue value) throws AnalyzerException {
+                return b(value.getSize(), getLocal(value));
             }
 
             @Override
-            public XValue unaryOperation(AbstractInsnNode insn, XValue value0) throws AnalyzerException {
-                XValue value = (XValue) value0;
+            public JvmValue unaryOperation(AbstractInsnNode insn, JvmValue value0) throws AnalyzerException {
+                Local local = getLocal(value0);
                 switch (insn.getOpcode()) {
                     case INEG:
-                        return new XValue(1, Exprs.nNeg(value.value, "I"));
+                        return b(1, Exprs.nNeg(local, "I"));
                     case IINC:
-                        return new XValue(1, Exprs.nAdd(value.value, Exprs.nInt(((IincInsnNode) insn).incr), "I"));
+                        return b(1, Exprs.nAdd(local, Exprs.nInt(((IincInsnNode) insn).incr), "I"));
                     case L2I:
-                        return new XValue(1, Exprs.nCast(value.value, "J", "I"));
+                        return b(1, Exprs.nCast(local, "J", "I"));
                     case F2I:
-                        return new XValue(1, Exprs.nCast(value.value, "F", "I"));
+                        return b(1, Exprs.nCast(local, "F", "I"));
                     case D2I:
-                        return new XValue(1, Exprs.nCast(value.value, "D", "I"));
+                        return b(1, Exprs.nCast(local, "D", "I"));
                     case I2B:
-                        return new XValue(1, Exprs.nCast(value.value, "I", "B"));
+                        return b(1, Exprs.nCast(local, "I", "B"));
                     case I2C:
-                        return new XValue(1, Exprs.nCast(value.value, "I", "C"));
+                        return b(1, Exprs.nCast(local, "I", "C"));
                     case I2S:
-                        return new XValue(1, Exprs.nCast(value.value, "I", "S"));
+                        return b(1, Exprs.nCast(local, "I", "S"));
                     case FNEG:
-                        return new XValue(1, Exprs.nNeg(value.value, "F"));
+                        return b(1, Exprs.nNeg(local, "F"));
                     case I2F:
-                        return new XValue(1, Exprs.nCast(value.value, "I", "F"));
+                        return b(1, Exprs.nCast(local, "I", "F"));
                     case L2F:
-                        return new XValue(1, Exprs.nCast(value.value, "J", "F"));
+                        return b(1, Exprs.nCast(local, "J", "F"));
                     case D2F:
-                        return new XValue(1, Exprs.nCast(value.value, "D", "F"));
+                        return b(1, Exprs.nCast(local, "D", "F"));
                     case LNEG:
-                        return new XValue(2, Exprs.nNeg(value.value, "J"));
+                        return b(2, Exprs.nNeg(local, "J"));
                     case I2L:
-                        return new XValue(2, Exprs.nCast(value.value, "I", "J"));
+                        return b(2, Exprs.nCast(local, "I", "J"));
                     case F2L:
-                        return new XValue(2, Exprs.nCast(value.value, "F", "J"));
+                        return b(2, Exprs.nCast(local, "F", "J"));
                     case D2L:
-                        return new XValue(2, Exprs.nCast(value.value, "D", "J"));
+                        return b(2, Exprs.nCast(local, "D", "J"));
                     case DNEG:
-                        return new XValue(2, Exprs.nNeg(value.value, "D"));
+                        return b(2, Exprs.nNeg(local, "D"));
                     case I2D:
-                        return new XValue(2, Exprs.nCast(value.value, "I", "D"));
+                        return b(2, Exprs.nCast(local, "I", "D"));
                     case L2D:
-                        return new XValue(2, Exprs.nCast(value.value, "J", "D"));
+                        return b(2, Exprs.nCast(local, "J", "D"));
                     case F2D:
-                        return new XValue(2, Exprs.nCast(value.value, "F", "D"));
+                        return b(2, Exprs.nCast(local, "F", "D"));
                     case IFEQ:
-                        stmts.add(Stmts.nIf(Exprs.nEq(value.value, Exprs.nInt(0), "I"),
+                        emit(Stmts.nIf(Exprs.nEq(local, Exprs.nInt(0), "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IFNE:
-                        stmts.add(Stmts.nIf(Exprs.nNe(value.value, Exprs.nInt(0), "I"),
+                        emit(Stmts.nIf(Exprs.nNe(local, Exprs.nInt(0), "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IFLT:
-                        stmts.add(Stmts.nIf(Exprs.nLt(value.value, Exprs.nInt(0), "I"),
+                        emit(Stmts.nIf(Exprs.nLt(local, Exprs.nInt(0), "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IFGE:
-                        stmts.add(Stmts.nIf(Exprs.nGe(value.value, Exprs.nInt(0), "I"),
+                        emit(Stmts.nIf(Exprs.nGe(local, Exprs.nInt(0), "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IFGT:
-                        stmts.add(Stmts.nIf(Exprs.nGt(value.value, Exprs.nInt(0), "I"),
+                        emit(Stmts.nIf(Exprs.nGt(local, Exprs.nInt(0), "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IFLE:
-                        stmts.add(Stmts.nIf(Exprs.nLe(value.value, Exprs.nInt(0), "I"),
+                        emit(Stmts.nIf(Exprs.nLe(local, Exprs.nInt(0), "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case TABLESWITCH: {
@@ -310,7 +464,7 @@ public class J2IRConverter implements Opcodes {
                         for (int i = 0; i < ts.labels.size(); i++) {
                             targets[i] = getLabel((LabelNode) ts.labels.get(i));
                         }
-                        stmts.add(Stmts.nTableSwitch(value.value, ts.min, targets, getLabel(ts.dflt)));
+                        emit(Stmts.nTableSwitch(local, ts.min, targets, getLabel(ts.dflt)));
                         return null;
                     }
                     case LOOKUPSWITCH: {
@@ -321,7 +475,7 @@ public class J2IRConverter implements Opcodes {
                             targets[i] = getLabel((LabelNode) ls.labels.get(i));
                             lookupValues[i] = (Integer) ls.keys.get(i);
                         }
-                        stmts.add(Stmts.nLookupSwitch(value.value, lookupValues, targets, getLabel(ls.dflt)));
+                        emit(Stmts.nLookupSwitch(local, lookupValues, targets, getLabel(ls.dflt)));
                         return null;
                     }
                     case IRETURN:
@@ -329,64 +483,64 @@ public class J2IRConverter implements Opcodes {
                     case FRETURN:
                     case DRETURN:
                     case ARETURN:
-                        stmts.add(Stmts.nReturn(value.value));
+                        // skip, move to returnOperation
                         return null;
                     case PUTSTATIC: {
                         FieldInsnNode fin = (FieldInsnNode) insn;
-                        stmts.add(Stmts.nAssign(Exprs.nStaticField("L" + fin.owner + ";", fin.name, fin.desc), value.value));
+                        emit(Stmts.nAssign(Exprs.nStaticField("L" + fin.owner + ";", fin.name, fin.desc), local));
                         return null;
                     }
                     case GETFIELD: {
                         FieldInsnNode fin = (FieldInsnNode) insn;
                         Type fieldType = Type.getType(fin.desc);
-                        return new XValue(fieldType.getSize(), Exprs.nField(value.value, "L" + fin.owner + ";", fin.name, fin.desc));
+                        return b(fieldType.getSize(), Exprs.nField(local, "L" + fin.owner + ";", fin.name, fin.desc));
                     }
                     case NEWARRAY:
                         switch (((IntInsnNode) insn).operand) {
                             case T_BOOLEAN:
-                                return new XValue(1, Exprs.nNewArray("Z", value.value));
+                                return b(1, Exprs.nNewArray("Z", local));
                             case T_CHAR:
-                                return new XValue(1, Exprs.nNewArray("C", value.value));
+                                return b(1, Exprs.nNewArray("C", local));
                             case T_BYTE:
-                                return new XValue(1, Exprs.nNewArray("B", value.value));
+                                return b(1, Exprs.nNewArray("B", local));
                             case T_SHORT:
-                                return new XValue(1, Exprs.nNewArray("S", value.value));
+                                return b(1, Exprs.nNewArray("S", local));
                             case T_INT:
-                                return new XValue(1, Exprs.nNewArray("I", value.value));
+                                return b(1, Exprs.nNewArray("I", local));
                             case T_FLOAT:
-                                return new XValue(1, Exprs.nNewArray("F", value.value));
+                                return b(1, Exprs.nNewArray("F", local));
                             case T_DOUBLE:
-                                return new XValue(1, Exprs.nNewArray("D", value.value));
+                                return b(1, Exprs.nNewArray("D", local));
                             case T_LONG:
-                                return new XValue(1, Exprs.nNewArray("D", value.value));
+                                return b(1, Exprs.nNewArray("D", local));
                             default:
                                 throw new AnalyzerException(insn, "Invalid array type");
                         }
                     case ANEWARRAY:
                         String desc = "L" + ((TypeInsnNode) insn).desc + ";";
-                        return new XValue(1, Exprs.nNewArray(desc, value.value));
+                        return b(1, Exprs.nNewArray(desc, local));
                     case ARRAYLENGTH:
-                        return new XValue(1, Exprs.nLength(value.value));
+                        return b(1, Exprs.nLength(local));
                     case ATHROW:
-                        stmts.add(Stmts.nThrow(value.value));
+                        emit(Stmts.nThrow(local));
                         return null;
                     case CHECKCAST:
                         desc = "L" + ((TypeInsnNode) insn).desc + ";";
-                        return new XValue(1, Exprs.nCheckCast(value.value, desc));
+                        return b(1, Exprs.nCheckCast(local, desc));
                     case INSTANCEOF:
-                        return new XValue(1, Exprs.nInstanceOf(value.value, "L" + ((TypeInsnNode) insn).desc + ";"));
+                        return b(1, Exprs.nInstanceOf(local, "L" + ((TypeInsnNode) insn).desc + ";"));
                     case MONITORENTER:
-                        stmts.add(Stmts.nLock(value.value));
+                        emit(Stmts.nLock(local));
                         return null;
                     case MONITOREXIT:
-                        stmts.add(Stmts.nUnLock(value.value));
+                        emit(Stmts.nUnLock(local));
                         return null;
                     case IFNULL:
-                        stmts.add(Stmts.nIf(Exprs.nEq(value.value, Exprs.nNull(), "L"),
+                        emit(Stmts.nIf(Exprs.nEq(local, Exprs.nNull(), "L"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IFNONNULL:
-                        stmts.add(Stmts.nIf(Exprs.nNe(value.value, Exprs.nNull(), "L"),
+                        emit(Stmts.nIf(Exprs.nNe(local, Exprs.nNull(), "L"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     default:
@@ -394,141 +548,147 @@ public class J2IRConverter implements Opcodes {
                 }
             }
 
+            JvmValue b(int size, com.googlecode.dex2jar.ir.expr.Value value) {
+                Local local = newLocal();
+                emit(Stmts.nAssign(local, value));
+                return new JvmValue(size, local);
+            }
+
             @Override
-            public XValue binaryOperation(AbstractInsnNode insn, XValue value10, XValue value20)
+            public JvmValue binaryOperation(AbstractInsnNode insn, JvmValue value10, JvmValue value20)
                     throws AnalyzerException {
-                XValue value1 = (XValue) value10;
-                XValue value2 = (XValue) value20;
+                Local local1 = getLocal(value10);
+                Local local2 = getLocal(value20);
                 switch (insn.getOpcode()) {
 
                     case IALOAD:
-                        return new XValue(1, Exprs.nArray(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nArray(local1, local2, "I"));
                     case BALOAD:
-                        return new XValue(1, Exprs.nArray(value1.value, value2.value, "B"));
+                        return b(1, Exprs.nArray(local1, local2, "B"));
                     case CALOAD:
-                        return new XValue(1, Exprs.nArray(value1.value, value2.value, "C"));
+                        return b(1, Exprs.nArray(local1, local2, "C"));
                     case SALOAD:
-                        return new XValue(1, Exprs.nArray(value1.value, value2.value, "S"));
+                        return b(1, Exprs.nArray(local1, local2, "S"));
                     case FALOAD:
-                        return new XValue(1, Exprs.nArray(value1.value, value2.value, "F"));
+                        return b(1, Exprs.nArray(local1, local2, "F"));
                     case AALOAD:
-                        return new XValue(1, Exprs.nArray(value1.value, value2.value, "L"));
+                        return b(1, Exprs.nArray(local1, local2, "L"));
                     case DALOAD:
-                        return new XValue(1, Exprs.nArray(value1.value, value2.value, "D"));
+                        return b(1, Exprs.nArray(local1, local2, "D"));
                     case LALOAD:
-                        return new XValue(1, Exprs.nArray(value1.value, value2.value, "J"));
+                        return b(1, Exprs.nArray(local1, local2, "J"));
                     case IADD:
-                        return new XValue(1, Exprs.nAdd(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nAdd(local1, local2, "I"));
                     case ISUB:
-                        return new XValue(1, Exprs.nSub(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nSub(local1, local2, "I"));
                     case IMUL:
-                        return new XValue(1, Exprs.nMul(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nMul(local1, local2, "I"));
                     case IDIV:
-                        return new XValue(1, Exprs.nDiv(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nDiv(local1, local2, "I"));
                     case IREM:
-                        return new XValue(1, Exprs.nRem(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nRem(local1, local2, "I"));
                     case ISHL:
-                        return new XValue(1, Exprs.nShl(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nShl(local1, local2, "I"));
                     case ISHR:
-                        return new XValue(1, Exprs.nShr(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nShr(local1, local2, "I"));
                     case IUSHR:
-                        return new XValue(1, Exprs.nUshr(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nUshr(local1, local2, "I"));
                     case IAND:
-                        return new XValue(1, Exprs.nAnd(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nAnd(local1, local2, "I"));
                     case IOR:
-                        return new XValue(1, Exprs.nOr(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nOr(local1, local2, "I"));
                     case IXOR:
-                        return new XValue(1, Exprs.nXor(value1.value, value2.value, "I"));
+                        return b(1, Exprs.nXor(local1, local2, "I"));
                     case FADD:
-                        return new XValue(1, Exprs.nAdd(value1.value, value2.value, "F"));
+                        return b(1, Exprs.nAdd(local1, local2, "F"));
                     case FSUB:
-                        return new XValue(1, Exprs.nSub(value1.value, value2.value, "F"));
+                        return b(1, Exprs.nSub(local1, local2, "F"));
                     case FMUL:
-                        return new XValue(1, Exprs.nMul(value1.value, value2.value, "F"));
+                        return b(1, Exprs.nMul(local1, local2, "F"));
                     case FDIV:
-                        return new XValue(1, Exprs.nDiv(value1.value, value2.value, "F"));
+                        return b(1, Exprs.nDiv(local1, local2, "F"));
                     case FREM:
-                        return new XValue(1, Exprs.nRem(value1.value, value2.value, "F"));
+                        return b(1, Exprs.nRem(local1, local2, "F"));
                     case LADD:
-                        return new XValue(2, Exprs.nAdd(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nAdd(local1, local2, "J"));
                     case LSUB:
-                        return new XValue(2, Exprs.nSub(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nSub(local1, local2, "J"));
                     case LMUL:
-                        return new XValue(2, Exprs.nMul(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nMul(local1, local2, "J"));
                     case LDIV:
-                        return new XValue(2, Exprs.nDiv(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nDiv(local1, local2, "J"));
                     case LREM:
-                        return new XValue(2, Exprs.nRem(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nRem(local1, local2, "J"));
                     case LSHL:
-                        return new XValue(2, Exprs.nShl(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nShl(local1, local2, "J"));
                     case LSHR:
-                        return new XValue(2, Exprs.nShr(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nShr(local1, local2, "J"));
                     case LUSHR:
-                        return new XValue(2, Exprs.nUshr(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nUshr(local1, local2, "J"));
                     case LAND:
-                        return new XValue(2, Exprs.nAnd(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nAnd(local1, local2, "J"));
                     case LOR:
-                        return new XValue(2, Exprs.nOr(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nOr(local1, local2, "J"));
                     case LXOR:
-                        return new XValue(2, Exprs.nXor(value1.value, value2.value, "J"));
+                        return b(2, Exprs.nXor(local1, local2, "J"));
 
                     case DADD:
-                        return new XValue(2, Exprs.nAdd(value1.value, value2.value, "D"));
+                        return b(2, Exprs.nAdd(local1, local2, "D"));
                     case DSUB:
-                        return new XValue(2, Exprs.nSub(value1.value, value2.value, "D"));
+                        return b(2, Exprs.nSub(local1, local2, "D"));
                     case DMUL:
-                        return new XValue(2, Exprs.nMul(value1.value, value2.value, "D"));
+                        return b(2, Exprs.nMul(local1, local2, "D"));
                     case DDIV:
-                        return new XValue(2, Exprs.nDiv(value1.value, value2.value, "D"));
+                        return b(2, Exprs.nDiv(local1, local2, "D"));
                     case DREM:
-                        return new XValue(2, Exprs.nRem(value1.value, value2.value, "D"));
+                        return b(2, Exprs.nRem(local1, local2, "D"));
 
                     case LCMP:
-                        return new XValue(2, Exprs.nLCmp(value1.value, value2.value));
+                        return b(2, Exprs.nLCmp(local1, local2));
                     case FCMPL:
-                        return new XValue(1, Exprs.nFCmpl(value1.value, value2.value));
+                        return b(1, Exprs.nFCmpl(local1, local2));
                     case FCMPG:
-                        return new XValue(1, Exprs.nFCmpg(value1.value, value2.value));
+                        return b(1, Exprs.nFCmpg(local1, local2));
                     case DCMPL:
-                        return new XValue(2, Exprs.nDCmpl(value1.value, value2.value));
+                        return b(2, Exprs.nDCmpl(local1, local2));
                     case DCMPG:
-                        return new XValue(2, Exprs.nDCmpg(value1.value, value2.value));
+                        return b(2, Exprs.nDCmpg(local1, local2));
 
                     case IF_ICMPEQ:
-                        stmts.add(Stmts.nIf(Exprs.nEq(value1.value, value2.value, "I"),
+                        emit(Stmts.nIf(Exprs.nEq(local1, local2, "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IF_ICMPNE:
-                        stmts.add(Stmts.nIf(Exprs.nNe(value1.value, value2.value, "I"),
+                        emit(Stmts.nIf(Exprs.nNe(local1, local2, "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IF_ICMPLT:
-                        stmts.add(Stmts.nIf(Exprs.nLt(value1.value, value2.value, "I"),
+                        emit(Stmts.nIf(Exprs.nLt(local1, local2, "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IF_ICMPGE:
-                        stmts.add(Stmts.nIf(Exprs.nGe(value1.value, value2.value, "I"),
+                        emit(Stmts.nIf(Exprs.nGe(local1, local2, "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IF_ICMPGT:
-                        stmts.add(Stmts.nIf(Exprs.nGt(value1.value, value2.value, "I"),
+                        emit(Stmts.nIf(Exprs.nGt(local1, local2, "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IF_ICMPLE:
-                        stmts.add(Stmts.nIf(Exprs.nLe(value1.value, value2.value, "I"),
+                        emit(Stmts.nIf(Exprs.nLe(local1, local2, "I"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IF_ACMPEQ:
-                        stmts.add(Stmts.nIf(Exprs.nEq(value1.value, value2.value, "L"),
+                        emit(Stmts.nIf(Exprs.nEq(local1, local2, "L"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case IF_ACMPNE:
-                        stmts.add(Stmts.nIf(Exprs.nNe(value1.value, value2.value, "L"),
+                        emit(Stmts.nIf(Exprs.nNe(local1, local2, "L"),
                                 getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     case PUTFIELD:
                         FieldInsnNode fin = (FieldInsnNode) insn;
-                        stmts.add(Stmts.nAssign(Exprs.nField(value1.value, "L" + fin.owner + ";", fin.name, fin.desc), value2.value));
+                        emit(Stmts.nAssign(Exprs.nField(local1, "L" + fin.owner + ";", fin.name, fin.desc), local2));
                         return null;
                     default:
                         throw new Error("Internal error.");
@@ -536,58 +696,69 @@ public class J2IRConverter implements Opcodes {
             }
 
             @Override
-            public XValue ternaryOperation(AbstractInsnNode insn, XValue value1, XValue value2, XValue value3)
+            public JvmValue ternaryOperation(AbstractInsnNode insn, JvmValue value1, JvmValue value2, JvmValue value3)
                     throws AnalyzerException {
+                Local local1 = getLocal(value1);
+                Local local2 = getLocal(value2);
+                Local local3 = getLocal(value3);
                 switch (insn.getOpcode()) {
                     case IASTORE:
-                        stmts.add(Stmts.nAssign(Exprs.nArray(((XValue) value1).value, ((XValue) value2).value, "I"),
-                                ((XValue) value3).value));
+                        emit(Stmts.nAssign(Exprs.nArray(local1, local2, "I"),
+                                local3));
                         break;
                     case LASTORE:
-                        stmts.add(Stmts.nAssign(Exprs.nArray(((XValue) value1).value, ((XValue) value2).value, "J"),
-                                ((XValue) value3).value));
+                        emit(Stmts.nAssign(Exprs.nArray(local1, local2, "J"),
+                                local3));
                         break;
                     case FASTORE:
-                        stmts.add(Stmts.nAssign(Exprs.nArray(((XValue) value1).value, ((XValue) value2).value, "F"),
-                                ((XValue) value3).value));
+                        emit(Stmts.nAssign(Exprs.nArray(local1, local2, "F"),
+                                local3));
                         break;
                     case DASTORE:
-                        stmts.add(Stmts.nAssign(Exprs.nArray(((XValue) value1).value, ((XValue) value2).value, "D"),
-                                ((XValue) value3).value));
+                        emit(Stmts.nAssign(Exprs.nArray(local1, local2, "D"),
+                                local3));
                         break;
                     case AASTORE:
-                        stmts.add(Stmts.nAssign(Exprs.nArray(((XValue) value1).value, ((XValue) value2).value, "L"),
-                                ((XValue) value3).value));
+                        emit(Stmts.nAssign(Exprs.nArray(local1, local2, "L"),
+                                local3));
                         break;
                     case BASTORE:
-                        stmts.add(Stmts.nAssign(Exprs.nArray(((XValue) value1).value, ((XValue) value2).value, "B"),
-                                ((XValue) value3).value));
+                        emit(Stmts.nAssign(Exprs.nArray(local1, local2, "B"),
+                                local3));
                         break;
                     case CASTORE:
-                        stmts.add(Stmts.nAssign(Exprs.nArray(((XValue) value1).value, ((XValue) value2).value, "C"),
-                                ((XValue) value3).value));
+                        emit(Stmts.nAssign(Exprs.nArray(local1, local2, "C"),
+                                local3));
                         break;
                     case SASTORE:
-                        stmts.add(Stmts.nAssign(Exprs.nArray(((XValue) value1).value, ((XValue) value2).value, "S"),
-                                ((XValue) value3).value));
+                        emit(Stmts.nAssign(Exprs.nArray(local1, local2, "S"),
+                                local3));
                         break;
                 }
 
                 return null;
             }
 
-            @Override
-            public XValue naryOperation(AbstractInsnNode insn, List xvalues) throws AnalyzerException {
+            public String[] toDescArray(Type[] ts) {
+                String[] ds = new String[ts.length];
+                for (int i = 0; i < ts.length; i++) {
+                    ds[i] = ts[i].getDescriptor();
+                }
+                return ds;
+            }
 
-                Value values[] = new Value[xvalues.size()];
+            @Override
+            public JvmValue naryOperation(AbstractInsnNode insn, List<? extends JvmValue> xvalues) throws AnalyzerException {
+
+                com.googlecode.dex2jar.ir.expr.Value values[] = new com.googlecode.dex2jar.ir.expr.Value[xvalues.size()];
                 for (int i = 0; i < xvalues.size(); i++) {
-                    values[i] = ((XValue) xvalues.get(i)).value;
+                    values[i] = getLocal(xvalues.get(i));
                 }
                 if (insn.getOpcode() == MULTIANEWARRAY) {
                     throw new UnsupportedOperationException("Not supported yet.");
                 } else {
                     MethodInsnNode mi = (MethodInsnNode) insn;
-                    Value v = null;
+                    com.googlecode.dex2jar.ir.expr.Value v = null;
                     String ret = Type.getReturnType(mi.desc).getDescriptor();
                     String owner = "L" + mi.owner + ";";
                     String ps[] = toDescArray(Type.getArgumentTypes(mi.desc));
@@ -608,68 +779,212 @@ public class J2IRConverter implements Opcodes {
                             throw new UnsupportedOperationException("Not supported yet.");
                     }
                     if ("V".equals(ret)) {
-                        stmts.add(Stmts.nVoidInvoke(v));
+                        emit(Stmts.nVoidInvoke(v));
                         return null;
                     } else {
-                        return new XValue(Type.getReturnType(mi.desc).getSize(), v);
+                        return b(Type.getReturnType(mi.desc).getSize(), v);
                     }
                 }
             }
 
             @Override
-            public XValue merge(XValue v, XValue w) {
+            public JvmValue merge(JvmValue v, JvmValue w) {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
 
             @Override
-            public void returnOperation(AbstractInsnNode insn, XValue value, XValue expected) throws AnalyzerException {
-                stmts.add(Stmts.nReturn(((XValue) value).value));
+            public void returnOperation(AbstractInsnNode insn, JvmValue value, JvmValue expected) throws AnalyzerException {
+                switch (insn.getOpcode()) {
+                    case IRETURN:
+                    case LRETURN:
+                    case FRETURN:
+                    case DRETURN:
+                    case ARETURN:
+                        emit(Stmts.nReturn(getLocal(value)));
+                        break;
+                    case RETURN:
+                        emit(Stmts.nReturnVoid());
+                        break;
+                }
+
             }
         };
+    }
 
-        for (AbstractInsnNode p = source.instructions.getFirst(); p != null; p = p.getNext()) {
-            if (p.getType() == AbstractInsnNode.LABEL) {
-                stmts.add(getLabel((LabelNode) p));
-            } else if (p.getOpcode() == GOTO) {
-                stmts.add(Stmts.nGoto(getLabel(((JumpInsnNode) p).label)));
-            } else if (p.getOpcode() == RETURN) {
-                stmts.add(Stmts.nReturnVoid());
-            } else {
-                fx.init(frames[source.instructions.indexOf(p)]);
-                fx.setReturn(null); // we don't need return value, cause ClassCastException if return not set to null
-                try {
-                    fx.execute(p, interpreter);
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
+    private Local getLocal(JvmValue value) {
+        Local local = value.local;
+        if (local == null) {
+            local = value.local = newLocal();
+        }
+        return local;
+    }
+
+    private void initParentCount(int[] parentCount) {
+        for (AbstractInsnNode p = insnList.getFirst(); p != null; p = p.getNext()) {
+            if (p.getType() == AbstractInsnNode.JUMP_INSN) {
+                JumpInsnNode jump = (JumpInsnNode) p;
+                parentCount[insnList.indexOf(jump.label)]++;
+            }
+            int op = p.getOpcode();
+            if (op == Opcodes.TABLESWITCH || op == Opcodes.LOOKUPSWITCH) {
+                if (op == Opcodes.TABLESWITCH) {
+                    TableSwitchInsnNode tsin = (TableSwitchInsnNode) p;
+                    for (LabelNode label : tsin.labels) {
+                        parentCount[insnList.indexOf(label)]++;
+                    }
+                    parentCount[insnList.indexOf(tsin.dflt)]++;
+                } else {
+                    LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) p;
+                    for (LabelNode label : lsin.labels) {
+                        parentCount[insnList.indexOf(label)]++;
+                    }
+                    parentCount[insnList.indexOf(lsin.dflt)]++;
                 }
             }
+            if ((op >= Opcodes.GOTO && op <= Opcodes.RETURN) || op == Opcodes.ATHROW) {
+                // can't continue
+            } else {
+                parentCount[insnList.indexOf(p.getNext())]++;
+            }
         }
-        return target;
     }
 
-    private IrMethod populate(String owner, MethodNode source) {
-        IrMethod target = new IrMethod();
-        target.name = source.name;
-        target.owner = "L" + owner + ";";
-        target.ret = Type.getReturnType(source.desc).getDescriptor();
-        Type[] args = Type.getArgumentTypes(source.desc);
-        String sArgs[] = new String[args.length];
-        target.args = sArgs;
-        for (int i = 0; i < args.length; i++) {
-            sArgs[i] = args[i].getDescriptor();
+    private void mergeEx(JvmFrame src, int dst) {
+        JvmFrame distFrame = frames[dst];
+        if (distFrame == null) {
+            distFrame = frames[dst] = new JvmFrame(methodNode.maxLocals, methodNode.maxStack);
         }
-        target.isStatic = 0 != (source.access & Opcodes.ACC_STATIC);
-        return target;
+        for (int i = 0; i < src.getLocals(); i++) {
+            JvmValue p = src.getLocal(i);
+            JvmValue q = distFrame.getLocal(i);
+            if (p != null) {
+                if (q == null) {
+                    q = new JvmValue(p.getSize());
+                    distFrame.setLocal(i, q);
+                }
+                relate(p, q);
+            }
+        }
     }
 
-    static class XValue implements org.objectweb.asm.tree.analysis.Value {
+    private void merge(JvmFrame src, int dst) {
+        JvmFrame distFrame = frames[dst];
+        if (distFrame == null) {
+            distFrame = frames[dst] = new JvmFrame(methodNode.maxLocals, methodNode.maxStack);
+        }
+        if (parentCount[dst] > 1) {
+            for (int i = 0; i < src.getLocals(); i++) {
+                JvmValue p = src.getLocal(i);
+                JvmValue q = distFrame.getLocal(i);
+                if (p != null) {
+                    if (q == null) {
+                        q = new JvmValue(p.getSize());
+                        distFrame.setLocal(i, q);
+                    }
+                    relate(p, q);
+                }
+            }
+            if (src.getStackSize() > 0) {
+                if (distFrame.getStackSize() == 0) {
+                    for (int i = 0; i < src.getStackSize(); i++) {
+                        distFrame.push(new JvmValue(src.getStack(i).getSize()));
+                    }
+                } else if (distFrame.getStackSize() != src.getStackSize()) {
+                    throw new RuntimeException("stack not balanced");
+                }
+                for (int i = 0; i < src.getStackSize(); i++) {
+                    JvmValue p = src.getStack(i);
+                    JvmValue q = distFrame.getStack(i);
+                    relate(p, q);
+                }
+            }
+        } else {
+            distFrame.init(src);
+        }
+    }
 
-        public Value value;
-        int size;
+    private void relate(JvmValue parent, JvmValue child) {
+        if (child.parent == null) {
+            child.parent = parent;
+        } else if (child.parent == parent) {
+            //
+        } else {
+            if (child.otherParent == null) {
+                child.otherParent = new HashSet<>(5);
+            }
+            child.otherParent.add(parent);
+        }
+    }
 
-        public XValue(int size, Value value) {
+    private JvmFrame initFirstFrame(MethodNode methodNode, IrMethod target) {
+        JvmFrame first = new JvmFrame(methodNode.maxLocals, methodNode.maxStack);
+        int x = 0;
+        if (!target.isStatic) {// not static
+            Local thiz = newLocal();
+            emit(Stmts.nIdentity(thiz, Exprs.nThisRef(target.owner)));
+            first.setLocal(x++, new JvmValue(1, thiz));
+        }
+        for (int i = 0; i < target.args.length; i++) {
+            Local p = newLocal();
+            emit(Stmts.nIdentity(p, Exprs.nParameterRef(target.args[i], i)));
+            int sizeOfType = sizeOfType(target.args[i]);
+            first.setLocal(x, new JvmValue(sizeOfType, p));
+            x += sizeOfType;
+        }
+        return first;
+    }
+
+    private int sizeOfType(String arg) {
+        switch (arg.charAt(0)) {
+            case 'J':
+            case 'D':
+                return 2;
+            default:
+                return 1;
+        }
+    }
+
+    private Local newLocal() {
+        Local thiz = Exprs.nLocal(target.locals.size());
+        target.locals.add(thiz);
+        return thiz;
+    }
+
+    static class JvmFrame extends Frame<JvmValue> {
+
+        public JvmFrame(int nLocals, int nStack) {
+            super(nLocals, nStack);
+        }
+
+        @Override
+        public void execute(AbstractInsnNode insn, Interpreter<JvmValue> interpreter) throws AnalyzerException {
+            if (insn.getType() == AbstractInsnNode.FRAME || insn.getType() == AbstractInsnNode.LINE || insn.getType()==AbstractInsnNode.LABEL) {
+                return;
+            }
+            if(insn.getOpcode()==44){
+                System.out.print("");
+            }
+            if (insn.getOpcode() == Opcodes.RETURN) {
+                interpreter.returnOperation(insn, null, null);
+            } else {
+                super.execute(insn, interpreter);
+            }
+        }
+    }
+
+    public static class JvmValue implements Value {
+        private final int size;
+        public JvmValue parent;
+        public Set<JvmValue> otherParent;
+        Local local;
+
+        public JvmValue(int size, Local local) {
             this.size = size;
-            this.value = value;
+            this.local = local;
+        }
+
+        public JvmValue(int size) {
+            this.size = size;
         }
 
         @Override
@@ -677,4 +992,5 @@ public class J2IRConverter implements Opcodes {
             return size;
         }
     }
+
 }
