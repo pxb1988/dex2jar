@@ -863,7 +863,7 @@ OP0	:	'nop'|'monitorenter'|'monitorexit'|'pop2'|'pop'
 	|'aconst_null'
 	|('a'|'d'|'f'|'i'|'l')? 'return'
 	|('a'|'d'|'f'|'i'|'l') ('store'|'load') '_' ('0'..'3')
-	|('a'|'d'|'f'|'i'|'l') ('astore'|'aload')
+	|('a'|'b'|'d'|'f'|'i'|'l') ('astore'|'aload')
 	|'dcmpg'|'dcmpl' | 'lcmp' |'fcmpg'|'fcmpl'
 	|'athrow'
 	|('i'|'f'|'d'|'l')('add'|'div'|'sub'|'mul'|'rem'|'shl'|'shr'|'ushr'|'and'|'or'|'xor'|'neg')
@@ -1110,6 +1110,9 @@ sMethod	@init{
     if(mn.exceptions==null){
         mn.exceptions=new ArrayList<>();
     }
+    if(mn.tryCatchBlocks==null){
+            mn.tryCatchBlocks=new ArrayList<>();
+        }
 }
     :	'.method' i=sAccList n=sMemberName t=sMethodDesc {mn.access|=i;mn.name=$n.name;mn.desc=unEscape($t.text);}
             (s=sSigAttr{mn.signature=$s.sig;}

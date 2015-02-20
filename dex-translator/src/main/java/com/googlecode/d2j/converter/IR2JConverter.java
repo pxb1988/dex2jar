@@ -358,20 +358,21 @@ public class IR2JConverter implements Opcodes {
                 asm.visitInsn(ATHROW);
                 break;
             case VOID_INVOKE:
-                InvokeExpr invokeExpr = (InvokeExpr) st.getOp();
-                accept(invokeExpr, asm);
-                String ret = invokeExpr.ret;
-                if (invokeExpr.vt == VT.INVOKE_NEW) {
+                Value op = st.getOp();
+                accept(op, asm);
+
+                String ret = op.valueType;
+                if (op.vt == VT.INVOKE_NEW) {
                     asm.visitInsn(POP);
                 } else if (!"V".equals(ret)) {
                     switch (ret.charAt(0)) {
-                    case 'J':
-                    case 'D':
-                        asm.visitInsn(POP2);
-                        break;
-                    default:
-                        asm.visitInsn(POP);
-                        break;
+                        case 'J':
+                        case 'D':
+                            asm.visitInsn(POP2);
+                            break;
+                        default:
+                            asm.visitInsn(POP);
+                            break;
                     }
                 }
                 break;

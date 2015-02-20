@@ -392,7 +392,7 @@ public class J2IRConverter {
 
             @Override
             public JvmValue unaryOperation(AbstractInsnNode insn, JvmValue value0) throws AnalyzerException {
-                Local local = getLocal(value0);
+                Local local = value0 == null ? null : getLocal(value0);
                 switch (insn.getOpcode()) {
                     case INEG:
                         return b(1, Exprs.nNeg(local, "I"));
@@ -525,7 +525,8 @@ public class J2IRConverter {
                         emit(Stmts.nThrow(local));
                         return null;
                     case CHECKCAST:
-                        desc = "L" + ((TypeInsnNode) insn).desc + ";";
+                        String orgDesc = ((TypeInsnNode) insn).desc;
+                        desc = orgDesc.startsWith("[") ? orgDesc : ("L" + orgDesc + ";");
                         return b(1, Exprs.nCheckCast(local, desc));
                     case INSTANCEOF:
                         return b(1, Exprs.nInstanceOf(local, "L" + ((TypeInsnNode) insn).desc + ";"));
@@ -542,6 +543,9 @@ public class J2IRConverter {
                     case IFNONNULL:
                         emit(Stmts.nIf(Exprs.nNe(local, Exprs.nNull(), "L"),
                                 getLabel(((JumpInsnNode) insn).label)));
+                        return null;
+                    case GOTO: // special case
+                        emit(Stmts.nGoto(getLabel(((JumpInsnNode) insn).label)));
                         return null;
                     default:
                         throw new Error("Internal error.");
@@ -811,7 +815,7 @@ public class J2IRConverter {
         };
     }
 
-    private Local getLocal(JvmValue value) {
+    Local getLocal(JvmValue value) {
         Local local = value.local;
         if (local == null) {
             local = value.local = newLocal();
@@ -958,14 +962,15 @@ public class J2IRConverter {
 
         @Override
         public void execute(AbstractInsnNode insn, Interpreter<JvmValue> interpreter) throws AnalyzerException {
-            if (insn.getType() == AbstractInsnNode.FRAME || insn.getType() == AbstractInsnNode.LINE || insn.getType()==AbstractInsnNode.LABEL) {
+            if (insn.getType() == AbstractInsnNode.FRAME || insn.getType() == AbstractInsnNode.LINE || insn.getType() == AbstractInsnNode.LABEL) {
                 return;
-            }
-            if(insn.getOpcode()==44){
-                System.out.print("");
             }
             if (insn.getOpcode() == Opcodes.RETURN) {
                 interpreter.returnOperation(insn, null, null);
+            } else if (insn.getOpcode() == Opcodes.GOTO) {
+                interpreter.unaryOperation(insn, null);
+            } else if (insn.getOpcode() == RET) {
+                throw new RuntimeException("not support yet!");
             } else {
                 super.execute(insn, interpreter);
             }
