@@ -16,6 +16,14 @@
  */
 package com.googlecode.dex2jar.tools;
 
+import com.googlecode.d2j.converter.IR2JConverter;
+import com.googlecode.d2j.converter.J2IRConverter;
+import com.googlecode.d2j.util.Escape;
+import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.StmtTraveler;
+import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.ts.*;
+import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
 import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -25,6 +33,7 @@ import org.objectweb.asm.tree.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -59,6 +68,8 @@ public class DecryptStringCmd extends BaseCmd {
     private String parametersDescriptor;
     @Opt(opt = "d", longOpt = "delete", hasArg = false, description = "delete the method which can decrypt the stings")
     private boolean deleteMethod = false;
+    @Opt(opt = "da", longOpt = "deep-analyze", hasArg = false, description = "use dex2jar IR to static analyze and find more values like byte[]")
+    private boolean deepAnalyze = false;
 
     static class MethodConfig {
         Method jmethod;
@@ -169,8 +180,8 @@ public class DecryptStringCmd extends BaseCmd {
         List<MethodConfig> methodConfigs = collectMethodConfigs();
         if (methodConfigs == null || methodConfigs.size() == 0) {
             System.err.println("No method selected !");
-                return;
-            }
+            return;
+        }
 
         final Map<MethodConfig, MethodConfig> map = loadMethods(jar, methodConfigs);
         try (FileSystem outputFileSystem = createZip(output)) {
@@ -179,76 +190,501 @@ public class DecryptStringCmd extends BaseCmd {
                 @Override
                 public void visitFile(Path file, String relative) throws IOException {
                     if (file.getFileName().toString().endsWith(".class")) {
-                        MethodConfig key = new MethodConfig();
-                        ClassReader cr = new ClassReader(Files.readAllBytes(file));
-                        ClassNode cn = new ClassNode();
-                        cr.accept(cn, ClassReader.EXPAND_FRAMES);
-
-                        for (MethodNode m : new ArrayList<MethodNode>(cn.methods)) {
-                            if (m.instructions == null) {
-                                continue;
-                            }
-                            key.owner = cn.name;
-                            key.name = m.name;
-                            key.desc = m.desc;
-                            if (map.containsKey(key)) {
-                                if (deleteMethod) {
-                                    cn.methods.remove(m);
-                                }
-                                continue;
-                            }
-                            AbstractInsnNode p = m.instructions.getFirst();
-                            while (p != null) {
-                                if (p.getOpcode() == Opcodes.INVOKESTATIC) {
-                                    MethodInsnNode mn = (MethodInsnNode) p;
-                                    key.owner = mn.owner;
-                                    key.name = mn.name;
-                                    key.desc = mn.desc;
-                                    MethodConfig config = map.get(key);
-                                    if (config != null) {
-                                        //here we are, given that the decryption method is successfully recognised
-                                        Method jmethod = config.jmethod;
-                                                try {
-                                            int pSize = jmethod.getParameterTypes().length;
-                                            // arguments' list. each parameter's value is retrieved by reading bytecode backwards, starting from the INVOKESTATIC statement
-                                            Object[] as = readArgumentValues(mn, jmethod, pSize);
-                                            //decryption routine invocation
-                                            String newValue = (String) jmethod.invoke(null, as);
-                                            //LDC statement generation
-                                            LdcInsnNode nLdc = new LdcInsnNode(newValue);
-                                            //insertion of the decrypted string's LDC statement, after INVOKESTATIC statement
-                                            m.instructions.insert(mn, nLdc);
-                                            //removal of INVOKESTATIC and previous push statements
-                                            removeInsts(m, mn, pSize);
-                                            p = nLdc;
-                                        } catch (Exception ex) {
-                                            // ignore
-                                        }
-                                    }
-                                }
-                                p = p.getNext();
-                            }
-                        }
-
-                        ClassWriter cw = new ClassWriter(0);
-                        cn.accept(cw);
                         Path dist1 = outputBase.resolve(relative);
-                        Path parent = dist1.getParent();
-                        if (parent != null && !Files.exists(parent)) {
-                            Files.createDirectories(parent);
+                        createParentDirectories(dist1);
+                        byte[] data = Files.readAllBytes(file);
+                        ClassNode cn = readClassNode(data);
+
+                        if (decrypt(cn, map)) {
+                            byte[] data2 = toByteArray(cn);
+                            Files.write(dist1, data2);
+                        } else {
+                            Files.write(dist1, data);
                         }
-                        Files.write(dist1, cw.toByteArray());
                     } else {
                         Path dist1 = outputBase.resolve(relative);
-                        Path parent = dist1.getParent();
-                        if (parent != null && !Files.exists(parent)) {
-                            Files.createDirectories(parent);
-                        }
+                        createParentDirectories(dist1);
                         Files.copy(file, dist1);
                     }
                 }
             });
         }
+    }
+
+    private byte[] toByteArray(ClassNode cn) {
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        cn.accept(cw);
+        return cw.toByteArray();
+    }
+
+    private ClassNode readClassNode(byte[] data) {
+        ClassReader cr = new ClassReader(data);
+        ClassNode cn = new ClassNode();
+        cr.accept(cn, ClassReader.EXPAND_FRAMES | ClassReader.SKIP_FRAMES);
+        return cn;
+    }
+
+    private boolean decrypt(ClassNode cn, Map<MethodConfig, MethodConfig> map) {
+        if (deepAnalyze) {
+            return decryptByIr(cn, map);
+        } else {
+            return decryptByStack(cn, map);
+        }
+    }
+
+    private boolean decryptByIr(ClassNode cn, Map<MethodConfig, MethodConfig> map) {
+        MethodConfig key = this.key;
+        boolean changed = false;
+        System.err.println(" >   on " + cn.name);
+        for (Iterator<MethodNode> it = cn.methods.iterator(); it.hasNext(); ) {
+            MethodNode m = it.next();
+            if (m.instructions == null) {
+                continue;
+            }
+            key.owner = cn.name;
+            key.name = m.name;
+            key.desc = m.desc;
+            if (map.containsKey(key)) {
+                if (deleteMethod) {
+                    it.remove();
+                }
+                continue;
+            }
+            boolean find = false;
+            // search for the decrypt method
+            for (AbstractInsnNode p = m.instructions.getFirst(); p != null; p = p.getNext()) {
+                if (p.getOpcode() == Opcodes.INVOKESTATIC) {
+                    MethodInsnNode mn = (MethodInsnNode) p;
+                    key.owner = mn.owner;
+                    key.name = mn.name;
+                    key.desc = mn.desc;
+                    MethodConfig config = map.get(key);
+                    if (config != null) {
+                        find = true;
+                    }
+                }
+            }
+            if (find) {
+                try {
+                    // copy m to m2 for cleanup debug info
+                    MethodNode m2 = new MethodNode();
+                    m2.tryCatchBlocks = new ArrayList<>();
+                    m2.name = m.name;
+                    m2.access = m.access;
+                    m2.desc = m.desc;
+                    m.accept(m2);
+                    cleanDebug(m2);
+                    // convert m2 to ir
+                    IrMethod irMethod = J2IRConverter.convert(cn.name, m2);
+                    // opt and decrypt
+                    optAndDecrypt(irMethod, map);
+
+                    // convert ir to m3
+                    MethodNode m3 = new MethodNode();
+                    m3.tryCatchBlocks = new ArrayList<>();
+                    new IR2JConverter(true).convert(irMethod, m3);
+
+                    // copy back m3 to m
+                    m.maxLocals = -1;
+                    m.maxLocals = -1;
+                    m.instructions = m3.instructions;
+                    m.tryCatchBlocks = m3.tryCatchBlocks;
+                    m.localVariables = null;
+                    changed = true;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+        return changed;
+    }
+
+    MethodConfig key = new MethodConfig();
+
+    private boolean decryptByStack(ClassNode cn, Map<MethodConfig, MethodConfig> map) {
+        MethodConfig key = this.key;
+        boolean changed = false;
+        for (Iterator<MethodNode> it = cn.methods.iterator(); it.hasNext(); ) {
+            MethodNode m = it.next();
+            if (m.instructions == null) {
+                continue;
+            }
+            key.owner = cn.name;
+            key.name = m.name;
+            key.desc = m.desc;
+            if (map.containsKey(key)) {
+                if (deleteMethod) {
+                    it.remove();
+                }
+                continue;
+            }
+            AbstractInsnNode p = m.instructions.getFirst();
+            while (p != null) {
+                if (p.getOpcode() == Opcodes.INVOKESTATIC) {
+                    MethodInsnNode mn = (MethodInsnNode) p;
+                    key.owner = mn.owner;
+                    key.name = mn.name;
+                    key.desc = mn.desc;
+                    MethodConfig config = map.get(key);
+                    if (config != null) {
+                        //here we are, given that the decryption method is successfully recognised
+                        Method jmethod = config.jmethod;
+                        try {
+                            int pSize = jmethod.getParameterTypes().length;
+                            // arguments' list. each parameter's value is retrieved by reading bytecode backwards, starting from the INVOKESTATIC statement
+                            Object[] as = readArgumentValues(mn, jmethod, pSize);
+                            //decryption routine invocation
+                            String newValue = (String) jmethod.invoke(null, as);
+                            //LDC statement generation
+                            LdcInsnNode nLdc = new LdcInsnNode(newValue);
+                            //insertion of the decrypted string's LDC statement, after INVOKESTATIC statement
+                            m.instructions.insert(mn, nLdc);
+                            //removal of INVOKESTATIC and previous push statements
+                            removeInsts(m, mn, pSize);
+                            p = nLdc;
+                            changed = true;
+                        } catch (Exception ex) {
+                            // ignore
+                        }
+                    }
+                }
+                p = p.getNext();
+            }
+        }
+        return changed;
+    }
+
+    protected final CleanLabel T_cleanLabel = new CleanLabel();
+    protected final Ir2JRegAssignTransformer T_ir2jRegAssign = new Ir2JRegAssignTransformer();
+    protected final NewTransformer T_new = new NewTransformer();
+    protected final RemoveConstantFromSSA T_removeConst = new RemoveConstantFromSSA();
+    protected final RemoveLocalFromSSA T_removeLocal = new RemoveLocalFromSSA();
+    protected final ExceptionHandlerTrim T_trimEx = new ExceptionHandlerTrim();
+    protected final TypeTransformer T_type = new TypeTransformer();
+    protected final DeadCodeTransformer T_deadCode = new DeadCodeTransformer();
+    protected final FillArrayTransformer T_fillArray = new FillArrayTransformer();
+    protected final AggTransformer T_agg = new AggTransformer();
+    protected final UnSSATransformer T_unssa = new UnSSATransformer();
+    protected final ZeroTransformer T_zero = new ZeroTransformer();
+    protected final VoidInvokeTransformer T_voidInvoke = new VoidInvokeTransformer();
+    protected final NpeTransformer T_npe = new NpeTransformer();
+
+    public void optAndDecrypt(IrMethod irMethod, final Map<MethodConfig, MethodConfig> map) {
+        T_deadCode.transform(irMethod);
+        T_cleanLabel.transform(irMethod);
+        T_removeLocal.transform(irMethod);
+        T_removeConst.transform(irMethod);
+        T_zero.transform(irMethod);
+        if (T_npe.transformReportChanged(irMethod)) {
+            T_deadCode.transform(irMethod);
+            T_removeLocal.transform(irMethod);
+            T_removeConst.transform(irMethod);
+        }
+        T_new.transform(irMethod);
+        T_fillArray.transform(irMethod);
+        T_agg.transform(irMethod);
+        T_voidInvoke.transform(irMethod);
+
+        new StmtTraveler() {
+            @Override
+            public Value travel(Value op) {
+                op = super.travel(op);
+                if (op.vt == Value.VT.INVOKE_STATIC) {
+                    InvokeExpr ie = (InvokeExpr) op;
+                    MethodConfig key = DecryptStringCmd.this.key;
+                    key.owner = ie.owner.substring(1, ie.owner.length() - 1);
+                    key.name = ie.name;
+                    key.desc = buildMethodDesc(ie.args, ie.ret);
+
+                    MethodConfig c = map.get(key);
+                    if (c != null) {
+                        try {
+                            Method jmethod = c.jmethod;
+                            if (ie.args.length != jmethod.getParameterCount()) {
+                                throw new RuntimeException();
+                            }
+                            Object args[] = new Object[ie.args.length];
+                            for (int i = 0; i < args.length; i++) {
+                                args[i] = convertIr2Jobj(ie.getOps()[i], ie.args[i]);
+                            }
+                            String str = (String) jmethod.invoke(null, args);
+                            System.err.println("   < " + Escape.v(str));
+                            return Exprs.nString(str);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }
+                return op;
+            }
+        }.travel(irMethod.stmts);
+
+        T_type.transform(irMethod);
+        T_unssa.transform(irMethod);
+        T_trimEx.transform(irMethod);
+        T_ir2jRegAssign.transform(irMethod);
+    }
+
+    private Object convertIr2Jobj(Value value, String type) {
+        if (value instanceof Constant) {
+            if (Constant.Null.equals(((Constant) value).value)) {
+                return null;
+            }
+        }
+        switch (type) {
+            case "Z": {
+                Object obj = ((Constant) value).value;
+                return obj instanceof Boolean ? obj : ((Number) obj).intValue() != 0;
+            }
+            case "B": {
+                Object obj = ((Constant) value).value;
+                return ((Number) obj).byteValue();
+            }
+            case "S": {
+                Object obj = ((Constant) value).value;
+                return ((Number) obj).shortValue();
+            }
+            case "C": {
+                Object obj = ((Constant) value).value;
+                return obj instanceof Character ? obj : (char) ((Number) obj).intValue();
+            }
+            case "I": {
+                Object obj = ((Constant) value).value;
+                return ((Number) obj).intValue();
+            }
+            case "J": {
+                Object obj = ((Constant) value).value;
+                return ((Number) obj).longValue();
+            }
+            case "F": {
+                Object obj = ((Constant) value).value;
+                return obj instanceof Float ? obj : Float.intBitsToFloat(((Number) obj).intValue());
+            }
+            case "D": {
+                Object obj = ((Constant) value).value;
+                return obj instanceof Double ? obj : Double.longBitsToDouble(((Number) obj).longValue());
+            }
+            case "Ljava/lang/String;":
+                return (String) ((Constant) value).value;
+            case "[Z":
+                if (value instanceof Constant) {
+                    Object obj = ((Constant) value).value;
+                    if (obj instanceof boolean[]) {
+                        return obj;
+                    } else {
+
+                        boolean[] b = new boolean[Array.getLength(obj)];
+                        for (int i = 0; i < b.length; i++) {
+                            b[i] = ((Number) Array.get(obj, i)).intValue() != 0;
+                        }
+                        return b;
+                    }
+                } else if (value instanceof FilledArrayExpr) {
+                    boolean b[] = new boolean[value.getOps().length];
+                    for (int i = 0; i < b.length; i++) {
+                        Object obj = ((Constant) value.getOps()[i]).value;
+                        if (obj instanceof Boolean) {
+                            b[i] = ((Boolean) obj).booleanValue();
+                        } else {
+                            b[i] = ((Number) obj).intValue() != 0;
+                        }
+                    }
+                    return b;
+                }
+                throw new RuntimeException();
+            case "[B":
+                if (value instanceof Constant) {
+                    Object obj = ((Constant) value).value;
+                    if (obj instanceof byte[]) {
+                        return obj;
+                    } else {
+                        byte[] b = new byte[Array.getLength(obj)];
+                        for (int i = 0; i < b.length; i++) {
+                            b[i] = ((Number) Array.get(obj, i)).byteValue();
+                        }
+                        return b;
+                    }
+                } else if (value instanceof FilledArrayExpr) {
+                    byte b[] = new byte[value.getOps().length];
+                    for (int i = 0; i < b.length; i++) {
+                        Object obj = ((Constant) value.getOps()[i]).value;
+                        b[i] = ((Number) obj).byteValue();
+                    }
+                    return b;
+                }
+                throw new RuntimeException();
+            case "[S":
+                if (value instanceof Constant) {
+                    Object obj = ((Constant) value).value;
+                    if (obj instanceof short[]) {
+                        return obj;
+                    } else {
+                        short[] b = new short[Array.getLength(obj)];
+                        for (int i = 0; i < b.length; i++) {
+                            b[i] = ((Number) Array.get(obj, i)).shortValue();
+                        }
+                        return b;
+                    }
+                } else if (value instanceof FilledArrayExpr) {
+                    short b[] = new short[value.getOps().length];
+                    for (int i = 0; i < b.length; i++) {
+                        Object obj = ((Constant) value.getOps()[i]).value;
+                        b[i] = ((Number) obj).shortValue();
+                    }
+                    return b;
+                }
+                throw new RuntimeException();
+            case "[C":
+                if (value instanceof Constant) {
+                    Object obj = ((Constant) value).value;
+                    if (obj instanceof char[]) {
+                        return obj;
+                    } else {
+                        char[] b = new char[Array.getLength(obj)];
+                        for (int i = 0; i < b.length; i++) {
+                            b[i] = (char) ((Number) Array.get(obj, i)).intValue();
+                        }
+                        return b;
+                    }
+                } else if (value instanceof FilledArrayExpr) {
+                    char b[] = new char[value.getOps().length];
+                    for (int i = 0; i < b.length; i++) {
+                        Object obj = ((Constant) value.getOps()[i]).value;
+                        b[i] = obj instanceof Character ? ((Character) obj).charValue() : (char) ((Number) obj).intValue();
+                    }
+                    return b;
+                }
+                throw new RuntimeException();
+            case "[I":
+                if (value instanceof Constant) {
+                    Object obj = ((Constant) value).value;
+                    if (obj instanceof int[]) {
+                        return obj;
+                    } else {
+                        int[] b = new int[Array.getLength(obj)];
+                        for (int i = 0; i < b.length; i++) {
+                            b[i] = ((Number) Array.get(obj, i)).intValue();
+                        }
+                        return b;
+                    }
+                } else if (value instanceof FilledArrayExpr) {
+                    int b[] = new int[value.getOps().length];
+                    for (int i = 0; i < b.length; i++) {
+                        Object obj = ((Constant) value.getOps()[i]).value;
+                        b[i] = ((Number) obj).intValue();
+                    }
+                    return b;
+                }
+                throw new RuntimeException();
+            case "[J":
+                if (value instanceof Constant) {
+                    Object obj = ((Constant) value).value;
+                    if (obj instanceof long[]) {
+                        return obj;
+                    } else {
+                        long[] b = new long[Array.getLength(obj)];
+                        for (int i = 0; i < b.length; i++) {
+                            b[i] = ((Number) Array.get(obj, i)).longValue();
+                        }
+                        return b;
+                    }
+                } else if (value instanceof FilledArrayExpr) {
+                    long b[] = new long[value.getOps().length];
+                    for (int i = 0; i < b.length; i++) {
+                        Object obj = ((Constant) value.getOps()[i]).value;
+                        b[i] = ((Number) obj).longValue();
+                    }
+                    return b;
+                }
+                throw new RuntimeException();
+            case "[F":
+                if (value instanceof Constant) {
+                    Object obj = ((Constant) value).value;
+                    if (obj instanceof float[]) {
+                        return obj;
+                    } else {
+                        float[] b = new float[Array.getLength(obj)];
+                        for (int i = 0; i < b.length; i++) {
+                            b[i] = (char) ((Number) Array.get(obj, i)).intValue();
+                        }
+                        return b;
+                    }
+                } else if (value instanceof FilledArrayExpr) {
+                    float b[] = new float[value.getOps().length];
+                    for (int i = 0; i < b.length; i++) {
+                        Object obj = ((Constant) value.getOps()[i]).value;
+                        b[i] = obj instanceof Float ? ((Float) obj).floatValue() : Float.intBitsToFloat(((Number) obj).intValue());
+                    }
+                    return b;
+                }
+                throw new RuntimeException();
+            case "[D":
+                if (value instanceof Constant) {
+                    Object obj = ((Constant) value).value;
+                    if (obj instanceof double[]) {
+                        return obj;
+                    } else {
+                        double[] b = new double[Array.getLength(obj)];
+                        for (int i = 0; i < b.length; i++) {
+                            b[i] = (char) ((Number) Array.get(obj, i)).intValue();
+                        }
+                        return b;
+                    }
+                } else if (value instanceof FilledArrayExpr) {
+                    double b[] = new double[value.getOps().length];
+                    for (int i = 0; i < b.length; i++) {
+                        Object obj = ((Constant) value.getOps()[i]).value;
+                        b[i] = obj instanceof Double ? ((Double) obj).doubleValue() : Double.longBitsToDouble(((Number) obj).longValue());
+                    }
+                    return b;
+                }
+                throw new RuntimeException();
+            case "[Ljava/lang/String;":
+                if (value instanceof Constant) {
+                    Object obj = ((Constant) value).value;
+                    if (obj instanceof String[]) {
+                        return obj;
+                    }
+                } else if (value instanceof FilledArrayExpr) {
+                    String b[] = new String[value.getOps().length];
+                    for (int i = 0; i < b.length; i++) {
+                        Object obj = ((Constant) value.getOps()[i]).value;
+                        if (obj instanceof String) {
+                            b[i] = (String) obj;
+                        } else if (Constant.Null.equals(obj)) {
+                            b[i] = null;
+                        } else {
+                            throw new RuntimeException();
+                        }
+                    }
+                    return b;
+                }
+                throw new RuntimeException();
+        }
+        throw new RuntimeException();
+    }
+
+    private String buildMethodDesc(String[] args, String ret) {
+        StringBuilder sb = new StringBuilder();
+        sb.append('(');
+        for (String s : args) {
+            sb.append(s);
+        }
+        return sb.append(')').append(ret).toString();
+    }
+
+    private void cleanDebug(MethodNode mn) {
+        for (AbstractInsnNode p = mn.instructions.getFirst(); p != null; ) {
+            if (p.getType() == AbstractInsnNode.LINE) {
+                AbstractInsnNode q = p.getNext();
+                mn.instructions.remove(p);
+                p = q;
+            } else {
+                p = p.getNext();
+            }
+        }
+        mn.localVariables = null;
     }
 
     void removeInsts(MethodNode m, MethodInsnNode mn, int pSize) {
@@ -262,28 +698,28 @@ public class DecryptStringCmd extends BaseCmd {
 
     Object[] readArgumentValues(MethodInsnNode mn, Method jmethod, int pSize) {
         AbstractInsnNode q = mn;
-                                            Object[] as = new Object[pSize];
-                                            for (int i = pSize - 1; i >= 0; i--) {
-                                                q = q.getPrevious();
-                                                Object object = readCst(q);
-                                                as[i] = convert(object, jmethod.getParameterTypes()[i]);
-                                                }
+        Object[] as = new Object[pSize];
+        for (int i = pSize - 1; i >= 0; i--) {
+            q = q.getPrevious();
+            Object object = readCst(q);
+            as[i] = convert(object, jmethod.getParameterTypes()[i]);
+        }
         return as;
-                        }
+    }
 
     Object convert(Object object, Class<?> type) {
-                    if (int.class.equals(type)) {
-                        return ((Number) object).intValue();
-                    }
-                    if (byte.class.equals(type)) {
-                        return ((Number) object).byteValue();
-                    }
-                    if (short.class.equals(type)) {
-                        return ((Number) object).shortValue();
-                    }
-                    if (char.class.equals(type)) {
-                        return (char) ((Number) object).intValue();
-                    }
+        if (int.class.equals(type)) {
+            return ((Number) object).intValue();
+        }
+        if (byte.class.equals(type)) {
+            return ((Number) object).byteValue();
+        }
+        if (short.class.equals(type)) {
+            return ((Number) object).shortValue();
+        }
+        if (char.class.equals(type)) {
+            return (char) ((Number) object).intValue();
+        }
         if (boolean.class.equals(type)) {
             return (char) ((Number) object).intValue() != 0;
         }
@@ -296,8 +732,8 @@ public class DecryptStringCmd extends BaseCmd {
         if (double.class.equals(type)) {
             return (char) ((Number) object).doubleValue();
         }
-                    return object;
-                }
+        return object;
+    }
 
     /**
      * load java methods from jar and --classpath
@@ -416,7 +852,7 @@ public class DecryptStringCmd extends BaseCmd {
             Method m = clz.getDeclaredMethod(name, classes);
             if (m != null) {
                 return m;
-}
+            }
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
@@ -446,18 +882,18 @@ public class DecryptStringCmd extends BaseCmd {
                 // LDC: String, integer, long and double cases (Opcodes.LDC comprehends LDC_W and LDC2_W)
                 // push 32bit or 64bit int/float
                 // push string/type
-            LdcInsnNode ldc = (LdcInsnNode) q;
+                LdcInsnNode ldc = (LdcInsnNode) q;
                 if (ldc.cst instanceof Type) {
                     throw new RuntimeException("not support .class value yet!");
                 }
-            return ldc.cst;
+                return ldc.cst;
 
             case Opcodes.BIPUSH:
             case Opcodes.SIPUSH:
                 // INT_INSN ("instruction with a single int operand")
                 // push 8bit or 16bit int
-            IntInsnNode in = (IntInsnNode) q;
-            return in.operand;
+                IntInsnNode in = (IntInsnNode) q;
+                return in.operand;
 
             case Opcodes.ICONST_M1:
             case Opcodes.ICONST_0:
@@ -478,7 +914,7 @@ public class DecryptStringCmd extends BaseCmd {
             case Opcodes.DCONST_0:
             case Opcodes.DCONST_1:
                 return (double) (q.getOpcode() - Opcodes.DCONST_0);
-            }
+        }
 
         throw new RuntimeException();
     }
@@ -493,27 +929,28 @@ public class DecryptStringCmd extends BaseCmd {
 
     Class<?> toJavaType(Type t) throws ClassNotFoundException {
         switch (t.getSort()) {
-        case Type.BOOLEAN:
-            return boolean.class;
-        case Type.BYTE:
-            return byte.class;
-        case Type.SHORT:
-            return short.class;
-        case Type.CHAR:
-            return char.class;
-        case Type.INT:
-            return int.class;
-        case Type.FLOAT:
-            return float.class;
-        case Type.LONG:
-            return long.class;
-        case Type.DOUBLE:
-            return double.class;
-        case Type.OBJECT:
-        case Type.ARRAY:
-            return Class.forName(t.getClassName());
-        case Type.VOID:
-            return void.class;
+            case Type.BOOLEAN:
+                return boolean.class;
+            case Type.BYTE:
+                return byte.class;
+            case Type.SHORT:
+                return short.class;
+            case Type.CHAR:
+                return char.class;
+            case Type.INT:
+                return int.class;
+            case Type.FLOAT:
+                return float.class;
+            case Type.LONG:
+                return long.class;
+            case Type.DOUBLE:
+                return double.class;
+            case Type.OBJECT:
+                return Class.forName(t.getClassName());
+            case Type.ARRAY:
+                return Class.forName(t.getDescriptor());
+            case Type.VOID:
+                return void.class;
         }
         throw new RuntimeException();
     }
