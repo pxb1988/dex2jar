@@ -22,12 +22,9 @@ import java.util.*;
 import com.googlecode.d2j.*;
 import com.googlecode.d2j.node.*;
 import com.googlecode.d2j.node.DexAnnotationNode.Item;
-import com.googlecode.d2j.node.DexCodeNode.DexLabelStmtNode;
-import com.googlecode.d2j.node.DexCodeNode.DexStmtNode;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.util.Out;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
-import com.googlecode.d2j.visitors.DexDebugVisitor;
 
 public class BaksmaliDumper implements DexConstants {
     private static final int ACCESS_FIELD = 1 << 31;
