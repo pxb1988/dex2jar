@@ -21,6 +21,8 @@ import java.util.List;
 
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.node.DexCodeNode;
+import com.googlecode.d2j.node.insn.DexLabelStmtNode;
+import com.googlecode.d2j.node.insn.DexStmtNode;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 
@@ -80,7 +82,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
         byte[] objs;
 
         public ArrayDataStmt(int length, byte[] obj) {
-            super();
+            super(null);
             this.length = length;
             this.objs = obj;
         }
@@ -96,7 +98,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
         DexLabel[] labels;
 
         public PackedSwitchStmt(int reg, DexLabel[] labels) {
-            super();
+            super(null);
             this.firstCase = reg;
             this.labels = labels;
         }
@@ -111,7 +113,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
         DexLabel labels[];
 
         public SparseSwitchStmt(int[] cases, DexLabel[] labels) {
-            super();
+            super(null);
             this.cases = cases;
             this.labels = labels;
         }
@@ -166,7 +168,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
     }
 
     /* package */void visitF31tStmt(final Op op, final int reg, final DexLabel label) {
-        add(new DexStmtNode() {
+        add(new DexStmtNode(op) {
 
             @Override
             public void accept(DexCodeVisitor cv) {

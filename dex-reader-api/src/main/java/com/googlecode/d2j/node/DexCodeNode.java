@@ -22,6 +22,7 @@ import java.util.List;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.node.insn.*;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
@@ -30,7 +31,7 @@ import com.googlecode.d2j.visitors.DexMethodVisitor;
 public class DexCodeNode extends DexCodeVisitor {
 
     public List<DexStmtNode> stmts = new ArrayList<DexStmtNode>();
-    public List<DexStmtNode> tryStmts = null;
+    public List<TryCatchNode> tryStmts = null;
     public DexDebugNode debugNode;
     public int totalRegister = -1;
 
@@ -44,7 +45,7 @@ public class DexCodeNode extends DexCodeVisitor {
 
     public void accept(DexCodeVisitor v) {
         if (tryStmts != null) {
-            for (DexStmtNode n : tryStmts) {
+            for (TryCatchNode n : tryStmts) {
                 n.accept(v);
             }
         }
@@ -77,35 +78,17 @@ public class DexCodeNode extends DexCodeVisitor {
 
     @Override
     public void visitConstStmt(final Op op, final int ra, final Object value) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitConstStmt(op, ra, value);
-            }
-        });
+        add(new ConstStmtNode(op, ra, value));
     }
 
     @Override
     public void visitFillArrayDataStmt(final Op op, final int ra, final Object array) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitFillArrayDataStmt(op, ra, array);
-            }
-        });
+        add(new FillArrayDataStmtNode(op, ra, array));
     }
 
     @Override
     public void visitFieldStmt(final Op op, final int a, final int b, final Field field) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitFieldStmt(op, a, b, field);
-            }
-        });
+        add(new FieldStmtNode(op, a, b, field));
     }
 
     @Override
@@ -115,13 +98,7 @@ public class DexCodeNode extends DexCodeVisitor {
 
     @Override
     public void visitJumpStmt(final Op op, final int a, final int b, final DexLabel label) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitJumpStmt(op, a, b, label);
-            }
-        });
+        add(new JumpStmtNode(op, a, b, label));
     }
 
     @Override
@@ -136,13 +113,7 @@ public class DexCodeNode extends DexCodeVisitor {
 
     @Override
     public void visitPackedSwitchStmt(final Op op, final int aA, final int first_case, final DexLabel[] labels) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitPackedSwitchStmt(op, aA, first_case, labels);
-            }
-        });
+        add(new PackedSwitchStmtNode(op, aA, first_case, labels));
     }
 
     @Override
@@ -152,68 +123,32 @@ public class DexCodeNode extends DexCodeVisitor {
 
     @Override
     public void visitSparseSwitchStmt(final Op op, final int ra, final int[] cases, final DexLabel[] labels) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitSparseSwitchStmt(op, ra, cases, labels);
-            }
-        });
+        add(new SparseSwitchStmtNode(op, ra, cases, labels));
     }
 
     @Override
     public void visitStmt0R(final Op op) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitStmt0R(op);
-            }
-        });
+        add(new Stmt0RNode(op));
     }
 
     @Override
     public void visitStmt1R(final Op op, final int reg) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitStmt1R(op, reg);
-            }
-        });
+        add(new Stmt1RNode(op, reg));
     }
 
     @Override
     public void visitStmt2R(final Op op, final int a, final int b) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitStmt2R(op, a, b);
-            }
-        });
+        add(new Stmt2RNode(op, a, b));
     }
 
     @Override
     public void visitStmt2R1N(final Op op, final int distReg, final int srcReg, final int content) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitStmt2R1N(op, distReg, srcReg, content);
-            }
-        });
+        add(new Stmt2R1NNode(op, distReg, srcReg, content));
     }
 
     @Override
     public void visitStmt3R(final Op op, final int a, final int b, final int c) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitStmt3R(op, a, b, c);
-            }
-        });
+        add(new Stmt3RNode(op, a, b, c));
     }
 
     @Override
@@ -221,59 +156,12 @@ public class DexCodeNode extends DexCodeVisitor {
         if (tryStmts == null) {
             tryStmts = new ArrayList<>(3);
         }
-        tryStmts.add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitTryCatch(start, end, handler, type);
-            }
-        });
+        tryStmts.add(new TryCatchNode(start, end, handler, type));
     }
 
     @Override
     public void visitTypeStmt(final Op op, final int a, final int b, final String type) {
-        add(new DexStmtNode() {
-
-            @Override
-            public void accept(DexCodeVisitor cv) {
-                cv.visitTypeStmt(op, a, b, type);
-            }
-        });
-    }
-
-    public static class DexLabelStmtNode extends DexStmtNode {
-        public DexLabel label;
-
-        public DexLabelStmtNode(DexLabel label) {
-            this.label = label;
-        }
-
-        @Override
-        public void accept(DexCodeVisitor cv) {
-            cv.visitLabel(label);
-        }
-    }
-
-    public static abstract class DexStmtNode {
-        public abstract void accept(DexCodeVisitor cv);
-    }
-
-    public static class MethodStmtNode extends DexStmtNode {
-
-        public final Op op;
-        public final int[] args;
-        public final Method method;
-
-        public MethodStmtNode(Op op, int[] args, Method method) {
-            this.op = op;
-            this.args = args;
-            this.method = method;
-        }
-
-        @Override
-        public void accept(DexCodeVisitor cv) {
-            cv.visitMethodStmt(op, args, method);
-        }
+        add(new TypeStmtNode(op, a, b, type));
     }
 
     @Override
@@ -283,21 +171,4 @@ public class DexCodeNode extends DexCodeVisitor {
         return dexDebugNode;
     }
 
-    public static class FilledNewArrayStmtNode extends DexStmtNode {
-
-        public final Op op;
-        public final int[] args;
-        public final String type;
-
-        public FilledNewArrayStmtNode(Op op, int[] args, String type) {
-            this.op = op;
-            this.args = args;
-            this.type = type;
-        }
-
-        @Override
-        public void accept(DexCodeVisitor cv) {
-            cv.visitFilledNewArrayStmt(op, args, type);
-        }
-    }
 }

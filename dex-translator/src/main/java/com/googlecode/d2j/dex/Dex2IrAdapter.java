@@ -58,6 +58,11 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
 import java.util.*;
 
 import com.googlecode.d2j.node.DexCodeNode;
+import com.googlecode.d2j.node.TryCatchNode;
+import com.googlecode.d2j.node.insn.DexLabelStmtNode;
+import com.googlecode.d2j.node.insn.FilledNewArrayStmtNode;
+import com.googlecode.d2j.node.insn.DexStmtNode;
+import com.googlecode.d2j.node.insn.MethodStmtNode;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
 import com.googlecode.dex2jar.ir.TypeClass;
 import org.objectweb.asm.Opcodes;
@@ -901,7 +906,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
 
     public IrMethod convert(DexCodeNode codeNode) {
         if (codeNode.tryStmts != null) {
-            for (DexCodeNode.DexStmtNode n : codeNode.tryStmts) {
+            for (TryCatchNode n : codeNode.tryStmts) {
                 n.accept(this);
             }
         }
@@ -916,13 +921,13 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
         if (codeNode.totalRegister >= 0) {
             this.visitRegister(codeNode.totalRegister);
         }
-        for (DexCodeNode.DexStmtNode n : codeNode.stmts) {
+        for (DexStmtNode n : codeNode.stmts) {
             n.accept(this);
-            if (n instanceof DexCodeNode.FilledNewArrayStmtNode) {
+            if (n instanceof FilledNewArrayStmtNode) {
                 lastIsInvokeOrFilledNewArray = true;
-            } else if (n instanceof DexCodeNode.MethodStmtNode) {
-                lastIsInvokeOrFilledNewArray = !((DexCodeNode.MethodStmtNode) n).method.getReturnType().equals("V");
-            } else if (!(n instanceof DexCodeNode.DexLabelStmtNode)) {
+            } else if (n instanceof MethodStmtNode) {
+                lastIsInvokeOrFilledNewArray = !((MethodStmtNode) n).method.getReturnType().equals("V");
+            } else if (!(n instanceof DexLabelStmtNode)) {
                 lastIsInvokeOrFilledNewArray = false;
             }
         }
