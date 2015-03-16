@@ -1,6 +1,7 @@
 package com.googlecode.d2j.node.analysis;
 
 import com.googlecode.d2j.node.insn.*;
+import com.googlecode.d2j.reader.Op;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,9 @@ public class DvmFrame<V> {
 
 
     public void set(int i, V v) {
+        if (i > values.length || i < 0) {
+            return;
+        }
         values[i] = v;
     }
 
@@ -45,6 +49,7 @@ public class DvmFrame<V> {
             case CONST_STRING_JUMBO:
             case CONST_CLASS:
                 set(((ConstStmtNode) insn).a, interpreter.newOperation(insn));
+                setTmp(null);
                 break;
             case SGET:
             case SGET_BOOLEAN:
@@ -54,9 +59,11 @@ public class DvmFrame<V> {
             case SGET_SHORT:
             case SGET_WIDE:
                 set(((FieldStmtNode) insn).a, interpreter.newOperation(insn));
+                setTmp(null);
                 break;
             case NEW_INSTANCE:
                 set(((TypeStmtNode) insn).a, interpreter.newOperation(insn));
+                setTmp(null);
                 break;
             case MOVE:
             case MOVE_16:
@@ -69,12 +76,14 @@ public class DvmFrame<V> {
             case MOVE_WIDE_16:
                 Stmt2RNode stmt2RNode = (Stmt2RNode) insn;
                 set(stmt2RNode.a, interpreter.copyOperation(insn, get(stmt2RNode.b)));
+                setTmp(null);
                 break;
             case MOVE_RESULT:
             case MOVE_RESULT_WIDE:
             case MOVE_RESULT_OBJECT:
             case MOVE_EXCEPTION:
                 set(((Stmt1RNode) insn).a, interpreter.copyOperation(insn, getTmp()));
+                setTmp(null);
                 break;
             case NOT_INT:
             case NOT_LONG:
@@ -100,6 +109,7 @@ public class DvmFrame<V> {
             case ARRAY_LENGTH:
                 Stmt2RNode stmt2RNode1 = (Stmt2RNode) insn;
                 set(stmt2RNode1.a, interpreter.unaryOperation(insn, get(stmt2RNode1.b)));
+                setTmp(null);
                 break;
             case IF_EQZ:
             case IF_GEZ:
@@ -108,12 +118,15 @@ public class DvmFrame<V> {
             case IF_LTZ:
             case IF_NEZ:
                 interpreter.unaryOperation(insn, get(((JumpStmtNode) insn).a));
+                setTmp(null);
                 break;
             case SPARSE_SWITCH:
                 interpreter.unaryOperation(insn, get(((SparseSwitchStmtNode) insn).a));
+                setTmp(null);
                 break;
             case PACKED_SWITCH:
                 interpreter.unaryOperation(insn, get(((PackedSwitchStmtNode) insn).a));
+                setTmp(null);
                 break;
             case SPUT:
             case SPUT_BOOLEAN:
@@ -123,6 +136,7 @@ public class DvmFrame<V> {
             case SPUT_SHORT:
             case SPUT_WIDE:
                 interpreter.unaryOperation(insn, get(((FieldStmtNode) insn).a));
+                setTmp(null);
                 break;
             case IGET:
             case IGET_BOOLEAN:
@@ -133,25 +147,26 @@ public class DvmFrame<V> {
             case IGET_WIDE:
                 FieldStmtNode fieldStmtNode = (FieldStmtNode) insn;
                 set(fieldStmtNode.a, interpreter.unaryOperation(insn, get(fieldStmtNode.b)));
+                setTmp(null);
                 break;
             case NEW_ARRAY:
             case CHECK_CAST:
             case INSTANCE_OF:
                 TypeStmtNode typeStmtNode = (TypeStmtNode) insn;
                 set(typeStmtNode.a, interpreter.unaryOperation(insn, get(typeStmtNode.b)));
+                setTmp(null);
                 break;
             case MONITOR_ENTER:
             case MONITOR_EXIT:
             case THROW:
                 interpreter.unaryOperation(insn, get(((Stmt1RNode) insn).a));
+                setTmp(null);
                 break;
             case RETURN:
             case RETURN_WIDE:
             case RETURN_OBJECT:
                 interpreter.returnOperation(insn, get(((Stmt1RNode) insn).a));
-                break;
-            case RETURN_VOID:
-                interpreter.returnOperation(insn, null);
+                setTmp(null);
                 break;
             case AGET:
             case AGET_BOOLEAN:
@@ -199,6 +214,7 @@ public class DvmFrame<V> {
             case USHR_LONG:
                 Stmt3RNode stmt3RNode = (Stmt3RNode) insn;
                 set(stmt3RNode.a, interpreter.binaryOperation(insn, get(stmt3RNode.b), get(stmt3RNode.c)));
+                setTmp(null);
                 break;
             case IF_EQ:
             case IF_GE:
@@ -208,6 +224,7 @@ public class DvmFrame<V> {
             case IF_NE:
                 JumpStmtNode jumpStmtNode = (JumpStmtNode) insn;
                 interpreter.binaryOperation(insn, get(jumpStmtNode.a), get(jumpStmtNode.b));
+                setTmp(null);
                 break;
             case IPUT:
             case IPUT_BOOLEAN:
@@ -218,6 +235,7 @@ public class DvmFrame<V> {
             case IPUT_WIDE:
                 FieldStmtNode fieldStmtNode1 = (FieldStmtNode) insn;
                 interpreter.binaryOperation(insn, get(fieldStmtNode1.b), get(fieldStmtNode1.a));
+                setTmp(null);
                 break;
             case APUT:
             case APUT_BOOLEAN:
@@ -228,6 +246,7 @@ public class DvmFrame<V> {
             case APUT_WIDE:
                 Stmt3RNode stmt3RNode1 = (Stmt3RNode) insn;
                 interpreter.ternaryOperation(insn, get(stmt3RNode1.b), get(stmt3RNode1.c), get(stmt3RNode1.a));
+                setTmp(null);
                 break;
             case INVOKE_VIRTUAL_RANGE:
             case INVOKE_VIRTUAL:
@@ -238,11 +257,25 @@ public class DvmFrame<V> {
             case INVOKE_STATIC_RANGE:
             case INVOKE_STATIC:
             case INVOKE_INTERFACE_RANGE:
-            case INVOKE_INTERFACE: { // TODO skip for J/D
+            case INVOKE_INTERFACE: {
+                int i = 0;
                 MethodStmtNode methodStmtNode = (MethodStmtNode) insn;
-                List<V> v = new ArrayList<>(methodStmtNode.args.length);
-                for (int i = 0; i < methodStmtNode.args.length; i++) {
+                List<V> v;
+                if (insn.op == Op.INVOKE_STATIC || insn.op == Op.INVOKE_STATIC_RANGE) {
+                    v = new ArrayList<>(methodStmtNode.method.getParameterTypes().length);
+                } else {
+                    v = new ArrayList<>(methodStmtNode.method.getParameterTypes().length + 1);
+                    v.add(get(methodStmtNode.args[i++]));
+                }
+
+                for (String type : methodStmtNode.method.getParameterTypes()) {
                     v.add(get(methodStmtNode.args[i]));
+                    char t = type.charAt(0);
+                    if (t == 'J' || t == 'D') {
+                        i += 2;
+                    } else {
+                        i += 1;
+                    }
                 }
                 setTmp(interpreter.naryOperation(insn, v));
             }
@@ -293,6 +326,7 @@ public class DvmFrame<V> {
             case USHR_LONG_2ADDR:
                 Stmt2RNode stmt2RNode2 = (Stmt2RNode) insn;
                 set(stmt2RNode2.a, interpreter.binaryOperation(insn, get(stmt2RNode2.a), get(stmt2RNode2.b)));
+                setTmp(null);
                 break;
             case ADD_INT_LIT16:
             case ADD_INT_LIT8:
@@ -315,8 +349,14 @@ public class DvmFrame<V> {
             case USHR_INT_LIT8:
                 Stmt2R1NNode stmt2R1NNode = (Stmt2R1NNode) insn;
                 set(stmt2R1NNode.distReg, interpreter.unaryOperation(insn, get(stmt2R1NNode.srcReg)));
+                setTmp(null);
                 break;
+            case GOTO:
+            case GOTO_16:
+            case GOTO_32:
+            case RETURN_VOID:
             case BAD_OP:
+                setTmp(null);
                 break;
             default:
                 throw new RuntimeException();
@@ -328,6 +368,9 @@ public class DvmFrame<V> {
     }
 
     private V get(int b) {
+        if (b > values.length || b < 0) {
+            return null;
+        }
         return values[b];
     }
 

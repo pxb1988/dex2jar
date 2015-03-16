@@ -59,7 +59,7 @@ public class Dex2IRConverter {
         return i;
     }
 
-    public IrMethod convert(DexCodeNode dexCodeNode, Method method, boolean isStatic) {
+    public IrMethod convert(boolean isStatic, Method method, DexCodeNode dexCodeNode) {
         this.dexCodeNode = dexCodeNode;
         IrMethod irMethod = new IrMethod();
         irMethod.args = method.getParameterTypes();
@@ -201,7 +201,8 @@ public class Dex2IRConverter {
                     }
                 }
                 if (phiValues.size() > 0) {
-                    phis.add(Stmts.nAssign(v.local, Exprs.nPhi(phiValues.toArray(new com.googlecode.dex2jar.ir.expr.Value[phiValues.size()]))));
+                    phis.add(Stmts.nAssign(v.local, Exprs
+                            .nPhi(phiValues.toArray(new com.googlecode.dex2jar.ir.expr.Value[phiValues.size()]))));
                     phiValues.clear();
                 }
             }
@@ -280,7 +281,34 @@ public class Dex2IRConverter {
             }
 
             tmp.init(frame);
-            tmp.execute(p, interpreter);
+            try {
+                if (p.op != null) {
+                    switch (p.op) {
+                        case RETURN_VOID:
+                            emit(nReturnVoid());
+                            break;
+                        case GOTO:
+                        case GOTO_16:
+                        case GOTO_32:
+                            emit(nGoto(toLabelStmt(((JumpStmtNode) p).label)));
+                            break;
+                        case NOP:
+                            emit(nNop());
+                            break;
+                        case BAD_OP:
+                            emit(nThrow(nInvokeNew(new Value[]{nString("bad dex opcode")}, new String[]{
+                                            "Ljava/lang/String;"},
+                                    "Ljava/lang/VerifyError;")));
+                            break;
+                        default:
+                            tmp.execute(p, interpreter);
+                            break;
+                    }
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException("Fail on Op " + p.op + " index " + index, exception);
+            }
+
 
             if (p.op != null) {
                 Op op = p.op;
@@ -394,21 +422,17 @@ public class Dex2IRConverter {
                     case CONST_16:
                     case CONST_4:
                     case CONST_HIGH16:
-                        b(nInt((Integer) ((ConstStmtNode) insn).value));
-                        break;
+                        return b(nInt((Integer) ((ConstStmtNode) insn).value));
                     case CONST_WIDE:
                     case CONST_WIDE_16:
                     case CONST_WIDE_32:
                     case CONST_WIDE_HIGH16:
-                        b(nLong((Long) ((ConstStmtNode) insn).value));
-                        break;
+                        return b(nLong((Long) ((ConstStmtNode) insn).value));
                     case CONST_CLASS:
-                        b(nType(((DexType) ((ConstStmtNode) insn).value).desc));
-                        break;
+                        return b(nType(((DexType) ((ConstStmtNode) insn).value).desc));
                     case CONST_STRING:
                     case CONST_STRING_JUMBO:
-                        b(nString((String) ((ConstStmtNode) insn).value));
-                        break;
+                        return b(nString((String) ((ConstStmtNode) insn).value));
                     case SGET:
                     case SGET_BOOLEAN:
                     case SGET_BYTE:
@@ -417,23 +441,29 @@ public class Dex2IRConverter {
                     case SGET_SHORT:
                     case SGET_WIDE:
                         Field field = ((FieldStmtNode) insn).field;
-                        b(nStaticField(field.getOwner(), field.getName(), field.getType()));
-                        break;
+                        return b(nStaticField(field.getOwner(), field.getName(), field.getType()));
                     case NEW_INSTANCE:
-                        b(nNew(((TypeStmtNode) insn).type));
-                        break;
+                        return b(nNew(((TypeStmtNode) insn).type));
                 }
                 return null;
             }
 
             @Override
             public DvmValue copyOperation(DexStmtNode insn, DvmValue value) {
+                if (value == null) {
+                    emitNotFindOperand(insn);
+                    return b(nInt(0));
+                }
                 return b(getLocal(value));
             }
 
             @Override
             public DvmValue unaryOperation(DexStmtNode insn, DvmValue value) {
-                Local local = value != null ? getLocal(value) : null;
+                if (value == null) {
+                    emitNotFindOperand(insn);
+                    return b(nInt(0));
+                }
+                Local local = getLocal(value);
                 switch (insn.op) {
                     case NOT_INT:
                         return b(nNot(local, "I"));
@@ -500,7 +530,8 @@ public class Dex2IRConverter {
                         return b(nLength(local));
 
                     case IF_EQZ:
-                        emit(nIf(Exprs.nEq(local, nInt(0), TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs
+                                .nEq(local, nInt(0), TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_GEZ:
@@ -520,7 +551,8 @@ public class Dex2IRConverter {
                         return null;
 
                     case IF_NEZ:
-                        emit(nIf(Exprs.nNe(local, nInt(0), TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs
+                                .nNe(local, nInt(0), TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
                         return null;
 
                     case PACKED_SWITCH:
@@ -625,6 +657,10 @@ public class Dex2IRConverter {
 
             @Override
             public DvmValue binaryOperation(DexStmtNode insn, DvmValue value1, DvmValue value2) {
+                if (value1 == null || value2 == null) {
+                    emitNotFindOperand(insn);
+                    return b(nInt(0));
+                }
                 Local local1 = getLocal(value1);
                 Local local2 = getLocal(value2);
                 switch (insn.op) {
@@ -761,7 +797,8 @@ public class Dex2IRConverter {
                         return b(nUshr(local1, local2, "J"));
 
                     case IF_EQ:
-                        emit(nIf(Exprs.nEq(local1, local2, TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs
+                                .nEq(local1, local2, TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_GE:
@@ -781,7 +818,8 @@ public class Dex2IRConverter {
                         return null;
 
                     case IF_NE:
-                        emit(nIf(Exprs.nNe(local1, local2, TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs
+                                .nNe(local1, local2, TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IPUT:
@@ -897,6 +935,10 @@ public class Dex2IRConverter {
 
             @Override
             public DvmValue ternaryOperation(DexStmtNode insn, DvmValue value1, DvmValue value2, DvmValue value3) {
+                if (value1 == null || value2 == null || value3 == null) {
+                    emitNotFindOperand(insn);
+                    return b(nInt(0));
+                }
                 Local local1 = getLocal(value1);
                 Local local2 = getLocal(value2);
                 Local local3 = getLocal(value3);
@@ -928,6 +970,14 @@ public class Dex2IRConverter {
 
             @Override
             public DvmValue naryOperation(DexStmtNode insn, List<? extends DvmValue> values) {
+                for (DvmValue v : values) {
+                    if (v == null) {
+                        emitNotFindOperand(insn);
+                        return b(nInt(0));
+                    }
+                }
+
+
                 switch (insn.op) {
                     case FILLED_NEW_ARRAY:
                     case FILLED_NEW_ARRAY_RANGE:
@@ -955,24 +1005,28 @@ public class Dex2IRConverter {
                         switch (op) {
                             case INVOKE_VIRTUAL_RANGE:
                             case INVOKE_VIRTUAL:
-                                invoke = nInvokeVirtual(vs, method.getOwner(), method.getName(), method.getParameterTypes(),
+                                invoke = nInvokeVirtual(vs, method.getOwner(), method.getName(), method
+                                                .getParameterTypes(),
                                         method.getReturnType());
                                 break;
                             case INVOKE_SUPER_RANGE:
                             case INVOKE_DIRECT_RANGE:
                             case INVOKE_SUPER:
                             case INVOKE_DIRECT:
-                                invoke = nInvokeSpecial(vs, method.getOwner(), method.getName(), method.getParameterTypes(),
+                                invoke = nInvokeSpecial(vs, method.getOwner(), method.getName(), method
+                                                .getParameterTypes(),
                                         method.getReturnType());
                                 break;
                             case INVOKE_STATIC_RANGE:
                             case INVOKE_STATIC:
-                                invoke = nInvokeStatic(vs, method.getOwner(), method.getName(), method.getParameterTypes(),
+                                invoke = nInvokeStatic(vs, method.getOwner(), method.getName(), method
+                                                .getParameterTypes(),
                                         method.getReturnType());
                                 break;
                             case INVOKE_INTERFACE_RANGE:
                             case INVOKE_INTERFACE:
-                                invoke = nInvokeInterface(vs, method.getOwner(), method.getName(), method.getParameterTypes(),
+                                invoke = nInvokeInterface(vs, method.getOwner(), method.getName(), method
+                                                .getParameterTypes(),
                                         method.getReturnType());
                                 break;
                             default:
@@ -990,8 +1044,31 @@ public class Dex2IRConverter {
 
             }
 
+            void emitNotFindOperand(DexStmtNode insn) {
+                String msg;
+                switch (insn.op) {
+                    case MOVE_RESULT:
+                    case MOVE_RESULT_OBJECT:
+                    case MOVE_RESULT_WIDE:
+                        msg = "can't get operand(s) for " + insn.op + ", wrong position ?";
+                        break;
+                    default:
+                        msg = "can't get operand(s) for " + insn.op + ", out-of-range or not initialized ?";
+                        break;
+                }
+
+                System.err.println("WARN: " + msg);
+                emit(nThrow(nInvokeNew(new Value[]{nString("d2j: " + msg)},
+                        new String[]{"Ljava/lang/String;"}, "Ljava/lang/VerifyError;")));
+            }
+
             @Override
             public void returnOperation(DexStmtNode insn, DvmValue value) {
+                if (value == null) {
+                    emitNotFindOperand(insn);
+                    return;
+                }
+
                 emit(nReturn(getLocal(value)));
             }
         };
