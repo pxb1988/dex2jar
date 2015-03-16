@@ -1014,13 +1014,18 @@ public class DexFileReader {
         return class_defs_size;
     }
 
-    private void findLabels(byte[] insns, BitSet nextBit, Map<Integer, DexLabel> labelsMap, Set<Integer> handlers,
+    static class BadOpException extends RuntimeException{
+        public BadOpException(String fmt,Object ...args){
+            super(String.format(fmt,args));
+        }
+    }
+
+    private void findLabels(byte[] insns, BitSet nextBit, BitSet badOps, Map<Integer, DexLabel> labelsMap, Set<Integer> handlers,
             Method method) {
         Queue<Integer> q = new LinkedList<Integer>();
         q.add(0);
         q.addAll(handlers);
         handlers.clear();
-        Op[] values = Op.ops;
         while (!q.isEmpty()) {
             int offset = q.poll();
             if (nextBit.get(offset)) {
@@ -1028,162 +1033,194 @@ public class DexFileReader {
             } else {
                 nextBit.set(offset);
             }
-            int u1offset = offset * 2;
-            if (u1offset >= insns.length) {
-                continue;
+            try {
+                travelInsn(labelsMap, q, insns, offset);
+            } catch (IndexOutOfBoundsException indexOutOfRange){
+                badOps.set(offset);
+                WARN("GLITCH: %04x %s | not enough space for reading instruction", offset, method.toString());
+            } catch (BadOpException badOp){
+                badOps.set(offset);
+                WARN("GLITCH: %04x %s | %s", offset, method.toString(), badOp.getMessage());
             }
-            int opcode = 0xFF & insns[u1offset];
-            Op op = null;
-            if (opcode < values.length) {
-                op = values[opcode];
-            }
-            if (op == null || op.format == null) {
-                WARN("GLITCH: zero-width instruction at %s, @0x%04x, op=0x%02x", method.toString(), u1offset, opcode);
-                continue;
-            }
+        }
+    }
 
-            int target;
-            boolean canContinue = true;
-            if (op.canBranch()) {
-                switch (op.format) {
-                case kFmt10t:
-                    target = offset + insns[u1offset + 1];
-                    q.add(target);
-                    order(labelsMap, target);
-                    break;
-                case kFmt20t:
-                case kFmt21t:
-                    target = offset + sshort(insns, u1offset + 2);
-                    q.add(target);
-                    order(labelsMap, target);
-                    break;
-                case kFmt22t:
-                    target = offset + sshort(insns, u1offset + 2);
-                    int u = ubyte(insns, u1offset + 1);
-                    boolean cmpSameReg = (u & 0x0F) == ((u >> 4) & 0x0F);
-                    boolean skipTarget = false;
-                    if (cmpSameReg) {
-                        switch (op) {
-                        case IF_EQ:
-                        case IF_GE:
-                        case IF_LE:
-                            // means always jump, equals to goto
-                            canContinue = false;
-                            break;
-                        case IF_NE:
-                        case IF_GT:
-                        case IF_LT:
-                            // means always not jump
-                            skipTarget = true;
-                            break;
-                        default:
-                            break;
-                        }
-                    }
-                    if (!skipTarget) {
-                        q.add(target);
-                        order(labelsMap, target);
-                    }
-                    break;
-                case kFmt30t:
-                case kFmt31t:
-                    target = offset + sint(insns, u1offset + 2);
-                    q.add(target);
-                    order(labelsMap, target);
-                    break;
-                default:
-                    break;
+    private void travelInsn(Map<Integer, DexLabel> labelsMap, Queue<Integer> q, byte[] insns, int offset) {
+        int u1offset = offset * 2;
+        if (u1offset >= insns.length) {
+            throw new IndexOutOfBoundsException();
+        }
+        int opcode = 0xFF & insns[u1offset];
+        Op op = null;
+        if (opcode < Op.ops.length) {
+            op = Op.ops[opcode];
+        }
+        if (op == null || op.format == null) {
+            throw new BadOpException("zero-width instruction op=0x%02x", opcode);
+        }
+        int target;
+        boolean canContinue = true;
+        if (op.canBranch()) {
+            switch (op.format) {
+            case kFmt10t:
+                target = offset + insns[u1offset + 1];
+                if (target < 0 || target * 2 > insns.length ) {
+                    throw new BadOpException("jump out of insns %s -> %04x", op, target);
                 }
+                q.add(target);
+                order(labelsMap, target);
+                break;
+            case kFmt20t:
+            case kFmt21t:
+                target = offset + sshort(insns, u1offset + 2);
+                if (target < 0 || target * 2 > insns.length ) {
+                    throw new BadOpException("jump out of insns %s -> %04x", op, target);
+                }
+                q.add(target);
+                order(labelsMap, target);
+                break;
+            case kFmt22t:
+                target = offset + sshort(insns, u1offset + 2);
+
+                int u = ubyte(insns, u1offset + 1);
+                boolean cmpSameReg = (u & 0x0F) == ((u >> 4) & 0x0F);
+                boolean skipTarget = false;
+                if (cmpSameReg) {
+                    switch (op) {
+                    case IF_EQ:
+                    case IF_GE:
+                    case IF_LE:
+                        // means always jump, equals to goto
+                        canContinue = false;
+                        break;
+                    case IF_NE:
+                    case IF_GT:
+                    case IF_LT:
+                        // means always not jump
+                        skipTarget = true;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                if (!skipTarget) {
+                    if (target < 0 || target * 2 > insns.length ) {
+                        throw new BadOpException("jump out of insns %s -> %04x", op, target);
+                    }
+                    q.add(target);
+                    order(labelsMap, target);
+                }
+                break;
+            case kFmt30t:
+            case kFmt31t:
+                target = offset + sint(insns, u1offset + 2);
+                if (target < 0 || target * 2 > insns.length ) {
+                    throw new BadOpException("jump out of insns %s -> %04x", op, target);
+                }
+                q.add(target);
+                order(labelsMap, target);
+                break;
+            default:
+                break;
             }
-            if (op.canSwitch()) {
-                order(labelsMap, offset + op.format.size);// default
-                int u1SwitchData = 2 * (offset + sint(insns, u1offset + 2));
-                if (u1SwitchData < insns.length) {
+        }
+        if (op.canSwitch()) {
+            order(labelsMap, offset + op.format.size);// default
+            int u1SwitchData = 2 * (offset + sint(insns, u1offset + 2));
+            if (u1SwitchData + 2 < insns.length) {
+
                     switch (insns[u1SwitchData + 1]) {
-                    case 0x01: // packed-switch-data
-                    {
-                        int size = ushort(insns, u1SwitchData + 2);
-                        int b = u1SwitchData + 8;// targets
-                        for (int i = 0; i < size; i++) {
-                            target = offset + sint(insns, b + i * 4);
-                            q.add(target);
-                            order(labelsMap, target);
+                        case 0x01: // packed-switch-data
+                        {
+                            int size = ushort(insns, u1SwitchData + 2);
+                            int b = u1SwitchData + 8;// targets
+                            for (int i = 0; i < size; i++) {
+                                target = offset + sint(insns, b + i * 4);
+                                if (target < 0 || target * 2 > insns.length ) {
+                                    throw new BadOpException("jump out of insns %s -> %04x", op, target);
+                                }
+                                q.add(target);
+                                order(labelsMap, target);
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case 0x02:// sparse-switch-data
-                    {
-                        int size = ushort(insns, u1SwitchData + 2);
-                        int b = u1SwitchData + 4 + 4 * size;// targets
-                        for (int i = 0; i < size; i++) {
-                            target = offset + sint(insns, b + i * 4);
-                            q.add(target);
-                            order(labelsMap, target);
+                        case 0x02:// sparse-switch-data
+                        {
+                            int size = ushort(insns, u1SwitchData + 2);
+                            int b = u1SwitchData + 4 + 4 * size;// targets
+                            for (int i = 0; i < size; i++) {
+                                target = offset + sint(insns, b + i * 4);
+                                if (target < 0 || target * 2 > insns.length ) {
+                                    throw new BadOpException("jump out of insns %s -> %04x", op, target);
+                                }
+                                q.add(target);
+                                order(labelsMap, target);
+                            }
+                            break;
                         }
-                        break;
+                        default:
+                            throw new BadOpException("bad payload for %s", op);
                     }
-                    }
-                } else {
-                    WARN("bad offset for switch @%04x", offset);
-                }
+            } else {
+                throw new BadOpException("bad payload offset for %s", op);
             }
+        }
 
-            if (canContinue) {
-                int idx;
-                switch (op.indexType) {
-                case kIndexStringRef:
-                    if (op.format == InstructionFormat.kFmt31c) {
-                        idx = uint(insns, u1offset + 2);
-                    } else {// other
-                        idx = ushort(insns, u1offset + 2);
-                    }
-                    canContinue = idx >= 0 && idx < string_ids_size;
-                    break;
-                case kIndexTypeRef:
+        if (canContinue) {
+            int idx = Integer.MAX_VALUE;
+            switch (op.indexType) {
+            case kIndexStringRef:
+                if (op.format == InstructionFormat.kFmt31c) {
+                    idx = uint(insns, u1offset + 2);
+                } else {// other
                     idx = ushort(insns, u1offset + 2);
-                    canContinue = idx < type_ids_size;
-                    break;
-                case kIndexMethodRef:
-                    idx = ushort(insns, u1offset + 2);
-                    canContinue = idx < method_ids_size;
-                    break;
-                case kIndexFieldRef:
-                    idx = ushort(insns, u1offset + 2);
-                    canContinue = idx < field_ids_size;
-                    break;
-                default:
                 }
-                if (!canContinue) {
-                    WARN("GLITCH: index-out-of-range at %s for %s @%04x", method.toString(), op, offset);
-                }
+                canContinue = idx >= 0 && idx < string_ids_size;
+                break;
+            case kIndexTypeRef:
+                idx = ushort(insns, u1offset + 2);
+                canContinue = idx < type_ids_size;
+                break;
+            case kIndexMethodRef:
+                idx = ushort(insns, u1offset + 2);
+                canContinue = idx < method_ids_size;
+                break;
+            case kIndexFieldRef:
+                idx = ushort(insns, u1offset + 2);
+                canContinue = idx < field_ids_size;
+                break;
+            default:
             }
+            if (!canContinue) {
+                throw new BadOpException("index-out-of-range for %s index: %d", op, idx);
+            }
+        }
 
-            if (canContinue && op.canContinue()) {
-                if (op == Op.NOP) {
-                    switch (insns[u1offset + 1]) {
-                    case 0x00:
-                        q.add(offset + op.format.size);
-                        break;
-                    case 0x01: {
-                        int size = ushort(insns, u1offset + 2);
-                        q.add(offset + (size * 2) + 4);
-                        break;
-                    }
-                    case 0x02: {
-                        int size = ushort(insns, u1offset + 2);
-                        q.add(offset + (size * 4) + 2);
-                        break;
-                    }
-                    case 0x03: {
-                        int element_width = ushort(insns, u1offset + 2);
-                        int size = uint(insns, u1offset + 4);
-                        q.add(offset + (size * element_width + 1) / 2 + 4);
-                        break;
-                    }
-                    }
-                } else {
+        if (canContinue && op.canContinue()) {
+            if (op == Op.NOP) {
+                switch (insns[u1offset + 1]) {
+                case 0x00:
                     q.add(offset + op.format.size);
+                    break;
+                case 0x01: {
+                    int size = ushort(insns, u1offset + 2);
+                    q.add(offset + (size * 2) + 4);
+                    break;
                 }
+                case 0x02: {
+                    int size = ushort(insns, u1offset + 2);
+                    q.add(offset + (size * 4) + 2);
+                    break;
+                }
+                case 0x03: {
+                    int element_width = ushort(insns, u1offset + 2);
+                    int size = uint(insns, u1offset + 4);
+                    q.add(offset + (size * element_width + 1) / 2 + 4);
+                    break;
+                }
+                }
+            } else {
+                q.add(offset + op.format.size);
             }
         }
     }
@@ -1230,7 +1267,6 @@ public class DexFileReader {
                 labels[listSize] = labelsMap.get(handler);
             }
             dcv.visitTryCatch(labelsMap.get(start_addr), labelsMap.get(end), labels, types);
-
         }
     }
 
@@ -1266,13 +1302,14 @@ public class DexFileReader {
             }
         }
 
-        findLabels(insnsArray, nextInsn, labelsMap, handlers, method);
-        acceptInsn(insnsArray, dcv, nextInsn, labelsMap);
+        BitSet badOps = new BitSet();
+        findLabels(insnsArray, nextInsn, badOps, labelsMap, handlers, method);
+        acceptInsn(insnsArray, dcv, nextInsn, badOps, labelsMap);
         dcv.visitEnd();
     }
 
     // 处理指令
-    private void acceptInsn(byte[] insns, DexCodeVisitor dcv, BitSet nextInsn, Map<Integer, DexLabel> labelsMap) {
+    private void acceptInsn(byte[] insns, DexCodeVisitor dcv, BitSet nextInsn, BitSet badOps, Map<Integer, DexLabel> labelsMap) {
         Iterator<Integer> labelOffsetIterator = labelsMap.keySet().iterator();
         Integer nextLabelOffset = labelOffsetIterator.hasNext() ? labelOffsetIterator.next() : null;
         Op[] values = Op.ops;
@@ -1288,52 +1325,16 @@ public class DexFileReader {
                     break;
                 }
             }
-            int u1offset = offset * 2;
-            if (u1offset >= insns.length) {
-                continue;
-            }
-            int opcode = 0xFF & insns[u1offset];
 
-            Op op = null;
-            if (opcode < values.length) {
-                op = values[opcode];
-            }
-            if (op == null || op.format == null) {
+            if(badOps.get(offset)){
                 dcv.visitStmt0R(Op.BAD_OP);
                 continue;
             }
 
-            {
-                boolean canContinue = true;
-                int idx;
-                switch (op.indexType) {
-                case kIndexStringRef:
-                    if (op.format == InstructionFormat.kFmt31c) {
-                        idx = uint(insns, u1offset + 2);
-                    } else {// other
-                        idx = ushort(insns, u1offset + 2);
-                    }
-                    canContinue = idx >= 0 && idx < string_ids_size;
-                    break;
-                case kIndexTypeRef:
-                    idx = ushort(insns, u1offset + 2);
-                    canContinue = idx < type_ids_size;
-                    break;
-                case kIndexMethodRef:
-                    idx = ushort(insns, u1offset + 2);
-                    canContinue = idx < method_ids_size;
-                    break;
-                case kIndexFieldRef:
-                    idx = ushort(insns, u1offset + 2);
-                    canContinue = idx < field_ids_size;
-                    break;
-                default:
-                }
-                if (!canContinue) {
-                    dcv.visitStmt0R(Op.BAD_OP);
-                    continue;
-                }
-            }
+            int u1offset = offset * 2;
+            int opcode = 0xFF & insns[u1offset];
+
+            Op op = values[opcode];
 
             int a, b, c, target;
             switch (op.format) {
@@ -1399,10 +1400,6 @@ public class DexFileReader {
                 target = offset + sint(insns, u1offset + 2);
                 a = ubyte(insns, u1offset + 1);
                 int u1SwitchData = 2 * target;
-                if (u1SwitchData >= insns.length) {
-                    dcv.visitStmt0R(Op.BAD_OP);
-                    break;
-                }
                 if (op == Op.FILL_ARRAY_DATA) {
                     int element_width = ushort(insns, u1SwitchData + 2);
                     int size = uint(insns, u1SwitchData + 4);
