@@ -226,7 +226,11 @@ public class J2IRConverter {
     private void dfs(BitSet[] exBranch, BitSet handlers, BitSet access, Interpreter<JvmValue> interpreter) throws AnalyzerException {
         currentEmit = preEmit;
         JvmFrame first = initFirstFrame(methodNode, target);
-        frames[0] = first;
+        if (parentCount[0] > 1) {
+            merge(first, 0);
+        } else {
+            frames[0] = first;
+        }
         Stack<AbstractInsnNode> stack = new Stack<>();
         stack.push(insnList.getFirst());
 
@@ -824,6 +828,7 @@ public class J2IRConverter {
     }
 
     private void initParentCount(int[] parentCount) {
+        parentCount[0] = 1;
         for (AbstractInsnNode p = insnList.getFirst(); p != null; p = p.getNext()) {
             if (p.getType() == AbstractInsnNode.JUMP_INSN) {
                 JumpInsnNode jump = (JumpInsnNode) p;
@@ -848,7 +853,10 @@ public class J2IRConverter {
             if ((op >= Opcodes.GOTO && op <= Opcodes.RETURN) || op == Opcodes.ATHROW) {
                 // can't continue
             } else {
-                parentCount[insnList.indexOf(p.getNext())]++;
+                AbstractInsnNode next = p.getNext();
+                if(next!=null) {
+                    parentCount[insnList.indexOf(p.getNext())]++;
+                }
             }
         }
     }

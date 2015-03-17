@@ -15,15 +15,11 @@ public class DvmFrame<V> {
     }
 
 
-    public void set(int i, V v) {
+    public void setReg(int i, V v) {
         if (i > values.length || i < 0) {
             return;
         }
         values[i] = v;
-    }
-
-    public void setTmp(V v) {
-        this.tmp = v;
     }
 
     public DvmFrame<V> init(DvmFrame<? extends V> src) {
@@ -48,7 +44,7 @@ public class DvmFrame<V> {
             case CONST_STRING:
             case CONST_STRING_JUMBO:
             case CONST_CLASS:
-                set(((ConstStmtNode) insn).a, interpreter.newOperation(insn));
+                setReg(((ConstStmtNode) insn).a, interpreter.newOperation(insn));
                 setTmp(null);
                 break;
             case SGET:
@@ -58,11 +54,11 @@ public class DvmFrame<V> {
             case SGET_OBJECT:
             case SGET_SHORT:
             case SGET_WIDE:
-                set(((FieldStmtNode) insn).a, interpreter.newOperation(insn));
+                setReg(((FieldStmtNode) insn).a, interpreter.newOperation(insn));
                 setTmp(null);
                 break;
             case NEW_INSTANCE:
-                set(((TypeStmtNode) insn).a, interpreter.newOperation(insn));
+                setReg(((TypeStmtNode) insn).a, interpreter.newOperation(insn));
                 setTmp(null);
                 break;
             case MOVE:
@@ -75,14 +71,14 @@ public class DvmFrame<V> {
             case MOVE_WIDE_FROM16:
             case MOVE_WIDE_16:
                 Stmt2RNode stmt2RNode = (Stmt2RNode) insn;
-                set(stmt2RNode.a, interpreter.copyOperation(insn, get(stmt2RNode.b)));
+                setReg(stmt2RNode.a, interpreter.copyOperation(insn, getReg(stmt2RNode.b)));
                 setTmp(null);
                 break;
             case MOVE_RESULT:
             case MOVE_RESULT_WIDE:
             case MOVE_RESULT_OBJECT:
             case MOVE_EXCEPTION:
-                set(((Stmt1RNode) insn).a, interpreter.copyOperation(insn, getTmp()));
+                setReg(((Stmt1RNode) insn).a, interpreter.copyOperation(insn, getTmp()));
                 setTmp(null);
                 break;
             case NOT_INT:
@@ -108,7 +104,7 @@ public class DvmFrame<V> {
             case LONG_TO_INT:
             case ARRAY_LENGTH:
                 Stmt2RNode stmt2RNode1 = (Stmt2RNode) insn;
-                set(stmt2RNode1.a, interpreter.unaryOperation(insn, get(stmt2RNode1.b)));
+                setReg(stmt2RNode1.a, interpreter.unaryOperation(insn, getReg(stmt2RNode1.b)));
                 setTmp(null);
                 break;
             case IF_EQZ:
@@ -117,15 +113,15 @@ public class DvmFrame<V> {
             case IF_LEZ:
             case IF_LTZ:
             case IF_NEZ:
-                interpreter.unaryOperation(insn, get(((JumpStmtNode) insn).a));
+                interpreter.unaryOperation(insn, getReg(((JumpStmtNode) insn).a));
                 setTmp(null);
                 break;
             case SPARSE_SWITCH:
-                interpreter.unaryOperation(insn, get(((SparseSwitchStmtNode) insn).a));
+                interpreter.unaryOperation(insn, getReg(((SparseSwitchStmtNode) insn).a));
                 setTmp(null);
                 break;
             case PACKED_SWITCH:
-                interpreter.unaryOperation(insn, get(((PackedSwitchStmtNode) insn).a));
+                interpreter.unaryOperation(insn, getReg(((PackedSwitchStmtNode) insn).a));
                 setTmp(null);
                 break;
             case SPUT:
@@ -135,7 +131,7 @@ public class DvmFrame<V> {
             case SPUT_OBJECT:
             case SPUT_SHORT:
             case SPUT_WIDE:
-                interpreter.unaryOperation(insn, get(((FieldStmtNode) insn).a));
+                interpreter.unaryOperation(insn, getReg(((FieldStmtNode) insn).a));
                 setTmp(null);
                 break;
             case IGET:
@@ -146,26 +142,32 @@ public class DvmFrame<V> {
             case IGET_SHORT:
             case IGET_WIDE:
                 FieldStmtNode fieldStmtNode = (FieldStmtNode) insn;
-                set(fieldStmtNode.a, interpreter.unaryOperation(insn, get(fieldStmtNode.b)));
+                setReg(fieldStmtNode.a, interpreter.unaryOperation(insn, getReg(fieldStmtNode.b)));
                 setTmp(null);
                 break;
             case NEW_ARRAY:
-            case CHECK_CAST:
-            case INSTANCE_OF:
+            case INSTANCE_OF: {
                 TypeStmtNode typeStmtNode = (TypeStmtNode) insn;
-                set(typeStmtNode.a, interpreter.unaryOperation(insn, get(typeStmtNode.b)));
+                setReg(typeStmtNode.a, interpreter.unaryOperation(insn, getReg(typeStmtNode.b)));
                 setTmp(null);
-                break;
+            }
+            break;
+            case CHECK_CAST: {
+                TypeStmtNode typeStmtNode = (TypeStmtNode) insn;
+                setReg(typeStmtNode.a, interpreter.unaryOperation(insn, getReg(typeStmtNode.a)));
+                setTmp(null);
+            }
+            break;
             case MONITOR_ENTER:
             case MONITOR_EXIT:
             case THROW:
-                interpreter.unaryOperation(insn, get(((Stmt1RNode) insn).a));
+                interpreter.unaryOperation(insn, getReg(((Stmt1RNode) insn).a));
                 setTmp(null);
                 break;
             case RETURN:
             case RETURN_WIDE:
             case RETURN_OBJECT:
-                interpreter.returnOperation(insn, get(((Stmt1RNode) insn).a));
+                interpreter.returnOperation(insn, getReg(((Stmt1RNode) insn).a));
                 setTmp(null);
                 break;
             case AGET:
@@ -213,7 +215,7 @@ public class DvmFrame<V> {
             case USHR_INT:
             case USHR_LONG:
                 Stmt3RNode stmt3RNode = (Stmt3RNode) insn;
-                set(stmt3RNode.a, interpreter.binaryOperation(insn, get(stmt3RNode.b), get(stmt3RNode.c)));
+                setReg(stmt3RNode.a, interpreter.binaryOperation(insn, getReg(stmt3RNode.b), getReg(stmt3RNode.c)));
                 setTmp(null);
                 break;
             case IF_EQ:
@@ -223,7 +225,7 @@ public class DvmFrame<V> {
             case IF_LT:
             case IF_NE:
                 JumpStmtNode jumpStmtNode = (JumpStmtNode) insn;
-                interpreter.binaryOperation(insn, get(jumpStmtNode.a), get(jumpStmtNode.b));
+                interpreter.binaryOperation(insn, getReg(jumpStmtNode.a), getReg(jumpStmtNode.b));
                 setTmp(null);
                 break;
             case IPUT:
@@ -234,7 +236,7 @@ public class DvmFrame<V> {
             case IPUT_SHORT:
             case IPUT_WIDE:
                 FieldStmtNode fieldStmtNode1 = (FieldStmtNode) insn;
-                interpreter.binaryOperation(insn, get(fieldStmtNode1.b), get(fieldStmtNode1.a));
+                interpreter.binaryOperation(insn, getReg(fieldStmtNode1.b), getReg(fieldStmtNode1.a));
                 setTmp(null);
                 break;
             case APUT:
@@ -245,7 +247,7 @@ public class DvmFrame<V> {
             case APUT_SHORT:
             case APUT_WIDE:
                 Stmt3RNode stmt3RNode1 = (Stmt3RNode) insn;
-                interpreter.ternaryOperation(insn, get(stmt3RNode1.b), get(stmt3RNode1.c), get(stmt3RNode1.a));
+                interpreter.ternaryOperation(insn, getReg(stmt3RNode1.b), getReg(stmt3RNode1.c), getReg(stmt3RNode1.a));
                 setTmp(null);
                 break;
             case INVOKE_VIRTUAL_RANGE:
@@ -265,11 +267,11 @@ public class DvmFrame<V> {
                     v = new ArrayList<>(methodStmtNode.method.getParameterTypes().length);
                 } else {
                     v = new ArrayList<>(methodStmtNode.method.getParameterTypes().length + 1);
-                    v.add(get(methodStmtNode.args[i++]));
+                    v.add(getReg(methodStmtNode.args[i++]));
                 }
 
                 for (String type : methodStmtNode.method.getParameterTypes()) {
-                    v.add(get(methodStmtNode.args[i]));
+                    v.add(getReg(methodStmtNode.args[i]));
                     char t = type.charAt(0);
                     if (t == 'J' || t == 'D') {
                         i += 2;
@@ -285,7 +287,7 @@ public class DvmFrame<V> {
                 FilledNewArrayStmtNode filledNewArrayStmtNode = (FilledNewArrayStmtNode) insn;
                 List<V> v = new ArrayList<>(filledNewArrayStmtNode.args.length);
                 for (int i = 0; i < filledNewArrayStmtNode.args.length; i++) {
-                    v.add(get(filledNewArrayStmtNode.args[i]));
+                    v.add(getReg(filledNewArrayStmtNode.args[i]));
                 }
                 setTmp(interpreter.naryOperation(insn, v));
             }
@@ -325,7 +327,7 @@ public class DvmFrame<V> {
             case USHR_INT_2ADDR:
             case USHR_LONG_2ADDR:
                 Stmt2RNode stmt2RNode2 = (Stmt2RNode) insn;
-                set(stmt2RNode2.a, interpreter.binaryOperation(insn, get(stmt2RNode2.a), get(stmt2RNode2.b)));
+                setReg(stmt2RNode2.a, interpreter.binaryOperation(insn, getReg(stmt2RNode2.a), getReg(stmt2RNode2.b)));
                 setTmp(null);
                 break;
             case ADD_INT_LIT16:
@@ -348,7 +350,11 @@ public class DvmFrame<V> {
             case SHR_INT_LIT8:
             case USHR_INT_LIT8:
                 Stmt2R1NNode stmt2R1NNode = (Stmt2R1NNode) insn;
-                set(stmt2R1NNode.distReg, interpreter.unaryOperation(insn, get(stmt2R1NNode.srcReg)));
+                setReg(stmt2R1NNode.distReg, interpreter.unaryOperation(insn, getReg(stmt2R1NNode.srcReg)));
+                setTmp(null);
+                break;
+            case FILL_ARRAY_DATA:
+                interpreter.unaryOperation(insn,getReg(((FillArrayDataStmtNode)insn).ra));
                 setTmp(null);
                 break;
             case GOTO:
@@ -363,11 +369,15 @@ public class DvmFrame<V> {
         }
     }
 
-    private V getTmp() {
+    public V getTmp() {
         return tmp;
     }
 
-    private V get(int b) {
+    public void setTmp(V v) {
+        this.tmp = v;
+    }
+
+    public V getReg(int b) {
         if (b > values.length || b < 0) {
             return null;
         }
@@ -378,11 +388,4 @@ public class DvmFrame<V> {
         return values.length;
     }
 
-    public V getLocal(int i) {
-        return get(i);
-    }
-
-    public void setLocal(int i, V q) {
-        set(i, q);
-    }
 }

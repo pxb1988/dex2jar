@@ -34,6 +34,7 @@ public class Dex2IRConverter {
     Map<DexLabel, LabelStmt> map = new HashMap<>();
     private Dex2IrFrame[] frames;
     private ArrayList<Stmt>[] emitStmts;
+    boolean initAllToZero = true;
 
     static int sizeofType(String s) {
         char t = s.charAt(0);
@@ -45,7 +46,6 @@ public class Dex2IRConverter {
     }
 
     static class Dex2IrFrame extends DvmFrame<DvmValue> {
-
         public Dex2IrFrame(int totalRegister) {
             super(totalRegister);
         }
@@ -79,35 +79,15 @@ public class Dex2IRConverter {
                 labelMap.put(dexLabelStmtNode.label, dexLabelStmtNode);
             }
         }
+
+        fixExceptionHandlers();
+
         BitSet[] exBranch = new BitSet[insnList.size()];
         parentCount = new int[insnList.size()];
         initParentCount(parentCount);
 
         BitSet handlers = new BitSet(insnList.size());
-        if (dexCodeNode.tryStmts != null) {
-            for (TryCatchNode tcb : dexCodeNode.tryStmts) {
-                target.traps.add(new Trap(getLabel(tcb.start), getLabel(tcb.end), getLabels(tcb.handler),
-                        tcb.type));
-                for (DexLabel h : tcb.handler) {
-                    handlers.set(indexOf(h));
-                }
-                int endIndex = indexOf(tcb.end);
-                for (int p = indexOf(tcb.start) + 1; p < endIndex; p++) {
-                    DexStmtNode stmt = insnList.get(p);
-                    if (stmt.op != null && stmt.op.canThrow()) {
-                        BitSet x = exBranch[p];
-                        if (x == null) {
-                            x = exBranch[p] = new BitSet(insnList.size());
-                        }
-                        for (DexLabel h : tcb.handler) {
-                            int hIndex = indexOf(h);
-                            x.set(hIndex);
-                            parentCount[hIndex]++;
-                        }
-                    }
-                }
-            }
-        }
+        initExceptionHandlers(dexCodeNode, exBranch, handlers);
 
         DvmInterpreter<DvmValue> interpreter = buildInterpreter();
         frames = new Dex2IrFrame[insnList.size()];
@@ -141,7 +121,7 @@ public class Dex2IRConverter {
             Dex2IrFrame frame = frames[i1];
             if (parentCount[i1] > 1 && frame != null && access.get(i1)) {
                 for (int j = 0; j < frame.getTotalRegisters(); j++) {
-                    DvmValue v = frame.getLocal(j);
+                    DvmValue v = frame.getReg(j);
                     addToQueue(queue, v);
                 }
             }
@@ -174,7 +154,7 @@ public class Dex2IRConverter {
                 LabelStmt labelStmt = getLabel(((DexLabelStmtNode) p).label);
                 List<AssignStmt> phis = new ArrayList<>();
                 for (int j = 0; j < frame.getTotalRegisters(); j++) {
-                    DvmValue v = frame.getLocal(j);
+                    DvmValue v = frame.getReg(j);
                     addPhi(v, phiValues, phis);
                 }
 
@@ -187,6 +167,131 @@ public class Dex2IRConverter {
         }
 
         return target;
+    }
+
+    /**
+     * issue 63
+     * <pre>
+     * L1:
+     *    STMTs
+     * L2:
+     *    RETURN
+     * L1~L2 > L2 Exception
+     * </pre>
+     * <p/>
+     * fix to
+     * <p/>
+     * <pre>
+     * L1:
+     *    STMTs
+     * L2:
+     *    RETURN
+     * L3:
+     *    goto L2
+     * L1~L2 > L3 Exception
+     * </pre>
+     */
+    private void fixExceptionHandlers() {
+        if (dexCodeNode.tryStmts == null) {
+            return;
+        }
+        Queue<Integer> q = new LinkedList<>();
+        Set<Integer> handlers = new TreeSet<>();
+        for (TryCatchNode tcb : dexCodeNode.tryStmts) {
+            for (DexLabel h : tcb.handler) {
+                int index = indexOf(h);
+                q.add(index + 1); // add the next insn after label
+                handlers.add(index);
+            }
+        }
+
+        q.add(0);
+
+        Map<Integer, DexLabel> needChange = new HashMap<>();
+
+        BitSet access = new BitSet(insnList.size());
+        while (!q.isEmpty()) {
+            Integer key = q.poll();
+            int index = key;
+            if (access.get(index)) {
+                continue;
+            } else {
+                access.set(index);
+            }
+            if (handlers.contains(key)) { // the cfg goes to a exception handler
+                needChange.put(key, null);
+            }
+            DexStmtNode node = insnList.get(key);
+            if (node.op == null) {
+                q.add(index + 1);
+            } else {
+                Op op = node.op;
+                if (op.canContinue()) {
+                    q.add(index + 1);
+                }
+                if (op.canBranch()) {
+                    JumpStmtNode jump = (JumpStmtNode) node;
+                    q.add(indexOf(jump.label));
+                }
+                if (op.canSwitch()) {
+                    for (DexLabel dexLabel : ((BaseSwitchStmtNode) node).labels) {
+                        q.add(indexOf(dexLabel));
+                    }
+                }
+            }
+        }
+
+        if (needChange.size() > 0) {
+            for (TryCatchNode tcb : dexCodeNode.tryStmts) {
+                DexLabel[] handler = tcb.handler;
+                for (int i = 0; i < handler.length; i++) {
+                    DexLabel h = handler[i];
+                    int index = indexOf(h);
+                    if (needChange.containsKey(index)) {
+                        DexLabel n = needChange.get(index);
+                        if (n == null) {
+                            n = new DexLabel();
+                            needChange.put(index, n);
+                            DexLabelStmtNode dexStmtNode = new DexLabelStmtNode(n);
+                            dexStmtNode.__index = insnList.size();
+                            insnList.add(dexStmtNode);
+                            labelMap.put(n, dexStmtNode);
+                            JumpStmtNode jumpStmtNode = new JumpStmtNode(Op.GOTO, 0, 0, h);
+                            jumpStmtNode.__index = insnList.size();
+                            insnList.add(jumpStmtNode);
+                        }
+                        handler[i] = n;
+                    }
+                }
+            }
+        }
+    }
+
+    private void initExceptionHandlers(DexCodeNode dexCodeNode, BitSet[] exBranch, BitSet handlers) {
+        if (dexCodeNode.tryStmts != null) {
+            for (TryCatchNode tcb : dexCodeNode.tryStmts) {
+                target.traps.add(new Trap(getLabel(tcb.start), getLabel(tcb.end), getLabels(tcb.handler),
+                        tcb.type));
+                for (DexLabel h : tcb.handler) {
+                    handlers.set(indexOf(h));
+                }
+                int endIndex = indexOf(tcb.end);
+                for (int p = indexOf(tcb.start) + 1; p < endIndex; p++) {
+                    DexStmtNode stmt = insnList.get(p);
+                    if (stmt.op != null && stmt.op.canThrow()) {
+                        BitSet x = exBranch[p];
+                        if (x == null) {
+                            x = exBranch[p] = new BitSet(insnList.size());
+                        }
+                        for (DexLabel h : tcb.handler) {
+                            int hIndex = indexOf(h);
+                            x.set(hIndex);
+                            parentCount[hIndex]++;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void addPhi(DvmValue v, Set<com.googlecode.dex2jar.ir.expr.Value> phiValues, List<AssignStmt> phis) {
@@ -247,7 +352,11 @@ public class Dex2IRConverter {
         currentEmit = preEmit;
 
         Dex2IrFrame first = initFirstFrame(dexCodeNode, target);
-        frames[0] = first;
+        if (parentCount[0] > 1) {
+            merge(first, 0);
+        } else {
+            frames[0] = first;
+        }
         Stack<DexStmtNode> stack = new Stack<>();
         stack.push(insnList.get(0));
         Dex2IrFrame tmp = new Dex2IrFrame(dexCodeNode.totalRegister);
@@ -290,7 +399,7 @@ public class Dex2IRConverter {
                         case GOTO:
                         case GOTO_16:
                         case GOTO_32:
-                            emit(nGoto(toLabelStmt(((JumpStmtNode) p).label)));
+                            emit(nGoto(getLabel(((JumpStmtNode) p).label)));
                             break;
                         case NOP:
                             emit(nNop());
@@ -358,19 +467,19 @@ public class Dex2IRConverter {
         }
     }
 
-    private void merge(Dex2IrFrame src, int dst) {
+    void merge(Dex2IrFrame src, int dst) {
         Dex2IrFrame distFrame = frames[dst];
         if (distFrame == null) {
             distFrame = frames[dst] = new Dex2IrFrame(dexCodeNode.totalRegister);
         }
         if (parentCount[dst] > 1) {
             for (int i = 0; i < src.getTotalRegisters(); i++) {
-                DvmValue p = src.getLocal(i);
-                DvmValue q = distFrame.getLocal(i);
+                DvmValue p = src.getReg(i);
+                DvmValue q = distFrame.getReg(i);
                 if (p != null) {
                     if (q == null) {
                         q = new DvmValue();
-                        distFrame.setLocal(i, q);
+                        distFrame.setReg(i, q);
                     }
                     relate(p, q);
                 }
@@ -396,14 +505,25 @@ public class Dex2IRConverter {
         if (!target.isStatic) {// not static
             Local thiz = newLocal();
             emit(Stmts.nIdentity(thiz, Exprs.nThisRef(target.owner)));
-            first.set(x - 1, new DvmValue(thiz));
+            first.setReg(x - 1, new DvmValue(thiz));
         }
         for (int i = 0; i < target.args.length; i++) {
             Local p = newLocal();
             emit(Stmts.nIdentity(p, Exprs.nParameterRef(target.args[i], i)));
-            first.set(x, new DvmValue(p));
+            first.setReg(x, new DvmValue(p));
             x += sizeofType(target.args[i]);
         }
+
+        if (initAllToZero) {
+            for (int i = 0; i < first.getTotalRegisters(); i++) {
+                if (first.getReg(i) == null) {
+                    Local p = newLocal();
+                    emit(nAssign(p, nInt(0)));
+                    first.setReg(i, new DvmValue(p));
+                }
+            }
+        }
+
         return first;
     }
 
@@ -531,28 +651,28 @@ public class Dex2IRConverter {
 
                     case IF_EQZ:
                         emit(nIf(Exprs
-                                .nEq(local, nInt(0), TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
+                                .nEq(local, nInt(0), TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_GEZ:
-                        emit(nIf(Exprs.nGe(local, nInt(0), "I"), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs.nGe(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_GTZ:
-                        emit(nIf(Exprs.nGt(local, nInt(0), "I"), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs.nGt(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_LEZ:
-                        emit(nIf(Exprs.nLe(local, nInt(0), "I"), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs.nLe(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_LTZ:
-                        emit(nIf(Exprs.nLt(local, nInt(0), "I"), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs.nLt(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_NEZ:
                         emit(nIf(Exprs
-                                .nNe(local, nInt(0), TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
+                                .nNe(local, nInt(0), TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case PACKED_SWITCH:
@@ -560,7 +680,7 @@ public class Dex2IRConverter {
                         DexLabel[] labels = ((BaseSwitchStmtNode) insn).labels;
                         LabelStmt[] lss = new LabelStmt[labels.length];
                         for (int i = 0; i < labels.length; i++) {
-                            lss[i] = toLabelStmt(labels[i]);
+                            lss[i] = getLabel(labels[i]);
                         }
                         LabelStmt d = new LabelStmt();
                         if (insn.op == Op.PACKED_SWITCH) {
@@ -650,7 +770,9 @@ public class Dex2IRConverter {
 
                     case USHR_INT_LIT8:
                         return b(nUshr(local, nInt(((Stmt2R1NNode) insn).content), "I"));
-
+                    case FILL_ARRAY_DATA:
+                        emit(nFillArrayData(local, nArrayValue(((FillArrayDataStmtNode) insn).array)));
+                        return null;
                 }
                 throw new RuntimeException();
             }
@@ -798,28 +920,28 @@ public class Dex2IRConverter {
 
                     case IF_EQ:
                         emit(nIf(Exprs
-                                .nEq(local1, local2, TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
+                                .nEq(local1, local2, TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_GE:
-                        emit(nIf(Exprs.nGe(local1, local2, "I"), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs.nGe(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_GT:
-                        emit(nIf(Exprs.nGt(local1, local2, "I"), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs.nGt(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_LE:
-                        emit(nIf(Exprs.nLe(local1, local2, "I"), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs.nLe(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_LT:
-                        emit(nIf(Exprs.nLt(local1, local2, "I"), toLabelStmt(((JumpStmtNode) insn).label)));
+                        emit(nIf(Exprs.nLt(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IF_NE:
                         emit(nIf(Exprs
-                                .nNe(local1, local2, TypeClass.ZIL.name), toLabelStmt(((JumpStmtNode) insn).label)));
+                                .nNe(local1, local2, TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
                         return null;
 
                     case IPUT:
@@ -830,7 +952,7 @@ public class Dex2IRConverter {
                     case IPUT_SHORT:
                     case IPUT_WIDE:
                         Field field = ((FieldStmtNode) insn).field;
-                        emit(nAssign(nField(local2, field.getOwner(), field.getName(), field.getType()), local1));
+                        emit(nAssign(nField(local1, field.getOwner(), field.getName(), field.getType()), local2));
                         return null;
 
                     case ADD_DOUBLE_2ADDR:
@@ -939,30 +1061,30 @@ public class Dex2IRConverter {
                     emitNotFindOperand(insn);
                     return b(nInt(0));
                 }
-                Local local1 = getLocal(value1);
-                Local local2 = getLocal(value2);
-                Local local3 = getLocal(value3);
+                Local localArray = getLocal(value1);
+                Local localIndex = getLocal(value2);
+                Local localValue = getLocal(value3);
                 switch (insn.op) {
                     case APUT:
-                        emit(nAssign(nArray(local2, local3, TypeClass.IF.name), local1));
+                        emit(nAssign(nArray(localArray, localIndex, TypeClass.IF.name), localValue));
                         break;
                     case APUT_BOOLEAN:
-                        emit(nAssign(nArray(local2, local3, "Z"), local1));
+                        emit(nAssign(nArray(localArray, localIndex, "Z"), localValue));
                         break;
                     case APUT_BYTE:
-                        emit(nAssign(nArray(local2, local3, "B"), local1));
+                        emit(nAssign(nArray(localArray, localIndex, "B"), localValue));
                         break;
                     case APUT_CHAR:
-                        emit(nAssign(nArray(local2, local3, "C"), local1));
+                        emit(nAssign(nArray(localArray, localIndex, "C"), localValue));
                         break;
                     case APUT_OBJECT:
-                        emit(nAssign(nArray(local2, local3, "L"), local1));
+                        emit(nAssign(nArray(localArray, localIndex, "L"), localValue));
                         break;
                     case APUT_SHORT:
-                        emit(nAssign(nArray(local2, local3, "S"), local1));
+                        emit(nAssign(nArray(localArray, localIndex, "S"), localValue));
                         break;
                     case APUT_WIDE:
-                        emit(nAssign(nArray(local2, local3, TypeClass.JD.name), local1));
+                        emit(nAssign(nArray(localArray, localIndex, TypeClass.JD.name), localValue));
                         break;
                 }
                 return null;
@@ -1074,10 +1196,6 @@ public class Dex2IRConverter {
         };
     }
 
-    private LabelStmt toLabelStmt(DexLabel label) {
-        return getLabel(label);
-    }
-
     private LabelStmt[] getLabels(DexLabel[] handler) {
         LabelStmt[] ts = new LabelStmt[handler.length];
         for (int i = 0; i < handler.length; i++) {
@@ -1096,10 +1214,13 @@ public class Dex2IRConverter {
     }
 
     private void initParentCount(int[] parentCount) {
+        parentCount[0] = 1; // first stmt always have one parent
         for (DexStmtNode p : insnList) {
             Op op = p.op;
             if (op == null) {
-                parentCount[p.__index + 1]++;
+                if (p.__index < parentCount.length - 1) { // not the last label
+                    parentCount[p.__index + 1]++;
+                }
             } else {
                 if (op.canBranch()) {
                     parentCount[indexOf(((JumpStmtNode) p).label)]++;
@@ -1117,7 +1238,7 @@ public class Dex2IRConverter {
         }
     }
 
-    private int indexOf(DexLabel label) {
+    int indexOf(DexLabel label) {
         DexLabelStmtNode dexLabelStmtNode = labelMap.get(label);
         return dexLabelStmtNode.__index;
     }

@@ -2,6 +2,7 @@ package com.googlecode.d2j.dex;
 
 import java.util.*;
 
+import com.googlecode.d2j.converter.Dex2IRConverter;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.InnerClassNode;
 
@@ -71,12 +72,10 @@ public class Dex2Asm {
 
     protected static final CleanLabel T_cleanLabel = new CleanLabel();
     protected static final EndRemover T_endRemove = new EndRemover();
-    protected static final ExceptionHandlerCurrectTransformer T_exceptionFix = new ExceptionHandlerCurrectTransformer();
     protected static final Ir2JRegAssignTransformer T_ir2jRegAssign = new Ir2JRegAssignTransformer();
     protected static final NewTransformer T_new = new NewTransformer();
     protected static final RemoveConstantFromSSA T_removeConst = new RemoveConstantFromSSA();
     protected static final RemoveLocalFromSSA T_removeLocal = new RemoveLocalFromSSA();
-    protected static final SSATransformer T_ssa = new SSATransformer();
     protected static final ExceptionHandlerTrim T_trimEx = new ExceptionHandlerTrim();
     protected static final TypeTransformer T_type = new TypeTransformer();
     // protected static final TopologicalSort T_topologicalSort = new TopologicalSort();
@@ -535,13 +534,8 @@ public class Dex2Asm {
     }
 
     public IrMethod dex2ir(DexMethodNode methodNode) {
-
-        IrMethod irMethod;
-        Dex2IrAdapter dex2IrAdapter = new Dex2IrAdapter(0 != (methodNode.access & DexConstants.ACC_STATIC),
-                methodNode.method);
-        irMethod = dex2IrAdapter.convert(methodNode.codeNode);
-
-        return irMethod;
+        return new Dex2IRConverter()
+                .convert(0 != (methodNode.access & DexConstants.ACC_STATIC), methodNode.method, methodNode.codeNode);
     }
 
     protected static Object findAnnotationAttribute(DexAnnotationNode ann, String name) {
@@ -568,11 +562,7 @@ public class Dex2Asm {
     }
 
     public void optimize(IrMethod irMethod) {
-        T_exceptionFix.transform(irMethod);
-        T_endRemove.transform(irMethod);
         T_cleanLabel.transform(irMethod);
-        // T_topologicalSort.transform(irMethod);
-        T_ssa.transform(irMethod);
         T_deadCode.transform(irMethod);
         T_removeLocal.transform(irMethod);
         T_removeConst.transform(irMethod);

@@ -130,13 +130,11 @@ public class Dex2jar {
 
             @Override
             public void optimize(IrMethod irMethod) {
-                T_exceptionFix.transform(irMethod);
                 T_endRemove.transform(irMethod);
                 T_cleanLabel.transform(irMethod);
                 if (0 != (v3Config & V3.TOPOLOGICAL_SORT)) {
                     // T_topologicalSort.transform(irMethod);
                 }
-                T_ssa.transform(irMethod);
                 T_removeLocal.transform(irMethod);
                 T_removeConst.transform(irMethod);
                 T_zero.transform(irMethod);
