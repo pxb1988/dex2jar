@@ -18,7 +18,7 @@ import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexFileVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
 
-@BaseCmd.Syntax(cmd = "d2j-dex-weaver", syntax = "[options] dex", desc = "replace invoke in dex", onlineHelp = "https://code.google.com/p/dex2jar/wiki/DexWeaver")
+@BaseCmd.Syntax(cmd = "d2j-dex-weaver", syntax = "[options] dex", desc = "replace invoke in dex", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/DexWeaver")
 public class DexWeaverCmd extends BaseCmd {
     @Opt(opt = "o", longOpt = "output", description = "output .dex file", argName = "out-dex-file")
     private Path output;

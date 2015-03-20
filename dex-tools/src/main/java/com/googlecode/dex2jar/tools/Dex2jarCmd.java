@@ -112,8 +112,7 @@ public class Dex2jarCmd extends BaseCmd {
                     Path errorFile = exceptionFile == null ? currentDir.resolve(baseName + "-error.zip")
                             : exceptionFile;
                     System.err.println("Detail Error Information in File " + errorFile);
-                    System.err
-                            .println("Please report this file to http://code.google.com/p/dex2jar/issues/entry if possible.");
+                    System.err.println(BaksmaliBaseDexExceptionHandler.REPORT_MESSAGE);
                     handler.dump(errorFile, orginalArgs);
                 }
             }

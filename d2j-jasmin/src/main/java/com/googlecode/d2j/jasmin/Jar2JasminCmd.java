@@ -28,7 +28,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
-@Syntax(cmd = "d2j-jar2jasmin", syntax = "[options] <jar>", desc = "Disassemble .class in jar file to jasmin file", onlineHelp = "https://code.google.com/p/dex2jar/wiki/Jasmin")
+@Syntax(cmd = "d2j-jar2jasmin", syntax = "[options] <jar>", desc = "Disassemble .class in jar file to jasmin file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Jasmin")
 public class Jar2JasminCmd extends BaseCmd {
     @Opt(opt = "d", longOpt = "debug", hasArg = false, description = "disassemble debug info")
     private boolean debugInfo = false;

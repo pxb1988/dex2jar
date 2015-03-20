@@ -7,7 +7,6 @@
     <name>dex2jar</name>
     <version>2.0</version>
     <description>A tool for converting Android .dex format to Java .class format</description>
-    <url>http://code.google.como/p/dex2jar/</url>
 
     <modules>
         <module>dex-reader-api</module>

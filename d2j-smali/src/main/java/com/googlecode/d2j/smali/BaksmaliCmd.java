@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import com.googlecode.dex2jar.tools.BaseCmd;
 import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 
-@Syntax(cmd = "d2j-baksmali", syntax = "[options] <dex>", desc = "disassembles and/or dumps a dex file", onlineHelp = "https://code.google.com/p/dex2jar/wiki/Smali")
+@Syntax(cmd = "d2j-baksmali", syntax = "[options] <dex>", desc = "disassembles and/or dumps a dex file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Smali")
 public class BaksmaliCmd extends BaseCmd {
     @Opt(opt = "b", longOpt = "no-debug-info", hasArg = false, description = "[not impl] don't write out debug info (.local, .param, .line, etc.)")
     private boolean noDebug;

@@ -43,7 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-@Syntax(cmd = "d2j-decrypt-string", syntax = "[options] <jar>", desc = "Decrypt in class file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/DecryptStrings\nhttps://bitbucket.org/pxb1988/dex2jar/wiki/DecryptStrings\nhttps://code.google.com/p/dex2jar/wiki/DecryptStrings")
+@Syntax(cmd = "d2j-decrypt-string", syntax = "[options] <jar>", desc = "Decrypt in class file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/DecryptStrings\nhttps://bitbucket.org/pxb1988/dex2jar/wiki/DecryptStrings")
 public class DecryptStringCmd extends BaseCmd {
     public static void main(String... args) {
         new DecryptStringCmd().doMain(args);

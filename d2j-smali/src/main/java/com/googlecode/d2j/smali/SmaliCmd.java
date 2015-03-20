@@ -9,7 +9,7 @@ import com.googlecode.d2j.visitors.DexFileVisitor;
 import com.googlecode.dex2jar.tools.BaseCmd;
 import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 
-@Syntax(cmd = "d2j-smali", syntax = "[options] [--] [<smali-file>|folder]*", desc = "assembles a set of smali files into a dex file", onlineHelp = "https://code.google.com/p/dex2jar/wiki/Smali")
+@Syntax(cmd = "d2j-smali", syntax = "[options] [--] [<smali-file>|folder]*", desc = "assembles a set of smali files into a dex file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Smali")
 public class SmaliCmd extends BaseCmd {
     @Opt(opt = "x", longOpt = "allow-odex-instructions", hasArg = false, description = "[not impl] allow odex instructions to be compiled into the dex file. Only a few instructions are supported - the ones that can exist in a dead code path and not cause dalvik to reject the class")
     private boolean allowOdexInstructions;
@@ -30,7 +30,7 @@ public class SmaliCmd extends BaseCmd {
     protected void doCommandLine() throws Exception {
 
         if (showVersionThenExits) {
-            System.out.println("smali 1.4.2p (http://code.google.com/p/dex2jar/)");
+            System.out.println("smali 1.4.2p (https://sourceforge.net/p/dex2jar)");
             System.out.println("Copyright (c) 2009-2013 Panxiaobo (pxb1988@gmail.com)");
             System.out.println("Apache license (http://www.apache.org/licenses/LICENSE-2.0)");
             return;

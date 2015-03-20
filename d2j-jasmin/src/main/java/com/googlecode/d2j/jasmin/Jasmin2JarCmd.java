@@ -32,7 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
-@BaseCmd.Syntax(cmd = "d2j-jasmin2jar", syntax = "[options] <jar>", desc = "Assemble .j files to .class file", onlineHelp = "https://code.google.com/p/dex2jar/wiki/Jasmin")
+@BaseCmd.Syntax(cmd = "d2j-jasmin2jar", syntax = "[options] <jar>", desc = "Assemble .j files to .class file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Jasmin")
 public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
     private static int versions[] = { 0, V1_1, V1_2, V1_3, V1_4, V1_5, V1_6, V1_7, 52 // V1_8 ?
             , 53 // V1_9 ?

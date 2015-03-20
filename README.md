@@ -1,11 +1,10 @@
-**Project move to [SourceForge](https://sourceforge.net/p/dex2jar) and [Bitbucket](https://bitbucket.org/pxb1988/dex2jar)**
+**Project move to [SourceForge](https://sourceforge.net/p/dex2jar) and [Bitbucket](https://bitbucket.org/pxb1988/dex2jar) and [Github](https://github.com/pxb1988/dex2jar)**
 
-My googlecode account is banned, and seams it is not possible to recover.
-
-| _ | Home | Wiki | Downloads | Issues |
+| _ | Mirror | Wiki | Downloads | Issues |
 |--:|:-----|:----:|:---------:|:------:|
 | sf | https://sourceforge.net/p/dex2jar | [Wiki](https://sourceforge.net/p/dex2jar/wiki) | [Downloads](https://sourceforge.net/projects/dex2jar/files/) | [Tickets](https://sourceforge.net/p/dex2jar/tickets/) |
-| bb | https://bitbucket.org/pxb1988/dex2jar |[Wiki](https://bitbucket.org/pxb1988/dex2jar/wiki)| [Downloads](https://bitbucket.org/pxb1988/dex2jar/downloads) | |
+| bb | https://bitbucket.org/pxb1988/dex2jar |[Wiki](https://bitbucket.org/pxb1988/dex2jar/wiki)| [Downloads](https://bitbucket.org/pxb1988/dex2jar/downloads) | [Issues](https://bitbucket.org/pxb1988/dex2jar/issues) |
+| gh | https://github.com/pxb1988/dex2jar | | | [Issues](https://github.com/pxb1988/dex2jar/issues) |
 | gc | https://code.google.com/p/dex2jar | [old](http://code.google.com/p/dex2jar/w/list) | [old](http://code.google.com/p/dex2jar/downloads/list) | [old](http://code.google.com/p/dex2jar/issues/list)|
 
 
@@ -24,7 +23,7 @@ Tools to work with android .dex and java .class files
 ## Need help ?
 send email to dex2jar@googlegroups.com 
 
-or post at https://sourceforge.net/p/dex2jar/tickets/
+or post on issue trackers list above.
 
 ## License
 [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)

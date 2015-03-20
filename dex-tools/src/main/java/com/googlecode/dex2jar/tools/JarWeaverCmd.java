@@ -8,7 +8,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@BaseCmd.Syntax(cmd = "d2j-jar-weaver", syntax = "[options] jar", desc = "replace invoke in jar", onlineHelp = "https://code.google.com/p/dex2jar/wiki/JarWeaver")
+@BaseCmd.Syntax(cmd = "d2j-jar-weaver", syntax = "[options] jar", desc = "replace invoke in jar", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/JarWeaver")
 public class JarWeaverCmd extends BaseCmd {
     @Opt(opt = "o", longOpt = "output", description = "output .jar file", argName = "out-jar-file", required = true)
     private Path output;
