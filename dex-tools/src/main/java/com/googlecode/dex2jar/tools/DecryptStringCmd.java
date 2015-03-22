@@ -400,7 +400,7 @@ public class DecryptStringCmd extends BaseCmd {
                     if (c != null) {
                         try {
                             Method jmethod = c.jmethod;
-                            if (ie.args.length != jmethod.getParameterCount()) {
+                            if (ie.args.length != jmethod.getParameterTypes().length) {
                                 throw new RuntimeException();
                             }
                             Object args[] = new Object[ie.args.length];
