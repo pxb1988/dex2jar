@@ -4,8 +4,13 @@ import com.googlecode.dex2jar.tools.BaseCmd;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.RemappingClassAdapter;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LocalVariableNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 
 import java.io.*;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,7 +71,7 @@ import java.util.jar.Manifest;
  *     }
  * </pre>
  * 
- * 3. TODO, Replace Methods Implementations
+ * 3. Replace Methods Implementations
  * 
  * <pre>
  * public int test() {
@@ -87,11 +92,12 @@ import java.util.jar.Manifest;
  * </pre>
  */
 public class InvocationWeaver implements Opcodes {
-    private static final String INVOCATION_INTERFACE = "com/googlecode/d2j/tools/jar/MethodInvocation";
-    private static final String DEFAULT_RET_TYPE = "Ld/$$$/j;";
+    private String invocationInterfaceDesc = "com/googlecode/d2j/tools/jar/MethodInvocation";
+    private String invocationTypePrefix = "d2j/gen/MI_";
+
+    private static final String DEFAULT_RET_TYPE = "L888;";
     private static final String DEFAULT_DESC = "(L;)" + DEFAULT_RET_TYPE;
     private static final Type OBJECT_TYPE = Type.getType(Object.class);
-    private static final String BASE_INVOCATION_TYPE_FMT = "d2j/gen/MI_%03d";
     List<Callback> callbacks = new ArrayList<Callback>();
     int currentInvocationIdx = 0;
     private MtdInfo key = new MtdInfo();
@@ -109,6 +115,7 @@ public class InvocationWeaver implements Opcodes {
     private Set<String> ignores = new HashSet<String>();
     private Map<String, String> clzDescMap = new HashMap<String, String>();
     private Map<MtdInfo, MtdInfo> mtdMap = new HashMap<MtdInfo, MtdInfo>();
+    private Map<MtdInfo, MtdInfo> defMap = new HashMap<MtdInfo, MtdInfo>();
 
     static private void box(Type arg, MethodVisitor mv) {
         switch (arg.getSort()) {
@@ -195,12 +202,136 @@ public class InvocationWeaver implements Opcodes {
         }
     }
 
-    private byte[] wave0(byte[] data) throws IOException {
+    public byte[] wave0(byte[] data) throws IOException {
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        new ClassReader(data).accept(new RemappingClassAdapter(cw, remapper) {
+        wave0(data, cw);
+        return cw.toByteArray();
+    }
+
+    public void wave0(byte[] data, final ClassVisitor cv) throws IOException {
+        new ClassReader(data).accept(wrapper(cv), ClassReader.EXPAND_FRAMES);
+    }
+
+    public ClassVisitor wrapper(final ClassVisitor cv) {
+        return new RemappingClassAdapter(cv, remapper) {
             Map<MtdInfo, MtdInfo> toCreate = new HashMap<MtdInfo, MtdInfo>();
             String clzName;
 
+            private MtdInfo newMethodA(int opcode, MtdInfo t, MtdInfo mapTo) {
+                MtdInfo n = toCreate.get(t);
+                if (n != null) {
+                    return n;
+                }
+                n = new MtdInfo();
+                n.owner = t.owner;
+                n.name = t.name + "$$$_A_";
+                boolean hasThis = opcode != INVOKESTATIC;
+
+                if (hasThis) {
+                    Type[] args = Type.getArgumentTypes(t.desc);
+                    Type ret = Type.getReturnType(t.desc);
+                    List<Type> ts = new ArrayList<>(args.length+1);
+                    ts.add(Type.getObjectType(t.owner));
+                    ts.addAll(Arrays.asList(args));
+                    n.desc = Type.getMethodDescriptor(ret, ts.toArray(new Type[ts.size()]));
+                }else {
+                    n.desc=t.desc;
+                }
+
+                toCreate.put(t, n);
+                MethodVisitor mv = cv.visitMethod(ACC_SYNTHETIC | ACC_PRIVATE | ACC_STATIC, n.name, n.desc, null, null);
+                mv.visitCode();
+                genMethodACode(opcode, t, mapTo, mv, t);
+
+                return n;
+            }
+            private void genMethodACode(int opcode, MtdInfo t, MtdInfo mapTo, MethodVisitor mv, MtdInfo src) {
+                boolean hasThis = opcode != INVOKESTATIC;
+                Type[] args = Type.getArgumentTypes(t.desc);
+                Type ret = Type.getReturnType(t.desc);
+
+
+                final int start;
+                mv.visitTypeInsn(NEW, getCurrentInvocationName());
+                mv.visitInsn(DUP);
+                if (hasThis) {
+                    mv.visitVarInsn(ALOAD, 0);
+                    start = 1;
+                } else {
+                    mv.visitInsn(ACONST_NULL);
+                    start = 0;
+                }
+                if(args.length == 0){
+                    mv.visitInsn(ACONST_NULL);
+                } else {
+                    mv.visitLdcInsn(args.length);
+                    mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+                    for (int i = 0; i < args.length; i++) {
+                        mv.visitInsn(DUP);
+                        mv.visitLdcInsn(i);
+                        mv.visitVarInsn(args[i].getOpcode(ILOAD), i + start);
+                        box(args[i], mv);
+                        mv.visitInsn(AASTORE);
+                    }
+                }
+                int nextIdx = callbacks.size();
+                mv.visitLdcInsn(nextIdx);
+                mv.visitMethodInsn(INVOKESPECIAL, getCurrentInvocationName(), "<init>",
+                        "(Ljava/lang/Object;[Ljava/lang/Object;I)V");
+
+                mv.visitMethodInsn(INVOKESTATIC, mapTo.owner, mapTo.name, mapTo.desc);
+                unBox(ret, Type.getReturnType(mapTo.desc), mv);
+                mv.visitInsn(ret.getOpcode(IRETURN));
+                mv.visitMaxs(-1, -1);
+                mv.visitEnd();
+
+                Callback cb = new Callback();
+                cb.idx = nextIdx;
+                cb.callback = newMethodCallback(opcode, t);
+                cb.target = src;
+                cb.isSpecial = opcode == INVOKESPECIAL;
+                cb.isStatic = opcode == INVOKESTATIC;
+                callbacks.add(cb);
+            }
+
+            private MtdInfo newMethodCallback(int opcode, MtdInfo t) {
+                MtdInfo n = new MtdInfo();
+                n.owner = className;
+                n.name = t.name + "$$$$_callback";
+                if (opcode == INVOKESPECIAL || opcode == INVOKESTATIC) {
+                    n.desc = "([Ljava/lang/Object;)Ljava/lang/Object;";
+                } else {
+                    n.desc = "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;";
+                }
+                MethodVisitor mv = cv.visitMethod(opcode == INVOKESPECIAL ? ACC_PUBLIC : ACC_PUBLIC
+                        | ACC_STATIC, n.name, n.desc, null, null);
+                mv.visitCode();
+                int start;
+                if (opcode != INVOKESTATIC) {
+                    mv.visitVarInsn(ALOAD, 0);
+                    if (opcode != INVOKESPECIAL) {
+                        mv.visitTypeInsn(CHECKCAST, t.owner);
+                    }
+                    start = 1;
+                } else {
+                    start = 0;
+                }
+                Type[] args = Type.getArgumentTypes(t.desc);
+
+                for (int i = 0; i < args.length; i++) {
+                    mv.visitVarInsn(ALOAD, start);
+                    mv.visitLdcInsn(i);
+                    mv.visitInsn(AALOAD);
+                    unBox(args[i], OBJECT_TYPE, mv);
+                }
+                mv.visitMethodInsn(opcode, t.owner, t.name, t.desc);
+                Type ret = Type.getReturnType(t.desc);
+                box(ret, mv);
+                mv.visitInsn(ARETURN);
+                mv.visitMaxs(-1, -1);
+                mv.visitEnd();
+                return n;
+            }
             @Override
             public void visit(int version, int access, String name, String signature, String superName,
                     String[] interfaces) {
@@ -209,185 +340,155 @@ public class InvocationWeaver implements Opcodes {
             }
 
             public MethodVisitor visitMethod(int access, final String name, String desc, String signature,
-                    String[] exceptions) {
-                return new MethodVisitor(Opcodes.ASM4, super.visitMethod(access, name, desc, signature, exceptions)) {
-                    @Override
-                    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-                        MtdInfo mapTo = findTargetMethod(owner, name, desc);
-                        if (mapTo != null) {
-                            boolean isStatic = opcode == INVOKESTATIC;
-                            Type orgRet = Type.getReturnType(desc);
-                            Type orgArgs[] = Type.getArgumentTypes(desc);
-                            Type nRet = Type.getReturnType(mapTo.desc);
-                            Type nArgs[] = Type.getArgumentTypes(mapTo.desc);
-                            if (orgRet.getSort() != Type.VOID && nRet.getSort() == Type.VOID) {
-                                throw new RuntimeException("can't cast " + nRet + " to " + orgRet);
-                            }
+                                             String[] exceptions) {
 
-                            if (nArgs.length == 1 && nArgs[0].getInternalName().equals(INVOCATION_INTERFACE)) {
-                                MtdInfo t = new MtdInfo();
-                                t.owner = owner;
-                                t.name = name;
-                                t.desc = desc;
-                                MtdInfo n = newMethodA(opcode, t, mapTo);
-                                super.visitMethodInsn(INVOKESTATIC, clzName, n.name, n.desc);
-                            } else { // simple replace
-                                // checking for invalid replace
-                                if (isStatic) {
-                                    if (!Arrays.deepEquals(orgArgs, nArgs)) {
-                                        throw new RuntimeException("arguments not equal: " + owner + "." + name + desc
-                                                + " <> " + mapTo.owner + "." + mapTo.name + mapTo.desc);
-                                    }
-                                } else {
-                                    if (nArgs.length != orgArgs.length + 1) {
-                                        throw new RuntimeException("arguments not equal: " + owner + "." + name + desc
-                                                + " <> " + mapTo.owner + "." + mapTo.name + mapTo.desc);
-                                    }
-                                    if (orgArgs.length > 0) {
-                                        for (int i = 0; i < orgArgs.length; i++) {
-                                            if (!orgArgs[i].equals(nArgs[i + 1])) {
-                                                throw new RuntimeException("arguments not equal: " + owner + "." + name
-                                                        + desc + " <> " + mapTo.owner + "." + mapTo.name + mapTo.desc);
-                                            }
+                final MethodVisitor superMv = superMethodVisitor(access, name, desc, signature, exceptions);
+                final MtdInfo mapTo = findDefinedTargetMethod(clzName, name, desc);
+                if (mapTo != null) {
+                    final MtdInfo t = new MtdInfo();
+                    t.owner = clzName;
+                    t.name = name + "_$$A_";
+                    t.desc = desc;
+                    final MtdInfo src = new MtdInfo();
+                    src.owner = clzName;
+                    src.name = name;
+                    src.desc = desc;
+                    return new MethodNode(Opcodes.ASM4, access, name, desc, signature, exceptions) {
+                        @Override
+                        public void visitEnd() {
+
+                            InsnList instructions = this.instructions;
+                            List<TryCatchBlockNode> tryCatchBlocks = this.tryCatchBlocks;
+                            List<LocalVariableNode> localVariables = this.localVariables;
+
+                            this.instructions = new InsnList();
+                            this.tryCatchBlocks = new ArrayList<>();
+                            this.localVariables = new ArrayList<>();
+                            this.maxLocals = -1;
+                            this.maxStack = -1;
+                            accept(superMv);
+                            int opcode;
+                            if (Modifier.isStatic(access)) {
+                                opcode = Opcodes.INVOKESTATIC;
+                            } else if (Modifier.isPrivate(access)) {
+                                opcode = Opcodes.INVOKESPECIAL;
+                            } else {
+                                opcode = Opcodes.INVOKEVIRTUAL;
+                            }
+                            genMethodACode(opcode, t, mapTo, superMv, src);
+
+                            ReplaceMethodVisitor rmv = new ReplaceMethodVisitor(superMethodVisitor(access, t.name, desc, null, null));
+                            rmv.visitCode();
+                            int n, i;
+                            n = tryCatchBlocks == null ? 0 : tryCatchBlocks.size();
+
+                            for (i = 0; i < n; ++i) {
+                                tryCatchBlocks.get(i).accept(rmv);
+                            }
+                            instructions.accept(rmv);
+                            n = localVariables == null ? 0 : localVariables.size();
+
+                            for (i = 0; i < n; ++i) {
+                                localVariables.get(i).accept(rmv);
+                            }
+                            rmv.visitMaxs(-1, -1);
+                            rmv.visitEnd();
+
+                        }
+                    };
+                } else {
+                    return new ReplaceMethodVisitor(superMv);
+                }
+            }
+
+            private MethodVisitor superMethodVisitor(int access, String name, String desc, String signature, String[] exceptions) {
+                return super.visitMethod(access, name, desc, signature, exceptions);
+            }
+
+            class ReplaceMethodVisitor extends MethodVisitor {
+                public ReplaceMethodVisitor(MethodVisitor mv) {
+                    super(Opcodes.ASM4, mv);
+                }
+
+                @Override
+                public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+                    MtdInfo mapTo = findTargetMethod(owner, name, desc);
+                    if (mapTo != null) {
+                        boolean isStatic = opcode == INVOKESTATIC;
+                        Type orgRet = Type.getReturnType(desc);
+                        Type orgArgs[] = Type.getArgumentTypes(desc);
+                        Type nRet = Type.getReturnType(mapTo.desc);
+                        Type nArgs[] = Type.getArgumentTypes(mapTo.desc);
+                        if (orgRet.getSort() != Type.VOID && nRet.getSort() == Type.VOID) {
+                            throw new RuntimeException("can't cast " + nRet + " to " + orgRet);
+                        }
+
+                        if (nArgs.length == 1 && nArgs[0].getDescriptor().equals(invocationInterfaceDesc)) {
+                            MtdInfo t = new MtdInfo();
+                            t.owner = owner;
+                            t.name = name;
+                            t.desc = desc;
+                            MtdInfo n = newMethodA(opcode, t, mapTo);
+                            super.visitMethodInsn(INVOKESTATIC, clzName, n.name, n.desc);
+                        } else { // simple replace
+                            // checking for invalid replace
+                            if (isStatic) {
+                                if (!Arrays.deepEquals(orgArgs, nArgs)) {
+                                    throw new RuntimeException("arguments not equal: " + owner + "." + name + desc
+                                            + " <> " + mapTo.owner + "." + mapTo.name + mapTo.desc);
+                                }
+                            } else {
+                                if (nArgs.length != orgArgs.length + 1) {
+                                    throw new RuntimeException("arguments not equal: " + owner + "." + name + desc
+                                            + " <> " + mapTo.owner + "." + mapTo.name + mapTo.desc);
+                                }
+                                if (orgArgs.length > 0) {
+                                    for (int i = 0; i < orgArgs.length; i++) {
+                                        if (!orgArgs[i].equals(nArgs[i + 1])) {
+                                            throw new RuntimeException("arguments not equal: " + owner + "." + name
+                                                    + desc + " <> " + mapTo.owner + "." + mapTo.name + mapTo.desc);
                                         }
                                     }
                                 }
-                                // replace it!
-                                super.visitMethodInsn(INVOKESTATIC, mapTo.owner, mapTo.name, mapTo.desc);
-                                unBox(orgRet, nRet, this.mv);
                             }
-
-                        } else {
-                            super.visitMethodInsn(opcode, owner, name, desc);
+                            // replace it!
+                            super.visitMethodInsn(INVOKESTATIC, mapTo.owner, mapTo.name, mapTo.desc);
+                            unBox(orgRet, nRet, this.mv);
                         }
+
+                    } else {
+                        super.visitMethodInsn(opcode, owner, name, desc);
                     }
-
-                    private MtdInfo newMethodA(int opcode, MtdInfo t, MtdInfo mapTo) {
-                        MtdInfo n = toCreate.get(t);
-                        if (n != null) {
-                            return n;
-                        }
-                        n = new MtdInfo();
-                        n.owner = t.owner;
-                        n.name = t.name + "$$$_A_";
-
-                        String nDesc = t.desc;
-                        boolean hasThis = opcode != INVOKESTATIC;
-                        Type[] args = Type.getArgumentTypes(t.desc);
-                        Type ret = Type.getReturnType(t.desc);
-                        if (hasThis) {
-                            List<Type> ts = new ArrayList<>(5);
-                            ts.add(Type.getObjectType(t.owner));
-                            ts.addAll(Arrays.asList(args));
-                            nDesc = Type.getMethodDescriptor(ret, ts.toArray(new Type[ts.size()]));
-                        }
-                        n.desc = nDesc;
-                        toCreate.put(t, n);
-                        MethodVisitor mv = cw.visitMethod(ACC_SYNTHETIC | ACC_PRIVATE | ACC_STATIC, n.name, n.desc,
-                                null, null);
-                        mv.visitCode();
-                        final int start;
-                        mv.visitTypeInsn(NEW, getCurrentInvocationName());
-                        mv.visitInsn(DUP);
-                        if (hasThis) {
-                            mv.visitVarInsn(ALOAD, 0);
-                            start = 1;
-                        } else {
-                            mv.visitInsn(ACONST_NULL);
-                            start = 0;
-                        }
-                        mv.visitLdcInsn(args.length);
-                        mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-                        for (int i = 0; i < args.length; i++) {
-                            mv.visitInsn(DUP);
-                            mv.visitLdcInsn(i);
-                            mv.visitVarInsn(args[i].getOpcode(ILOAD), i + start);
-                            box(args[i], mv);
-                            mv.visitInsn(AASTORE);
-                        }
-                        int nextIdx = callbacks.size();
-                        mv.visitLdcInsn(nextIdx);
-                        mv.visitMethodInsn(INVOKESPECIAL, getCurrentInvocationName(), "<init>",
-                                "(Ljava/lang/Object;[Ljava/lang/Object;I)V");
-
-                        mv.visitMethodInsn(INVOKESTATIC, mapTo.owner, mapTo.name, mapTo.desc);
-                        unBox(ret, Type.getReturnType(mapTo.desc), mv);
-                        mv.visitInsn(ret.getOpcode(IRETURN));
-                        mv.visitMaxs(-1, -1);
-                        mv.visitEnd();
-
-                        Callback cb = new Callback();
-                        cb.idx = nextIdx;
-                        cb.callback = newMethodCallback(opcode, t);
-                        cb.target = t;
-                        cb.isSpecial = opcode == INVOKESPECIAL;
-                        cb.isStatic = opcode == INVOKESTATIC;
-                        callbacks.add(cb);
-                        return n;
-                    }
-
-                    private MtdInfo newMethodCallback(int opcode, MtdInfo t) {
-                        MtdInfo n = new MtdInfo();
-                        n.owner = className;
-                        n.name = t.name + "$$$$_callback";
-                        if (opcode == INVOKESPECIAL || opcode == INVOKESTATIC) {
-                            n.desc = "([Ljava/lang/Object;)Ljava/lang/Object;";
-                        } else {
-                            n.desc = "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;";
-                        }
-                        MethodVisitor mv = cw.visitMethod(opcode == INVOKESPECIAL ? ACC_PUBLIC : ACC_PUBLIC
-                                | ACC_STATIC, n.name, n.desc, null, null);
-                        mv.visitCode();
-                        int start;
-                        if (opcode != INVOKESTATIC) {
-                            mv.visitVarInsn(ALOAD, 0);
-                            if (opcode != INVOKESPECIAL) {
-                                mv.visitTypeInsn(CHECKCAST, t.owner);
-                            }
-                            start = 1;
-                        } else {
-                            start = 0;
-                        }
-                        Type[] args = Type.getArgumentTypes(t.desc);
-
-                        for (int i = 0; i < args.length; i++) {
-                            mv.visitVarInsn(ALOAD, start);
-                            mv.visitLdcInsn(i);
-                            mv.visitInsn(AALOAD);
-                            unBox(args[i], OBJECT_TYPE, mv);
-                        }
-                        mv.visitMethodInsn(opcode, t.owner, t.name, t.desc);
-                        Type ret = Type.getReturnType(t.desc);
-                        box(ret, mv);
-                        mv.visitInsn(ARETURN);
-                        mv.visitMaxs(-1, -1);
-                        mv.visitEnd();
-                        return n;
-                    }
-                };
+                }
             }
-        }, ClassReader.EXPAND_FRAMES);
-        return cw.toByteArray();
+
+        };
     }
 
+    private MtdInfo findDefinedTargetMethod(String owner, String name, String desc) {
+        return findTargetMethod0(defMap, owner, name, desc);
+    }
     private MtdInfo findTargetMethod(String owner, String name, String desc) {
+        return findTargetMethod0(mtdMap,owner,name,desc);
+    }
+    private MtdInfo findTargetMethod0(Map<MtdInfo,MtdInfo> map, String owner, String name, String desc) {
         key.name = name;
         key.owner = owner;
         key.desc = desc;
-        MtdInfo v = mtdMap.get(key);
+        MtdInfo v = map.get(key);
         if (v != null) {
             return v;
         }
 
         // try with default ret
         key.desc = Type.getMethodDescriptor(Type.getType(DEFAULT_RET_TYPE), Type.getArgumentTypes(desc));
-        v = mtdMap.get(key);
+        v = map.get(key);
         if (v != null) {
             return v;
         }
         // try with default desc
         key.desc = DEFAULT_DESC;
-        v = mtdMap.get(key);
+        v = map.get(key);
         return v;
     }
 
@@ -434,8 +535,9 @@ public class InvocationWeaver implements Opcodes {
         });
 
         if (callbacks.size() > 0) {
-            String type = getCurrentInvocationName();
-            byte[] data = buildInvocationClz(type);
+            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            String type = buildInvocationClz(cw);
+            byte[] data= cw.toByteArray();
             Path target = to.resolve(type + ".class");
             BaseCmd.createParentDirectories(target);
             Files.write(target, data);
@@ -444,9 +546,10 @@ public class InvocationWeaver implements Opcodes {
 
     }
 
-    private byte[] buildInvocationClz(String typeName) {
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        cw.visit(V1_6, ACC_PUBLIC, typeName, null, "java/lang/Object", new String[] { INVOCATION_INTERFACE });
+    public String buildInvocationClz(ClassVisitor cw) {
+        String typeName = getCurrentInvocationName();
+        cw.visit(V1_6, ACC_PUBLIC, typeName, null, "java/lang/Object", new String[]{
+                toInternal(invocationInterfaceDesc)});
         cw.visitField(ACC_PRIVATE | ACC_FINAL, "thiz", "Ljava/lang/Object;", null, null).visitEnd();
         cw.visitField(ACC_PRIVATE | ACC_FINAL, "args", "[Ljava/lang/Object;", null, null).visitEnd();
         cw.visitField(ACC_PRIVATE | ACC_FINAL, "idx", "I", null, null).visitEnd();
@@ -470,88 +573,24 @@ public class InvocationWeaver implements Opcodes {
             mv.visitEnd();
         }
         {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "getMethodOwner", "()Ljava/lang/String;", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, typeName, "idx", "I");
-            Label def = new Label();
-            Label[] labels = new Label[callbacks.size()];
-            for (int i = 0; i < labels.length; i++) {
-                labels[i] = new Label();
-            }
-            mv.visitTableSwitchInsn(0, callbacks.size() - 1, def, labels);
-
-            for (int i = 0; i < labels.length; i++) {
-                mv.visitLabel(labels[i]);
-                Callback cb = callbacks.get(i);
-                MtdInfo m = cb.target;
-                mv.visitLdcInsn("L" + m.owner + ";");
-                mv.visitInsn(ARETURN);
-            }
-            mv.visitLabel(def);
-            mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
-            mv.visitInsn(DUP);
-            mv.visitLdcInsn("invalid idx");
-            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V");
-            mv.visitInsn(ATHROW);
-            mv.visitMaxs(-1, -1);
-            mv.visitEnd();
-        }
-        {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "getMethodName", "()Ljava/lang/String;", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, typeName, "idx", "I");
-            Label def = new Label();
-            Label[] labels = new Label[callbacks.size()];
-            for (int i = 0; i < labels.length; i++) {
-                labels[i] = new Label();
-            }
-            mv.visitTableSwitchInsn(0, callbacks.size() - 1, def, labels);
-
-            for (int i = 0; i < labels.length; i++) {
-                mv.visitLabel(labels[i]);
-                Callback cb = callbacks.get(i);
-                MtdInfo m = cb.target;
-                mv.visitLdcInsn(m.name);
-                mv.visitInsn(ARETURN);
-            }
-            mv.visitLabel(def);
-            mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
-            mv.visitInsn(DUP);
-            mv.visitLdcInsn("invalid idx");
-            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V");
-            mv.visitInsn(ATHROW);
-            mv.visitMaxs(-1, -1);
-            mv.visitEnd();
-        }
-        {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "getMethodDesc", "()Ljava/lang/String;", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, typeName, "idx", "I");
-            Label def = new Label();
-            Label[] labels = new Label[callbacks.size()];
-            for (int i = 0; i < labels.length; i++) {
-                labels[i] = new Label();
-            }
-            mv.visitTableSwitchInsn(0, callbacks.size() - 1, def, labels);
-
-            for (int i = 0; i < labels.length; i++) {
-                mv.visitLabel(labels[i]);
-                Callback cb = callbacks.get(i);
-                MtdInfo m = cb.target;
-                mv.visitLdcInsn(m.desc);
-                mv.visitInsn(ARETURN);
-            }
-            mv.visitLabel(def);
-            mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
-            mv.visitInsn(DUP);
-            mv.visitLdcInsn("invalid idx");
-            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V");
-            mv.visitInsn(ATHROW);
-            mv.visitMaxs(-1, -1);
-            mv.visitEnd();
+            genSwitchMethod(cw, typeName, "getMethodOwner", new CB() {
+                @Override
+                public String getKey(MtdInfo mtd) {
+                    return mtd.owner;
+                }
+            });
+            genSwitchMethod(cw, typeName, "getMethodName", new CB() {
+                @Override
+                public String getKey(MtdInfo mtd) {
+                    return mtd.name;
+                }
+            });
+            genSwitchMethod(cw, typeName, "getMethodDesc", new CB() {
+                @Override
+                public String getKey(MtdInfo mtd) {
+                    return mtd.desc;
+                }
+            });
         }
         {
             MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "getArguments", "()[Ljava/lang/Object;", null, null);
@@ -621,8 +660,47 @@ public class InvocationWeaver implements Opcodes {
             mv.visitMaxs(-1, -1);
             mv.visitEnd();
         }
+        return typeName;
+    }
 
-        return cw.toByteArray();
+    interface CB {
+        String getKey(MtdInfo mtd);
+    }
+    private void genSwitchMethod(ClassVisitor cw, String typeName,String methodName, CB callback) {
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, methodName, "()Ljava/lang/String;", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, typeName, "idx", "I");
+        Label def = new Label();
+        Label[] labels = new Label[callbacks.size()];
+
+        Map<String, Label> strMap = new TreeMap<>();
+        for (int i = 0; i < labels.length; i++) {
+            Callback cb = callbacks.get(i);
+            String key = callback.getKey(cb.target);
+            Label label = strMap.get(key);
+            if (label == null) {
+                label = new Label();
+                strMap.put(key, label);
+            }
+            labels[i] = label;
+        }
+
+        mv.visitTableSwitchInsn(0, callbacks.size() - 1, def, labels);
+
+        for (Map.Entry<String,Label> e:strMap.entrySet()) {
+            mv.visitLabel(e.getValue());
+            mv.visitLdcInsn(e.getKey());
+            mv.visitInsn(ARETURN);
+        }
+        mv.visitLabel(def);
+        mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
+        mv.visitInsn(DUP);
+        mv.visitLdcInsn("invalid idx");
+        mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V");
+        mv.visitInsn(ATHROW);
+        mv.visitMaxs(-1, -1);
+        mv.visitEnd();
     }
 
     public InvocationWeaver withConfig(Path is) throws IOException {
@@ -639,19 +717,22 @@ public class InvocationWeaver implements Opcodes {
         }
     }
 
-    public InvocationWeaver withConfig(List<String> lines) throws IOException {
-
+    public InvocationWeaver withConfig(List<String> lines) {
         for (String ln : lines) {
-            if ("".equals(ln) || ln.startsWith("#")) {
-                continue;
-            }
-            switch (ln.charAt(0)) {
+            withConfig(ln);
+        }
+        return this;
+    }
+
+    public void withConfig(String ln) {
+        if ("".equals(ln) || ln.startsWith("#")) {
+            return;
+        }
+        switch (java.lang.Character.toLowerCase(ln.charAt(0))) {
             case 'i':
-            case 'I':
                 ignores.add(ln.substring(2));
                 break;
             case 'c':
-            case 'C':
                 int index = ln.lastIndexOf('=');
                 if (index > 0) {
                     String key = toInternal(ln.substring(2, index));
@@ -660,7 +741,6 @@ public class InvocationWeaver implements Opcodes {
                     ignores.add(value);
                 }
                 break;
-            case 'R':
             case 'r':
                 index = ln.lastIndexOf('=');
                 if (index > 0) {
@@ -680,13 +760,36 @@ public class InvocationWeaver implements Opcodes {
 
                 }
                 break;
-            }
+            case 'd':
+                index = ln.lastIndexOf('=');
+                if (index > 0) {
+                    String key = ln.substring(2, index);
+                    String value = ln.substring(index + 1);
+                    MtdInfo mi = buildMethodInfo(key);
 
+                    index = value.indexOf('.');
+                    MtdInfo mtdValue = new MtdInfo();
+                    mtdValue.owner = toInternal(value.substring(0, index));
+
+                    int index2 = value.indexOf('(', index);
+                    mtdValue.name = value.substring(index + 1, index2);
+                    mtdValue.desc = value.substring(index2);
+
+                    defMap.put(mi, mtdValue);
+                }
+                break;
+
+            case 'o':
+                setInvocationInterfaceDesc(ln.substring(2));
+                break;
         }
-        return this;
     }
 
-    private String toInternal(String key) {
+    public void setInvocationInterfaceDesc(String invocationInterfaceDesc) {
+        this.invocationInterfaceDesc = invocationInterfaceDesc;
+    }
+
+    private static String toInternal(String key) {
         if (key.endsWith(";")) {
             key = key.substring(1, key.length() - 1);
         }
@@ -714,7 +817,7 @@ public class InvocationWeaver implements Opcodes {
     }
 
     public String getCurrentInvocationName() {
-        return String.format(BASE_INVOCATION_TYPE_FMT, currentInvocationIdx);
+        return String.format("%s_%03d", invocationTypePrefix, currentInvocationIdx);
     }
 
     private void nextInvocationName() {
