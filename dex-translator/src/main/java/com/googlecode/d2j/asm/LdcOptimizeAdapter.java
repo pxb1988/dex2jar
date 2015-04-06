@@ -15,6 +15,7 @@
  */
 package com.googlecode.d2j.asm;
 
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -112,6 +113,19 @@ public class LdcOptimizeAdapter extends MethodVisitor implements Opcodes {
         } else {
             super.visitLdcInsn(cst);
         }
+    }
+
+    public static MethodVisitor wrap(MethodVisitor mv) {
+        return mv == null ? null : new LdcOptimizeAdapter(mv);
+    }
+
+    public static ClassVisitor wrap(ClassVisitor cv) {
+        return cv == null ? null : new ClassVisitor(Opcodes.ASM5, cv) {
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+                return wrap(super.visitMethod(access, name, desc, signature, exceptions));
+            }
+        };
     }
 
 }

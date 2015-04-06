@@ -1,7 +1,19 @@
 package com.googlecode.d2j.tools.jar.test;
 
+import com.googlecode.d2j.jasmin.JasminDumper;
+import com.googlecode.d2j.tools.jar.InvocationWeaver;
+import com.googlecode.d2j.tools.jar.MethodInvocation;
+import com.googlecode.dex2jar.tools.BaseCmd;
+import org.junit.Assert;
+import org.junit.Test;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import com.googlecode.d2j.asm.*;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
@@ -9,13 +21,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileSystem;
 import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.googlecode.d2j.tools.jar.InvocationWeaver;
-import com.googlecode.d2j.tools.jar.MethodInvocation;
-import com.googlecode.dex2jar.tools.BaseCmd;
 
 /**
  * public class Res extends ArrayList { public static void main(String... args) { System.out.append("");
@@ -76,6 +81,35 @@ public class WaveTest {
             list = null;
             tmp.delete();
         }
+    }
+
+    @Test
+    public void test2() {
+        ClassNode cn = new ClassNode();
+        cn.name = "A";
+        cn.version = Opcodes.V1_6;
+        MethodVisitor mv = cn.visitMethod(0, "m", "()V", null, null);
+        mv.visitInsn(Opcodes.RETURN);
+        mv.visitMaxs(-1, -1);
+        mv.visitEnd();
+        cn.visitEnd();
+
+
+        new JasminDumper(new PrintWriter(System.out, true)).dump(cn);
+
+
+        InvocationWeaver iw = new InvocationWeaver();
+        iw.setInvocationInterfaceDesc("Lp;");
+        iw.withConfig("d LA;.m()V=LB;.t(Lp;)Ljava/lang/Object;");
+        ClassNode nc = new ClassNode();
+        cn.accept(iw.wrapper(LdcOptimizeAdapter.wrap(nc)));
+
+        new JasminDumper(new PrintWriter(System.out, true)).dump(nc);
+
+        ClassNode nc2 = new ClassNode();
+        iw.buildInvocationClz(LdcOptimizeAdapter.wrap(nc2));
+
+        new JasminDumper(new PrintWriter(System.out, true)).dump(nc2);
     }
 
 }

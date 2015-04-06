@@ -428,10 +428,11 @@ public class JasminDumper implements Opcodes {
                             pw.print("tableswitch ");
                             pw.println(min);
                             for (Label label : labels) {
+                                pw.print("      ");
                                 print(label);
                                 pw.println();
                             }
-                            pw.print("default : ");
+                            pw.print("      default : ");
                             print(dflt);
                             pw.println();
                         }
@@ -468,7 +469,7 @@ public class JasminDumper implements Opcodes {
                 }
                 if (mn.localVariables != null) {
                     for (LocalVariableNode lv : mn.localVariables) {
-                        pw.print(".var ");
+                        pw.print("  .var ");
                         pw.print(lv.index);
                         pw.print(" is '");
                         pw.print(lv.name);
@@ -486,8 +487,8 @@ public class JasminDumper implements Opcodes {
                         pw.println();
                     }
                 }
-                println(".limit locals ", Integer.toString(mn.maxLocals));
-                println(".limit stack ", Integer.toString(mn.maxStack));
+                println("  .limit locals ", Integer.toString(mn.maxLocals));
+                println("  .limit stack ", Integer.toString(mn.maxStack));
             }
             pw.println(".end method");
         }
