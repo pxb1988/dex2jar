@@ -1,115 +1,95 @@
 package com.googlecode.d2j.tools.jar.test;
 
+import com.googlecode.d2j.asm.LdcOptimizeAdapter;
 import com.googlecode.d2j.jasmin.JasminDumper;
+import com.googlecode.d2j.jasmin.Jasmins;
 import com.googlecode.d2j.tools.jar.InvocationWeaver;
-import com.googlecode.d2j.tools.jar.MethodInvocation;
-import com.googlecode.dex2jar.tools.BaseCmd;
+import org.antlr.runtime.RecognitionException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
-import com.googlecode.d2j.asm.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.FileSystem;
-import java.util.List;
+import java.io.StringWriter;
 
-/**
- * public class Res extends ArrayList { public static void main(String... args) { System.out.append("");
- * System.out.println("test"); }
- * 
- * @Override public int size() { return super.size(); }
- * @Override public boolean add(Object o) { return super.add(o); } }
- */
 public class WaveTest {
-    static boolean appendCalled = false;
-    static boolean printlnCalled = false;
-
-    public static Object add(Object thiz, Object obj) throws Throwable {
-        System.out.println("add");
-        return false;
-    }
-
-    public static Object size(MethodInvocation mi) throws Throwable {
-        System.out.println(mi.getMethodName());
-        return -1;
-    }
-
-    public static Object append(MethodInvocation mi) throws Throwable {
-        appendCalled = true;
-        System.out.println(mi.getMethodName());
-        return null;
-    }
-
-    public static Object println(Object thiz, String str) throws Throwable {
-        printlnCalled = true;
-        System.out.println("println");
-        return null;
-    }
-
     @Test
-    public void test() throws ClassNotFoundException, IllegalAccessException, InstantiationException, IOException,
-            NoSuchMethodException, InvocationTargetException, URISyntaxException {
-
-        InvocationWeaver w = new InvocationWeaver().withConfig(WaveTest.class.getResourceAsStream("/wave.config"));
-        File tmp = File.createTempFile("abc", ".jar");
-
-        try (FileSystem fs2 = BaseCmd.createZip(tmp.toPath());
-                FileSystem fs = BaseCmd.openZip(new File(WaveTest.class.getResource("/wave.jar").getPath()).toPath())) {
-            w.wave(fs.getPath("/"), fs2.getPath("/"));
-        }
-        try(URLClassLoader cl = new URLClassLoader(new URL[] { tmp.toURI().toURL() }, WaveTest.class.getClassLoader())) {
-            Class<?> clz = cl.loadClass("com.googlecode.d2j.tools.jar.test.res.Res");
-            List<Object> list = (List<Object>) clz.newInstance();
-            Assert.assertFalse(list.add(""));
-            Assert.assertEquals(-1, list.size());
-
-            Method m = clz.getMethod("main", String[].class);
-            System.out.println(m);
-            m.invoke(null, new Object[]{null});
-            Assert.assertTrue(appendCalled);
-            Assert.assertTrue(printlnCalled);
-
-            list = null;
-            tmp.delete();
-        }
-    }
-
-    @Test
-    public void test2() {
-        ClassNode cn = new ClassNode();
-        cn.name = "A";
-        cn.version = Opcodes.V1_6;
-        MethodVisitor mv = cn.visitMethod(0, "m", "()V", null, null);
-        mv.visitInsn(Opcodes.RETURN);
-        mv.visitMaxs(-1, -1);
-        mv.visitEnd();
-        cn.visitEnd();
-
-
-        new JasminDumper(new PrintWriter(System.out, true)).dump(cn);
-
+    public void testA() throws IOException, RecognitionException {
 
         InvocationWeaver iw = new InvocationWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
         iw.withConfig("d LA;.m()V=LB;.t(Lp;)Ljava/lang/Object;");
-        ClassNode nc = new ClassNode();
-        cn.accept(iw.wrapper(LdcOptimizeAdapter.wrap(nc)));
 
-        new JasminDumper(new PrintWriter(System.out, true)).dump(nc);
+        test0(iw, "a");
+    }
 
-        ClassNode nc2 = new ClassNode();
-        iw.buildInvocationClz(LdcOptimizeAdapter.wrap(nc2));
+    @Test
+    public void testB() throws IOException, RecognitionException {
 
-        new JasminDumper(new PrintWriter(System.out, true)).dump(nc2);
+        InvocationWeaver iw = new InvocationWeaver();
+        iw.setInvocationInterfaceDesc("Lp;");
+        iw.withConfig("r Ljava/util/ArrayList;.size=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.size(Lp;)Ljava/lang/Object;");
+        iw.withConfig("r Ljava/util/ArrayList;.add=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.add(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+        iw.withConfig("r Ljava/io/PrintStream;.append(Ljava/lang/CharSequence;)Ljava/io/PrintStream;=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.append(Lp;)Ljava/lang/Object;");
+        iw.withConfig("r Ljava/io/PrintStream;.println(Ljava/lang/String;)V=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.println(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;");
+
+        test0(iw, "b");
+    }
+
+    @Test
+    public void testC() throws IOException, RecognitionException {
+
+        InvocationWeaver iw = new InvocationWeaver();
+        iw.setInvocationInterfaceDesc("Lp;");
+        iw.withConfig("r LT;.a()V=LB;.a(Lp;)Ljava/lang/Object;");
+        iw.withConfig("r LT;.b()V=LB;.b(Lp;)V");
+        iw.withConfig("r LT;.c()I=LB;.c(Lp;)Ljava/lang/Object;");
+        // iw.withConfig("r LT;.d()I=LB;.d(Lp;)V");
+        test0(iw, "c");
+    }
+
+    private void test0(InvocationWeaver iw, String prefix) throws IOException, RecognitionException {
+        ClassNode before = Jasmins
+                .parse(prefix + "-before.j", getClass().getResourceAsStream("/weave/" + prefix + "-before.j"));
+        ClassNode expectedAfter = Jasmins
+                .parse(prefix + "-after.j", getClass().getResourceAsStream("/weave/" + prefix + "-after.j"));
+        ClassNode expectedGen = Jasmins
+                .parse(prefix + "-gen.j", getClass().getResourceAsStream("/weave/" + prefix + "-gen.j"));
+
+        ClassNode after = new ClassNode();
+
+        before.accept(iw.wrapper(after));
+
+        assertEqual(expectedAfter, after);
+
+        ClassNode gen = new ClassNode();
+        iw.buildInvocationClz(LdcOptimizeAdapter.wrap(gen));
+
+        assertEqual(expectedGen, gen);
+    }
+
+    private void assertEqual(ClassNode expected, ClassNode actual) throws IOException {
+        String stdExpect = toStd(expected);
+        String stdActual = toStd(actual);
+        Assert.assertEquals(stdExpect, stdActual);
+    }
+
+    public static String toStd(ClassNode expected) throws IOException {
+        expected.access &= ~Opcodes.ACC_SUPER;
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        expected.accept(LdcOptimizeAdapter.wrap(cw));
+
+        ClassReader cr = new ClassReader(cw.toByteArray());
+        ClassNode n = new ClassNode(Opcodes.ASM4);
+        cr.accept(n, ClassReader.EXPAND_FRAMES | ClassReader.SKIP_FRAMES);
+
+        StringWriter stringWriter = new StringWriter();
+        new JasminDumper(new PrintWriter(stringWriter, true)).dump(n);
+        return stringWriter.toString();
     }
 
 }

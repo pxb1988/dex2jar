@@ -92,7 +92,7 @@ import java.util.jar.Manifest;
  * </pre>
  */
 public class InvocationWeaver implements Opcodes {
-    private String invocationInterfaceDesc = "com/googlecode/d2j/tools/jar/MethodInvocation";
+    private String invocationInterfaceDesc = "Lcom/googlecode/d2j/tools/jar/MethodInvocation;";
     private String invocationTypePrefix = "d2j/gen/MI_";
 
     private static final String DEFAULT_RET_TYPE = "L888;";

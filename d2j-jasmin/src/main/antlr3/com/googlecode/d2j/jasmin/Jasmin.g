@@ -1198,7 +1198,10 @@ sSwitch @init {List<Integer> keys=null;List<Label> labels=null;Label defaultLabe
 	        }
 	        mn.visitLookupSwitchInsn(defaultLabel, ts, labels.toArray(new Label[labels.size()]));
 	        }
-	|	a=TABLESWITCH c=INT ';' 'high' '=' d=INT (z=sLabel  {labels.add(getLabel($z.text));} )* (DEFAULT ':' z=sLabel {defaultLabel=getLabel($z.text);})    {
-	        line($a.line); mn.visitTableSwitchInsn(parseInt($c.text),parseInt($d.text),defaultLabel,labels.toArray(new Label[labels.size()]));
+	|	a=TABLESWITCH { labels=new ArrayList<>();  } c=INT ';' 'high' '=' d=INT (z=sLabel  {labels.add(getLabel($z.text));} )* (DEFAULT ':' z=sLabel {defaultLabel=getLabel($z.text);})    {
+	        line($a.line); mn.visitTableSwitchInsn(parseInt($c.text),parseInt($c.text)+labels.size()-1,defaultLabel,labels.toArray(new Label[labels.size()]));
 	        }
+	|   a=TABLESWITCH { labels=new ArrayList<>();  } c=INT (z=sLabel  {labels.add(getLabel($z.text));} )* (DEFAULT ':' z=sLabel {defaultLabel=getLabel($z.text);})    {
+        	        line($a.line); mn.visitTableSwitchInsn(parseInt($c.text),parseInt($c.text)+labels.size()-1,defaultLabel,labels.toArray(new Label[labels.size()]));
+        	        }
     ;
