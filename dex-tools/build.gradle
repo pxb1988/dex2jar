@@ -12,7 +12,7 @@ dependencies {
 
 task bin_gen(type: JavaExec) {
     dependsOn classes
-    classpath=runtimeClasspath
+    classpath sourceSets.main.runtimeClasspath
     ext.binDir="$buildDir/generated-sources/bin"
     outputs.dir file(ext.binDir)
     main='com.googlecode.dex2jar.bin_gen.BinGen'
