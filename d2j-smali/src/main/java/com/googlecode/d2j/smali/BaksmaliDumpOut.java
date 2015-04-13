@@ -24,10 +24,16 @@ import java.io.IOException;
 public class BaksmaliDumpOut implements Out {
     private final BufferedWriter writer;
     int i;
+    final String indent;
 
     public BaksmaliDumpOut(BufferedWriter writer) {
+        this("  ", writer);
+    }
+
+    public BaksmaliDumpOut(String indent, BufferedWriter writer) {
         this.writer = writer;
         i = 0;
+        this.indent = indent;
     }
 
     @Override
@@ -44,7 +50,7 @@ public class BaksmaliDumpOut implements Out {
     public void s(String s) {
         try {
             for (int i = 0; i < this.i; i++) {
-                writer.append("    ");
+                writer.append(indent);
             }
             writer.append(s);
             writer.newLine();
@@ -57,7 +63,7 @@ public class BaksmaliDumpOut implements Out {
     public void s(String format, Object... arg) {
         try {
             for (int i = 0; i < this.i; i++) {
-                writer.append("    ");
+                writer.append(indent);
             }
             writer.append(String.format(format, arg));
             writer.newLine();

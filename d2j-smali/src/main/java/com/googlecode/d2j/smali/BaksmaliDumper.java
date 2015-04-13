@@ -22,9 +22,12 @@ import java.util.*;
 import com.googlecode.d2j.*;
 import com.googlecode.d2j.node.*;
 import com.googlecode.d2j.node.DexAnnotationNode.Item;
+import com.googlecode.d2j.node.insn.DexLabelStmtNode;
+import com.googlecode.d2j.node.insn.DexStmtNode;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.util.Out;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
+import com.googlecode.d2j.visitors.DexDebugVisitor;
 
 public class BaksmaliDumper implements DexConstants {
     private static final int ACCESS_FIELD = 1 << 31;
@@ -511,7 +514,34 @@ public class BaksmaliDumper implements DexConstants {
 
         DexCodeVisitor dexCodeVisitor = new BaksmaliCodeDumper(out, useParameterRegisters, useLocals, nextLabelNumber,
                 codeNode.totalRegister - inRegs, usedLabel, debugLabelMap);
-        codeNode.accept(dexCodeVisitor);
+        accept(out, codeNode, dexCodeVisitor);
         dexCodeVisitor.visitEnd();
+    }
+    void accept(Out out, DexCodeNode code, DexCodeVisitor v) {
+        if (code.tryStmts != null) {
+            for (TryCatchNode n : code.tryStmts) {
+                n.accept(v);
+            }
+        }
+        if (code.debugNode != null) {
+            DexDebugVisitor ddv = v.visitDebug();
+            if (ddv != null) {
+                code.debugNode.accept(ddv);
+                ddv.visitEnd();
+            }
+        }
+        if (code.totalRegister >= 0) {
+            v.visitRegister(code.totalRegister);
+        }
+        for (DexStmtNode n : code.stmts) {
+            if(n instanceof DexLabelStmtNode){
+                n.accept(v);
+            }else {
+                out.push();
+                n.accept(v);
+                out.pop();
+            }
+
+        }
     }
 }
