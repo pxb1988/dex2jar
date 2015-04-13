@@ -293,7 +293,7 @@ sInstruction[SmaliCodeVisitor dcv]
 		{int regs1[]=new int[regs.size()]; for(int i=0;i<regs.size();i++){ regs1[i]=getReg(regs.get(i)); }
 		 dcv.visitFilledNewArrayStmt(getOp($ft5c.text),regs1,$obj.text);
 		}
-	|fm5c '{' {regs.clear();} (r=REGISTER{regs.add($r.text);})? (',' r=REGISTER{regs.add($r.text);}) *  '}' ',' m=sMethodF
+	|fm5c '{' {regs.clear();} (r=REGISTER{regs.add($r.text);} (',' r=REGISTER{regs.add($r.text);})* )? '}' ',' m=sMethodF
 		{int regs1[]=new int[regs.size()]; for(int i=0;i<regs.size();i++){ regs1[i]=getReg(regs.get(i)); }
 		 dcv.visitMethodStmt(getOp($fm5c.text),regs1,$m.m);
 		}
@@ -308,6 +308,7 @@ sInstruction[SmaliCodeVisitor dcv]
 		  }
 		  dcv.visitMethodStmt(getOp($fmrc.text),regs,$m.m);
 		}
+	|fmrc '{' '}' ',' m=sMethodF { dcv.visitMethodStmt(getOp($fmrc.text),new int[0],$m.m); }
 	|ftrc '{' r1=REGISTER '..' r2=REGISTER '}' ',' obj=(OBJECT_TYPE|ARRAY_TYPE) { throw new RuntimeException(); }
 	|sss=sLabel {dcv.visitLabel(getLabel($sss.text)); }
 	|f2sb r1=REGISTER ',' r2=REGISTER ',' d2=INT {dcv.visitStmt2R1N(getOp($f2sb.text),getReg($r1.text),getReg($r2.text),parseInt($d2.text));}
