@@ -16,6 +16,14 @@
  */
 package com.googlecode.d2j.smali;
 
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexFileNode;
+import com.googlecode.d2j.visitors.DexFileVisitor;
+import org.antlr.runtime.ANTLRReaderStream;
+import org.antlr.runtime.ANTLRStringStream;
+import org.antlr.runtime.CommonTokenStream;
+import org.antlr.runtime.RecognitionException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,13 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-
-import org.antlr.runtime.ANTLRReaderStream;
-import org.antlr.runtime.ANTLRStringStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.RecognitionException;
-
-import com.googlecode.d2j.visitors.DexFileVisitor;
 
 public class Smali {
     public void smaliFile(Path path, DexFileVisitor dcv) throws IOException {
@@ -49,6 +50,12 @@ public class Smali {
             is.name = name;
             smali0(dcv, is);
         }
+    }
+
+    public DexClassNode smaliFile2Node(String name, InputStream in) throws IOException {
+        DexFileNode dfn = new DexFileNode();
+        smaliFile(name, in, dfn);
+        return dfn.clzs.size() > 0 ? dfn.clzs.get(0) : null;
     }
 
     private void smali0(DexFileVisitor dcv, ANTLRStringStream is) throws IOException {

@@ -23,7 +23,7 @@ public class JarWeaverCmd extends BaseCmd {
             throw new HelpException("no jar");
         }
 
-        InvocationWeaver invocationWeaver = new InvocationWeaver().withConfig(config);
+        InvocationWeaver invocationWeaver = (InvocationWeaver) new InvocationWeaver().withConfig(config);
 
         try (FileSystem fs = createZip(output)) {
             final Path outRoot = fs.getPath("/");

@@ -13,7 +13,7 @@
 .method public static varargs main([Ljava/lang/String;)V
     getstatic java/lang/System/out Ljava/io/PrintStream;
     ldc ""
-    invokestatic com/googlecode/d2j/tools/jar/test/res/Res/append$$$_A_(Ljava/io/PrintStream;Ljava/lang/CharSequence;)Ljava/io/PrintStream;
+    invokestatic com/googlecode/d2j/tools/jar/test/res/Res/append_A001(Ljava/io/PrintStream;Ljava/lang/CharSequence;)Ljava/io/PrintStream;
     pop
     getstatic java/lang/System/out Ljava/io/PrintStream;
     ldc "test"
@@ -24,7 +24,7 @@
   .limit stack 2
 .end method
 
-.method private static synthetic append$$$_A_(Ljava/io/PrintStream;Ljava/lang/CharSequence;)Ljava/io/PrintStream;
+.method private static synthetic append_A001(Ljava/io/PrintStream;Ljava/lang/CharSequence;)Ljava/io/PrintStream;
     new d2j/gen/MI__000
     dup
     aload 0
@@ -43,7 +43,7 @@
   .limit stack 7
 .end method
 
-.method public static append$$$$_callback(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+.method public static append_CB002(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
     aload 0
     checkcast java/io/PrintStream
     aload 1
@@ -58,13 +58,13 @@
 
 .method public size()I
     aload 0
-    invokestatic com/googlecode/d2j/tools/jar/test/res/Res/size$$$_A_(Ljava/util/ArrayList;)I
+    invokestatic com/googlecode/d2j/tools/jar/test/res/Res/size_A003(Ljava/util/ArrayList;)I
     ireturn
   .limit locals 1
   .limit stack 1
 .end method
 
-.method private static synthetic size$$$_A_(Ljava/util/ArrayList;)I
+.method private static synthetic size_A003(Ljava/util/ArrayList;)I
     new d2j/gen/MI__000
     dup
     aload 0
@@ -79,7 +79,7 @@
   .limit stack 5
 .end method
 
-.method public size$$$$_callback([Ljava/lang/Object;)Ljava/lang/Object;
+.method public size_CB004([Ljava/lang/Object;)Ljava/lang/Object;
     aload 0
     invokespecial java/util/ArrayList/size()I
     invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;

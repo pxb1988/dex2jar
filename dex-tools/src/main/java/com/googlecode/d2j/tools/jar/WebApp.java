@@ -31,7 +31,7 @@ public class WebApp {
 
         Path clz = new File(webApp, "WEB-INF/classes").toPath();
         Path tmpClz = new File(webApp, "WEB-INF/tmp-classes").toPath();
-        final InvocationWeaver ro = new InvocationWeaver().withConfig(config.toPath());
+        final InvocationWeaver ro = (InvocationWeaver) new InvocationWeaver().withConfig(config.toPath());
         Files.deleteIfExists(tmpClz);
         copyDirectory(clz, tmpClz);
 

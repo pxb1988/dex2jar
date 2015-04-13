@@ -13,21 +13,21 @@
     pop
     return
   .limit locals 1
-  .limit stack -1
+  .limit stack 5
 .end method
 
-.method public static m_$$A_$$$$_callback(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+.method public static m_A001_CB002(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
     aload 0
     checkcast A
-    invokevirtual A/m_$$A_()V
+    invokevirtual A/m_A001()V
     aconst_null
     areturn
-  .limit locals -1
-  .limit stack -1
+  .limit locals 2
+  .limit stack 1
 .end method
 
-.method m_$$A_()V
+.method public m_A001()V
     return
   .limit locals 1
-  .limit stack -1
+  .limit stack 0
 .end method

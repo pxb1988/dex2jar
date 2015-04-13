@@ -22,8 +22,8 @@
     iload 3
     putfield d2j/gen/MI__000/idx I
     return
-  .limit locals -1
-  .limit stack -1
+  .limit locals 4
+  .limit stack 2
 .end method
 
 .method public getMethodOwner()Ljava/lang/String;
@@ -41,8 +41,8 @@
     ldc "invalid idx"
     invokespecial java/lang/RuntimeException/<init>(Ljava/lang/String;)V
     athrow
-  .limit locals -1
-  .limit stack -1
+  .limit locals 1
+  .limit stack 3
 .end method
 
 .method public getMethodName()Ljava/lang/String;
@@ -60,8 +60,8 @@
     ldc "invalid idx"
     invokespecial java/lang/RuntimeException/<init>(Ljava/lang/String;)V
     athrow
-  .limit locals -1
-  .limit stack -1
+  .limit locals 1
+  .limit stack 3
 .end method
 
 .method public getMethodDesc()Ljava/lang/String;
@@ -79,24 +79,24 @@
     ldc "invalid idx"
     invokespecial java/lang/RuntimeException/<init>(Ljava/lang/String;)V
     athrow
-  .limit locals -1
-  .limit stack -1
+  .limit locals 1
+  .limit stack 3
 .end method
 
 .method public getArguments()[Ljava/lang/Object;
     aload 0
     getfield d2j/gen/MI__000/args [Ljava/lang/Object;
     areturn
-  .limit locals -1
-  .limit stack -1
+  .limit locals 1
+  .limit stack 1
 .end method
 
 .method public getThis()Ljava/lang/Object;
     aload 0
     getfield d2j/gen/MI__000/thiz Ljava/lang/Object;
     areturn
-  .limit locals -1
-  .limit stack -1
+  .limit locals 1
+  .limit stack 1
 .end method
 
 .method public proceed()Ljava/lang/Object;
@@ -111,7 +111,7 @@
     getfield d2j/gen/MI__000/thiz Ljava/lang/Object;
     aload 0
     getfield d2j/gen/MI__000/args [Ljava/lang/Object;
-    invokestatic A/m_$$A_$$$$_callback(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+    invokestatic A/m_A001_CB002(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
     areturn
   L1:
     new java/lang/RuntimeException
@@ -119,6 +119,6 @@
     ldc "invalid idx"
     invokespecial java/lang/RuntimeException/<init>(Ljava/lang/String;)V
     athrow
-  .limit locals -1
-  .limit stack -1
+  .limit locals 1
+  .limit stack 3
 .end method

@@ -126,17 +126,17 @@
   L0:
     aload 0
     getfield d2j/gen/MI__000/args [Ljava/lang/Object;
-    invokestatic A/a$$$$_callback([Ljava/lang/Object;)Ljava/lang/Object;
+    invokestatic A/a_CB002([Ljava/lang/Object;)Ljava/lang/Object;
     areturn
   L1:
     aload 0
     getfield d2j/gen/MI__000/args [Ljava/lang/Object;
-    invokestatic A/b$$$$_callback([Ljava/lang/Object;)Ljava/lang/Object;
+    invokestatic A/b_CB004([Ljava/lang/Object;)Ljava/lang/Object;
     areturn
   L2:
     aload 0
     getfield d2j/gen/MI__000/args [Ljava/lang/Object;
-    invokestatic A/c$$$$_callback([Ljava/lang/Object;)Ljava/lang/Object;
+    invokestatic A/c_CB006([Ljava/lang/Object;)Ljava/lang/Object;
     areturn
   L3:
     new java/lang/RuntimeException

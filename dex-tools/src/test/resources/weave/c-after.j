@@ -3,9 +3,9 @@
 .super java/lang/Object
 
 .method m()V
-    invokestatic A/a$$$_A_()V
-    invokestatic A/b$$$_A_()V
-    invokestatic A/c$$$_A_()I
+    invokestatic A/a_A001()V
+    invokestatic A/b_A003()V
+    invokestatic A/c_A005()I
     pop
     invokestatic T/d()I
     pop
@@ -14,7 +14,7 @@
   .limit stack 1
 .end method
 
-.method private static synthetic a$$$_A_()V
+.method private static synthetic a_A001()V
     new d2j/gen/MI__000
     dup
     aconst_null
@@ -28,7 +28,7 @@
   .limit stack 5
 .end method
 
-.method public static a$$$$_callback([Ljava/lang/Object;)Ljava/lang/Object;
+.method public static a_CB002([Ljava/lang/Object;)Ljava/lang/Object;
     invokestatic T/a()V
     aconst_null
     areturn
@@ -36,7 +36,7 @@
   .limit stack 1
 .end method
 
-.method private static synthetic b$$$_A_()V
+.method private static synthetic b_A003()V
     new d2j/gen/MI__000
     dup
     aconst_null
@@ -49,7 +49,7 @@
   .limit stack 5
 .end method
 
-.method public static b$$$$_callback([Ljava/lang/Object;)Ljava/lang/Object;
+.method public static b_CB004([Ljava/lang/Object;)Ljava/lang/Object;
     invokestatic T/b()V
     aconst_null
     areturn
@@ -57,7 +57,7 @@
   .limit stack 1
 .end method
 
-.method private static synthetic c$$$_A_()I
+.method private static synthetic c_A005()I
     new d2j/gen/MI__000
     dup
     aconst_null
@@ -72,7 +72,7 @@
   .limit stack 5
 .end method
 
-.method public static c$$$$_callback([Ljava/lang/Object;)Ljava/lang/Object;
+.method public static c_CB006([Ljava/lang/Object;)Ljava/lang/Object;
     invokestatic T/c()I
     invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;
     areturn
