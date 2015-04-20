@@ -74,6 +74,12 @@ public class BaseWeaver {
         // try with default desc
         key.desc = DEFAULT_DESC;
         v = map.get(key);
+        if (v != null) {
+            return v;
+        }
+        if (!name.equals("*")) {
+            return findTargetMethod0(map, owner, "*", desc);
+        }
         return v;
     }
 
@@ -162,6 +168,9 @@ public class BaseWeaver {
 
             case 'o':
                 setInvocationInterfaceDesc(ln.substring(2));
+                break;
+            case 'p':
+                invocationTypePrefix = ln.substring(2);
                 break;
         }
     }
