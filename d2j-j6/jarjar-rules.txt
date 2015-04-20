@@ -1,0 +1,3 @@
+rule java.nio.file.** pxb.@0
+rule java.nio.charset.StandardCharsets pxb.java.nio.charset.StandardCharsets
+rule java.lang.AutoCloseable java.io.Closeable

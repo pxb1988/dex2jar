@@ -1,0 +1,4 @@
+#
+r Ljava/io/File;.toPath=Lj6/Files;.toPath(Ljava/io/File;)Ljava/lang/Object;
+r Ljava/lang/Throwable;.addSuppressed(Ljava/lang/Throwable;)=Lj6/Thro;.addSuppressed(Ljava/lang/Throwable;Ljava/lang/Throwable;)V;
+r [Ljava/lang/Throwable;.getSuppressed()=Lj6/Thro;.getSuppressed(Ljava/lang/Throwable;)[Ljava/lang/Throwable;

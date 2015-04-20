@@ -1,0 +1,9 @@
+-libraryjars <java.home>/lib/rt.jar
+-keepattributes AnnotationDefault,RuntimeVisible*Annotations,Signature
+-repackageclasses d2j
+-allowaccessmodification
+#-dontobfuscate
+-keep public class com.googlecode.dex2jar.tools.Dex2jarCmd {public static void main(java.lang.String[]);}
+-keep,allowobfuscation public class com.googlecode.dex2jar.tools.Dex2jarCmd {@com.googlecode.dex2jar.tools.BaseCmd$Opt <fields>;}
+
+-dontwarn **
