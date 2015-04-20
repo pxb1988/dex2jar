@@ -6,6 +6,8 @@ allprojects  {
   version = '2.1-SNAPSHOT'
 }
 
+defaultTasks('clean','distZip')
+
 subprojects {
   apply plugin: 'java'
   apply plugin: 'maven'
@@ -33,10 +35,6 @@ subprojects {
   test.classpath += configurations.provided
 // == end
 
-// TODO gradle 2.0 fail on 'Compile'
-//  tasks.withType(Compile) {
-//    options.encoding = 'UTF-8'
-//  }
   [compileJava, compileTestJava]*.options.collect {options ->options.encoding = 'UTF-8'}
     dependencies {
     testCompile group: 'junit', name: 'junit', version:'4.11'
