@@ -20,7 +20,7 @@ task allinone(type: Jar, dependsOn: jar) {
         attributes("Implementation-Title": project.name,
                 "Implementation-Version": project.version,
                 "Build-Time": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "Revision": System.env.BUILD_REVISION?System.env.BUILD_REVISION:System.env.MERCURIAL_REVISION?System.env.MERCURIAL_REVISION:"HEAD",
+                "Revision":"${getRevision()}",
                 "Build-Number": System.env.BUILD_NUMBER?System.env.BUILD_NUMBER:"-1",
         )
     }
