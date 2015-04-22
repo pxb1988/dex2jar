@@ -25,8 +25,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -379,17 +379,22 @@ public abstract class BaseCmd {
         initOptionFromClass(this.getClass());
     }
 
-    public static void main(String... args) throws ClassNotFoundException, IllegalAccessException,
-            InstantiationException {
+    public static void main(String... args) throws Exception {
         if (args.length < 1) {
             System.err.println("d2j-run <class> [args]");
             return;
         }
         Class<?> clz = Class.forName(args[0]);
-        BaseCmd baseCmd = (BaseCmd) clz.newInstance();
         String newArgs[] = new String[args.length - 1];
         System.arraycopy(args, 1, newArgs, 0, newArgs.length);
-        baseCmd.doMain(newArgs);
+        if (BaseCmd.class.isAssignableFrom(clz)) {
+            BaseCmd baseCmd = (BaseCmd) clz.newInstance();
+            baseCmd.doMain(newArgs);
+        } else {
+            Method m = clz.getMethod("main",String[].class);
+            m.setAccessible(true);
+            m.invoke(null, newArgs);
+        }
     }
     
     protected void parseSetArgs(String... args) throws IllegalArgumentException, IllegalAccessException {

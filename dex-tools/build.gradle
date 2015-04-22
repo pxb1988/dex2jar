@@ -1,6 +1,8 @@
 description = 'Dex Tools'
 apply plugin:'application'
 
+mainClassName="com.googlecode.dex2jar.tools.BaseCmd"
+
 dependencies {
   compile project(':dex-translator')
   compile project(':d2j-smali')
@@ -11,7 +13,7 @@ dependencies {
 }
 
 task bin_gen(type: JavaExec) {
-    dependsOn classes
+    dependsOn jar
     classpath sourceSets.main.runtimeClasspath
     ext.binDir="$buildDir/generated-sources/bin"
     outputs.dir file(ext.binDir)
@@ -30,6 +32,7 @@ applicationDistribution.from("$parent.rootDir") {
   include("LICENSE.txt")
 }
 
-startScripts.enabled=false
+startScripts.dependsOn bin_gen
+
 artifacts.archives distZip
 

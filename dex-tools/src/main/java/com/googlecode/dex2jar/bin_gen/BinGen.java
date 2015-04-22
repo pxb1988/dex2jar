@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Properties;
 
 public class BinGen {
@@ -57,6 +58,9 @@ public class BinGen {
                     Path f = out.resolve(cfg.relativize(file));
                     BaseCmd.createParentDirectories(f);
                     Files.copy(file, f, StandardCopyOption.REPLACE_EXISTING);
+                    if (fileName.endsWith(".sh")) {
+                        setExec(f);
+                    }
                 }
                 return super.visitFile(file, attrs);
             }
@@ -71,6 +75,9 @@ public class BinGen {
                 String s = sh.replaceAll("__@class_name@__", p.getProperty(name));
                 bw.append(s);
             }
+
+            setExec(path);
+
             path = out.resolve(key.toString() + ".bat");
             BaseCmd.createParentDirectories(path);
             try (BufferedWriter bw = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
@@ -78,6 +85,15 @@ public class BinGen {
                 String s = bat.replaceAll("__@class_name@__", p.getProperty(name));
                 bw.append(s);
             }
+        }
+    }
+
+    private static void setExec(Path path) {
+        try {
+            path.toFile().setExecutable(true);
+            Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rwxr-xr-x"));
+        } catch (Exception ex) {
+            // ignored
         }
     }
 }
