@@ -204,7 +204,12 @@ public class ConstPool {
     }
 
     public MethodIdItem uniqMethod(Method method) {
-        MethodIdItem key = new MethodIdItem(uniqType(method.getOwner()), uniqString(method.getName()), putProto(method));
+        MethodIdItem key = new MethodIdItem(uniqType(method.getOwner()), uniqString(method.getName()), uniqProto(method));
+        return uniqMethod(key);
+    }
+
+    public MethodIdItem uniqMethod(String owner, String name, String parms[], String ret) {
+        MethodIdItem key = new MethodIdItem(uniqType(owner), uniqString(name), uniqProto(parms, ret));
         return uniqMethod(key);
     }
 
@@ -217,10 +222,13 @@ public class ConstPool {
         return key;
     }
 
-    private ProtoIdItem putProto(Method method) {
-        String[] types = method.getParameterTypes();
-        TypeIdItem ret = uniqType(method.getReturnType());
-        StringIdItem shorty = uniqString(buildShorty(method.getReturnType(), types));
+    private ProtoIdItem uniqProto(Method method) {
+        return uniqProto(method.getParameterTypes(), method.getReturnType());
+    }
+
+    public ProtoIdItem uniqProto(String[] types, String retDesc) {
+        TypeIdItem ret = uniqType(retDesc);
+        StringIdItem shorty = uniqString(buildShorty(retDesc, types));
         TypeListItem params = putTypeList(types);
         ProtoIdItem key = new ProtoIdItem(params, ret, shorty);
         ProtoIdItem item = protos.get(key);

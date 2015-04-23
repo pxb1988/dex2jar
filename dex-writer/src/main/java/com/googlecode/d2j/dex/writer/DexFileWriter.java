@@ -98,6 +98,30 @@ public class DexFileWriter extends DexFileVisitor {
     }
 
     void buildMapListItem() {
+
+        // begin ===========
+        // satisfy 'bool DexFileVerifier::CheckMap()' on art/runtime/dex_file_verifier.cc
+        // make sure the items are not empty
+        if (cp.classDefs.isEmpty()) {
+            System.err.println("WARN: no classdef on the dex");
+        }
+        if (cp.methods.isEmpty()) {
+            cp.uniqMethod("Ljava/lang/Object;", "<init>", new String[0], "V");
+        }
+        if (cp.fields.isEmpty()) {
+            cp.uniqField("Ljava/lang/System;", "out", "Ljava/io/PrintStream;");
+        }
+        if (cp.protos.isEmpty()) {
+            cp.uniqProto(new String[0], "V");
+        }
+        if (cp.types.isEmpty()) {
+            cp.uniqType("V");
+        }
+        if (cp.strings.isEmpty()) {
+            cp.uniqString("V");
+        }
+        // end ===========
+
         mapItem = new MapListItem();
         headItem = new HeadItem();
         SectionItem<HeadItem> headSection = new SectionItem<>(SectionType.TYPE_HEADER_ITEM);
