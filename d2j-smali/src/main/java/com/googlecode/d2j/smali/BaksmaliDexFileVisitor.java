@@ -26,6 +26,8 @@ public class BaksmaliDexFileVisitor extends DexFileVisitor {
     }
 
     protected String rebuildFileName(String s) {
+        s = BaksmaliDumper.escapeId(s);
+        s = s.replace('\\', '-');
         String low = s.toLowerCase();
         if (hases.contains(low)) {
             return s + "_d2j" + i++;

@@ -176,14 +176,14 @@ ID  :	('a'..'z'|'A'..'Z'|'_'|'$'|ESC_SEQ) (ESC_SEQ| ~('\\'|'\r'|'\n'|'\t'|' '|':
 
 sFile	:	'.class' acc=sAccList a=OBJECT_TYPE 
 ( sSuper | sInterface) *
-{buildDexClassVisitor(acc,$a.text);}
+{buildDexClassVisitor(acc,unEscapeId($a.text));}
 (sSource |sMethod|sField|sAnnotation)*
                                             '.end class'?  {endClass();}
 	;
 sSource 	:	'.source' a=STRING {this.source=unEscape($a.text);};
-sSuper	:	'.super' a=OBJECT_TYPE {this.superName=$a.text;};
+sSuper	:	'.super' a=OBJECT_TYPE {this.superName=unEscapeId($a.text);};
 sInterface
-	:	'.implements' a=OBJECT_TYPE {this.interfaceNames.add($a.text);};
+	:	'.implements' a=OBJECT_TYPE {this.interfaceNames.add(unEscapeId($a.text));};
 sMethod	@init{ boolean isStatic=false; SmaliCodeVisitor dcv=null;     DexMethodVisitor dexMethodVisitor=null; DexDebugVisitor debugVisitor=null; int paramIndex=0; }
 	:	'.method' acc=sAccList {isStatic=0!=(acc&ACC_STATIC);} 
 		( m1=sMethodF { dexMethodVisitor=dexClassVisitor.visitMethod(acc,$m1.m); this.currentMethod=m1; this.ins_in=methodIns($m1.m,isStatic); }
@@ -201,20 +201,20 @@ sField	@init{DexFieldVisitor dexFieldVisitor=null;}: '.field' acc=sAccList (f=sF
 		'.end field')? {dexFieldVisitor.visitEnd();dexAnnotationAble=null;}
 	;
 sAnnotation @init{DexAnnotationVisitor dexAnnotationVisitor=null;}
-	: 	'.annotation' v=ANN_VISIBLE d=OBJECT_TYPE { dexAnnotationVisitor= dexAnnotationAble.visitAnnotation($d.text,getAnnVisibility($v.text)); }
-		(kk=sAnnotationKeyName '=' vv=sAnnotationValue {doAccept(dexAnnotationVisitor,$kk.text,$vv.v);})*
+	: 	'.annotation' v=ANN_VISIBLE d=OBJECT_TYPE { dexAnnotationVisitor= dexAnnotationAble.visitAnnotation(unEscapeId($d.text),getAnnVisibility($v.text)); }
+		(kk=sAnnotationKeyName '=' vv=sAnnotationValue {doAccept(dexAnnotationVisitor,unEscapeId($kk.text),$vv.v);})*
 		 '.end annotation' {dexAnnotationVisitor.visitEnd();}
 	;
 sSubannotation returns[Object v] @init{Ann an=new Ann();}
-	:	'.subannotation' n=OBJECT_TYPE {an.name=$n.text;}(kk=sAnnotationKeyName '=' vv=sAnnotationValue {an.put($kk.text,vv);})* '.end subannotation' {$v=an;}
+	:	'.subannotation' n=OBJECT_TYPE {an.name=unEscapeId($n.text);}(kk=sAnnotationKeyName '=' vv=sAnnotationValue {an.put(unEscapeId($kk.text),vv);})* '.end subannotation' {$v=an;}
 	;
 sAccList returns [int acc]: {acc=0;}(a=ACC {acc|=getAcc($a.text);})*  ;
 sType: OBJECT_TYPE | PRIMITIVE_TYPE | ARRAY_TYPE;
-sFieldF	returns [Field f]:	o=OBJECT_TYPE '->' n=sFieldNameF ':' t=sType{f=new Field($o.text,$n.text,$t.text);};
-sFieldP	returns [Field f]:	n=sFieldNameP ':' t=sType {f=new Field(this.clzName,$n.text,$t.text);};
-sMethodP returns[Method m]:	n=sMethodNameP t=sMethodArgAndRet {$m=new Method(this.clzName,$n.text,toTypeList($t.as),$t.ret);};
-sMethodF returns[Method m]:	o=(ARRAY_TYPE|OBJECT_TYPE) '->' n=sMethodNameF t=sMethodArgAndRet {$m=new Method($o.text,$n.text,toTypeList($t.as),$t.ret);};
-sMethodArgAndRet returns[String as,String ret]: '(' a=(PRIMITIVE_TYPE|OBJECT_TYPE|ARRAY_TYPE|SIMPLE_TYPE_LIST|COMPLEX_TYPE_LIST| /*empty*/) ')' b=(PRIMITIVE_TYPE|OBJECT_TYPE|ARRAY_TYPE|VOID_TYPE) {$as=$a.text;$ret=$b.text;};
+sFieldF	returns [Field f]:	o=OBJECT_TYPE '->' n=sFieldNameF ':' t=sType{f=new Field($o.text,unEscapeId($n.text),$t.text);};
+sFieldP	returns [Field f]:	n=sFieldNameP ':' t=sType {f=new Field(this.clzName,unEscapeId($n.text),$t.text);};
+sMethodP returns[Method m]:	n=sMethodNameP t=sMethodArgAndRet {$m=new Method(this.clzName,unEscapeId($n.text),toTypeList($t.as),$t.ret);};
+sMethodF returns[Method m]:	o=(ARRAY_TYPE|OBJECT_TYPE) '->' n=sMethodNameF t=sMethodArgAndRet {$m=new Method(unEscapeId($o.text),unEscapeId($n.text),toTypeList($t.as),$t.ret);};
+sMethodArgAndRet returns[String as,String ret]: '(' a=(PRIMITIVE_TYPE|OBJECT_TYPE|ARRAY_TYPE|SIMPLE_TYPE_LIST|COMPLEX_TYPE_LIST| /*empty*/) ')' b=(PRIMITIVE_TYPE|OBJECT_TYPE|ARRAY_TYPE|VOID_TYPE) {$as=$a.text!=null?unEscapeId($a.text):null;$ret=unEscapeId($b.text);};
 sMethodNameF
 	:	sMethodNameP|ACC;
 sMethodNameP
@@ -270,7 +270,7 @@ sDebug[SmaliCodeVisitor dcv, DexDebugVisitor ddv]	@init{ String sig=null; String
 sInstruction[SmaliCodeVisitor dcv]
 	:	('.registers' a=INT {int reg=parseInt($a.text);this.locals=reg-ins_in; dcv.visitRegister(reg); }) 
 	| ('.locals' a=INT {this.locals=parseInt($a.text); dcv.visitRegister(locals+ins_in);}) 
-	| ('.catch' a=OBJECT_TYPE '{' b=sLabel '..' c=sLabel  '}' d=sLabel { dcv.visitTryCatch(getLabel($b.text),getLabel($c.text),new DexLabel[]{ getLabel($d.text) }, new String[]{$a.text}); } )
+	| ('.catch' a=OBJECT_TYPE '{' b=sLabel '..' c=sLabel  '}' d=sLabel { dcv.visitTryCatch(getLabel($b.text),getLabel($c.text),new DexLabel[]{ getLabel($d.text) }, new String[]{unEscapeId($a.text)}); } )
 	| ('.catchall' '{' b=sLabel '..' c=sLabel  '}' d=sLabel { dcv.visitTryCatch(getLabel($b.text),getLabel($c.text),new DexLabel[]{ getLabel($d.text) }, new String[]{null}); })
 	|(f0x { dcv.visitStmt0R(getOp($f0x.text)); })
 	|f0t sLabel { dcv.visitJumpStmt(getOp($f0t.text),-1,-1,getLabel($sLabel.text)); }
@@ -284,14 +284,14 @@ sInstruction[SmaliCodeVisitor dcv]
 			} else {
 				dcv.visitTypeStmt(getOp(t),getReg($r1.text),-1,$obj.text);
 			} }
-	|ft2c r1=REGISTER ',' r2=REGISTER ',' obj=(OBJECT_TYPE|ARRAY_TYPE) { dcv.visitTypeStmt(getOp($ft2c.text),getReg($r1.text),getReg($r2.text),$obj.text); }
+	|ft2c r1=REGISTER ',' r2=REGISTER ',' obj=(OBJECT_TYPE|ARRAY_TYPE) { dcv.visitTypeStmt(getOp($ft2c.text),getReg($r1.text),getReg($r2.text),unEscapeId($obj.text)); }
 	|ff1c r1=REGISTER ',' f=sFieldF { dcv.visitFieldStmt(getOp($ff1c.text),getReg($r1.text),-1,$f.f); }
 	|ff2c r1=REGISTER ',' r2=REGISTER ',' f=sFieldF { dcv.visitFieldStmt(getOp($ff2c.text),getReg($r1.text),getReg($r2.text),$f.f); }
 	|f2x r1=REGISTER ',' r2=REGISTER { dcv.visitStmt2R(getOp($f2x.text),getReg($r1.text),getReg($r2.text)); }
 	|f3x r1=REGISTER ',' r2=REGISTER ',' r3=REGISTER { dcv.visitStmt3R(getOp($f3x.text),getReg($r1.text),getReg($r2.text),getReg($r3.text)); }
 	|ft5c '{' {regs.clear();}  (r=REGISTER {regs.add($r.text);})? (',' r=REGISTER {regs.add($r.text);})*  '}' ',' obj=ARRAY_TYPE 
 		{int regs1[]=new int[regs.size()]; for(int i=0;i<regs.size();i++){ regs1[i]=getReg(regs.get(i)); }
-		 dcv.visitFilledNewArrayStmt(getOp($ft5c.text),regs1,$obj.text);
+		 dcv.visitFilledNewArrayStmt(getOp($ft5c.text),regs1,unEscapeId($obj.text));
 		}
 	|fm5c '{' {regs.clear();} (r=REGISTER{regs.add($r.text);} (',' r=REGISTER{regs.add($r.text);})* )? '}' ',' m=sMethodF
 		{int regs1[]=new int[regs.size()]; for(int i=0;i<regs.size();i++){ regs1[i]=getReg(regs.get(i)); }
