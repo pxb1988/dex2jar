@@ -252,8 +252,7 @@ public class DexFileWriter extends DexFileVisitor {
 
     private int place() {
         // 2. order
-        // keep mapItem even if size is 0
-        // mapItem.cleanZeroSizeEntry();
+        mapItem.cleanZeroSizeEntry();
 
         // 3. place
         int offset = 0;
