@@ -10,8 +10,3 @@ dependencies {
   testCompile project(':d2j-jasmin')
 }
 
-sourceSets {
-  test {
-    output.resourcesDir = "build/classes/test"
-  }
-}

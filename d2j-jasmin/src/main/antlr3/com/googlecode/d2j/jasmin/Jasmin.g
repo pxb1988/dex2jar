@@ -859,11 +859,12 @@ OUTTER	:	'outer';
 OP0	:	'nop'|'monitorenter'|'monitorexit'|'pop2'|'pop'
 	|	'iconst_m1'
 	|('a'|'i')'const_' ('0'..'5')
-	|('f'|'d'|'l')'const_' ('0'..'1')
+	|('d'|'l')'const_' ('0'..'1')
+	|'fconst_' ('0'..'2')
 	|'aconst_null'
 	|('a'|'d'|'f'|'i'|'l')? 'return'
 	|('a'|'d'|'f'|'i'|'l') ('store'|'load') '_' ('0'..'3')
-	|('a'|'b'|'d'|'f'|'i'|'l') ('astore'|'aload')
+	|('a'|'b'|'c'|'d'|'f'|'i'|'l') ('astore'|'aload')
 	|'dcmpg'|'dcmpl' | 'lcmp' |'fcmpg'|'fcmpl'
 	|'athrow'
 	|('i'|'f'|'d'|'l')('add'|'div'|'sub'|'mul'|'rem'|'shl'|'shr'|'ushr'|'and'|'or'|'xor'|'neg')
@@ -921,20 +922,17 @@ WINTEGER: 'int';
 WFLOAT: 'float';
 WLONG: 'long';
 WDOUBLE: 'double';
-ID  :('B'|'Z'|'S'|'C'|'I'|'F'|'J'|'D'|'e'|'s'|'c') (ESC_SEQ| ~('\\'|'\r'|'\n'|'\t'|' '|':'|'-'|'='|','|'{'|'}'|'('|')') )+
-    |(ESC_SEQ| ~('\\' | '\r' | '\n' | '\t' | '\'' | '\"' | ' ' | ':' | '-' | '=' | '.' | ',' | '&' | '@' | '/'
-                      | '{'|'['|']'|'}'|'('|')'
-                      |'B'|'Z'|'S'|'C'|'I'|'F'|'J'|'D'|'e'|'s'|'c'
-                      |'0'..'9'
-                 )) (ESC_SEQ| ~('\\'|'\r'|'\n'|'\t'|' '|':'|'-'|'='|','|'{'|'}'|'('|')') )*
+
+fragment
+F_ID_FOLLOWS: ESC_SEQ| ~('\\'|'\r'|'\n'|'\t'|' '|':'|'-'|'='|','|'{'|'}'|'('|')');
+ID  :    FRAGMENT_PRIMITIVE_TYPE F_ID_FOLLOWS+
+    |    ESC_SEQ F_ID_FOLLOWS*
+    |    ~(FRAGMENT_PRIMITIVE_TYPE| '0'..'9'| '\\' | '\r' | '\n' | '\t' | '\'' | '\"' | ' ' | ':' | '-' | '=' | '.' | ',' | '&' | '@' | '/' | '{'|'['|']'|'}'|'('|')') F_ID_FOLLOWS*
     ;
 PARRAY_TYPE
 	:	'['+ FRAGMENT_OBJECT_TYPE
 	|	'[' '['+ FRAGMENT_PRIMITIVE_TYPE
 	;
-LOW_E	:	'e';
-LOW_S	:	's';
-LOW_C	:	'c';
 AT	:	'@';
 AND	:	'&';
 UP_Z	:	'Z';
@@ -967,12 +965,12 @@ sHead+ (sAnnotation|sVisibiltyAnnotation)* (sField|sMethod)*
 sHead   :  '.bytecode' ( a=INT { int v=parseInt($a.text); cn.version=versions[v>=45?v-45:v];}
                         |a=DOUBLE {double v=parseDouble($a.text); cn.version=versions[(int)(v<2.0?(v*10)\%10:(v-44))]; }
                        )
-        |  '.source' a4=sId  { cn.sourceFile=$a4.text; }
-		|  '.class' i=sAccList {cn.access|=$i.acc; if ((cn.access & Opcodes.ACC_INTERFACE) == 0) {cn.access |= Opcodes.ACC_SUPER;} else { cn.access &= ~Opcodes.ACC_SUPER; } } b=sId { cn.name=$b.text; }
-		|  '.interface' i=sAccList {cn.access|=ACC_INTERFACE|$i.acc;} b=sId { cn.name=$b.text; }
-		|  '.super' a1=sId  {  cn.superName=$a1.text; }
-		|  '.implements' a2=sId { if(cn.interfaces==null){cn.interfaces=new ArrayList<>();}  cn.interfaces.add($a2.text); }
-		|  '.enclosing method' ownerAndName=sId {tmp=null;} (b=sMethodDesc{tmp=$b.text;})? {String on[]=parseOwnerAndName($ownerAndName.text);cn.visitOuterClass(on[0],on[1],tmp);}
+        |  '.source' aa4=sAnyIdOrString  { cn.sourceFile=$aa4.str; }
+		|  '.class' i=sAccList {cn.access|=$i.acc; if ((cn.access & Opcodes.ACC_INTERFACE) == 0) {cn.access |= Opcodes.ACC_SUPER;} else { cn.access &= ~Opcodes.ACC_SUPER; } } a1=sInternalNameOrDesc { cn.name=Type.getType($a1.desc).getInternalName(); }
+		|  '.interface' i=sAccList {cn.access|=ACC_INTERFACE|$i.acc;} a1=sInternalNameOrDesc { cn.name=Type.getType($a1.desc).getInternalName(); }
+		|  '.super' a1=sInternalNameOrDescACC  {  cn.superName=Type.getType($a1.desc).getInternalName(); }
+		|  '.implements' a1=sInternalNameOrDescACC { if(cn.interfaces==null){cn.interfaces=new ArrayList<>();}  cn.interfaces.add(Type.getType($a1.desc).getInternalName()); }
+		|  '.enclosing method' ownerAndName=sOwnerAndName {tmp=null;} (b=sMethodDesc{tmp=$b.text;})? {cn.visitOuterClass($ownerAndName.ownerInternalName,$ownerAndName.memberName,tmp);}
 		|  sDeprecateAttr  { cn.access|=ACC_DEPRECATED; }
 		|  '.debug' a=STRING  { cn.sourceDebug=unEscapeString($a.text); }
 		|  '.attribute' sId STRING     { System.err.println("ignore .attribute"); }
@@ -995,16 +993,16 @@ sArrayType
 sClassDesc
 	:	sArrayType|OBJECT_TYPE|UP_Z|UP_B|UP_S|UP_C|UP_I|UP_J|UP_D|UP_F
 	;
-sId	:	ID|LOW_E|LOW_S|LOW_C|AT|AND|UP_Z|UP_B|UP_S|UP_C|UP_I|UP_F|UP_D|UP_J|ANNOTATION_VISIBLITY|METHOD_ANNOTATION_VISIBLITY|INNER|OUTTER
+sId	:	ID|AT|AND|UP_Z|UP_B|UP_S|UP_C|UP_I|UP_F|UP_D|UP_J|ANNOTATION_VISIBLITY|METHOD_ANNOTATION_VISIBLITY|INNER|OUTTER
 	|	IIOP|IOP|JOP|OP0|LDC|XFIELD|XTYPE|XINVOKE|INVOKEINTERFACE|MULTIANEWARRAY|LOOKUPSWITCH|TABLESWITCH|DEFAULT|FROM|TO|USING|STACK|LOCALS|HIGH|INVOKEDYNAMIC|VOID_TYPE
 	| WBOOLEAN| WBYTE | WSHORT|WCHAR|WINTEGER|WLONG|WFLOAT|WDOUBLE |XNEWARRAY
 	;
 sWord : sId ;
 sAnnotation
-	: '.annotation' (b=ANNOTATION_VISIBLITY a=sId { currentAnnotationVisitor= currentAv.visitAnnotation($a.text,!$b.text.contains("invisible")); } |
+	: '.annotation' (b=ANNOTATION_VISIBLITY aInternalOrDesc=sInternalNameOrDescACC { currentAnnotationVisitor= currentAv.visitAnnotation($aInternalOrDesc.desc,!$b.text.contains("invisible")); } |
 	                  b=METHOD_ANNOTATION_VISIBLITY c=INT a=sId {currentAnnotationVisitor=currentAv.visitParameterAnnotation(parseInt($c.text),$a.text,!$b.text.contains("invisible"));}
-	                ) sAnnotationElement*
-	  '.end annotation'
+	                )
+	    (sAnnotationElement* '.end annotation')?
 	;
 sVisibiltyAnnotation
 	: {boolean visible=false;} ('.runtime_visible_annotation' {visible=true;}|'.runtime_invisible_annotation'{visible=false;}) a=STRING      { currentAnnotationVisitor= currentAv.visitAnnotation(unEscape($a.text),visible); }
@@ -1038,10 +1036,11 @@ sSubannotationSoot  returns[AnnotationNode v]
 	    '.end' '.annotation'
 	;
 sAnnotationElement @init{List<Object> array = new ArrayList<Object>(); AnnotationNode _t= currentAnnotationVisitor;}
-    :   a=sId (   LOW_E c=OBJECT_TYPE '=' b=sWord  { _t.visit($a.text,new String[]{$c.text,$b.text}); }
+    :   a=sId (
+             xid=ID { if(!"e".contains($xid.text)){ throw new RecognitionException(input);} }  c=OBJECT_TYPE '=' b=sWord {  _t.visit($a.text,new String[]{$c.text,$b.text}); }
            | AT b2=OBJECT_TYPE '=' {  currentAnnotationVisitor=new AnnotationNode($b2.text);} sSubannotation  { _t.visit($a.text,currentAnnotationVisitor); }
-           | LOW_C  '=' b1=sClassDesc { currentAnnotationVisitor.visit($a.text,Type.getType($b1.text)); }
-           | LOW_S  '=' b3=STRING      { currentAnnotationVisitor.visit($a.text,unEscapeString($b3.text)); }
+           | xid=ID { if(!"c".contains($xid.text)){ throw new RecognitionException(input);} } '=' b1=sClassDesc { currentAnnotationVisitor.visit($a.text,Type.getType($b1.text)); }
+           | xid=ID { if(!"s".contains($xid.text)){ throw new RecognitionException(input);} } '=' b3=STRING      { currentAnnotationVisitor.visit($a.text,unEscapeString($b3.text)); }
            | UP_B  '=' b4=INT  { currentAnnotationVisitor.visit($a.text,(byte)parseInt($b4.text)); }
            | UP_Z  '=' b5=INT  { currentAnnotationVisitor.visit($a.text,0!=parseInt($b5.text)); }
            | UP_S  '=' b6=INT   { currentAnnotationVisitor.visit($a.text,(short)parseInt($b6.text)); }
@@ -1058,7 +1057,7 @@ sAnnotationElement @init{List<Object> array = new ArrayList<Object>(); Annotatio
            | ARRAY_J '='  (b17=(INT|LONG) {array.add(parseLong($b17.text));} )+  { currentAnnotationVisitor.visit($a.text,array); }
            | ARRAY_F '='  (b18=(INT|FLOAT|DOUBLE) {array.add(parseFloat($b18.text));} )+  { currentAnnotationVisitor.visit($a.text,array); }
            | ARRAY_D '='  (b19=(INT|DOUBLE) {array.add(parseDouble($b19.text));} )+       { currentAnnotationVisitor.visit($a.text,array); }
-           | ARRAY_LOW_E c=OBJECT_TYPE '='  (b=sWord {  array.add(new String[]{$c.text,$b.text}); } )+  { currentAnnotationVisitor.visit($a.text,array); }
+           | ARRAY_LOW_E c=OBJECT_TYPE '='  ((b1=sWord{  array.add(new String[]{$c.text,unEscape($b1.text)}); }|b2=STRING{  array.add(new String[]{$c.text,unEscapeString($b2.text)}); }|b3=DSTRING{  array.add(new String[]{$c.text,unEscapeString($b3.text)}); })  )+  { currentAnnotationVisitor.visit($a.text,array); }
            | ARRAY_AND b20=OBJECT_TYPE '=' ARRAY_AT '='  ({currentAnnotationVisitor=new AnnotationNode($b20.text);} sSubannotation{ array.add(currentAnnotationVisitor); })+ { currentAnnotationVisitor.visit($a.text,array); }
            | ARRAY_LOW_C '='  (b=sClassDesc {array.add(Type.getType($b.text));} )+       { currentAnnotationVisitor.visit($a.text,array); }
            | ARRAY_LOW_S '='  (b21=STRING {array.add(unEscapeString($b21.text));})+   { currentAnnotationVisitor.visit($a.text,array); }
@@ -1086,7 +1085,7 @@ sField	@init {
               |a2=LONG     {fn.value=parseValue(fn.desc,parseLong($a2.text));}
               |a3=FLOAT    {fn.value=parseValue(fn.desc,parseFloat($a3.text));}
               |a4=DOUBLE   {fn.value=parseValue(fn.desc,parseDouble($a4.text));}
-              |a5=sClassDesc {fn.value=parseValue(fn.desc,unEscape($a5.text));}
+              |a5=sClassDesc {fn.value=parseValue(fn.desc,Type.getType(unEscape($a5.text)));}
               )
         )?
             (
@@ -1120,7 +1119,7 @@ sMethod	@init{
                 |sSynthetic {cn.access|=ACC_SYNTHETIC;}
                 |sVisibiltyAnnotation
                 |sAnnotation
-                |'.throws' a=sId {  mn.exceptions.add(unEscape($a.text)); }
+                |'.throws' at=sInternalNameOrDesc {  mn.exceptions.add(Type.getType($at.desc).getInternalName()); }
                 |'.annotation_default' (t=sAnnotationElementSoot {currentAnnotationVisitor=(AnnotationNode)mn.visitAnnotationDefault();} )? '.end' '.annotation_default'
                 |'.param' ('.runtime_invisible_annotation'|'.runtime_visible_annotation') {int index=0;}
                     ({boolean visible=false;} ('.runtime_visible_annotation' {visible=true;}|'.runtime_invisible_annotation'{visible=false;}) a1=STRING
@@ -1135,7 +1134,7 @@ sMethod	@init{
 	('.method_attribute' sId STRING {System.err.println("ignore method_attribute");})*
 	;
 
-sLabel	:	ID|LOW_E|LOW_S|LOW_C|AT|AND|UP_Z|UP_B|UP_S|UP_C|UP_I|UP_F|UP_D|UP_J|ANNOTATION_VISIBLITY|METHOD_ANNOTATION_VISIBLITY|INNER|OUTTER
+sLabel	:	ACC|ID|UP_Z|UP_B|UP_S|UP_C|UP_I|UP_F|UP_D|UP_J|ANNOTATION_VISIBLITY|METHOD_ANNOTATION_VISIBLITY|INNER|OUTTER
 	;
 code
     :	a=OP0 { line($a.line); visitOP0(getOp($a.text)); }
@@ -1146,9 +1145,9 @@ code
 	                               |c=FLOAT      {mn.visitLdcInsn(parseFloat($c.text));}
 	                               |c=DOUBLE     {mn.visitLdcInsn(parseDouble($c.text));}
 	                               |c=STRING     {mn.visitLdcInsn(unEscapeString($c.text));}
-	                               |e=sClassDesc {mn.visitLdcInsn(unEscape($e.text));}
+	                               |eTV=sInternalNameOrDescNoString {mn.visitLdcInsn(Type.getType($eTV.desc));}
 	                              )
-	|	a=XFIELD e=sId f=sClassDesc {  line($a.line);  String oa[]=parseOwnerAndName($e.text); mn.visitFieldInsn(getOp($a.text),oa[0],oa[1],unEscape($f.text));   }
+	|	a=XFIELD efo=sFieldObject {  line($a.line);  mn.visitFieldInsn(getOp($a.text),$efo.ownerInternalName,$efo.memberName,$efo.type);   }
 	|   a=XNEWARRAY {line($a.line); }  (
 	               WBOOLEAN{mn.visitIntInsn(NEWARRAY,T_BOOLEAN);}
 	               |WBYTE{mn.visitIntInsn(NEWARRAY,T_BYTE);}
@@ -1158,20 +1157,18 @@ code
 	               |WLONG{mn.visitIntInsn(NEWARRAY,T_LONG);}
 	               |WFLOAT{mn.visitIntInsn(NEWARRAY,T_FLOAT);}
 	               |WDOUBLE{mn.visitIntInsn(NEWARRAY,T_DOUBLE);})
-	|	a=XTYPE ff=sId {
+	|	a=XTYPE ffTV=sInternalNameOrDescACC {
 	                       line($a.line);
-	                          mn.visitTypeInsn(getOp($a.text),unEscape($ff.text));
+	                          mn.visitTypeInsn(getOp($a.text),Type.getType($ffTV.desc).getInternalName());
 	            }
 	|	a=JOP z=sLabel  { line($a.line); visitJOP(getOp($a.text),getLabel($z.text)); }
-	|	a=XINVOKE e=sId  m=sMethodDesc   {line($a.line);
-	                    String oa[]=parseOwnerAndName($e.text);
-	                    mn.visitMethodInsn(getOp($a.text),oa[0],oa[1],unEscape($m.text));
+	|	a=XINVOKE e1=sMethodObject   {line($a.line);
+	                    mn.visitMethodInsn(getOp($a.text),$e1.ownerInternalName,$e1.memberName,$e1.desc);
 	                  }
-	|	a=INVOKEINTERFACE e=sId  m=sMethodDesc INT?  {line($a.line);
-	                    String oa[]=parseOwnerAndName($e.text);
-	                    mn.visitMethodInsn(getOp($a.text),oa[0],oa[1],unEscape($m.text));
+	|	a=INVOKEINTERFACE e2=sMethodObject INT?  {line($a.line);
+	                    mn.visitMethodInsn(getOp($a.text),$e2.ownerInternalName,$e2.memberName,$e2.desc);
 	                  }
-	|	a=INVOKEDYNAMIC sId sMethodDesc sId sMethodDesc '(' sInvokeDynamicE (',' sInvokeDynamicE)* ')'  {line($a.line); if(1==1) throw new RuntimeException("not support Yet!");}
+	|	a=INVOKEDYNAMIC e3=sMethodObject sId sMethodDesc '(' sInvokeDynamicE (',' sInvokeDynamicE)* ')'  {line($a.line); if(1==1) throw new RuntimeException("not support Yet!");}
 	|	a=MULTIANEWARRAY ff=sClassDesc c=INT   {line($a.line); mn.visitMultiANewArrayInsn(unEscape($ff.text),parseInt($c.text)); }
 	|   z=sLabel ':' { Label label=getLabel($z.text); mn.visitLabel(label); if(rebuildLine) {mn.visitLineNumber($z.start.getLine(),label);}
 	 }
@@ -1204,4 +1201,47 @@ sSwitch @init {List<Integer> keys=null;List<Label> labels=null;Label defaultLabe
 	|   a=TABLESWITCH { labels=new ArrayList<>();  } c=INT (z=sLabel  {labels.add(getLabel($z.text));} )* (DEFAULT ':' z=sLabel {defaultLabel=getLabel($z.text);})    {
         	        line($a.line); mn.visitTableSwitchInsn(parseInt($c.text),parseInt($c.text)+labels.size()-1,defaultLabel,labels.toArray(new Label[labels.size()]));
         	        }
+    ;
+sInternalNameOrDesc returns[String desc]
+    : (a=sArrayType { $desc=unEscape($a.text); }|b=OBJECT_TYPE { $desc=unEscape($b.text); })
+    | c=sId {  $desc= "L"+unEscape($c.text)+";"; }
+    | DSTRING {  $desc= "L"+unEscapeString($DSTRING.text)+";"; }
+    | STRING {  $desc= "L"+unEscapeString($STRING.text)+";"; }
+    ;
+sInternalNameOrDescACC returns[String desc]
+        : (a=sArrayType { $desc=unEscape($a.text); }|b=OBJECT_TYPE { $desc=unEscape($b.text); })
+        | c=sAnyId {  $desc= "L"+unEscape($c.text)+";"; }
+        | DSTRING {  $desc= "L"+unEscapeString($DSTRING.text)+";"; }
+        | STRING {  $desc= "L"+unEscapeString($STRING.text)+";"; }
+        ;
+sInternalNameOrDescNoString returns[String desc]
+    : (a=sArrayType { $desc=unEscape($a.text); }|b=OBJECT_TYPE { $desc=unEscape($b.text); })
+    | c=sAnyId {  $desc= "L"+unEscape($c.text)+";"; }
+    ;
+sAnyId
+    : ACC | sId
+    ;
+sAnyIdOrString returns[String str]
+    : sAnyId { $str=unEscape($sAnyId.text);}
+    | STRING { $str=unEscapeString($STRING.text); }
+    | DSTRING { $str=unEscapeString($DSTRING.text); }
+    ;
+sOwnerAndName returns[String ownerInternalName, String memberName]
+    :    a=sArrayType '/' x=sAnyId { if($x.text.contains("/")){ throw new RecognitionException(input);}  $ownerInternalName=unEscape($a.text); $memberName=unEscape($x.text); }
+    | b=sClassDesc '->' x=sAnyId { if($x.text.contains("/")){ throw new RecognitionException(input);} $ownerInternalName=Type.getType(unEscape($b.text)).getInternalName(); $memberName=unEscape($x.text);  }
+    | c=sId { String cstr=$c.text; int idx=cstr.lastIndexOf('/'); if(idx<=0) { throw new RecognitionException(input); } $ownerInternalName=unEscape(cstr.substring(0,idx)); $memberName=unEscape(cstr.substring(idx+1)); }
+    ;
+sMethodObject returns[String ownerInternalName, String memberName, String desc]
+    :   ( a=sArrayType '/' x=sAnyId { if($x.text.contains("/")){ throw new RecognitionException(input);}  $ownerInternalName=unEscape($a.text); $memberName=unEscape($x.text); }
+        | b=sClassDesc '->' x=sAnyId { if($x.text.contains("/")){ throw new RecognitionException(input);} $ownerInternalName=Type.getType(unEscape($b.text)).getInternalName(); $memberName=unEscape($x.text);  }
+        | c=sId { String cstr=$c.text; int idx=cstr.lastIndexOf('/'); if(idx<=0) { throw new RecognitionException(input); } $ownerInternalName=unEscape(cstr.substring(0,idx)); $memberName=unEscape(cstr.substring(idx+1)); }
+        )
+      d=sMethodDesc { $desc=unEscape($d.text);  }
+    ;
+sFieldObject returns[String ownerInternalName, String memberName, String type]
+    :   ( a=sArrayType '/' x=sAnyId { if($x.text.contains("/")){ throw new RecognitionException(input);}  $ownerInternalName=unEscape($a.text); $memberName=unEscape($x.text); }
+        | b=sClassDesc '->' x=sAnyId ':' { if($x.text.contains("/")){ throw new RecognitionException(input);} $ownerInternalName=Type.getType(unEscape($b.text)).getInternalName(); $memberName=unEscape($x.text);  }
+        | c=sId { String cstr=$c.text; int idx=cstr.lastIndexOf('/'); if(idx<=0) { throw new RecognitionException(input); } $ownerInternalName=unEscape(cstr.substring(0,idx)); $memberName=unEscape(cstr.substring(idx+1)); }
+        )
+      b=sClassDesc { $type=unEscape($b.text);  }
     ;

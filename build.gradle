@@ -29,10 +29,13 @@ subprojects {
   }
   sourceSets {
       main { compileClasspath += configurations.provided }
-      test { compileClasspath += configurations.provided }
-  }
+      test {
+        compileClasspath += configurations.provided
 
-  test.classpath += configurations.provided
+        // make sure the resources and class output to same dir, for simple unit test
+        output.resourcesDir = output.classesDir
+      }
+  }
 // == end
 
   [compileJava, compileTestJava]*.options.collect {options ->options.encoding = 'UTF-8'}

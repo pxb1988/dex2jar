@@ -77,7 +77,7 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
         }
 
         if (output == null) {
-            output = new File(getBaseName(jar) + "-jar2jasmin/").toPath();
+            output = new File(getBaseName(jar) + "-jasmin2jar/").toPath();
         }
 
         if (Files.exists(output) && !forceOverwrite) {

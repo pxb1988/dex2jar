@@ -29,17 +29,15 @@
  */
 package com.googlecode.d2j.jasmin;
 
-import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.util.Printer;
+
+import java.io.PrintWriter;
+import java.util.*;
 
 /**
  * <b>get from asm example</b>
@@ -91,6 +89,8 @@ import org.objectweb.asm.util.Printer;
  * @author Eric Bruneton
  */
 public class JasminDumper implements Opcodes {
+    private static Set<String> ACCESS_KWS = new HashSet<String>(Arrays
+            .asList("abstract", "private", "protected", "public", "enum", "final", "interface", "static", "strictfp", "native", "super"));
 
     public JasminDumper(PrintWriter pw) {
         this.pw = pw;
@@ -106,6 +106,16 @@ public class JasminDumper implements Opcodes {
      */
     protected final Map<Label, String> labelNames = new HashMap<>();
 
+    static void printIdAfterAccess(PrintWriter out, String id) {
+        if (ACCESS_KWS.contains(id)) {
+            out.print("\"");
+            out.print(id);
+            out.print("\"");
+        } else {
+            out.print(id);
+        }
+    }
+
     public void dump(ClassNode cn) {
         labelNames.clear();
         pw.print(".bytecode ");
@@ -116,12 +126,17 @@ public class JasminDumper implements Opcodes {
         pw.print(".class");
         pw.print(access_clz(cn.access));
         pw.print(' ');
-        pw.println(cn.name);
+        printIdAfterAccess(pw, cn.name);
+        pw.println();
         if (cn.superName != null) {
-            println(".super ", cn.superName);
+            pw.print(".super ");
+            printIdAfterAccess(pw, cn.superName);
+            pw.println();
         }
         for (String itf : cn.interfaces) {
-            println(".implements ", itf);
+            pw.print(".implements ");
+            printIdAfterAccess(pw, itf);
+            pw.println();
         }
         if (cn.signature != null) {
             println(".signature ", '"' + cn.signature + '"');
@@ -158,7 +173,7 @@ public class JasminDumper implements Opcodes {
             pw.print(access_clz(in.access & (~Opcodes.ACC_SUPER)));
             if (in.innerName != null) {
                 pw.print(' ');
-                pw.print(in.innerName);
+                printIdAfterAccess(pw, in.innerName);
             }
             if (in.name != null) {
                 pw.print(" inner ");
@@ -182,9 +197,9 @@ public class JasminDumper implements Opcodes {
             boolean deprecated = (fn.access & Opcodes.ACC_DEPRECATED) != 0;
             pw.print("\n.field");
             pw.print(access_fld(fn.access));
-            pw.print(" '");
-            pw.print(fn.name);
-            pw.print("' ");
+            pw.print(' ');
+            printIdAfterAccess(pw,fn.name);
+            pw.print(' ');
             pw.print(fn.desc);
             if (fn.value instanceof String) {
                 StringBuffer buf = new StringBuffer();
@@ -223,7 +238,7 @@ public class JasminDumper implements Opcodes {
             pw.print("\n.method");
             pw.print(access_mtd(mn.access));
             pw.print(' ');
-            pw.print(mn.name);
+            printIdAfterAccess(pw, mn.name);
             pw.println(mn.desc);
             if (mn.signature != null) {
                 pw.print(".signature \"");
@@ -692,7 +707,7 @@ public class JasminDumper implements Opcodes {
             pw.print("e ");
             pw.print(((String[]) value)[0]);
             pw.print(" = ");
-            print(((String[]) value)[1]);
+            pw.print(((String[]) value)[1]);
             pw.println();
         } else if (value instanceof AnnotationNode) {
             pw.print("@ ");
