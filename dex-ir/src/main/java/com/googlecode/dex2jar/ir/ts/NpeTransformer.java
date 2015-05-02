@@ -17,6 +17,7 @@
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.StmtSearcher;
 import com.googlecode.dex2jar.ir.StmtTraveler;
 import com.googlecode.dex2jar.ir.expr.Constant;
 import com.googlecode.dex2jar.ir.expr.Exprs;
@@ -26,14 +27,16 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 
 /**
- * Replace MUST be NullPointerException stmt to 'throw new NullPointerException()' run after {@link SSATransformer} and
- * {@link RemoveConstantFromSSA}
+ * Replace MUST be NullPointerException stmt to 'throw new NullPointerException()'
+ *
+ * Replace MUST be 'divide by zero' stmt to 'throw new ArithmeticException("divide by zero")'
  */
 public class NpeTransformer extends StatedTransformer {
-    private static class XNPE extends RuntimeException {
+    private static class MustThrowException extends RuntimeException {
     }
 
-    private static final XNPE NPE = new XNPE();
+    private static final MustThrowException NPE = new MustThrowException();
+    private static final MustThrowException DIVE = new MustThrowException();
 
     @Override
     public boolean transformReportChanged(IrMethod method) {
@@ -41,19 +44,19 @@ public class NpeTransformer extends StatedTransformer {
         if (method.locals.size() == 0) {
             return false;
         }
-        StmtTraveler st = new StmtTraveler() {
+        StmtSearcher st = new StmtSearcher() {
             @Override
-            public Stmt travel(Stmt stmt) {
+            public void travel(Stmt stmt) {
                 if (stmt.st == Stmt.ST.FILL_ARRAY_DATA) {
                     if (isNull(stmt.getOp1())) {
                         throw NPE;
                     }
                 }
-                return super.travel(stmt);
+                super.travel(stmt);
             }
 
             @Override
-            public Value travel(Value op) {
+            public void travel(Value op) {
                 switch (op.vt) {
                 case INVOKE_VIRTUAL:
                 case INVOKE_SPECIAL:
@@ -75,9 +78,24 @@ public class NpeTransformer extends StatedTransformer {
                     }
                 }
                     break;
+                    case IDIV:
+                        if (op.getOp2().vt == Value.VT.CONSTANT) {
+                            Constant constant = (Constant) op.getOp2();
+                            if (((Number) constant.value).intValue() == 0) {
+                                throw DIVE;
+                            }
+                        }
+                        break;
+                    case LDIV:
+                        if (op.getOp2().vt == Value.VT.CONSTANT) {
+                            Constant constant = (Constant) op.getOp2();
+                            if (((Number) constant.value).longValue() == 0) {
+                                throw DIVE;
+                            }
+                        }
+                        break;
                 default:
                 }
-                return op;
             }
 
         };
@@ -85,19 +103,18 @@ public class NpeTransformer extends StatedTransformer {
             try {
                 st.travel(p);
                 p = p.getNext();
-            } catch (XNPE e) {
-                npe(method, p);
+            } catch (MustThrowException e) {
+                replace(method, p);
                 Stmt q = p.getNext();
                 method.stmts.remove(p);
                 changed = true;
                 p = q;
-
             }
         }
         return changed;
     }
 
-    private void npe(final IrMethod m, final Stmt p) {
+    private void replace(final IrMethod m, final Stmt p) {
         StmtTraveler traveler = new StmtTraveler() {
             @Override
             public Value travel(Value op) {
@@ -127,6 +144,24 @@ public class NpeTransformer extends StatedTransformer {
                     }
                 }
                     break;
+                    case IDIV:
+                        if (op.getOp2().vt == Value.VT.CONSTANT) {
+                            Constant constant = (Constant) op.getOp2();
+                            if (((Number) constant.value).intValue() == 0) {
+                                travel(op.getOp1());
+                                throw DIVE;
+                            }
+                        }
+                        break;
+                    case LDIV:
+                        if (op.getOp2().vt == Value.VT.CONSTANT) {
+                            Constant constant = (Constant) op.getOp2();
+                            if (((Number) constant.value).longValue() == 0) {
+                                travel(op.getOp1());
+                                throw DIVE;
+                            }
+                        }
+                        break;
                 default:
                 }
                 Value sop = super.travel(op);
@@ -177,9 +212,14 @@ public class NpeTransformer extends StatedTransformer {
                 break;
             case En:
             }
-        } catch (XNPE e) {
-            m.stmts.insertBefore(p,
-                    Stmts.nThrow(Exprs.nInvokeNew(new Value[0], new String[0], "Ljava/lang/NullPointerException;")));
+        } catch (MustThrowException e) {
+            if (e == NPE) {
+                m.stmts.insertBefore(p,
+                        Stmts.nThrow(Exprs.nInvokeNew(new Value[0], new String[0], "Ljava/lang/NullPointerException;")));
+            } else {
+                m.stmts.insertBefore(p,
+                        Stmts.nThrow(Exprs.nInvokeNew(new Value[]{Exprs.nString("divide by zero")}, new String[]{"Ljava/lang/String;"}, "Ljava/lang/ArithmeticException;")));
+            }
         }
     }
 
