@@ -18,7 +18,6 @@ package com.googlecode.d2j.tools.jar.test;
 
 import com.googlecode.d2j.jasmin.JasminDumper;
 import com.googlecode.d2j.jasmin.Jasmins;
-import jdk.internal.org.objectweb.asm.Type;
 import org.junit.Assert;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
