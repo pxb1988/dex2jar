@@ -39,8 +39,7 @@ import com.googlecode.d2j.visitors.*;
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
-public class DexFileReader {
-
+public class DexFileReader implements BaseDexFileReader {
     /**
      * skip debug infos in dex file.
      */
@@ -69,7 +68,6 @@ public class DexFileReader {
      * keep clinit method when {@link #SKIP_DEBUG}
      */
     public static final int KEEP_CLINIT = 1 << 7;
-
 
     // private static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
 
@@ -109,7 +107,6 @@ public class DexFileReader {
     private static final int VALUE_BOOLEAN = 31;
     final ByteBuffer annotationSetRefListIn;
     final ByteBuffer annotationsDirectoryItemIn;
-
     final ByteBuffer annotationSetItemIn;
     final ByteBuffer annotationItemIn;
     final ByteBuffer classDataIn;
@@ -536,10 +533,12 @@ public class DexFileReader {
      * 
      * @param dv
      */
+    @Override
     public void accept(DexFileVisitor dv) {
         this.accept(dv, 0);
     }
 
+    @Override
     public List<String> getClassNames() {
         List<String> names = new ArrayList<>(class_defs_size);
         ByteBuffer in = classDefIn;
@@ -560,6 +559,7 @@ public class DexFileReader {
      *            config flags, {@link #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_ANNOTATION},
      *            {@link #SKIP_FIELD_CONSTANT}
      */
+    @Override
     public void accept(DexFileVisitor dv, int config) {
         for (int cid = 0; cid < class_defs_size; cid++) {
             accept(dv, cid, config);
@@ -579,6 +579,7 @@ public class DexFileReader {
      *            config flags, {@link #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_ANNOTATION},
      *            {@link #SKIP_FIELD_CONSTANT}
      */
+    @Override
     public void accept(DexFileVisitor dv, int classIdx, int config) {
         classDefIn.position(classIdx * 32);
         int class_idx = classDefIn.getInt();
@@ -1294,7 +1295,7 @@ public class DexFileReader {
             findTryCatch(in, dcv, tries_size, insns, labelsMap, handlers);
         }
         // 处理debug信息
-        if (debug_info_off != 0 && (0 == (config & DexFileReader.SKIP_DEBUG))) {
+        if (debug_info_off != 0 && (0 == (config & SKIP_DEBUG))) {
             DexDebugVisitor ddv = dcv.visitDebug();
             if (ddv != null) {
                 read_debug_info(debug_info_off, registers_size, isStatic, method, labelsMap, ddv);

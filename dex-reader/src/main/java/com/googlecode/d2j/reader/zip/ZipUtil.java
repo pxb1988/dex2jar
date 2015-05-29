@@ -16,6 +16,7 @@
 
 package com.googlecode.d2j.reader.zip;
 
+import com.googlecode.d2j.util.zip.AccessBufByteArrayOutputStream;
 import com.googlecode.d2j.util.zip.ZipEntry;
 import com.googlecode.d2j.util.zip.ZipFile;
 
@@ -33,12 +34,12 @@ import java.nio.file.Path;
  */
 public class ZipUtil {
     public static byte[] toByteArray(InputStream is) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        AccessBufByteArrayOutputStream out = new AccessBufByteArrayOutputStream();
         byte[] buff = new byte[1024];
         for (int c = is.read(buff); c > 0; c = is.read(buff)) {
             out.write(buff, 0, c);
         }
-        return out.toByteArray();
+        return out.getBuf();
     }
 
     /**

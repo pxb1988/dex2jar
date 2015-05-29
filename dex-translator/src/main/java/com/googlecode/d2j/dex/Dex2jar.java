@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.googlecode.d2j.node.DexMethodNode;
+import com.googlecode.d2j.reader.BaseDexFileReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -50,7 +51,7 @@ public class Dex2jar {
         return from(new DexFileReader(in));
     }
 
-    public static Dex2jar from(DexFileReader reader) {
+    public static Dex2jar from(BaseDexFileReader reader) {
         return new Dex2jar(reader);
     }
 
@@ -68,11 +69,11 @@ public class Dex2jar {
 
     private DexExceptionHandler exceptionHandler;
 
-    final private DexFileReader reader;
+    final private BaseDexFileReader reader;
     private int readerConfig;
     private int v3Config;
 
-    private Dex2jar(DexFileReader reader) {
+    private Dex2jar(BaseDexFileReader reader) {
         super();
         this.reader = reader;
         readerConfig |= DexFileReader.SKIP_DEBUG;
@@ -175,7 +176,7 @@ public class Dex2jar {
         return exceptionHandler;
     }
 
-    public DexFileReader getReader() {
+    public BaseDexFileReader getReader() {
         return reader;
     }
 

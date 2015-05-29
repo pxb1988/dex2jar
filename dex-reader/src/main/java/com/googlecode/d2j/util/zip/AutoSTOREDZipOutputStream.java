@@ -16,7 +16,6 @@
  */
 package com.googlecode.d2j.util.zip;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.*;
@@ -28,12 +27,6 @@ import java.util.zip.ZipEntry;
 public class AutoSTOREDZipOutputStream extends ZipOutputStream {
     public AutoSTOREDZipOutputStream(OutputStream out) {
         super(out);
-    }
-
-    static class AccessBufByteArrayOutputStream extends ByteArrayOutputStream {
-        public byte[] getBuf() {
-            return buf;
-        }
     }
 
     private CRC32 crc = new CRC32();

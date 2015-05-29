@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.googlecode.d2j.reader.BaseDexFileReader;
+import com.googlecode.d2j.reader.MultiDexFileReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -34,7 +36,6 @@ import com.googlecode.d2j.dex.ExDex2Asm;
 import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.reader.DexFileReader;
-import com.googlecode.d2j.reader.zip.ZipUtil;
 
 @BaseCmd.Syntax(cmd = "d2j-mt-dex2jar", syntax = "[options] <file0> [file1 ... fileN]", desc = "convert dex to jar")
 public class Dex2jarMultiThreadCmd extends BaseCmd {
@@ -90,7 +91,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
         final Path errorFile = currentDir.resolve(baseName + "-error.zip");
         System.err.println("dex2jar " + fileName + " -> " + file);
         final BaksmaliBaseDexExceptionHandler exceptionHandler = new BaksmaliBaseDexExceptionHandler();
-        DexFileReader reader = new DexFileReader(ZipUtil.readDex(new File(fileName)));
+        BaseDexFileReader reader = MultiDexFileReader.open(Files.readAllBytes(new File(fileName).toPath()));
         DexFileNode fileNode = new DexFileNode();
         try {
             reader.accept(fileNode, DexFileReader.SKIP_DEBUG | DexFileReader.IGNORE_READ_EXCEPTION);

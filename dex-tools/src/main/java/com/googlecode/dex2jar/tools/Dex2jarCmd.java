@@ -16,14 +16,15 @@
  */
 package com.googlecode.dex2jar.tools;
 
+import com.googlecode.d2j.dex.Dex2jar;
+import com.googlecode.d2j.reader.BaseDexFileReader;
+import com.googlecode.d2j.reader.DexFileReader;
+import com.googlecode.d2j.reader.MultiDexFileReader;
+import com.googlecode.dex2jar.ir.ET;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import com.googlecode.d2j.dex.Dex2jar;
-import com.googlecode.d2j.reader.DexFileReader;
-import com.googlecode.d2j.reader.zip.ZipUtil;
-import com.googlecode.dex2jar.ir.ET;
 
 @BaseCmd.Syntax(cmd = "d2j-dex2jar", syntax = "[options] <file0> [file1 ... fileN]", desc = "convert dex to jar")
 public class Dex2jarCmd extends BaseCmd {
@@ -101,7 +102,7 @@ public class Dex2jarCmd extends BaseCmd {
             Path file = output == null ? currentDir.resolve(baseName + "-dex2jar.jar") : output;
             System.err.println("dex2jar " + fileName + " -> " + file);
 
-            DexFileReader reader = new DexFileReader(ZipUtil.readDex(new File(fileName)));
+            BaseDexFileReader reader = MultiDexFileReader.open(Files.readAllBytes(new File(fileName).toPath()));
             BaksmaliBaseDexExceptionHandler handler = notHandleException ? null : new BaksmaliBaseDexExceptionHandler();
             Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort()
                     .skipDebug(!debugInfo).optimizeSynchronized(this.optmizeSynchronized).printIR(printIR)
