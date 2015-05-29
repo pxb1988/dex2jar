@@ -286,9 +286,9 @@ import java.util.*;
         public void visitStartLocal(int reg, DexLabel label, String name, String type, String signature) {
             super.visitStartLocal(reg, label, name, type, signature);
             if (signature == null) {
-                out.s(".local %s, %s:%s", reg(reg), name, type);
+                out.s(".local %s, %s:%s", reg(reg), BaksmaliDumper.escapeValue(name), type);
             } else {
-                out.s(".local %s, %s:%s, %s", reg(reg), name, type, BaksmaliDumper.escapeValue(signature));
+                out.s(".local %s, %s:%s, %s", reg(reg), BaksmaliDumper.escapeValue(name), type, BaksmaliDumper.escapeValue(signature));
             }
         }
 

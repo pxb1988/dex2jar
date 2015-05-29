@@ -24,7 +24,7 @@ import java.util.List;
 
 public class DebugInfoItem extends BaseItem {
     public List<DNode> debugNodes = new ArrayList<>();
-    public List<StringIdItem> parameterNames = new ArrayList<>();
+    public StringIdItem parameterNames[];
     public int firstLine;
     public StringIdItem fileName;
 
@@ -117,7 +117,7 @@ public class DebugInfoItem extends BaseItem {
         if (parameterNames == null) {
             offset += lengthOfUleb128(0);
         } else {
-            offset += lengthOfUleb128(parameterNames.size());
+            offset += lengthOfUleb128(parameterNames.length);
             for (StringIdItem s : parameterNames) {
                 offset += lengthOfUleb128(1 + (s == null ? -1 : s.index));
             }
@@ -214,7 +214,7 @@ public class DebugInfoItem extends BaseItem {
         if (parameterNames == null) {
             out.uleb128("szParams", 0);
         } else {
-            out.uleb128("szParams", parameterNames.size());
+            out.uleb128("szParams", parameterNames.length);
             for (StringIdItem s : parameterNames) {
                 out.uleb128p1("param_name_index", s == null ? -1 : s.index);
             }

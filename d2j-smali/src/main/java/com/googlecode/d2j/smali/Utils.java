@@ -1,17 +1,17 @@
 package com.googlecode.d2j.smali;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.Visibility;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexAnnotationVisitor;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Utils implements DexConstants {
 
@@ -401,4 +401,32 @@ public class Utils implements DexConstants {
         }
         return a;
     }
+
+    public static int reg2ParamIdx(Method m, int reg, int locals, boolean isStatic) {
+        int x = reg - locals;
+        if (x < 0) {
+            return -1;
+        }
+        int a = isStatic ? 0 : 1;
+        String[] parameterTypes = m.getParameterTypes();
+        for (int i = 0, parameterTypesLength = parameterTypes.length; i < parameterTypesLength; i++) {
+
+            if (x == a) {
+                return i;
+            }
+
+            String t = parameterTypes[i];
+            switch (t.charAt(0)) {
+                case 'J':
+                case 'D':
+                    a += 2;
+                    break;
+                default:
+                    a += 1;
+                    break;
+            }
+        }
+        return -1;
+    }
+
 }

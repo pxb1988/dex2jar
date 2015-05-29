@@ -25,6 +25,7 @@ package com.googlecode.d2j.smali;
     String source;
     int ins_in;
     String clzName;
+    boolean isStatic;
     List<String> interfaceNames = new ArrayList(5);
     Map<String,DexLabel> labelsMap=new HashMap();
     String superName;
@@ -65,7 +66,6 @@ package com.googlecode.d2j.smali;
      
       }
     }
-
 }
 
 fragment
@@ -184,7 +184,7 @@ sSource 	:	'.source' a=STRING {this.source=unEscape($a.text);};
 sSuper	:	'.super' a=OBJECT_TYPE {this.superName=unEscapeId($a.text);};
 sInterface
 	:	'.implements' a=OBJECT_TYPE {this.interfaceNames.add(unEscapeId($a.text));};
-sMethod	@init{ boolean isStatic=false; SmaliCodeVisitor dcv=null;     DexMethodVisitor dexMethodVisitor=null; DexDebugVisitor debugVisitor=null; int paramIndex=0; }
+sMethod	@init{ isStatic=false; SmaliCodeVisitor dcv=null;     DexMethodVisitor dexMethodVisitor=null; DexDebugVisitor debugVisitor=null; int paramIndex=0; }
 	:	'.method' acc=sAccList {isStatic=0!=(acc&ACC_STATIC);} 
 		( m1=sMethodF { dexMethodVisitor=dexClassVisitor.visitMethod(acc,$m1.m); this.currentMethod=m1; this.ins_in=methodIns($m1.m,isStatic); }
 			| m2=sMethodP { dexMethodVisitor=dexClassVisitor.visitMethod(acc,$m2.m);this.currentMethod=$m2.m; this.ins_in=methodIns($m2.m,isStatic);}
@@ -233,7 +233,7 @@ sFieldValue returns[Object s]
 	:	a=sBaseValue {$s=$a.v;};
 sParameter[DexMethodVisitor dmv, int paramIndex, DexDebugVisitor debugVisitor]
 	:	('.parameter' (a=STRING { debugVisitor.visitParameterName(paramIndex,unescapeStr($a.text)); } )?  ( ( {dexAnnotationAble=dmv.visitParameterAnnotation(paramIndex);} sAnnotation {dexAnnotationAble=null;})* '.end parameter')?)
-		| ('.param' r1=REGISTER (',' a=STRING {  debugVisitor.visitParameterName(getReg($r1.text), unescapeStr($a.text)); } )? (({dexAnnotationAble=dmv.visitParameterAnnotation(getReg($r1.text));} sAnnotation {dexAnnotationAble=null;})* '.end param')?)
+		| ('.param' r1=REGISTER (',' a=STRING {  debugVisitor.visitParameterName(reg2ParamIdx(currentMethod,getReg($r1.text),locals,isStatic), unescapeStr($a.text)); } )? (({dexAnnotationAble=dmv.visitParameterAnnotation(getReg($r1.text));} sAnnotation {dexAnnotationAble=null;})* '.end param')?)
 	;
 sAnnotationKeyName
 	:	sBaseMemberName|ACC;

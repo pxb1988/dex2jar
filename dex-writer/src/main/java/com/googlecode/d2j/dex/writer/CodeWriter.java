@@ -16,39 +16,21 @@
  */
 package com.googlecode.d2j.dex.writer;
 
-import static com.googlecode.d2j.reader.InstructionFormat.kFmt10x;
-import static com.googlecode.d2j.reader.InstructionFormat.kFmt11x;
-import static com.googlecode.d2j.reader.InstructionFormat.kFmt22b;
-import static com.googlecode.d2j.reader.InstructionFormat.kFmt22s;
-import static com.googlecode.d2j.reader.InstructionFormat.kFmt23x;
-import static com.googlecode.d2j.reader.InstructionFormat.kFmt35c;
-import static com.googlecode.d2j.reader.InstructionFormat.kFmt3rc;
-import static com.googlecode.d2j.reader.Op.BAD_OP;
-import static com.googlecode.d2j.reader.Op.CONST;
-import static com.googlecode.d2j.reader.Op.CONST_16;
-import static com.googlecode.d2j.reader.Op.CONST_HIGH16;
-import static com.googlecode.d2j.reader.Op.CONST_WIDE_32;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.dex.writer.insn.*;
+import com.googlecode.d2j.dex.writer.item.*;
+import com.googlecode.d2j.reader.Op;
+import com.googlecode.d2j.visitors.DexCodeVisitor;
+import com.googlecode.d2j.visitors.DexDebugVisitor;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 
-import com.googlecode.d2j.DexLabel;
-import com.googlecode.d2j.Field;
-import com.googlecode.d2j.Method;
-import com.googlecode.d2j.dex.writer.insn.Insn;
-import com.googlecode.d2j.dex.writer.insn.JumpOp;
-import com.googlecode.d2j.dex.writer.insn.Label;
-import com.googlecode.d2j.dex.writer.insn.OpInsn;
-import com.googlecode.d2j.dex.writer.insn.PreBuildInsn;
-import com.googlecode.d2j.dex.writer.item.BaseItem;
-import com.googlecode.d2j.dex.writer.item.CodeItem;
-import com.googlecode.d2j.dex.writer.item.ConstPool;
-import com.googlecode.d2j.dex.writer.item.DebugInfoItem;
-import com.googlecode.d2j.node.DexDebugNode;
-import com.googlecode.d2j.reader.Op;
-import com.googlecode.d2j.visitors.DexCodeVisitor;
-import com.googlecode.d2j.visitors.DexDebugVisitor;
+import static com.googlecode.d2j.reader.InstructionFormat.*;
+import static com.googlecode.d2j.reader.Op.*;
 
 @SuppressWarnings("incomplete-switch")
 public class CodeWriter extends DexCodeVisitor {
@@ -793,6 +775,7 @@ public class CodeWriter extends DexCodeVisitor {
 
         if (codeItem.debugInfo == null) {
             codeItem.debugInfo = new DebugInfoItem();
+            codeItem.debugInfo.parameterNames=new StringIdItem[owner.getParameterTypes().length];
         }
         final DebugInfoItem debugInfoItem = codeItem.debugInfo;
         cp.addDebugInfoItem(debugInfoItem);
@@ -803,11 +786,10 @@ public class CodeWriter extends DexCodeVisitor {
                 if (name == null) {
                     return;
                 }
-                while (debugInfoItem.parameterNames.size() <= parameterIndex) {
-                    debugInfoItem.parameterNames.add(null);
+                if (parameterIndex >= debugInfoItem.parameterNames.length) {
+                    return;
                 }
-
-                debugInfoItem.parameterNames.set(parameterIndex, cp.uniqString(name));
+                debugInfoItem.parameterNames[parameterIndex] = cp.uniqString(name);
             }
 
             @Override
