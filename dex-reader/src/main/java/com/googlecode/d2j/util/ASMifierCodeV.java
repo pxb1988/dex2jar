@@ -175,9 +175,7 @@ public class ASMifierCodeV extends DexCodeVisitor implements DexConstants {
 
     @Override
     public DexDebugVisitor visitDebug() {
-        m.s("DexDebugVisitor ddv=code.visitDebug();");
-        m.s("if(ddv!=null){");
-        m.push();
+        m.s("DexDebugVisitor ddv=new DexDebugVisitor(code.visitDebug());");
         return new DexDebugVisitor() {
             @Override
             public void visitParameterName(int reg, String name) {
@@ -217,13 +215,7 @@ public class ASMifierCodeV extends DexCodeVisitor implements DexConstants {
 
             @Override
             public void visitRestartLocal(int reg, DexLabel label) {
-                m.s("ddv.visitReStartLocal(%d,%s);", reg, v(label));
-            }
-
-            @Override
-            public void visitEnd() {
-                m.pop();
-                m.s("}");
+                m.s("ddv.visitRestartLocal(%d,%s);", reg, v(label));
             }
         };
     }
