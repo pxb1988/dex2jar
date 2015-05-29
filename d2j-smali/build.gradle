@@ -7,8 +7,8 @@ dependencies {
   }
   compile project(':dex-reader')
   antlr2java(group: 'org.antlr', name: 'antlr', version:'3.5.2')
-  provided project(':d2j-base-cmd')
-  provided project(':dex-writer')
+  compile project(':d2j-base-cmd')
+  compile project(':dex-writer')
 }
 
 task antlr2java(type: JavaExec) {

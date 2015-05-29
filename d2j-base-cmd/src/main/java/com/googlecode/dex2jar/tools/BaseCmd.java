@@ -393,7 +393,7 @@ public abstract class BaseCmd {
         } else {
             Method m = clz.getMethod("main",String[].class);
             m.setAccessible(true);
-            m.invoke(null, newArgs);
+            m.invoke(null, (Object)newArgs);
         }
     }
     

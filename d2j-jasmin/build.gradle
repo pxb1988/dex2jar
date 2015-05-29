@@ -7,7 +7,7 @@ dependencies {
   }
   compile "org.ow2.asm:asm-debug-all:5.0.3"
   antlr2java "org.antlr:antlr:3.5.2"
-  provided project(':d2j-base-cmd')
+  compile project(':d2j-base-cmd')
 }
 
 task antlr2java(type: JavaExec) {

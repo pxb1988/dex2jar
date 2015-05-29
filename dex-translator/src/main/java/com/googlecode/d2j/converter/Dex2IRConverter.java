@@ -564,6 +564,7 @@ public class Dex2IRConverter {
                         return b(nStaticField(field.getOwner(), field.getName(), field.getType()));
                     case NEW_INSTANCE:
                         return b(nNew(((TypeStmtNode) insn).type));
+                    default:
                 }
                 return null;
             }
