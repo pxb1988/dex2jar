@@ -16,40 +16,25 @@
  */
 package com.googlecode.d2j.converter;
 
-import java.lang.reflect.Array;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.googlecode.d2j.asm.LdcOptimizeAdapter;
+import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.Trap;
+import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.expr.Value.E1Expr;
+import com.googlecode.dex2jar.ir.expr.Value.E2Expr;
+import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
+import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.expr.ArrayExpr;
-import com.googlecode.dex2jar.ir.expr.CastExpr;
-import com.googlecode.dex2jar.ir.expr.Constant;
-import com.googlecode.dex2jar.ir.expr.Exprs;
-import com.googlecode.dex2jar.ir.expr.FieldExpr;
-import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
-import com.googlecode.dex2jar.ir.expr.InvokeExpr;
-import com.googlecode.dex2jar.ir.expr.Local;
-import com.googlecode.dex2jar.ir.expr.NewExpr;
-import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
-import com.googlecode.dex2jar.ir.expr.StaticFieldExpr;
-import com.googlecode.dex2jar.ir.expr.TypeExpr;
-import com.googlecode.dex2jar.ir.expr.Value;
-import com.googlecode.dex2jar.ir.expr.Value.E1Expr;
-import com.googlecode.dex2jar.ir.expr.Value.E2Expr;
-import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
-import com.googlecode.dex2jar.ir.expr.Value.VT;
-import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-import com.googlecode.dex2jar.ir.ts.Cfg;
-import com.googlecode.dex2jar.ir.ts.Cfg.TravelCallBack;
+import java.lang.reflect.Array;
+import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings("incomplete-switch")
 public class IR2JConverter implements Opcodes {
@@ -233,24 +218,45 @@ public class IR2JConverter implements Opcodes {
 
             case FILL_ARRAY_DATA:{
                 E2Stmt e2 = (E2Stmt) st;
-                Object arrayData = ((Constant) e2.getOp2()).value;
-                int arraySize=Array.getLength(arrayData);
-                String arrayValueType = e2.getOp1().valueType;
-                String elementType;
-                if (arrayValueType.charAt(0) == '[') {
-                    elementType = arrayValueType.substring(1);
+                if (e2.getOp2().vt == VT.CONSTANT) {
+                    Object arrayData = ((Constant) e2.getOp2()).value;
+                    int arraySize = Array.getLength(arrayData);
+                    String arrayValueType = e2.getOp1().valueType;
+                    String elementType;
+                    if (arrayValueType.charAt(0) == '[') {
+                        elementType = arrayValueType.substring(1);
+                    } else {
+                        elementType = "I";
+                    }
+                    int iastoreOP = getOpcode(elementType, IASTORE);
+                    accept(e2.getOp1(), asm);
+                    for (int i = 0; i < arraySize; i++) {
+                        asm.visitInsn(DUP);
+                        asm.visitLdcInsn(i);
+                        asm.visitLdcInsn(Array.get(arrayData, i));
+                        asm.visitInsn(iastoreOP);
+                    }
+                    asm.visitInsn(POP);
                 } else {
-                    elementType = "I";
+                    FilledArrayExpr filledArrayExpr = (FilledArrayExpr) e2.getOp2();
+                    int arraySize = filledArrayExpr.ops.length;
+                    String arrayValueType = e2.getOp1().valueType;
+                    String elementType;
+                    if (arrayValueType.charAt(0) == '[') {
+                        elementType = arrayValueType.substring(1);
+                    } else {
+                        elementType = "I";
+                    }
+                    int iastoreOP = getOpcode(elementType, IASTORE);
+                    accept(e2.getOp1(), asm);
+                    for (int i = 0; i < arraySize; i++) {
+                        asm.visitInsn(DUP);
+                        asm.visitLdcInsn(i);
+                        accept(filledArrayExpr.ops[i], asm);
+                        asm.visitInsn(iastoreOP);
+                    }
+                    asm.visitInsn(POP);
                 }
-                int iastoreOP = getOpcode(elementType, IASTORE);
-                accept(e2.getOp1(), asm);
-                for (int i = 0; i < arraySize; i++) {
-                    asm.visitInsn(DUP);
-                    asm.visitLdcInsn(i);
-                    asm.visitLdcInsn(Array.get(arrayData, i));
-                    asm.visitInsn(iastoreOP);
-                }
-                asm.visitInsn(POP);
             }
             break;
             case GOTO:
@@ -385,30 +391,6 @@ public class IR2JConverter implements Opcodes {
 
     private static boolean isLocalWithIndex(Value v, int i) {
         return v.vt == VT.LOCAL && ((Local) v)._ls_index == i;
-    }
-
-    private int[] buildLocalUsage(IrMethod ir) {
-        int maxLocal = 0;
-        for (Local local : ir.locals) {
-            if (local._ls_index > maxLocal) {
-                maxLocal = local._ls_index;
-            }
-        }
-        final int[] localUsages = new int[maxLocal + 1]; // maxIndex+1 to get the size
-        Cfg.travel(ir.stmts, new TravelCallBack() {
-
-            @Override
-            public Value onAssign(Local v, AssignStmt as) {
-                return v;
-            }
-
-            @Override
-            public Value onUse(Local v) {
-                localUsages[v._ls_index]++;
-                return v;
-            }
-        }, true);
-        return localUsages;
     }
 
     /**
