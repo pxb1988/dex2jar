@@ -305,7 +305,7 @@ public class AntlrSmaliUtil {
                         scv.visitTypeStmt(op, r, 0, unEscapeId(cst.getText()));
                         break;
                     case CONST_WIDE:
-                        scv.visitConstStmt(op, r, cst.getType() == SmaliLexer.INT ? ((long) parseInt(ctx.getText())) : parseLong(cst.getText()));
+                        scv.visitConstStmt(op, r, cst.getType() == SmaliLexer.INT ? ((long) parseInt(cst.getText())) : parseLong(cst.getText()));
                         break;
                     case CONST_WIDE_16: {
                         long v;

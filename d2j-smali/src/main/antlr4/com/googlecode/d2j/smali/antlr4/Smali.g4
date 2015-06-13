@@ -253,9 +253,8 @@ f1x	:	op=('move-result'|'move-result-wide'|'move-result-object'
 	|	'monitor-enter' | 'monitor-exit' ) r1=REGISTER
 	;
 fconst
-    : op=('const/4'|'const/16'|CONST|'const/high16'|'const-wide/16'|'const-wide/32'|'const-wide/high16')
-                                                      r1=REGISTER ',' cst=INT
-    | op='const-wide'                                 r1=REGISTER ',' cst=(INT|LONG)
+    : op=('const/4'|'const/16'|CONST|'const/high16'|'const-wide/16'|'const-wide/32'|'const-wide/high16'|'const-wide')
+                                                      r1=REGISTER ',' cst=(INT|LONG)
 	| op=('const-string'|'const-string/jumbo')        r1=REGISTER ','  cst=STRING
     | op=('const-class'|'check-cast'|'new-instance')  r1=REGISTER ','  cst=(OBJECT_TYPE|ARRAY_TYPE)
 	;

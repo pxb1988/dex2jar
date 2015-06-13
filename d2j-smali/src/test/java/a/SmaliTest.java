@@ -36,8 +36,8 @@ public class SmaliTest {
         }
     }
 
-    Map<String, DexClassNode> readDex(String path) throws IOException {
-        DexFileReader dexFileReader = new DexFileReader(ZipUtil.readDex(new File(path)));
+    Map<String, DexClassNode> readDex(File path) throws IOException {
+        DexFileReader dexFileReader = new DexFileReader(ZipUtil.readDex(path));
         DexFileNode dexFileNode = new DexFileNode();
         dexFileReader.accept(dexFileNode);
         Map<String, DexClassNode> map = new HashMap<>();
@@ -49,7 +49,18 @@ public class SmaliTest {
 
     @Test
     public void test2() throws IOException {
-        String dexFile = "../dex-translator/src/test/resources/dexes/i_jetty.dex";
+        File dir=new File( "../dex-translator/src/test/resources/dexes");
+        File[]fs=dir.listFiles();
+        if(fs!=null) {
+            for (File f : fs) {
+                if (f.getName().endsWith(".dex") || f.getName().endsWith(".apk")) {
+                    dotest(f);
+                }
+            }
+        }
+    }
+
+    private void dotest(File dexFile) throws IOException {
         DexBackedDexFile dex = DexFileFactory.loadDexFile(dexFile, 14, false);
         Map<String, DexClassNode> map = readDex(dexFile);
 

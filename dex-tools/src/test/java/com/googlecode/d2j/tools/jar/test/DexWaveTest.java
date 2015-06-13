@@ -44,12 +44,9 @@ public class DexWaveTest {
     }
 
     private void test0(DexWeaver iw, String prefix) throws IOException, RecognitionException {
-
-        Smali s = new Smali();
-
-        DexClassNode before = s.smaliFile2Node(prefix + "-before.smali", getClass()
+        DexClassNode before = Smali.smaliFile2Node(prefix + "-before.smali", getClass()
                 .getResourceAsStream("/weave/smali/" + prefix + "-before.smali"));
-        DexClassNode expectedAfter = s.smaliFile2Node(prefix + "-after.smali", getClass()
+        DexClassNode expectedAfter = Smali.smaliFile2Node(prefix + "-after.smali", getClass()
                 .getResourceAsStream("/weave/smali/" + prefix + "-after.smali"));
 
         DexFileNode dfn = new DexFileNode();
@@ -58,7 +55,7 @@ public class DexWaveTest {
 
         assertEqual(expectedAfter, dfn.clzs.get(0));
 
-        DexClassNode expectedGen = s.smaliFile2Node(prefix + "-gen.j", getClass()
+        DexClassNode expectedGen = Smali.smaliFile2Node(prefix + "-gen.j", getClass()
                 .getResourceAsStream("/weave/smali/" + prefix + "-gen.smali"));
 
         dfn.clzs.clear();
