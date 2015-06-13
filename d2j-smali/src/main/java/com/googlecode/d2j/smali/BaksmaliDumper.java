@@ -31,13 +31,14 @@ import com.googlecode.d2j.visitors.DexDebugVisitor;
 
 public class BaksmaliDumper implements DexConstants {
     private static final int ACCESS_FIELD = 1 << 31;
-    private final static String[] accessWords = new String[] { "public", "private", "protected", "static", "final",
+    private final static String[] accessWords = new String[]{"public", "private", "protected", "static", "final",
             "synchronized", "bridge", "varargs", "native", "abstract", "strictfp", "synthetic", "constructor",
-            "interface", "enum", "annotation", "volatile", "transient" };
+            "interface", "enum", "annotation", "volatile", "transient"};
 
     static {
         Arrays.sort(accessWords);
     }
+
     private final StringBuilder buff = new StringBuilder();
     private boolean useParameterRegisters = true;
     private boolean useLocals = false;
@@ -342,9 +343,11 @@ public class BaksmaliDumper implements DexConstants {
         out.pop();
         out.s(".end annotation");
     }
+
     public void baksmaliClass(DexClassNode n, BufferedWriter writer) {
         baksmaliClass(n, new BaksmaliDumpOut(writer));
     }
+
     public void baksmaliClass(DexClassNode n, Out out) {
 
         buff.setLength(0);
@@ -374,9 +377,6 @@ public class BaksmaliDumper implements DexConstants {
                 buff.append(".field ");
                 appendAccess(f.access | ACCESS_FIELD, buff);
                 Field field = f.field;
-                if (isAccessWords(field.getName())) {
-                    buff.append(escapeType(field.getOwner())).append("->");
-                }
                 buff.append(escapeId(f.field.getName())).append(":").append(escapeType(field.getType()));
                 if (f.cst != null) {
                     buff.append(" = ");
@@ -409,9 +409,6 @@ public class BaksmaliDumper implements DexConstants {
         buff.append(".method ");
         Method method = m.method;
         appendAccess(m.access, buff);
-        if (isAccessWords(method.getName())) {
-            buff.append(escapeType(method.getOwner())).append("->");
-        }
         buff.append(escapeId(method.getName())).append(escapeMethodDesc(method));
         out.s(buff.toString());
         out.push();
@@ -419,26 +416,41 @@ public class BaksmaliDumper implements DexConstants {
             dumpAnns(m.anns, out);
         }
 
-        if (m.parameterAnns != null) {
-            List<String> parameterNames = null;
-            if (m.codeNode != null && m.codeNode.debugNode != null) {
-                parameterNames = m.codeNode.debugNode.parameterNames;
+        int paramMax = 0;
+        List<String> parameterNames = null;
+        if (m.codeNode != null && m.codeNode.debugNode != null) {
+            parameterNames = m.codeNode.debugNode.parameterNames;
+            if (parameterNames != null) {
+                paramMax = parameterNames.size();
             }
+        }
+        int annoMax = 0;
+        if (m.parameterAnns != null) {
             for (int i = 0; i < m.parameterAnns.length; i++) {
                 List<DexAnnotationNode> ps = m.parameterAnns[i];
-                String debugName = parameterNames != null && parameterNames.size() > i ? parameterNames.get(i) : null;
-                if (debugName == null) {
-                    out.s(".parameter");
-                } else {
-                    out.s(".parameter \"" + escapeId(debugName) + "\"");
-                }
-                if (ps != null) {
-                    out.push();
-                    dumpAnns(ps, out);
-                    out.pop();
-                    out.s(".end parameter");
+                if (ps != null && ps.size() > 0) {
+                    annoMax = i + 1;
                 }
             }
+        }
+
+        int max = Math.max(paramMax, annoMax);
+        for (int i = 0; i < max; i++) {
+            String type = method.getParameterTypes()[i];
+            String debugName = parameterNames == null ? null : i < parameterNames.size() ? parameterNames.get(i) : null;
+            if (debugName != null) {
+                out.s(".parameter \"" + escapeId(debugName) + "\" # " + type);
+            } else {
+                out.s(".parameter # " + type);
+            }
+            List<DexAnnotationNode> ps = m.parameterAnns == null ? null : m.parameterAnns[i];
+            if (ps != null && ps.size() != 0) {
+                out.push();
+                dumpAnns(ps, out);
+                out.pop();
+                out.s(".end parameter");
+            }
+            // FIXME support '.param' REGISTER, STRING
         }
 
         if (m.codeNode != null) {
@@ -500,23 +512,14 @@ public class BaksmaliDumper implements DexConstants {
             }
         }
 
-        int inRegs = 0;
-        if ((methodNode.access & ACC_STATIC) == 0) {
-            inRegs++;
-        }
-        for (String arg : methodNode.method.getParameterTypes()) {
-            inRegs++;
-            char c = arg.charAt(0);
-            if (c == 'J' || c == 'D') {
-                inRegs++;
-            }
-        }
+        int inRegs = Utils.methodIns(methodNode.method, (methodNode.access & ACC_STATIC) != 0);
 
         DexCodeVisitor dexCodeVisitor = new BaksmaliCodeDumper(out, useParameterRegisters, useLocals, nextLabelNumber,
                 codeNode.totalRegister - inRegs, usedLabel, debugLabelMap);
         accept(out, codeNode, dexCodeVisitor);
         dexCodeVisitor.visitEnd();
     }
+
     void accept(Out out, DexCodeNode code, DexCodeVisitor v) {
         if (code.tryStmts != null) {
             for (TryCatchNode n : code.tryStmts) {
@@ -530,13 +533,13 @@ public class BaksmaliDumper implements DexConstants {
                 ddv.visitEnd();
             }
         }
-        if (code.totalRegister >= 0) {
+        if (code.totalRegister >= 0 && code.stmts.size() > 0) {
             v.visitRegister(code.totalRegister);
         }
         for (DexStmtNode n : code.stmts) {
-            if(n instanceof DexLabelStmtNode){
+            if (n instanceof DexLabelStmtNode) {
                 n.accept(v);
-            }else {
+            } else {
                 out.push();
                 n.accept(v);
                 out.pop();

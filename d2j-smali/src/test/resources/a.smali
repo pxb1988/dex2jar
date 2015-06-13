@@ -38,17 +38,22 @@
 .annotation system La;
 .end annotation
 .end field
-.method public I (II)V
+.method public I(II)V
 .parameter "AAAA"
 .annotation system La;
 .end annotation
 .end parameter
 .parameter
 .registers 4
+.local v2, a : I
 .local v2, a:I
+.local v2, "a":I
 .end local v2
 .restart local v2
 .end method
 .method private Lggg;->static([Z)V
 .end method
-
+.method private static([Z)V
+.end method
+.method private Lg>gg;->static([Z)V
+.end method

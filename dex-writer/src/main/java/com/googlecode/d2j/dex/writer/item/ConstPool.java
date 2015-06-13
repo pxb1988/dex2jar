@@ -343,10 +343,7 @@ public class ConstPool {
         return v;
     }
 
-    public CodeItem addCodeItem() {
-        CodeItem code = new CodeItem();
+    public void addCodeItem(CodeItem code) {
         codeItems.add(code);
-        return code;
-
     }
 }

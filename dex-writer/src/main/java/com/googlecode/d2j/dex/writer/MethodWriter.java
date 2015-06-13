@@ -56,8 +56,8 @@ import com.googlecode.d2j.visitors.DexMethodVisitor;
 
     @Override
     public DexCodeVisitor visitCode() {
-        encodedMethod.code = cp.addCodeItem();
-        return new CodeWriter(encodedMethod.code, method, isStatic, cp);
+        encodedMethod.code = new CodeItem();
+        return new CodeWriter(encodedMethod, encodedMethod.code, method, isStatic, cp);
     }
 
     @Override

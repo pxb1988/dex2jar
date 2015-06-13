@@ -2,25 +2,24 @@ configurations {
   antlr2java
 }
 dependencies {
-  compile(group: 'org.antlr', name: 'antlr-runtime', version:'3.5.2') {
-        exclude(module: 'stringtemplate')
-  }
+  compile 'org.antlr:antlr4-runtime:4.5'
   compile project(':dex-reader')
-  antlr2java(group: 'org.antlr', name: 'antlr', version:'3.5.2')
+  antlr2java 'org.antlr:antlr4:4.5'
   compile project(':d2j-base-cmd')
   compile project(':dex-writer')
+  testCompile 'org.smali:baksmali:2.0.6'
 }
 
 task antlr2java(type: JavaExec) {
     classpath=configurations.antlr2java
-    def source='src/main/antlr3'
-    def grammars = fileTree(source).include('**/*.g')
+    def source='src/main/antlr4'
+    def grammars = fileTree(source).include('**/*.g4')
     ext.antlrJava="$buildDir/generated-sources/antlr"
-    def antlrDir="$buildDir/generated-sources/antlr/com/googlecode/d2j/smali"
+    def antlrDir="$buildDir/generated-sources/antlr/com/googlecode/d2j/smali/antlr4"
     inputs.dir file(source)
     outputs.dir file(ext.antlrJava)
-    main='org.antlr.Tool'
-    args=['-o', "$antlrDir",grammars.files].flatten()
+    main='org.antlr.v4.Tool'
+    args=[ '-no-listener', '-visitor','-package','com.googlecode.d2j.smali.antlr4', '-o', "$antlrDir",grammars.files].flatten()
 }
 compileJava{
     dependsOn antlr2java

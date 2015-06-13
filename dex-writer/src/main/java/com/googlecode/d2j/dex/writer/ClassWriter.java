@@ -66,8 +66,7 @@ import com.googlecode.d2j.visitors.DexMethodVisitor;
         encodedField.accessFlags = accessFlags;
         encodedField.field = cp.uniqField(field);
         if (value != null) {
-            value = cp.wrapEncodedItem(value);
-            encodedField.staticValue = EncodedValue.wrap(value);
+            encodedField.staticValue = EncodedValue.wrap(cp.wrapEncodedItem(value));
         }
         if (0 != (ACC_STATIC & accessFlags)) { // is static
             dataItem.staticFields.add(encodedField);

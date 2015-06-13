@@ -235,7 +235,7 @@ public class EncodedValue {
                 return ((Number) this.value).doubleValue() == 0.0;
             case VALUE_BOOLEAN:
                 Boolean z = (Boolean) this.value;
-                return Boolean.TRUE.equals(z);
+                return Boolean.FALSE.equals(z);
         }
         return false;
     }

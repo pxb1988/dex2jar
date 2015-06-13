@@ -45,8 +45,10 @@ public class CodeWriter extends DexCodeVisitor {
     List<CodeItem.TryItem> tryItems = new ArrayList<>();
     Method owner;
     Map<DexLabel, Label> labelMap = new HashMap<>();
+    ClassDataItem.EncodedMethod encodedMethod;
 
-    public CodeWriter(CodeItem codeItem, Method owner, boolean isStatic, ConstPool cp) {
+    public CodeWriter(ClassDataItem.EncodedMethod encodedMethod, CodeItem codeItem, Method owner, boolean isStatic, ConstPool cp) {
+        this.encodedMethod = encodedMethod;
         this.codeItem = codeItem;
         this.owner = owner;
         int in_reg_size = 0;
@@ -415,6 +417,12 @@ public class CodeWriter extends DexCodeVisitor {
 
     @Override
     public void visitEnd() {
+        if (ops.size() == 0 && tailOps.size() == 0) {
+            encodedMethod.code = null;
+            return;
+        }
+        cp.addCodeItem(codeItem);
+
         codeItem.registersSize = this.total_reg;
         codeItem.outsSize = max_out_reg_size;
         codeItem.insSize = in_reg_size;
@@ -423,6 +431,7 @@ public class CodeWriter extends DexCodeVisitor {
         codeItem.prepareTries(tryItems);
 
         if (codeItem.debugInfo != null) {
+            cp.addDebugInfoItem(codeItem.debugInfo);
             List<DebugInfoItem.DNode> debugNodes = codeItem.debugInfo.debugNodes;
             Collections.sort(debugNodes, new Comparator<DebugInfoItem.DNode>() {
                 @Override
@@ -778,7 +787,6 @@ public class CodeWriter extends DexCodeVisitor {
             codeItem.debugInfo.parameterNames=new StringIdItem[owner.getParameterTypes().length];
         }
         final DebugInfoItem debugInfoItem = codeItem.debugInfo;
-        cp.addDebugInfoItem(debugInfoItem);
         return new DexDebugVisitor() {
 
             @Override
