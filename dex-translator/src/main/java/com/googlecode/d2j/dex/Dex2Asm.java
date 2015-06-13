@@ -422,7 +422,6 @@ public class Dex2Asm {
         }
         if (classNode.methods != null) {
             for (DexMethodNode methodNode : classNode.methods) {
-                System.err.println(methodNode.method);
                 convertMethod(classNode, methodNode, cv);
             }
         }
