@@ -122,7 +122,7 @@ public class DexAnnotationNode extends DexAnnotationVisitor {
 
     public void accept(DexAnnotationAble av) {
         DexAnnotationVisitor av1 = av.visitAnnotation(type, visibility);
-        if (av != null) {
+        if (av1 != null) {
             for (Item item : items) {
                 acceptAnnotationItem(av1, item.name, item.value);
             }
