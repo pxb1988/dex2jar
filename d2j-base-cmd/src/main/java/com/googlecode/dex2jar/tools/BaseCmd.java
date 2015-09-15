@@ -323,27 +323,40 @@ public abstract class BaseCmd {
             Opt opt = f.getAnnotation(Opt.class);
             if (opt != null) {
                 f.setAccessible(true);
-                if (!opt.hasArg()) {
-                    Class<?> type = f.getType();
-                    if (!type.equals(boolean.class)) {
-                        throw new RuntimeException("the type of " + f
-                                + " must be boolean, as it is declared as no args");
-                    }
-                    boolean b;
-                    try {
-                        b = (Boolean) f.get(this);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    if (b) {
-                        throw new RuntimeException("the value of " + f + " must be false, as it is declared as no args");
-                    }
-                }
                 Option option = new Option();
                 option.field = f;
                 option.description = opt.description();
                 option.hasArg = opt.hasArg();
                 option.required = opt.required();
+                if ("".equals(opt.longOpt()) && "".equals(opt.opt())) {   // into automode
+                    option.longOpt = fromCamel(f.getName());
+                    if (f.getType().equals(boolean.class)) {
+                        option.hasArg=false;
+                        try {
+                            if (f.getBoolean(this)) {
+                                throw new RuntimeException("the value of " + f + " must be false, as it is declared as no args");
+                            }
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    checkConflict(option, "--" + option.longOpt);
+                    continue;
+                }
+                if (!opt.hasArg()) {
+                    if (!f.getType().equals(boolean.class)) {
+                        throw new RuntimeException("the type of " + f
+                                + " must be boolean, as it is declared as no args");
+                    }
+
+                    try {
+                        if (f.getBoolean(this)) {
+                            throw new RuntimeException("the value of " + f + " must be false, as it is declared as no args");
+                        }
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 boolean haveLongOpt = false;
                 if (!"".equals(opt.longOpt())) {
                     option.longOpt = opt.longOpt();
@@ -359,10 +372,28 @@ public abstract class BaseCmd {
                 } else {
                     if (!haveLongOpt) {
                         throw new RuntimeException("opt or longOpt is not set in @Opt(...) " + f);
+                    }
+                }
             }
         }
     }
+
+    private static String fromCamel(String name) {
+        if (name.length() == 0) {
+            return "";
         }
+        StringBuilder sb = new StringBuilder();
+        char[] charArray = name.toCharArray();
+        sb.append(Character.toLowerCase(charArray[0]));
+        for (int i = 1; i < charArray.length; i++) {
+            char c = charArray[i];
+            if (Character.isUpperCase(c)) {
+                sb.append("-").append(Character.toLowerCase(c));
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     private void checkConflict(Option option, String key) {
