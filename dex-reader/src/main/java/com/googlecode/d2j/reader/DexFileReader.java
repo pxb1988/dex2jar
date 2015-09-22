@@ -999,7 +999,9 @@ public class DexFileReader implements BaseDexFileReader {
             }
             DexAnnotationAble dpav = dmv.visitParameterAnnotation(j);
             try {
-                read_annotation_set_item(param_annotation_offset, dpav);
+                if (dpav != null) {
+                    read_annotation_set_item(param_annotation_offset, dpav);
+                }
             } catch (Exception e) {
                 throw new DexException(e, "while accept parameter annotation in parameter:[%d]", j);
             }
