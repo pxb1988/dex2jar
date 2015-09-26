@@ -112,4 +112,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    <repositories>
+        <repository>
+            <id>d2j</id>
+            <url>http://repository-dex2jar.forge.cloudbees.com/release/</url>
+        </repository>
+    </repositories>
 </project>
