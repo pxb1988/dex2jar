@@ -379,9 +379,9 @@ public class Dex2Asm {
         boolean isInnerClass = false;
         if (clzInfo != null) {
             isInnerClass = clzInfo.enclosingClass != null || clzInfo.enclosingMethod != null;
-            access = clearClassAccess(isInnerClass, access);
-
         }
+        access = clearClassAccess(isInnerClass, access);
+
         cv.visit(Opcodes.V1_6, access, toInternalName(classNode.className), signature,
                 classNode.superClass == null ? null : toInternalName(classNode.superClass), interfaceInterNames);
 
