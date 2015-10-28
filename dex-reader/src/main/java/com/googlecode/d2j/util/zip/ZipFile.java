@@ -16,10 +16,10 @@
  */
 package com.googlecode.d2j.util.zip;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,9 +68,17 @@ public class ZipFile implements AutoCloseable, ZipConstants {
 
     private String comment;
     final ByteBuffer raf;
+    RandomAccessFile file;
 
     public ZipFile(ByteBuffer in) throws IOException {
         raf = in.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
+        readCentralDir();
+    }
+
+    public ZipFile(File fd) throws IOException {
+        RandomAccessFile randomAccessFile = new RandomAccessFile(fd, "r");
+        file = randomAccessFile;
+        raf = randomAccessFile.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, fd.length());
         readCentralDir();
     }
 
@@ -115,6 +123,12 @@ public class ZipFile implements AutoCloseable, ZipConstants {
         return null;
     }
 
+    public long getEntryDataStart(ZipEntry entry) {
+        int fileNameLength = raf.getShort((int) (entry.localHeaderRelOffset + 26)) & 0xffff;
+        int extraFieldLength = raf.getShort((int) (entry.localHeaderRelOffset + 28)) & 0xffff;
+        return entry.localHeaderRelOffset + 30 + fileNameLength + extraFieldLength;
+    }
+
     /**
      * Returns an input stream on the data of the specified {@code android.ZipEntry}.
      * 
@@ -127,30 +141,8 @@ public class ZipFile implements AutoCloseable, ZipConstants {
      *             if this zip file has been closed.
      */
     public InputStream getInputStream(ZipEntry entry) throws IOException {
-        // We don't know the entry data's start position. All we have is the
-        // position of the entry's local header.
-        // http://www.pkware.com/documents/casestudies/APPNOTE.TXT
-        final ByteBuffer is = (ByteBuffer) raf.duplicate().order(ByteOrder.LITTLE_ENDIAN)
-                .position((int) entry.localHeaderRelOffset);
-
-        skip(is, 6); // skip check localMagic
-        // final int localMagic = is.getInt();
-        // if (localMagic != LOCSIG) {
-        // throwZipException("Local File Header", localMagic);
-        // }
-        // skip(is, 2);
-
-        // At position 6 we find the General Purpose Bit Flag.
-        int gpbf = is.getShort() & 0xffff;
-
-        // Offset 26 has the file name length, and offset 28 has the extra field length.
-        // These lengths can differ from the ones in the central header.
-        skip(is, 18);
-        int fileNameLength = is.getShort() & 0xffff;
-        int extraFieldLength = is.getShort() & 0xffff;
-
-        // Skip the variable-size file name and extra field data.
-        skip(is, fileNameLength + extraFieldLength);
+        long entryDataStart = getEntryDataStart(entry);
+        ByteBuffer is = (ByteBuffer) raf.duplicate().position((int) entryDataStart);
 
         if (entry.compressionMethod == ZipEntry.STORED) {
             final ByteBuffer buf = (ByteBuffer) is.slice().order(ByteOrder.LITTLE_ENDIAN).limit((int) entry.size);
@@ -276,7 +268,9 @@ public class ZipFile implements AutoCloseable, ZipConstants {
 
     @Override
     public void close() throws IOException {
-
+        if(file!=null){
+            file.close();
+        }
     }
 
     static class ZipInflaterInputStream extends InflaterInputStream {
