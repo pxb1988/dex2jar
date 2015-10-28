@@ -60,19 +60,12 @@ public abstract class BaseItem {
         return count;
     }
 
-    public static int lengthOfUleb128(final int s) {
+    public static int lengthOfUleb128(int value) {
+        int remaining = value >>> 7;
         int length = 1;
-        if (s > 0x7f) {
+        while (remaining != 0) {
             length++;
-            if (s > (0x3fff)) {
-                length++;
-                if (s > (0x1fffff)) {
-                    length++;
-                    if (s > (0xfffffff)) {
-                        length++;
-                    }
-                }
-            }
+            remaining >>>= 7;
         }
         return length;
     }
