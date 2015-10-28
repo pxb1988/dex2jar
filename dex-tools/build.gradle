@@ -9,7 +9,7 @@ dependencies {
   compile project(':d2j-jasmin')
   compile project(':dex-writer')
   compile project(':d2j-base-cmd')
-  compile "com.google.android.tools:dx:1.7"
+  compile "com.google.android.tools:dx:23.0.0"
 }
 
 task bin_gen(type: JavaExec) {

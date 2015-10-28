@@ -20,6 +20,9 @@ subprojects {
   }
   artifacts.archives packageSources
   repositories {
+    maven {
+      url "http://repository-dex2jar.forge.cloudbees.com/release/"
+    }
     mavenCentral()
   }
 
