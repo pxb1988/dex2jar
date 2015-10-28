@@ -815,7 +815,7 @@ public class CodeWriter extends DexCodeVisitor {
 
             @Override
             public void visitLineNumber(int line, DexLabel label) {
-                if (line < miniLine) {
+                if ((0x00000000FFFFffffL & line) < miniLine) {
                     miniLine = line;
                 }
                 debugInfoItem.debugNodes.add(DebugInfoItem.DNode.line(line, getLabel(label)));
