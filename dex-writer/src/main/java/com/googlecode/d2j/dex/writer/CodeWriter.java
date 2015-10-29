@@ -427,8 +427,7 @@ public class CodeWriter extends DexCodeVisitor {
         codeItem.outsSize = max_out_reg_size;
         codeItem.insSize = in_reg_size;
 
-        codeItem.prepareInsns(ops, tailOps);
-        codeItem.prepareTries(tryItems);
+        codeItem.init(ops, tailOps, tryItems);
 
         if (codeItem.debugInfo != null) {
             cp.addDebugInfoItem(codeItem.debugInfo);
@@ -654,7 +653,6 @@ public class CodeWriter extends DexCodeVisitor {
                 ech.addPairs.add(new CodeItem.EncodedCatchHandler.AddrPair(cp.uniqType(type), label));
             }
         }
-
     }
 
     @Override
@@ -677,7 +675,6 @@ public class CodeWriter extends DexCodeVisitor {
                 checkContentU4bit(op, "A", a);
                 checkContentU4bit(op, "B", b);
                 break;
-
             }
 
             this.a = a;
@@ -703,6 +700,12 @@ public class CodeWriter extends DexCodeVisitor {
                 checkContentUShort(op, "?@CCCC", idxItem.index);
                 out.put((byte) ((a & 0xF) | (b << 4))).putShort((short) idxItem.index);
                 break;
+            }
+        }
+
+        public void fit() {
+            if (op == CONST_STRING && (idxItem.index > 0xFFFF || idxItem.index < 0)) {
+                op = CONST_STRING_JUMBO;
             }
         }
     }

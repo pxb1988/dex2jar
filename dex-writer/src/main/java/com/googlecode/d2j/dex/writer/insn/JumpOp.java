@@ -59,4 +59,19 @@ public class JumpOp extends OpInsn {
                 throw new RuntimeException("not support");
         }
     }
+
+    public boolean fit() {
+        int offset = label.offset - this.offset;
+        if ((op == Op.GOTO && (offset > Byte.MAX_VALUE || offset < Byte.MIN_VALUE)) ||
+                (op == Op.GOTO_16 && (offset > Short.MAX_VALUE || offset < Short.MIN_VALUE))
+                ) {
+            if ((offset > Short.MAX_VALUE || offset < Short.MIN_VALUE)) {
+                op = Op.GOTO_32;
+            } else {
+                op = Op.GOTO_16;
+            }
+            return false;
+        }
+        return true;
+    }
 }

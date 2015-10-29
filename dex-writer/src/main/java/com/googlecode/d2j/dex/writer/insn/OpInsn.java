@@ -19,7 +19,7 @@ package com.googlecode.d2j.dex.writer.insn;
 import com.googlecode.d2j.reader.Op;
 
 public abstract class OpInsn extends Insn {
-    public final Op op;
+    public Op op;
 
 
     public OpInsn(Op op) {

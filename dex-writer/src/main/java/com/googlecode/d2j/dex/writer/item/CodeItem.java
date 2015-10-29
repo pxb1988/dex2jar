@@ -16,8 +16,10 @@
  */
 package com.googlecode.d2j.dex.writer.item;
 
+import com.googlecode.d2j.dex.writer.CodeWriter;
 import com.googlecode.d2j.dex.writer.ann.Off;
 import com.googlecode.d2j.dex.writer.insn.Insn;
+import com.googlecode.d2j.dex.writer.insn.JumpOp;
 import com.googlecode.d2j.dex.writer.insn.Label;
 import com.googlecode.d2j.dex.writer.insn.PreBuildInsn;
 import com.googlecode.d2j.dex.writer.io.DataOut;
@@ -40,8 +42,14 @@ public class CodeItem extends BaseItem {
     public List<Insn> insns;
     public List<EncodedCatchHandler> handlers;
 
+    List<TryItem> _tryItems;
+    List<Insn> _ops;
+    List<Insn> _tailOps;
     @Override
     public int place(int offset) {
+        prepareInsns();
+        prepareTries();
+
         offset += 16 + insn_size * 2;
         if (tries != null && tries.size() > 0) {
             if ((insn_size & 0x01) != 0) {// padding
@@ -114,12 +122,17 @@ public class CodeItem extends BaseItem {
         }
     }
 
-    public void prepareTries(List<TryItem> tryItems) {
-        if (tryItems.size() > 0) {
+    public void init(List<Insn> ops, List<Insn> tailOps, List<TryItem> tryItems) {
+        this._ops = ops;
+        this._tailOps = tailOps;
+        this._tryItems = tryItems;
+    }
+    private void prepareTries() {
+        if (_tryItems.size() > 0) {
             List<CodeItem.TryItem> uniqTrys = new ArrayList<>();
             { // merge dup trys
                 Set<TryItem> set = new HashSet<>();
-                for (CodeItem.TryItem tryItem : tryItems) {
+                for (CodeItem.TryItem tryItem : _tryItems) {
                     if (!set.contains(tryItem)) {
                         uniqTrys.add(tryItem);
                         set.add(tryItem);
@@ -177,25 +190,46 @@ public class CodeItem extends BaseItem {
         }
     }
 
-    public void prepareInsns(List<Insn> ops, List<Insn> tailOps) {
-        int codeSize = 0;
-        for (Insn insn : ops) {
-            insn.offset = codeSize;
-            codeSize += insn.getCodeUnitSize();
+    private void prepareInsns() {
+        List<JumpOp> jumpOps=new ArrayList<>();
+        for (Insn insn : _ops) {
+            if (insn instanceof CodeWriter.IndexedInsn) {
+                ((CodeWriter.IndexedInsn) insn).fit();
+            } else  if(insn instanceof JumpOp){
+                jumpOps.add((JumpOp)insn);
+            }
         }
-        for (Insn insn : tailOps) {
+
+        int codeSize = 0;
+        while (true) {
+            for (Insn insn : _ops) {
+                insn.offset = codeSize;
+                codeSize += insn.getCodeUnitSize();
+            }
+            boolean allfit = true;
+            for (JumpOp jop : jumpOps) {
+                if (!jop.fit()) {
+                    allfit = false;
+                }
+            }
+            if (allfit) {
+                break;
+            }
+            codeSize = 0;
+        }
+        for (Insn insn : _tailOps) {
             if ((codeSize & 1) != 0) { // not 32bit alignment
                 Insn nop = new PreBuildInsn(new byte[] { (byte) Op.NOP.opcode, 0 }); // f10x
                 insn.offset = codeSize;
                 codeSize += nop.getCodeUnitSize();
-                ops.add(nop);
+                _ops.add(nop);
             }
             insn.offset = codeSize;
             codeSize += insn.getCodeUnitSize();
-            ops.add(insn);
+            _ops.add(insn);
         }
-        tailOps.clear();
-        this.insns = ops;
+        _tailOps.clear();
+        this.insns = _ops;
         this.insn_size = codeSize;
     }
 
