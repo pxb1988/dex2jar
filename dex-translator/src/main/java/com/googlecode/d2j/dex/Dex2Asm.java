@@ -86,6 +86,7 @@ public class Dex2Asm {
     protected static final ZeroTransformer T_zero = new ZeroTransformer();
     protected static final VoidInvokeTransformer T_voidInvoke = new VoidInvokeTransformer();
     protected static final NpeTransformer T_npe = new NpeTransformer();
+    protected static final MultiArrayTransformer T_multiArray = new MultiArrayTransformer();
 
     static private int clearClassAccess(boolean isInner, int access) {
         if ((access & Opcodes.ACC_INTERFACE) == 0) { // issue 55
@@ -575,6 +576,7 @@ public class Dex2Asm {
         T_new.transform(irMethod);
         T_fillArray.transform(irMethod);
         T_agg.transform(irMethod);
+        T_multiArray.transform(irMethod);
         T_voidInvoke.transform(irMethod);
         T_type.transform(irMethod);
         T_unssa.transform(irMethod);

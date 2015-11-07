@@ -18,17 +18,12 @@ package com.googlecode.dex2jar.ir.test;
 
 import com.googlecode.dex2jar.ir.TypeClass;
 import com.googlecode.dex2jar.ir.expr.Local;
-import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
 import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
-import com.googlecode.dex2jar.ir.ts.DeadCodeTransformer;
-import com.googlecode.dex2jar.ir.ts.NpeTransformer;
-import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
 import com.googlecode.dex2jar.ir.ts.TypeTransformer;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.googlecode.dex2jar.ir.expr.Exprs.*;
@@ -123,8 +118,8 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         Local b = addLocal("b");
         Local c = addLocal("c");
 
-        addStmt(nAssign(b, new NewMutiArrayExpr("F", 1, new Value[] { nInt(2) })));
-        addStmt(nFillArrayData(b, nConstant(new int[] { 5, 6 })));
+        addStmt(nAssign(b, nNewMutiArray("F", 1, new Value[]{nInt(2)})));
+        addStmt(nFillArrayData(b, nConstant(new int[]{5, 6})));
         addStmt(nAssign(c, nArray(b, nInt(3), TypeClass.IF.name)));
         addStmt(nReturnVoid());
         transform();
@@ -143,6 +138,31 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nReturnVoid());
         transform();
         Assert.assertEquals("I", c.valueType);
+    }
+
+
+    @Test
+    public void testGithubIssue28() {
+        initMethod(true, "V");
+        Local b = addLocal("b");
+
+        addStmt(nAssign(b, nNewMutiArray("D", 2, new Value[]{nInt(2), nInt(3)})));
+        addStmt(nAssign(nArray(nArray(b, nInt(5), TypeClass.OBJECT.name), nInt(1), TypeClass.JD.name), nLong(0)));
+        addStmt(nReturnVoid());
+        transform();
+        Assert.assertEquals("", b.valueType, "[[D");
+    }
+
+    @Test
+    public void testGithubIssue28x() {
+        initMethod(true, "V");
+        Local b = addLocal("b");
+
+        addStmt(nAssign(b, nInt(0)));
+        addStmt(nAssign(nArray(nArray(b, nInt(5), TypeClass.OBJECT.name), nInt(1), TypeClass.JD.name), nLong(0)));
+        addStmt(nReturnVoid());
+        transform();
+        Assert.assertEquals("", b.valueType, "[[D");
     }
 
 }

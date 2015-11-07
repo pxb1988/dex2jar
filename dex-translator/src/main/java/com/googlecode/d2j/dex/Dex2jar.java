@@ -147,6 +147,7 @@ public class Dex2jar {
                 T_new.transform(irMethod);
                 T_fillArray.transform(irMethod);
                 T_agg.transform(irMethod);
+                T_multiArray.transform(irMethod);
                 T_voidInvoke.transform(irMethod);
                 if (0 != (v3Config & V3.PRINT_IR)) {
                     int i = 0;

@@ -7,6 +7,9 @@ import com.googlecode.dex2jar.ir.stmt.StmtList;
 import java.util.Iterator;
 
 public class StmtTraveler {
+    public void travel(IrMethod method) {
+        travel(method.stmts);
+    }
     public void travel(StmtList stmts) {
         for (Iterator<Stmt> it = stmts.iterator(); it.hasNext(); ) {
             Stmt stmt = it.next();

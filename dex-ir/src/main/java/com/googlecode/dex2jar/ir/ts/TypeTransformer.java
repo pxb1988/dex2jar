@@ -99,9 +99,8 @@ public class TypeTransformer implements Transformer {
     public static class TypeRef {
 
         public final Value value;
-        public TypeClass clz = TypeClass.UNKNOWN;
         /**
-         * same use, have sample {@link #clz}
+         * same use, have same {@link #clz}
          */
         public Set<TypeRef> sameValues = null;
         /**
@@ -109,15 +108,85 @@ public class TypeTransformer implements Transformer {
          */
         public Set<TypeRef> gArrayValues = null;
         public Set<TypeRef> sArrayValues = null;
-        // /**
-        // * reference to roots
-        // */
-        // public Set<TypeRef> gArryRoots = null;
-        // public Set<TypeRef> sArryRoots = null;
+        /**
+        * reference to root
+        */
+        public TypeRef arrayRoot = null;
         public Set<TypeRef> parents = null;
-        public String provideDesc = null;
         public Set<TypeRef> children = null;
-        public Set<String> uses;
+
+        public void setArrayValueShareT(SharedT arrayValueShareT) {
+            this.arrayValueShareT = arrayValueShareT;
+        }
+
+        public TypeClass getClz() {
+            return t.getReal().clz;
+        }
+
+        public void setClz(TypeClass clz) {
+            this.t.getReal().clz = clz;
+        }
+
+        static class SharedT {
+            private TypeClass clz = TypeClass.UNKNOWN;
+            private String provideDesc = null;
+            private Set<String> uses;
+            SharedT next;
+
+            SharedT getReal() {
+                SharedT _this = this;
+                SharedT _next = this.next;
+                while (_next != null) {
+                    _this = _next;
+                    _next = _next.next;
+                }
+                return _this;
+            }
+
+            boolean merge(SharedT b) {
+                SharedT a = this;
+                if (a == b) {
+                    return false;
+                }
+                b.next = a;
+                if (a.provideDesc == null) {
+                    a.provideDesc = b.provideDesc;
+                } else if (b.provideDesc != null) {
+                    a.provideDesc = TypeAnalyze.mergeProviderType(a.provideDesc, b.provideDesc);
+                }
+                if (b.uses != null) {
+                    if (a.uses == null) {
+                        a.uses = new HashSet<>();
+                    }
+                    a.uses.addAll(b.uses);
+                }
+                return true;
+            }
+        }
+
+        private SharedT arrayValueShareT;
+
+        SharedT getArrayValueShareT() {
+            if (arrayValueShareT == null) {
+                arrayValueShareT = new SharedT();
+                return arrayValueShareT;
+            } else {
+                return arrayValueShareT.getReal();
+            }
+        }
+
+        boolean mergeT(TypeRef other) {
+            SharedT a = t.getReal();
+            SharedT b = other.t.getReal();
+            this.t = a;
+            other.t = a;
+            if (a != b) {
+                updateTypeClass(other.getClz());
+                return a.merge(b);
+            }
+            return false;
+        }
+        SharedT t = new SharedT();
 
         public TypeRef(Value value) {
             super();
@@ -126,36 +195,36 @@ public class TypeTransformer implements Transformer {
 
         @Override
         public String toString() {
-            String p = this.uses == null ? "[]" : this.uses.toString();
-            return clz + "::" + value + ": " + this.provideDesc + " > {" + p.substring(1, p.length() - 1) + "}";
+            String p = this.getUses() == null ? "[]" : this.getUses().toString();
+            return getClz() + "::" + value + ": " + this.getProvideDesc() + " > {" + p.substring(1, p.length() - 1) + "}";
         }
 
         public String getType() {
-            if (clz == TypeClass.OBJECT) {
-                if (provideDesc.length() == 1) {
+            if (getClz() == TypeClass.OBJECT) {
+                if (getProvideDesc().length() == 1) {
                     return "Ljava/lang/Object;";
                 } else {
-                    return provideDesc;
+                    return getProvideDesc();
                 }
             }
-            if (clz.fixed && clz != TypeClass.INT) {
-                if (provideDesc == null) {
+            if (getClz().fixed && getClz() != TypeClass.INT) {
+                if (getProvideDesc() == null) {
                     throw new RuntimeException();
                 }
-                return provideDesc;
+                return getProvideDesc();
             }
-            if (clz == TypeClass.JD) { // prefere Long if wide
+            if (getClz() == TypeClass.JD) { // prefere Long if wide
                 return "J";
             }
-            if (uses != null) {
+            if (getUses() != null) {
                 for (String t : possibleIntTypes) {
-                    if (uses.contains(t)) {
+                    if (getUses().contains(t)) {
                         return t;
                     }
                 }
             }
 
-            switch (clz) {
+            switch (getClz()) {
             case ZI:
                 return "I";
             case ZIFL:
@@ -171,11 +240,11 @@ public class TypeTransformer implements Transformer {
         }
 
         public boolean updateTypeClass(TypeClass clz) {
-            TypeClass merged = TypeClass.merge(this.clz, clz);
-            if (merged == this.clz) {
+            TypeClass merged = TypeClass.merge(this.getClz(), clz);
+            if (merged == this.getClz()) {
                 return false;
             }
-            this.clz = merged;
+            this.setClz(merged);
             return true;
         }
 
@@ -186,10 +255,39 @@ public class TypeTransformer implements Transformer {
             // this.gArryRoots = null;
             this.parents = null;
             this.children = null;
-            this.provideDesc = null;
             this.children = null;
             this.sameValues = null;
-            this.uses = null;
+        }
+
+        public Set<String> getUses() {
+            return t.getReal().uses;
+        }
+
+        public String getProvideDesc() {
+            return t.getReal().provideDesc;
+        }
+
+        public void setProvideDesc(String provideDesc) {
+            this.t.getReal().provideDesc = provideDesc;
+        }
+
+        public boolean addUses(String ele) {
+            SharedT t=this.t.getReal();
+            if (t.uses != null) {
+                return t.uses.add(ele);
+            } else {
+                t.uses = new HashSet<>();
+                return t.uses.add(ele);
+            }
+        }
+
+        public boolean addAllUses(Set<String> uses) {
+            if (uses != null) {
+                return uses.addAll(uses);
+            } else {
+                uses = new HashSet<>();
+                return uses.addAll(uses);
+            }
         }
     }
 
@@ -211,13 +309,24 @@ public class TypeTransformer implements Transformer {
         private void fixTypes() {
 
             // 1. collect all Array Roots
+            UniqueQueue<TypeRef> q = new UniqueQueue<>();
             Set<TypeRef> arrayRoots = new HashSet<>();
             for (TypeRef t : refs) {
                 if (t.gArrayValues != null || t.sArrayValues != null) {
                     arrayRoots.add(t);
+                    q.add(t);
                 }
             }
-            UniqueQueue<TypeRef> q = new UniqueQueue<>();
+            while (!q.isEmpty()) {
+                TypeRef ref = q.poll();
+                TypeRef.SharedT arrayValue=ref.getArrayValueShareT();
+                if(ref.gArrayValues!=null){
+                    for(TypeRef t:ref.gArrayValues){
+
+                    }
+                }
+            }
+
             q.addAll(refs);
             while (!q.isEmpty()) {
                 // 2. merge provided type to children. merge uses to parent. merge TypeClass to sameValues
@@ -227,7 +336,7 @@ public class TypeTransformer implements Transformer {
                 }
                 // 3. merge type from Array Roots to Array Values
                 for (TypeRef ref : arrayRoots) {
-                    String provideDesc = ref.provideDesc;
+                    String provideDesc = ref.getProvideDesc();
                     if (provideDesc != null && provideDesc.charAt(0) == '[') {
                         String ele = provideDesc.substring(1);
 
@@ -236,7 +345,7 @@ public class TypeTransformer implements Transformer {
                                 if (p.updateTypeClass(TypeClass.clzOf(ele))) {
                                     q.add(p);
                                 }
-                                mergeTypeToSubRef(ele, p, q);
+                                mergeTypeToArrayGetValue(ele, p, q);
                             }
                         }
                         if (ref.sArrayValues != null) {
@@ -244,10 +353,7 @@ public class TypeTransformer implements Transformer {
                                 if (p.updateTypeClass(TypeClass.clzOf(ele))) {
                                     q.add(p);
                                 }
-                                if (p.uses == null) {
-                                    p.uses = new HashSet<>();
-                                }
-                                if (p.uses.add(ele)) {
+                                if (p.addUses(ele)) {
                                     q.add(p);
                                 }
                             }
@@ -257,21 +363,87 @@ public class TypeTransformer implements Transformer {
             }
         }
 
-        private void mergeTypeToSubRef(String type, TypeRef target, UniqueQueue<TypeRef> q) {
-            if (target.provideDesc == null) {
-                target.provideDesc = type;
+        private static void mergeTypeToArrayGetValue(String type, TypeRef target, UniqueQueue<TypeRef> q) {
+            if (target.getProvideDesc() == null) {
+                target.setProvideDesc(type);
                 q.add(target);
             } else {
-                String mergedType = mergeType(type, target.provideDesc);
-                if (!mergedType.equals(target.provideDesc)) {
-                    target.provideDesc = mergedType;
+                String mergedType = mergeTypeEx(type, target.getProvideDesc());
+                if (!mergedType.equals(target.getProvideDesc())) {
+                    target.setProvideDesc(mergedType);
+                    q.add(target);
+                }
+            }
+        }
+        private static void mergeTypeToSubRef(String type, TypeRef target, UniqueQueue<TypeRef> q) {
+            if (target.getProvideDesc() == null) {
+                target.setProvideDesc(type);
+                q.add(target);
+            } else {
+                String mergedType = mergeProviderType(type, target.getProvideDesc());
+                if (!mergedType.equals(target.getProvideDesc())) {
+                    target.setProvideDesc(mergedType);
                     q.add(target);
                 }
             }
         }
 
+        /**
+         * [[B + [[D -> [L
+         * [B + L -> [B
+         * [[B + [B -> [[B
+         *
+         * @param a
+         * @param b
+         * @return
+         */
+        private static String mergeTypeEx(String a, String b) {
+            if (a.equals(b)) {
+                return a;
+            }
+            int as = countArrayDim(a);
+            int bs = countArrayDim(b);
+            if (as > bs) {
+                return a;
+            } else if (bs > as) {
+                return b;
+            } else { // as==bs;
+                String elementTypeA = a.substring(as);
+                String elementTypeB = a.substring(bs);
+                TypeClass ta = TypeClass.clzOf(elementTypeA);
+                TypeClass tb = TypeClass.clzOf(elementTypeB);
+                if (ta.fixed && !tb.fixed) {
+                    return a;
+                } else if (!ta.fixed && tb.fixed) {
+                    return b;
+                } else if (ta.fixed && tb.fixed) {
+                    if (ta != tb) {
+                        if (as == 0) {
+                            throw new RuntimeException();
+                        }
+                        return buildArray(as - 1, "L");
+                    }
+                    if (ta == TypeClass.INT) {
+                        String chooseType = "I";
+                        for (int i = possibleIntTypes.length - 1; i >= 0; i--) {
+                            String t = possibleIntTypes[i];
+                            if (a.equals(t) || b.equals(t)) {
+                                chooseType = t;
+                                break;
+                            }
+                        }
+                        return buildArray(as, chooseType);
+                    } else {
+                        return buildArray(as, "L");
+                    }
+                } else { // !ta.fixed && !tb.fixed
+                    return buildArray(as, TypeClass.merge(ta, tb).name);
+                }
+            }
+        }
+
         private void copyTypes(UniqueQueue<TypeRef> q, TypeRef ref) {
-            TypeClass clz = ref.clz;
+            TypeClass clz = ref.getClz();
 
             switch (clz) {
             case BOOLEAN:
@@ -279,16 +451,14 @@ public class TypeTransformer implements Transformer {
             case LONG:
             case DOUBLE:
             case VOID:
-                ref.provideDesc = clz.name;
+                ref.setProvideDesc(clz.name);
                 break;
             default:
             }
-            String provideDesc = ref.provideDesc;
+            String provideDesc = ref.getProvideDesc();
             if (provideDesc == null && ref.parents != null && ref.parents.size() > 1) {
-                boolean allAreSet = isAllParentSetted(ref);
-                if (allAreSet) {
-                    provideDesc = mergeParentType(ref.parents);
-                    ref.provideDesc = provideDesc;
+                if (isAllParentSetted(ref)) {
+                    ref.setProvideDesc(provideDesc = mergeParentType(ref.parents));
                 }
             }
             if (ref.parents != null) {
@@ -296,11 +466,8 @@ public class TypeTransformer implements Transformer {
                     if (p.updateTypeClass(clz)) {
                         q.add(p);
                     }
-                    if (ref.uses != null) {
-                        if (p.uses == null) {
-                            p.uses = new HashSet<>();
-                        }
-                        if (p.uses.addAll(ref.uses)) {
+                    if (ref.getUses() != null) {
+                        if (p.addAllUses(ref.getUses())) {
                             q.add(p);
                         }
                     }
@@ -329,7 +496,7 @@ public class TypeTransformer implements Transformer {
         private boolean isAllParentSetted(TypeRef ref) {
             boolean allAreSet = true;
             for (TypeRef p : ref.parents) {
-                if (p.provideDesc == null) {
+                if (p.getProvideDesc() == null) {
                     allAreSet = false;
                     break;
                 }
@@ -337,7 +504,23 @@ public class TypeTransformer implements Transformer {
             return allAreSet;
         }
 
-        private String mergeType(String a, String b) {
+        private static String mergeObjectType(String a, String b) {
+            if (a.equals(b)) {
+                return a;
+            }
+            if ("L".endsWith(a)) {
+                return b;
+            } else if ("L".equals(b)) {
+                return a;
+            }
+            if (a.compareTo(b) > 0) {
+                return a;
+            } else {
+                return b;
+            }
+        }
+
+        private static String mergeProviderType(String a, String b) {
             if (a.equals(b)) {
                 return a;
             }
@@ -364,19 +547,19 @@ public class TypeTransformer implements Transformer {
                     int as = countArrayDim(a);
                     int bs = countArrayDim(b);
                     if (as == 0 || bs == 0) {
-                        return "Ljava/lang/Object;";
+                        return mergeObjectType(a, b);
                     } else {
                         String elementTypeA = a.substring(as);
                         String elementTypeB = a.substring(bs);
-                        if (as > bs) {
-                            return buildArray(elementTypeB.charAt(0) == 'L' ? bs : bs - 1, "Ljava/lang/Object;");
+                        if (as < bs) {
+                            return buildArray(elementTypeB.charAt(0) == 'L' ? bs : bs - 1, "L");
                         } else if (bs > as) {
-                            return buildArray(elementTypeA.charAt(0) == 'L' ? bs : bs - 1, "Ljava/lang/Object;");
+                            return buildArray(elementTypeA.charAt(0) == 'L' ? as : as - 1, "L");
                         } else { // as==bs
                             if (elementTypeA.charAt(0) != 'L' || elementTypeB.charAt(0) != 'L') {
-                                return buildArray(as - 1, "Ljava/lang/Object;");
+                                return buildArray(as - 1, "L");
                             } else {
-                                return buildArray(as, "Ljava/lang/Object;");
+                                return buildArray(as, "L");
                             }
                         }
                     }
@@ -388,7 +571,7 @@ public class TypeTransformer implements Transformer {
             }
         }
 
-        private String buildArray(int dim, String s) {
+        private static String buildArray(int dim, String s) {
             if (dim == 0) {
                 return s;
             }
@@ -400,7 +583,7 @@ public class TypeTransformer implements Transformer {
             return sb.toString();
         }
 
-        private int countArrayDim(String a) {
+        private static int countArrayDim(String a) {
             int i = 0;
             while (a.charAt(i) == '[') {
                 i++;
@@ -410,9 +593,9 @@ public class TypeTransformer implements Transformer {
 
         private String mergeParentType(Set<TypeRef> parents) {
             Iterator<TypeRef> it = parents.iterator();
-            String a = it.next().provideDesc;
+            String a = it.next().getProvideDesc();
             while (it.hasNext()) {
-                a = mergeType(a, it.next().provideDesc);
+                a = mergeProviderType(a, it.next().getProvideDesc());
             }
             return a;
         }
@@ -744,10 +927,7 @@ public class TypeTransformer implements Transformer {
                 root.gArrayValues = new HashSet<>(3);
             }
             root.gArrayValues.add(value);
-            // if (value.gArryRoots == null) {
-            // value.gArryRoots = new HashSet<>(3);
-            // }
-            // value.gArryRoots.add(root);
+            value.arrayRoot = root;
         }
 
         private void linkSetArray(Value array, Value v) {
@@ -757,11 +937,7 @@ public class TypeTransformer implements Transformer {
                 root.sArrayValues = new HashSet<>(3);
             }
             root.sArrayValues.add(value);
-            // if (value.sArryRoots == null) {
-            // value.sArryRoots = new HashSet<>(3);
-            // }
-            //
-            // value.sArryRoots.add(root);
+            value.arrayRoot = root;
         }
 
         private void linkFromTo(Value from, Value to) {
@@ -779,7 +955,7 @@ public class TypeTransformer implements Transformer {
 
         private void provideAs(Value op, String type) {
             TypeRef typeRef = getDefTypeRef(op);
-            typeRef.provideDesc = type;
+            typeRef.setProvideDesc(type);
             typeRef.updateTypeClass(TypeClass.clzOf(type));
         }
 
@@ -864,10 +1040,7 @@ public class TypeTransformer implements Transformer {
 
         private void useAs(Value op, String type) {
             TypeRef typeRef = getDefTypeRef(op);
-            if (typeRef.uses == null) {
-                typeRef.uses = new HashSet<>();
-            }
-            typeRef.uses.add(type);
+            typeRef.addUses(type);
             typeRef.updateTypeClass(TypeClass.clzOf(type));
         }
     }

@@ -609,7 +609,7 @@ public class IR2JConverter implements Opcodes {
                 sb.append('[');
             }
             sb.append(nmae.baseType);
-            asm.visitMultiANewArrayInsn(sb.toString(), nmae.dimension);
+            asm.visitMultiANewArrayInsn(sb.toString(), value.ops.length);
             break;
         case INVOKE_NEW:
             asm.visitTypeInsn(NEW, toInternal(((InvokeExpr) value).owner));
