@@ -37,6 +37,7 @@ public class NpeTransformer extends StatedTransformer {
 
     private static final MustThrowException NPE = new MustThrowException();
     private static final MustThrowException DIVE = new MustThrowException();
+    private static final MustThrowException NEGATIVE_ARRAY_SIZE = new MustThrowException();
 
     @Override
     public boolean transformReportChanged(IrMethod method) {
@@ -91,6 +92,24 @@ public class NpeTransformer extends StatedTransformer {
                             Constant constant = (Constant) op.getOp2();
                             if (((Number) constant.value).longValue() == 0) {
                                 throw DIVE;
+                            }
+                        }
+                        break;
+                    case NEW_ARRAY:
+                        if (op.getOp().vt == Value.VT.CONSTANT) {
+                            Constant constant = (Constant) op.getOp();
+                            if (((Number) constant.value).intValue() < 0) {
+                                throw NEGATIVE_ARRAY_SIZE;
+                            }
+                        }
+                        break;
+                    case NEW_MUTI_ARRAY:
+                        for (Value size : op.getOps()) {
+                            if (size.vt == Value.VT.CONSTANT) {
+                                Constant constant = (Constant) size;
+                                if (((Number) constant.value).intValue() < 0) {
+                                    throw NEGATIVE_ARRAY_SIZE;
+                                }
                             }
                         }
                         break;
@@ -162,6 +181,26 @@ public class NpeTransformer extends StatedTransformer {
                             }
                         }
                         break;
+                    case NEW_ARRAY:
+                        if (op.getOp().vt == Value.VT.CONSTANT) {
+                            Constant constant = (Constant) op.getOp();
+                            if (((Number) constant.value).intValue() < 0) {
+                                throw NEGATIVE_ARRAY_SIZE;
+                            }
+                        }
+                        break;
+                    case NEW_MUTI_ARRAY:
+                        for (Value size : op.getOps()) {
+                            if (size.vt == Value.VT.CONSTANT) {
+                                Constant constant = (Constant) size;
+                                if (((Number) constant.value).intValue() < 0) {
+                                    throw NEGATIVE_ARRAY_SIZE;
+                                }else {
+                                    travel(size);
+                                }
+                            }
+                        }
+                        break;
                 default:
                 }
                 Value sop = super.travel(op);
@@ -216,9 +255,12 @@ public class NpeTransformer extends StatedTransformer {
             if (e == NPE) {
                 m.stmts.insertBefore(p,
                         Stmts.nThrow(Exprs.nInvokeNew(new Value[0], new String[0], "Ljava/lang/NullPointerException;")));
-            } else {
+            } else if (e == DIVE) {
                 m.stmts.insertBefore(p,
                         Stmts.nThrow(Exprs.nInvokeNew(new Value[]{Exprs.nString("divide by zero")}, new String[]{"Ljava/lang/String;"}, "Ljava/lang/ArithmeticException;")));
+            } else if (e == NEGATIVE_ARRAY_SIZE) {
+                m.stmts.insertBefore(p,
+                        Stmts.nThrow(Exprs.nInvokeNew(new Value[0], new String[0], "Ljava/lang/NegativeArraySizeException;")));
             }
         }
     }
