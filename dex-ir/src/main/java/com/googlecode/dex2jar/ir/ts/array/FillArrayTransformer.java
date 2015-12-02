@@ -524,7 +524,17 @@ public class FillArrayTransformer extends StatedTransformer {
                         TypeExpr ae = (TypeExpr) p.getOp2();
                         if (ae.getOp().vt == Value.VT.CONSTANT) {
                             int size = ((Number) ((Constant) ae.getOp()).value).intValue();
-                            arraySizes.put((Local) p.getOp1(), new ArrayObject(size, ae.type, (AssignStmt) p));
+
+                            // https://bitbucket.org/pxb1988/dex2jar/issues/2/decompiler-error
+                            // the following code may used in a java
+                            // try{
+                            //   new int[-1];
+                            // } catch(Exception e) {
+                            //   ...
+                            // }
+                            if (size >= 0) {
+                                arraySizes.put((Local) p.getOp1(), new ArrayObject(size, ae.type, (AssignStmt) p));
+                            }
                         }
                     } else if (p.getOp1().vt == Value.VT.ARRAY) {
                         ArrayExpr ae = (ArrayExpr) p.getOp1();
