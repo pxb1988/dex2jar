@@ -133,7 +133,8 @@ public class AsmVerify extends BaseCmd {
                     if (file.getFileName().toString().endsWith(".class")) {
                         ClassReader cr = new ClassReader(Files.readAllBytes(file));
                         ClassNode cn = new ClassNode();
-                        cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
+                        cr.accept(new CheckClassAdapter(cn, false),
+                                ClassReader.SKIP_DEBUG | ClassReader.EXPAND_FRAMES | ClassReader.SKIP_FRAMES);
                         for (MethodNode method : cn.methods) {
                             BasicVerifier verifier = new BasicVerifier();
                             Analyzer<BasicValue> a = new Analyzer<>(verifier);
