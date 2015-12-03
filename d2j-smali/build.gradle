@@ -1,32 +1,20 @@
-configurations {
-  antlr2java
-}
+apply plugin: 'antlr'
+
 dependencies {
   compile 'org.antlr:antlr4-runtime:4.5'
   compile project(':dex-reader')
-  antlr2java 'org.antlr:antlr4:4.5'
+  antlr 'org.antlr:antlr4:4.5'
   compile project(':d2j-base-cmd')
   compile project(':dex-writer')
   testCompile 'org.smali:baksmali:2.0.6'
 }
 
-task antlr2java(type: JavaExec) {
-    classpath=configurations.antlr2java
-    def source='src/main/antlr4'
-    def grammars = fileTree(source).include('**/*.g4')
-    ext.antlrJava="$buildDir/generated-sources/antlr"
-    def antlrDir="$buildDir/generated-sources/antlr/com/googlecode/d2j/smali/antlr4"
-    inputs.dir file(source)
-    outputs.dir file(ext.antlrJava)
-    main='org.antlr.v4.Tool'
-    args=[ '-no-listener', '-visitor','-package','com.googlecode.d2j.smali.antlr4', '-o', "$antlrDir",grammars.files].flatten()
+generateGrammarSource {
+    maxHeapSize = "64m"
+    arguments += ['-no-listener', '-visitor','-package','com.googlecode.d2j.smali.antlr4']
 }
-compileJava{
-    dependsOn antlr2java
-    source antlr2java.antlrJava
-}
+
 sourceSets {
-    test {
-        output.resourcesDir = "build/classes/test"
-    }
+    test.output.resourcesDir = "build/classes/test"
+    main.antlr.srcDirs = ['src/main/antlr4']
 }
