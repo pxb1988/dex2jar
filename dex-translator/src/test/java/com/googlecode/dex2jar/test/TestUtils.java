@@ -15,24 +15,21 @@
  */
 package com.googlecode.dex2jar.test;
 
-import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.net.URL;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
-
+import com.android.dx.cf.direct.DirectClassFile;
+import com.android.dx.cf.direct.StdAttributeFactory;
+import com.android.dx.dex.DexOptions;
+import com.android.dx.dex.cf.CfOptions;
+import com.android.dx.dex.cf.CfTranslator;
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.DexException;
+import com.googlecode.d2j.dex.ClassVisitorFactory;
+import com.googlecode.d2j.dex.Dex2Asm;
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexFileNode;
+import com.googlecode.d2j.node.DexMethodNode;
+import com.googlecode.d2j.reader.zip.ZipUtil;
+import com.googlecode.d2j.smali.BaksmaliDumper;
+import com.googlecode.d2j.visitors.DexClassVisitor;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.objectweb.asm.ClassReader;
@@ -51,19 +48,23 @@ import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
-import com.android.dx.dex.DexOptions;
-import com.android.dx.dex.cf.CfOptions;
-import com.android.dx.dex.cf.CfTranslator;
-import com.googlecode.d2j.DexConstants;
-import com.googlecode.d2j.DexException;
-import com.googlecode.d2j.dex.ClassVisitorFactory;
-import com.googlecode.d2j.dex.Dex2Asm;
-import com.googlecode.d2j.node.DexClassNode;
-import com.googlecode.d2j.node.DexFileNode;
-import com.googlecode.d2j.node.DexMethodNode;
-import com.googlecode.d2j.reader.zip.ZipUtil;
-import com.googlecode.d2j.smali.BaksmaliDumper;
-import com.googlecode.d2j.visitors.DexClassVisitor;
+import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
@@ -334,7 +335,10 @@ public abstract class TestUtils {
         cfOptions.strictNameCheck = false;
         DexOptions dexOptions = new DexOptions();
 
-        CfTranslator.translate("", data, cfOptions, dexOptions);
+        DirectClassFile dcf = new DirectClassFile(data, clzNode.className.substring(1, clzNode.className.length() - 1) + ".class", true);
+        dcf.setAttributeFactory(new StdAttributeFactory());
+        com.android.dx.dex.file.DexFile dxFile = new com.android.dx.dex.file.DexFile(dexOptions);
+        CfTranslator.translate(dcf, data, cfOptions, dexOptions, dxFile);
         return data;
     }
 
