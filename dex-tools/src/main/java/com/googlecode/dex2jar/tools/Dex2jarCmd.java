@@ -37,12 +37,12 @@ public class Dex2jarCmd extends BaseCmd {
     private Path exceptionFile;
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
-    @Opt(opt = "n", longOpt = "not-handle-exception", hasArg = false, description = "not handle any exception throwed by dex2jar")
+    @Opt(opt = "n", longOpt = "not-handle-exception", hasArg = false, description = "not handle any exceptions thrown by dex2jar")
     private boolean notHandleException = false;
     @Opt(opt = "o", longOpt = "output", description = "output .jar file, default is $current_dir/[file-name]-dex2jar.jar", argName = "out-jar-file")
     private Path output;
 
-    @Opt(opt = "r", longOpt = "reuse-reg", hasArg = false, description = "reuse regiter while generate java .class file")
+    @Opt(opt = "r", longOpt = "reuse-reg", hasArg = false, description = "reuse register while generate java .class file")
     private boolean reuseReg = false;
 
     @Opt(opt = "s", hasArg = false, description = "same with --topological-sort/-ts")
@@ -54,10 +54,10 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "d", longOpt = "debug-info", hasArg = false, description = "translate debug info")
     private boolean debugInfo = false;
 
-    @Opt(opt = "p", longOpt = "print-ir", hasArg = false, description = "print ir to Syste.out")
+    @Opt(opt = "p", longOpt = "print-ir", hasArg = false, description = "print ir to System.out")
     private boolean printIR = false;
 
-    @Opt(opt = "os", longOpt = "optmize-synchronized", hasArg = false, description = "optmize-synchronized")
+    @Opt(opt = "os", longOpt = "optmize-synchronized", hasArg = false, description = "optimize-synchronized")
     private boolean optmizeSynchronized = false;
 
     @Opt(opt = "nc", longOpt = "no-code", hasArg = false, description = "")
