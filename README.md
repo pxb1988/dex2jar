@@ -8,7 +8,7 @@
 | gc | https://code.google.com/p/dex2jar | [old](http://code.google.com/p/dex2jar/w/list) | [old](http://code.google.com/p/dex2jar/downloads/list) | [old](http://code.google.com/p/dex2jar/issues/list)|
 
 
-#dex2jar
+#dex2jar [![Build Status](https://travis-ci.org/pxb1988/dex2jar.svg?branch=2.x)](https://travis-ci.org/pxb1988/dex2jar)
 Tools to work with android .dex and java .class files
 
 1. dex-reader/writer:
