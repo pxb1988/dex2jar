@@ -95,90 +95,79 @@ public enum TypeClass {
         } else {
             if (thizCls.fixed) {
                 if (clz.fixed) {
-                    // FIXME check out the infect of move-result-object
-                    // FIXME div-int
+                    // special case for merge I and Z
+                    // https://bitbucket.org/pxb1988/dex2jar/issues/1/javalangruntimeexception-can-not-merge-i
+                    // http://sourceforge.net/p/dex2jar/tickets/237/
+                    if ((thizCls == INT && clz == BOOLEAN) || (thizCls == BOOLEAN || clz == INT)) {
+                        return INT;
+                    }
                     throw new RuntimeException("can not merge " + thizCls + " and " + clz);
                 } else {
                     return thizCls;
                 }
-            } else {
-                if (clz.fixed) {
-                    return clz;
-                } else { // both not fixed
-                    switch (thizCls) {
-                    case ZIL:
-                        switch (clz) {
-                        case ZIFL:
-                            return thizCls;
-                        case IF:
-                            return TypeClass.INT;
-                        case ZIF:
-                        case ZI:
-                            return ZI;
-
-                        case JD:
-                            throw new RuntimeException();
-                        default:
-                        }
-                    case ZIFL:
-                        switch (clz) {
-                        case ZIL:
-                        case IF:
-                        case ZIF:
-                        case ZI:
-                            return clz;
-
-                        case JD:
-                            throw new RuntimeException();
-                        default:
-                        }
-                    case IF:
-                        switch (clz) {
-                        case ZIL:
-                        case ZI:
-                            return TypeClass.INT;
-                        case ZIFL:
-                        case ZIF:
-                            return thizCls;
-
-                        case JD:
-                            throw new RuntimeException();
-                        default:
-                        }
-                    case ZIF:
-                        switch (clz) {
-                        case IF:
-                            return clz;
-                        case ZIL:
-                        case ZI:
-                            return ZI;
-                        case ZIFL:
-                            return thizCls;
-
-                        case JD:
-                            throw new RuntimeException();
-                        default:
-                        }
-                    case ZI:
-                        switch (clz) {
-                        case IF:
-                            return INT;
-                        case ZIL:
-                        case ZIFL:
-                        case ZIF:
-                            return thizCls;
-                        case JD:
-                            throw new RuntimeException();
-                        default:
-                        }
-                    case JD:
-                        throw new RuntimeException();
-                    default:
-                    }
-                }
+            } else if (clz.fixed) {
+                return clz;
+            } else { // both not fixed
+                return merge0(thizCls, clz);
             }
         }
+    }
 
+    /**
+     * X     ZIL   ZIFL ZIF  ZI  IF
+     * ZIL   X     ZIL  ZI   ZI  I
+     * ZIFL  ZIL   X    ZIF  ZI  IF
+     * ZIF   ZI    ZIF  X    ZI  IF
+     * ZI    ZI    ZI   ZI   X   I
+     * IF    I     IF   IF   I   X
+     */
+    private static TypeClass merge0(TypeClass a, TypeClass b) {
+        if (a == JD || b == JD) {
+            throw new RuntimeException("can not merge " + a + " and " + b);
+        }
+        switch (a) {
+            case ZIL:
+                switch (b) {
+                    case ZIFL:
+                        return ZIL;
+                    case IF:
+                        return INT;
+                    case ZIF:
+                    case ZI:
+                        return ZI;
+                    default:
+                }
+            case ZIFL:
+                return b;
+            case IF:
+                switch (b) {
+                    case ZIL:
+                    case ZI:
+                        return INT;
+                    case ZIFL:
+                    case ZIF:
+                        return IF;
+                    default:
+                }
+            case ZIF:
+                switch (b) {
+                    case IF:
+                        return IF;
+                    case ZIL:
+                    case ZI:
+                        return ZI;
+                    case ZIFL:
+                        return ZIF;
+                    default:
+                }
+            case ZI:
+                if (b == TypeClass.IF) {
+                    return INT;
+                } else {
+                    return ZI;
+                }
+            default:
+        }
         throw new RuntimeException();
     }
 
