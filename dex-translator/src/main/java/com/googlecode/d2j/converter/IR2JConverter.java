@@ -529,7 +529,30 @@ public class IR2JConverter implements Opcodes {
     }
 
     static int getOpcode(String v, int op) {
-        return Type.getType(v).getOpcode(op);
+        switch (v.charAt(0)) {
+            case 'L':
+            case '[':
+                return Type.getType("La;").getOpcode(op);
+            case 'Z':
+                return Type.BOOLEAN_TYPE.getOpcode(op);
+            case 'B':
+                return Type.BYTE_TYPE.getOpcode(op);
+            case 'S':
+                return Type.SHORT_TYPE.getOpcode(op);
+            case 'C':
+                return Type.CHAR_TYPE.getOpcode(op);
+            case 'I':
+                return Type.INT_TYPE.getOpcode(op);
+            case 'F':
+                return Type.FLOAT_TYPE.getOpcode(op);
+            case 'J':
+                return Type.LONG_TYPE.getOpcode(op);
+            case 'D':
+                return Type.DOUBLE_TYPE.getOpcode(op);
+            default:
+                // FIXME handle undetected types
+                return Type.INT_TYPE.getOpcode(op); // treat other as int
+        }
     }
 
     private static void accept(Value value, MethodVisitor asm) {
