@@ -10,7 +10,6 @@ dependencies {
 }
 
 generateGrammarSource {
-    maxHeapSize = "64m"
     arguments += ['-no-listener', '-visitor','-package','com.googlecode.d2j.smali.antlr4']
 }
 
