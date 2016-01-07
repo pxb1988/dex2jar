@@ -277,7 +277,15 @@ public class Dex2Asm {
                             DexType type = (DexType) findAnnotationAttribute(ann, "value");
                             Clz enclosingClass = get(classes, type.desc);
                             clz.enclosingClass = enclosingClass;
+
+                            // apply patch from ChaeHoon Lim,
+                            // obfuscated code may declare itself as enclosing class
+                            // which cause dex2jar to endless loop
+                            //if(!clz.name.equals(clz.enclosingClass.name)) {
+                            //    enclosingClass.addInner(clz);
+                            //}
                             enclosingClass.addInner(clz);
+
                         }
                             break;
                         case DexConstants.ANNOTATION_ENCLOSING_METHOD_TYPE: {
@@ -608,9 +616,17 @@ public class Dex2Asm {
      * 
      */
     private static void searchEnclosing(Clz clz, List<InnerClassNode> innerClassNodes) {
+        Set<Clz> visitedClz = new HashSet<>();
         for (Clz p = clz; p != null; p = p.enclosingClass) {
+            if (!visitedClz.add(p)) { // prevent endless loop
+                break;
+            }
             Clz enclosingClass = p.enclosingClass;
             if (enclosingClass == null) {
+                break;
+            }
+            if (enclosingClass == clz) {
+                // enclosing itself, that is impossible
                 break;
             }
             int accessInInner = clearInnerAccess(p.access);
