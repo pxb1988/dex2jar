@@ -133,6 +133,7 @@ DRESTARTLOCAL:'.restart local';
 DPROLOGUE:'.prologue';
 DEPIOGUE:'.epiogue';
 
+sFiles: sFile+;
 sFile	:	'.class' sAccList className=OBJECT_TYPE
     ( sSuper | sInterface|sSource|sMethod|sField|sAnnotation)*
              '.end class'?

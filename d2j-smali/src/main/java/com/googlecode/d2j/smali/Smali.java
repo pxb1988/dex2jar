@@ -74,8 +74,9 @@ public class Smali {
         CommonTokenStream ts = new CommonTokenStream(lexer);
         SmaliParser parser = new SmaliParser(ts);
 
-        SmaliParser.SFileContext ctx = parser.sFile();
-        AntlrSmaliUtil.acceptFile(ctx, dcv);
+        for (SmaliParser.SFileContext ctx : parser.sFiles().sFile()) {
+            AntlrSmaliUtil.acceptFile(ctx, dcv);
+        }
     }
 
     public static void smaliFile(String fileName, char[] data, DexFileVisitor dcv) throws IOException {
