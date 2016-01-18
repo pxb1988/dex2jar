@@ -757,19 +757,24 @@ public class DecryptStringCmd extends BaseCmd {
 
         URLClassLoader cl = new URLClassLoader(urls);
         for (MethodConfig config : methodConfigs) {
+            Method jmethod;
             try {
                 Class<?> clz = cl.loadClass(config.owner.replace('/', '.'));
                 if (clz == null) {
                     System.err.println("clz is null:" + config.owner);
                 }
-                Method jmethod = findAnyMethodMatch(clz, config.name,
+                jmethod = findAnyMethodMatch(clz, config.name,
                         toJavaType(Type.getArgumentTypes(config.desc)));
-                jmethod.setAccessible(true);
-                config.jmethod = jmethod;
-                map.put(config, config);
             } catch (Exception ex) {
                 System.err.println("can't load method: L" + config.owner + ";->" + config.name + config.desc);
                 throw ex;
+            }
+            if (jmethod != null) {
+                jmethod.setAccessible(true);
+                config.jmethod = jmethod;
+                map.put(config, config);
+            } else {
+                throw new NoSuchMethodException("can't find method " + config.name + config.desc + " on class " + config.owner + " or its parent");
             }
         }
         return map;
@@ -853,8 +858,9 @@ public class DecryptStringCmd extends BaseCmd {
             if (m != null) {
                 return m;
             }
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+        } catch (NoSuchMethodException ignored) {
+            // https://github.com/pxb1988/dex2jar/issues/51
+            // mute exception stack
         }
         Class<?> sup = clz.getSuperclass();
         if (sup != null) {
