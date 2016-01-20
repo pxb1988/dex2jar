@@ -34,6 +34,7 @@ import org.objectweb.asm.tree.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -70,6 +71,8 @@ public class DecryptStringCmd extends BaseCmd {
     private boolean deleteMethod = false;
     @Opt(opt = "da", longOpt = "deep-analyze", hasArg = false, description = "use dex2jar IR to static analyze and find more values like byte[]")
     private boolean deepAnalyze = false;
+    @Opt(opt = "v", longOpt = "verbose", hasArg = false, description = "show more on output")
+    private boolean verbose = false;
 
     static class MethodConfig {
         Method jmethod;
@@ -235,7 +238,6 @@ public class DecryptStringCmd extends BaseCmd {
     private boolean decryptByIr(ClassNode cn, Map<MethodConfig, MethodConfig> map) {
         MethodConfig key = this.key;
         boolean changed = false;
-        System.err.println(" >   on " + cn.name);
         for (Iterator<MethodNode> it = cn.methods.iterator(); it.hasNext(); ) {
             MethodNode m = it.next();
             if (m.instructions == null) {
@@ -250,6 +252,14 @@ public class DecryptStringCmd extends BaseCmd {
                 }
                 continue;
             }
+
+
+            if (false && verbose) {
+                System.out.println();
+                System.out.println("===============");
+                System.out.println("on method " + cn.name + ";->" + m.name + m.desc);
+            }
+
             boolean find = false;
             // search for the decrypt method
             for (AbstractInsnNode p = m.instructions.getFirst(); p != null; p = p.getNext()) {
@@ -292,7 +302,9 @@ public class DecryptStringCmd extends BaseCmd {
                     m.localVariables = null;
                     changed = true;
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    if(verbose) {
+                        ex.printStackTrace();
+                    }
                 }
             }
         }
@@ -318,6 +330,13 @@ public class DecryptStringCmd extends BaseCmd {
                 }
                 continue;
             }
+
+            if (false && verbose) {
+                System.out.println();
+                System.out.println("===============");
+                System.out.println("on method " + cn.name + ";->" + m.name + m.desc);
+            }
+
             AbstractInsnNode p = m.instructions.getFirst();
             while (p != null) {
                 if (p.getOpcode() == Opcodes.INVOKESTATIC) {
@@ -333,8 +352,14 @@ public class DecryptStringCmd extends BaseCmd {
                             int pSize = jmethod.getParameterTypes().length;
                             // arguments' list. each parameter's value is retrieved by reading bytecode backwards, starting from the INVOKESTATIC statement
                             Object[] as = readArgumentValues(mn, jmethod, pSize);
+                            if (verbose) {
+                                System.out.println(" > calling " + jmethod + " with arguments " + v(as));
+                            }
                             //decryption routine invocation
                             String newValue = (String) jmethod.invoke(null, as);
+                            if (verbose) {
+                                System.out.println("  -> " + Escape.v(newValue));
+                            }
                             //LDC statement generation
                             LdcInsnNode nLdc = new LdcInsnNode(newValue);
                             //insertion of the decrypted string's LDC statement, after INVOKESTATIC statement
@@ -343,8 +368,14 @@ public class DecryptStringCmd extends BaseCmd {
                             removeInsts(m, mn, pSize);
                             p = nLdc;
                             changed = true;
+                        } catch (InvocationTargetException ex){
+                            if(verbose){
+                                ex.getTargetException().printStackTrace();
+                            }
                         } catch (Exception ex) {
-                            // ignore
+                            if (verbose) {
+                                ex.printStackTrace();
+                            }
                         }
                     }
                 }
@@ -403,12 +434,18 @@ public class DecryptStringCmd extends BaseCmd {
                             if (ie.args.length != jmethod.getParameterTypes().length) {
                                 throw new RuntimeException();
                             }
+
                             Object args[] = new Object[ie.args.length];
                             for (int i = 0; i < args.length; i++) {
                                 args[i] = convertIr2Jobj(ie.getOps()[i], ie.args[i]);
                             }
+                            if (verbose) {
+                                System.out.println(" > calling " + jmethod + " with arguments " + v(args));
+                            }
                             String str = (String) jmethod.invoke(null, args);
-                            System.err.println("   < " + Escape.v(str));
+                            if (verbose) {
+                                System.out.println("  -> " + Escape.v(str));
+                            }
                             return Exprs.nString(str);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -424,6 +461,24 @@ public class DecryptStringCmd extends BaseCmd {
         T_unssa.transform(irMethod);
         T_trimEx.transform(irMethod);
         T_ir2jRegAssign.transform(irMethod);
+    }
+
+    public static String v(Object[] vs) {
+        StringBuilder sb = new StringBuilder("[");
+        boolean first = true;
+        for (Object obj : vs) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(",");
+            }
+            if(obj instanceof String) {
+                sb.append(Escape.v(obj));
+            }else {
+                sb.append(obj);
+            }
+        }
+        return sb.append("]").toString();
     }
 
     private Object convertIr2Jobj(Value value, String type) {
@@ -920,6 +975,8 @@ public class DecryptStringCmd extends BaseCmd {
             case Opcodes.DCONST_0:
             case Opcodes.DCONST_1:
                 return (double) (q.getOpcode() - Opcodes.DCONST_0);
+            case Opcodes.ACONST_NULL:
+                return null;
         }
 
         throw new RuntimeException();
