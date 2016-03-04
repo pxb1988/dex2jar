@@ -223,6 +223,9 @@ public class TypeTransformer implements Transformer {
             while (x.next != null) {
                 x = x.next;
             }
+            if (x != this) {
+                this.next = x;
+            }
             return x;
         }
 
@@ -280,8 +283,9 @@ public class TypeTransformer implements Transformer {
         }
 
         public boolean updateTypeClass(TypeClass clz) {
-            TypeClass merged = TypeClass.merge(this.getClz(), clz);
-            if (merged == this.getClz()) {
+            TypeClass thizClz = this.getClz();
+            TypeClass merged = TypeClass.merge(thizClz, clz);
+            if (merged == thizClz) {
                 return false;
             }
             this.setClz(merged);
