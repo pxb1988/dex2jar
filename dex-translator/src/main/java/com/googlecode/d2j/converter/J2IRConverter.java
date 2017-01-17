@@ -84,7 +84,7 @@ public class J2IRConverter {
         if (methodNode.tryCatchBlocks != null) {
             for (TryCatchBlockNode tcb : methodNode.tryCatchBlocks) {
                 target.traps.add(new Trap(getLabel(tcb.start), getLabel(tcb.end), new LabelStmt[]{getLabel(tcb.handler)},
-                        new String[]{tcb.type}));
+                        new String[]{tcb.type == null ? null : Type.getObjectType(tcb.type).getDescriptor()}));
                 int handlerIdx = insnList.indexOf(tcb.handler);
                 handlers.set(handlerIdx);
 
