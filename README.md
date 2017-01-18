@@ -3,8 +3,8 @@
 | _ | Mirror | Wiki | Downloads | Issues |
 |--:|:-----|:----:|:---------:|:------:|
 | sf | https://sourceforge.net/p/dex2jar | [Wiki](https://sourceforge.net/p/dex2jar/wiki) | [Downloads](https://sourceforge.net/projects/dex2jar/files/) | [Tickets](https://sourceforge.net/p/dex2jar/tickets/) |
-| bb | https://bitbucket.org/pxb1988/dex2jar |[Wiki](https://bitbucket.org/pxb1988/dex2jar/wiki)| [Downloads](https://bitbucket.org/pxb1988/dex2jar/downloads) | [Issues](https://bitbucket.org/pxb1988/dex2jar/issues) |
-| gh | https://github.com/pxb1988/dex2jar | | | [Issues](https://github.com/pxb1988/dex2jar/issues) |
+| bb | https://bitbucket.org/pxb1988/dex2jar | [Wiki](https://bitbucket.org/pxb1988/dex2jar/wiki) | [Downloads](https://bitbucket.org/pxb1988/dex2jar/downloads) | [Issues](https://bitbucket.org/pxb1988/dex2jar/issues) |
+| gh | https://github.com/pxb1988/dex2jar | [Wiki](https://github.com/pxb1988/dex2jar/wiki) | [Releases](https://github.com/pxb1988/dex2jar/releases) | [Issues](https://github.com/pxb1988/dex2jar/issues) |
 | gc | https://code.google.com/p/dex2jar | [old](http://code.google.com/p/dex2jar/w/list) | [old](http://code.google.com/p/dex2jar/downloads/list) | [old](http://code.google.com/p/dex2jar/issues/list)|
 
 
