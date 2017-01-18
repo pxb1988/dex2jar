@@ -592,6 +592,7 @@ public class DexFileReader implements BaseDexFileReader {
         int static_values_off = classDefIn.getInt();
 
         String className = getType(class_idx);
+        if(ignoreClass(className)) return;
         String superClassName = getType(superclass_idx);
         String[] interfaceNames = getTypeList(interfaces_off);
         try {
@@ -609,6 +610,10 @@ public class DexFileReader implements BaseDexFileReader {
                 throw dexException;
             }
         }
+    }
+
+    public Boolean ignoreClass(String className){
+       return false;
     }
 
     private Object readEncodedValue(ByteBuffer in) {
