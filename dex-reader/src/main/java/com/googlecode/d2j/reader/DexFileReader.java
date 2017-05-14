@@ -87,7 +87,7 @@ public class DexFileReader implements BaseDexFileReader {
     private static final int MAGIC_DEX = 0x0A786564 & 0x00FFFFFF;// hex for 'dex ', ignore the 0A
     private static final int MAGIC_ODEX = 0x0A796564 & 0x00FFFFFF;// hex for 'dey ', ignore the 0A
     private static final int MAGIC_035 = 0x00353330;
-    private static final int MAGIC_036 = 0x00363330;
+    private static final int MAGIC_037 = 0x00373330;
     private static final int ENDIAN_CONSTANT = 0x12345678;
     private static final int VALUE_BYTE = 0;
     private static final int VALUE_SHORT = 2;
@@ -144,7 +144,7 @@ public class DexFileReader implements BaseDexFileReader {
             throw new DexException("not support magic.");
         }
         int version = in.getInt() & 0x00FFFFFF;
-        if (version != MAGIC_035 && version != MAGIC_036) {
+        if (version != MAGIC_035 && version != MAGIC_037) {
             throw new DexException("not support version.");
         }
 
