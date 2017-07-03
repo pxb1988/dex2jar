@@ -1,0 +1,9 @@
+# Gradle files
+.gradle/
+build/
+
+# Maven files
+target/
+
+# Misc
+.DS_Store
