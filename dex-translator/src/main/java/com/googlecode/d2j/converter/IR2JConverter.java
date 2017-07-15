@@ -16,7 +16,9 @@
  */
 package com.googlecode.d2j.converter;
 
+import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.asm.LdcOptimizeAdapter;
+import com.googlecode.d2j.dex.Dex2Asm;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.*;
@@ -27,10 +29,7 @@ import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.*;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 
 import java.lang.reflect.Array;
 import java.util.HashMap;
@@ -635,13 +634,13 @@ public class IR2JConverter implements Opcodes {
             asm.visitMultiANewArrayInsn(sb.toString(), value.ops.length);
             break;
         case INVOKE_NEW:
-            asm.visitTypeInsn(NEW, toInternal(((InvokeExpr) value).owner));
+            asm.visitTypeInsn(NEW, toInternal(((InvokeExpr) value).getOwner()));
             asm.visitInsn(DUP);
             // pass through
         case INVOKE_INTERFACE:
         case INVOKE_SPECIAL:
         case INVOKE_STATIC:
-        case INVOKE_VIRTUAL:
+        case INVOKE_VIRTUAL: {
             InvokeExpr ie = (InvokeExpr) value;
             int i = 0;
             if (value.vt != VT.INVOKE_STATIC && value.vt != VT.INVOKE_NEW) {
@@ -651,7 +650,7 @@ public class IR2JConverter implements Opcodes {
             for (int j = 0; i < value.ops.length; i++, j++) {
                 Value vb = value.ops[i];
                 accept(vb, asm);
-                insertI2x(vb.valueType, ie.args[j], asm);
+                insertI2x(vb.valueType, ie.getArgs()[j], asm);
             }
 
             int opcode;
@@ -673,9 +672,36 @@ public class IR2JConverter implements Opcodes {
                 opcode = -1;
             }
 
-            asm.visitMethodInsn(opcode, toInternal(ie.owner), ie.name,
-                    buildMethodDesc(ie.vt == VT.INVOKE_NEW ? "V" : ie.ret, ie.args));
-            break;
+            asm.visitMethodInsn(opcode, toInternal(ie.getOwner()), ie.getName(),
+                    buildMethodDesc(ie.vt == VT.INVOKE_NEW ? "V" : ie.getRet(), ie.getArgs()));
+        }
+        break;
+        case INVOKE_CUSTOM: {
+            InvokeCustomExpr ice = (InvokeCustomExpr) value;
+            String argTypes[] = ice.getProto().getParameterTypes();
+            Value[] vbs = ice.getOps();
+            if (argTypes.length == vbs.length) {
+                for (int i = 0; i < vbs.length; i++) {
+                    Value vb = vbs[i];
+                    accept(vb, asm);
+                    insertI2x(vb.valueType, argTypes[i], asm);
+                }
+            } else if (argTypes.length + 1 == vbs.length) {
+                accept(vbs[0], asm);
+                for (int i = 1; i < vbs.length; i++) {
+                    Value vb = vbs[i];
+                    accept(vb, asm);
+                    insertI2x(vb.valueType, argTypes[i - 1], asm);
+                }
+            } else {
+                throw new RuntimeException();
+            }
+            asm.visitInvokeDynamicInsn(ice.name, ice.proto.getDesc(), (Handle) Dex2Asm.convertConstantValue(ice.handle), Dex2Asm.convertConstantValues(ice.bsmArgs));
+        }
+        break;
+        case INVOKE_POLYMORPHIC: {
+            throw new RuntimeException("INVOKE_POLYMORPHIC"); // auto box/unbox ?
+        }
         }
     }
 

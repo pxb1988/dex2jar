@@ -19,9 +19,7 @@ package com.googlecode.d2j.node;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.googlecode.d2j.DexLabel;
-import com.googlecode.d2j.Field;
-import com.googlecode.d2j.Method;
+import com.googlecode.d2j.*;
 import com.googlecode.d2j.node.insn.*;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
@@ -109,6 +107,16 @@ public class DexCodeNode extends DexCodeVisitor {
     @Override
     public void visitMethodStmt(final Op op, final int[] args, final Method method) {
         add(new MethodStmtNode(op, args, method));
+    }
+
+    @Override
+    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
+        add(new MethodCustomStmtNode(op, args, name, proto, bsm, bsmArgs));
+    }
+
+    @Override
+    public void visitMethodStmt(Op op, int[] args, Method bsm, Proto proto) {
+        add(new MethodPolymorphicStmtNode(op, args, bsm, proto));
     }
 
     @Override

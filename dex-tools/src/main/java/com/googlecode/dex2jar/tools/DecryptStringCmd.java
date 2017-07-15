@@ -423,21 +423,21 @@ public class DecryptStringCmd extends BaseCmd {
                 if (op.vt == Value.VT.INVOKE_STATIC) {
                     InvokeExpr ie = (InvokeExpr) op;
                     MethodConfig key = DecryptStringCmd.this.key;
-                    key.owner = ie.owner.substring(1, ie.owner.length() - 1);
-                    key.name = ie.name;
-                    key.desc = buildMethodDesc(ie.args, ie.ret);
+                    key.owner = ie.getOwner().substring(1, ie.getOwner().length() - 1);
+                    key.name = ie.getName();
+                    key.desc = buildMethodDesc(ie.getArgs(), ie.getRet());
 
                     MethodConfig c = map.get(key);
                     if (c != null) {
                         try {
                             Method jmethod = c.jmethod;
-                            if (ie.args.length != jmethod.getParameterTypes().length) {
+                            if (ie.getArgs().length != jmethod.getParameterTypes().length) {
                                 throw new RuntimeException();
                             }
 
-                            Object args[] = new Object[ie.args.length];
+                            Object args[] = new Object[ie.getArgs().length];
                             for (int i = 0; i < args.length; i++) {
-                                args[i] = convertIr2Jobj(ie.getOps()[i], ie.args[i]);
+                                args[i] = convertIr2Jobj(ie.getOps()[i], ie.getArgs()[i]);
                             }
                             if (verbose) {
                                 System.out.println(" > calling " + jmethod + " with arguments " + v(args));

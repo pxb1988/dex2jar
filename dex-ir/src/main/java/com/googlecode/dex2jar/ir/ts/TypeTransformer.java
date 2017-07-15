@@ -917,20 +917,29 @@ public class TypeTransformer implements Transformer {
                 case INVOKE_SPECIAL:
                 case INVOKE_STATIC:
                 case INVOKE_VIRTUAL:
-                    InvokeExpr ie = (InvokeExpr) enExpr;
-                    String type = ie.vt == VT.INVOKE_NEW ? ie.owner : ie.ret;
+                case INVOKE_POLYMORPHIC:
+                case INVOKE_CUSTOM: {
+                    AbstractInvokeExpr ice = (AbstractInvokeExpr) enExpr;
+                    String type = ice.getProto().getReturnType();
                     provideAs(enExpr, type);
                     useAs(enExpr, type); // no one else will use it
 
-                    int start = 0;
-                    if (ie.vt != VT.INVOKE_STATIC && ie.vt != VT.INVOKE_NEW) {
-                        start = 1;
-                        useAs(vbs[0], ie.owner);
+                    String argTypes[] = ice.getProto().getParameterTypes();
+                    if (argTypes.length == vbs.length) {
+                        for (int i = 0; i < vbs.length; i++) {
+                            useAs(vbs[i], argTypes[i]);
+                        }
+                    } else if (argTypes.length + 1 == vbs.length) {
+                        useAs(vbs[0], "L");
+                        for (int i = 1; i < vbs.length; i++) {
+                            useAs(vbs[i], argTypes[i - 1]);
+                        }
+                    } else {
+                        throw new RuntimeException();
                     }
-                    for (int i = 0; start < vbs.length; start++, i++) {
-                        useAs(vbs[start], ie.args[i]);
-                    }
-                    break;
+                }
+                break;
+
                 case FILLED_ARRAY:
                     FilledArrayExpr fae = (FilledArrayExpr) enExpr;
                     for (Value vb : vbs) {

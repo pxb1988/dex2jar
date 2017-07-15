@@ -41,10 +41,10 @@ public class MultiArrayTransformer extends StatedTransformer {
                         Value from = te.getOp();
                         if (from.vt == Value.VT.INVOKE_STATIC) {
                             InvokeExpr invokeExpr = (InvokeExpr) from;
-                            if (invokeExpr.name.equals("newInstance")
-                                    && invokeExpr.owner.equals("Ljava/lang/reflect/Array;")
-                                    && invokeExpr.args.length == 2
-                                    && invokeExpr.args[0].equals("Ljava/lang/Class;")) {
+                            if (invokeExpr.getName().equals("newInstance")
+                                    && invokeExpr.getOwner().equals("Ljava/lang/reflect/Array;")
+                                    && invokeExpr.getArgs().length == 2
+                                    && invokeExpr.getArgs()[0].equals("Ljava/lang/Class;")) {
                                 Value arg0 = invokeExpr.getOps()[0];
                                 String elementType = null;
                                 if (arg0.vt == Value.VT.CONSTANT) {
@@ -88,7 +88,7 @@ public class MultiArrayTransformer extends StatedTransformer {
                                 }
                                 if (elementType != null) {
                                     Value dt = invokeExpr.getOps()[1];
-                                    if (invokeExpr.args[1].equals("I")) {
+                                    if (invokeExpr.getArgs()[1].equals("I")) {
                                         if (te.type.equals("[" + elementType)) {
                                             int d = 0;
                                             while (elementType.charAt(d) == '[') {

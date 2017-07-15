@@ -29,6 +29,8 @@ public enum InstructionFormat {
     // kFmt35ms(3), // [opt] invoke-virtual+super
     kFmt3rc(3), // op {vCCCC .. v(CCCC+AA-1)}, thing@BBBB
     // kFmt3rms(3), // [opt] invoke-virtual+super/range
+    kFmt45cc(4), // op {vC,vD,vE,vF,vG}, meth@BBBB, proto@HHHH
+    kFmt4rcc(4), // op {vCCCC .. vNNNNN}, meth@BBBB, proto@HHHH
     kFmt51l(5), // op vAA, #+BBBBBBBBBBBBBBBB
     // kFmt35mi(3), // [opt] inline invoke
     // kFmt3rmi(3), // [opt] inline invoke/range

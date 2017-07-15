@@ -10,5 +10,7 @@ package com.googlecode.d2j.reader;
     kIndexFieldRef, // field reference index
     kIndexInlineMethod, // inline method index (for inline linked methods)
     kIndexVtableOffset, // vtable offset (for static linked methods)
-    kIndexFieldOffset // field offset (for static linked fields)
+    kIndexFieldOffset, // field offset (for static linked fields)
+    kIndexMethodAndProtoRef, // 038,
+    kIndexCallSiteRef, // 038,
 };

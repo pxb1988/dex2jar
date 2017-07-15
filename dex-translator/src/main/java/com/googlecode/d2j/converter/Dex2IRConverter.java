@@ -1115,15 +1115,44 @@ public class Dex2IRConverter {
                         }
 
                         return value;
+                    case INVOKE_CUSTOM:
+                    case INVOKE_CUSTOM_RANGE: {
+                        Value[] vs = new Value[values.size()];
+                        for (int i = 0; i < vs.length; i++) {
+                            vs[i] = getLocal(values.get(i));
+                        }
+                        MethodCustomStmtNode n = (MethodCustomStmtNode) insn;
+                        Value invoke = nInvokeCustom(vs, n.name, n.proto, n.bsm, n.bsmArgs);
+                        if ("V".equals(n.getProto().getReturnType())) {
+                            emit(nVoidInvoke(invoke));
+                            return null;
+                        } else {
+                            return b(invoke);
+                        }
+                    }
+                    case INVOKE_POLYMORPHIC:
+                    case INVOKE_POLYMORPHIC_RANGE: {
+                        Value[] vs = new Value[values.size()];
+                        for (int i = 0; i < vs.length; i++) {
+                            vs[i] = getLocal(values.get(i));
+                        }
+                        MethodPolymorphicStmtNode n = (MethodPolymorphicStmtNode) insn;
+                        Value invoke = nInvokePolymorphic(vs, n.proto, n.method);
+                        if ("V".equals(n.getProto().getReturnType())) {
+                            emit(nVoidInvoke(invoke));
+                            return null;
+                        } else {
+                            return b(invoke);
+                        }
+                    }
                     default:
                         Op op = insn.op;
-                        Method method = ((MethodStmtNode) insn).method;
                         Value[] vs = new Value[values.size()];
                         for (int i = 0; i < vs.length; i++) {
                             vs[i] = getLocal(values.get(i));
                         }
 
-
+                        Method method = ((MethodStmtNode) insn).method;
                         Value invoke = null;
                         switch (op) {
                             case INVOKE_VIRTUAL_RANGE:

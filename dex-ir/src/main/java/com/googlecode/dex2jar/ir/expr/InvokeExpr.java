@@ -15,6 +15,8 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.Proto;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.Util;
 import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
@@ -22,60 +24,50 @@ import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
 /**
  * Represent a method invocation expression. To represent a {@link VT#INVOKE_INTERFACE},{@link VT#INVOKE_SPECIAL} or
  * {@link VT#INVOKE_VIRTUAL} the first element of ops is the owner object,To represent a {@link VT#INVOKE_NEW} or
- * {@link VT#INVOKE_STATIC} all ops are arguments. The return type of {@link VT#INVOKE_NEW} is {@link #owner} instead of
- * {@link #ret}
- * 
+ * {@link VT#INVOKE_STATIC} all ops are arguments. The return type of {@link VT#INVOKE_NEW} is owner instead of ret
+ *
+ * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
+ * @version $Rev: 9fd8005bbaa4 $
  * @see VT#INVOKE_INTERFACE
  * @see VT#INVOKE_NEW
  * @see VT#INVOKE_SPECIAL
  * @see VT#INVOKE_STATIC
  * @see VT#INVOKE_VIRTUAL
- * 
- * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
- * @version $Rev: 9fd8005bbaa4 $
  */
-public class InvokeExpr extends EnExpr {
+public class InvokeExpr extends AbstractInvokeExpr {
 
-    /**
-     * argument type desc
-     */
-    public String[] args;
-    public String name;
-    /**
-     * owner type desc
-     */
-    public String owner;
-    /**
-     * owner type desc
-     */
-    public String ret;
+    public Method method;
 
     @Override
     protected void releaseMemory() {
-        args = null;
-        ret = null;
-        owner = null;
-        name = null;
+        method = null;
         super.releaseMemory();
     }
 
+    @Override
+    public Proto getProto() {
+        return method.getProto();
+    }
+
     public InvokeExpr(VT type, Value[] args, String ownerType, String methodName, String[] argmentTypes,
-            String returnType) {
+                      String returnType) {
         super(type, args);
-        this.ret = returnType;
-        this.name = methodName;
-        this.owner = ownerType;
-        this.args = argmentTypes;
+        this.method = new Method(ownerType, methodName, argmentTypes, returnType);
+    }
+
+    public InvokeExpr(VT type, Value[] args, Method method) {
+        super(type, args);
+        this.method = method;
     }
 
     @Override
     public Value clone() {
-        return new InvokeExpr(vt, cloneOps(), owner, name, args, ret);
+        return new InvokeExpr(vt, cloneOps(), method);
     }
 
     @Override
     public Value clone(LabelAndLocalMapper mapper) {
-        return new InvokeExpr(vt, cloneOps(mapper), owner, name, args, ret);
+        return new InvokeExpr(vt, cloneOps(mapper), method);
     }
 
     @Override
@@ -83,10 +75,10 @@ public class InvokeExpr extends EnExpr {
         StringBuilder sb = new StringBuilder();
 
         if (super.vt == VT.INVOKE_NEW) {
-            sb.append("new ").append(Util.toShortClassName(owner)).append('(');
+            sb.append("new ").append(Util.toShortClassName(method.getOwner())).append('(');
         } else {
-            sb.append(super.vt == VT.INVOKE_STATIC ? Util.toShortClassName(owner) : ops[0]).append('.')
-                    .append(this.name).append('(');
+            sb.append(super.vt == VT.INVOKE_STATIC ? Util.toShortClassName(method.getOwner()) : ops[0]).append('.')
+                    .append(this.method.getName()).append('(');
         }
         boolean first = true;
         for (int i = (vt == VT.INVOKE_STATIC || vt == VT.INVOKE_NEW) ? 0 : 1; i < ops.length; i++) {
@@ -100,4 +92,21 @@ public class InvokeExpr extends EnExpr {
         sb.append(')');
         return sb.toString();
     }
+
+    public String getOwner() {
+        return method.getOwner();
+    }
+
+    public String getRet() {
+        return method.getReturnType();
+    }
+
+    public String getName() {
+        return method.getName();
+    }
+
+    public String[] getArgs() {
+        return method.getParameterTypes();
+    }
+
 }
