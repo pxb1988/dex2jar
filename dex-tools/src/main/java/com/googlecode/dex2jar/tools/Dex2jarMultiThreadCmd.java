@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.googlecode.d2j.dex.LambadaNameSafeClassAdapter;
 import com.googlecode.d2j.reader.BaseDexFileReader;
 import com.googlecode.d2j.reader.MultiDexFileReader;
 import org.objectweb.asm.ClassVisitor;
@@ -36,6 +37,8 @@ import com.googlecode.d2j.dex.ExDex2Asm;
 import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.reader.DexFileReader;
+import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.commons.RemappingClassAdapter;
 
 @BaseCmd.Syntax(cmd = "d2j-mt-dex2jar", syntax = "[options] <file0> [file1 ... fileN]", desc = "convert dex to jar")
 public class Dex2jarMultiThreadCmd extends BaseCmd {
@@ -104,23 +107,24 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
         ClassVisitorFactory cvf = new ClassVisitorFactory() {
             @Override
             public ClassVisitor create(final String name) {
-                return new ClassVisitor(Opcodes.ASM4, new ClassWriter(ClassWriter.COMPUTE_MAXS)) {
+                final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
+                return new ClassVisitor(Opcodes.ASM4, rca) {
                     @Override
                     public void visitEnd() {
                         super.visitEnd();
-                        ClassWriter cw = (ClassWriter) super.cv;
-
+                        String className = rca.getClassName();
                         byte[] data;
                         try {
                             // FIXME handle 'java.lang.RuntimeException: Method code too large!'
                             data = cw.toByteArray();
                         } catch (Exception ex) {
-                            System.err.println(String.format("ASM fail to generate .class file: %s", name));
+                            System.err.println(String.format("ASM fail to generate .class file: %s", className));
                             exceptionHandler.handleFileException(ex);
                             return;
                         }
                         try {
-                            Path dist1 = dist.resolve(name + ".class");
+                            Path dist1 = dist.resolve(className + ".class");
                             BaseCmd.createParentDirectories(dist1);
                             Files.write(dist1, data);
                         } catch (IOException e) {

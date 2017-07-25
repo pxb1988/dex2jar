@@ -17,6 +17,7 @@ package com.googlecode.dex2jar.test;
 
 import com.android.dx.cf.direct.DirectClassFile;
 import com.android.dx.cf.direct.StdAttributeFactory;
+import com.android.dx.cf.iface.ParseException;
 import com.android.dx.dex.DexOptions;
 import com.android.dx.dex.cf.CfOptions;
 import com.android.dx.dex.cf.CfTranslator;
@@ -24,6 +25,7 @@ import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.DexException;
 import com.googlecode.d2j.dex.ClassVisitorFactory;
 import com.googlecode.d2j.dex.Dex2Asm;
+import com.googlecode.d2j.dex.LambadaNameSafeClassAdapter;
 import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.node.DexMethodNode;
@@ -36,6 +38,8 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
@@ -313,10 +317,11 @@ public abstract class TestUtils {
             }
         };
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
         ClassVisitorFactory cvf = new ClassVisitorFactory() {
             @Override
             public ClassVisitor create(String classInternalName) {
-                return cw;
+                return rca;
             }
         };
         if (fileNode != null) {
@@ -335,10 +340,18 @@ public abstract class TestUtils {
         cfOptions.strictNameCheck = false;
         DexOptions dexOptions = new DexOptions();
 
-        DirectClassFile dcf = new DirectClassFile(data, clzNode.className.substring(1, clzNode.className.length() - 1) + ".class", true);
+        DirectClassFile dcf = new DirectClassFile(data, rca.getClassName() + ".class", true);
         dcf.setAttributeFactory(new StdAttributeFactory());
         com.android.dx.dex.file.DexFile dxFile = new com.android.dx.dex.file.DexFile(dexOptions);
-        CfTranslator.translate(dcf, data, cfOptions, dexOptions, dxFile);
+        try {
+            CfTranslator.translate(dcf, data, cfOptions, dexOptions, dxFile);
+        } catch (ParseException e) {
+            if ("MethodHandle not supported".equals(e.getMessage())) {
+                e.printStackTrace();
+            } else {
+                throw e;
+            }
+        }
         return data;
     }
 

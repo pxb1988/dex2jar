@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
+import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.MethodHandle;
 import com.googlecode.d2j.Proto;
@@ -41,7 +42,10 @@ public final class Exprs {
     }
 
     public static Constant nType(String desc) {
-        return new Constant(new Constant.Type(desc));
+        return new Constant(new DexType(desc));
+    }
+    public static Constant nType(DexType t) {
+        return new Constant(t);
     }
 
     public static Constant nDouble(double i) {

@@ -33,10 +33,8 @@ public class ExDex2Asm extends Dex2Asm {
 
     @Override
     public void convertCode(DexMethodNode methodNode, MethodVisitor mv) {
-        if (!AsmBridge.isMethodWriter(mv)) {
-            throw new RuntimeException("We use a MethodWriter tricky here!");
-        }
-        MethodNode mn = new MethodNode(Opcodes.ASM4, methodNode.access, methodNode.method.getName(),
+        MethodVisitor mw = AsmBridge.searchMethodWriter(mv);
+        MethodNode mn = new MethodNode(Opcodes.ASM5, methodNode.access, methodNode.method.getName(),
                 methodNode.method.getDesc(), null, null);
         try {
             super.convertCode(methodNode, mn);
@@ -51,13 +49,15 @@ public class ExDex2Asm extends Dex2Asm {
         }
         // code convert ok, copy to MethodWriter and check for Size
         mn.accept(mv);
-        try {
-            AsmBridge.sizeOfMethodWriter(mv);
-        } catch (Exception ex) {
-            mn.instructions.clear();
-            mn.tryCatchBlocks.clear();
-            exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, ex);
-            AsmBridge.replaceMethodWriter(mv, mn);
+        if (mw != null) {
+            try {
+                AsmBridge.sizeOfMethodWriter(mw);
+            } catch (Exception ex) {
+                mn.instructions.clear();
+                mn.tryCatchBlocks.clear();
+                exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, ex);
+                AsmBridge.replaceMethodWriter(mw, mn);
+            }
         }
     }
 }

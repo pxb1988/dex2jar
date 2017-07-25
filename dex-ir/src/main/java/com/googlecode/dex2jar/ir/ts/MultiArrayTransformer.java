@@ -1,5 +1,6 @@
 package com.googlecode.dex2jar.ir.ts;
 
+import com.googlecode.d2j.DexType;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.StmtTraveler;
 import com.googlecode.dex2jar.ir.expr.*;
@@ -48,7 +49,7 @@ public class MultiArrayTransformer extends StatedTransformer {
                                 Value arg0 = invokeExpr.getOps()[0];
                                 String elementType = null;
                                 if (arg0.vt == Value.VT.CONSTANT) {
-                                    elementType = ((Constant.Type) ((Constant) invokeExpr.getOps()[0]).value).desc;
+                                    elementType = ((DexType) ((Constant) invokeExpr.getOps()[0]).value).desc;
                                 } else {
                                     if (arg0.vt == Value.VT.STATIC_FIELD) {
                                         StaticFieldExpr sfe = (StaticFieldExpr) arg0;

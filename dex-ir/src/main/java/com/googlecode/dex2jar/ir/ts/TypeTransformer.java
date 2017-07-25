@@ -16,6 +16,7 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
+import com.googlecode.d2j.DexType;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.TypeClass;
 import com.googlecode.dex2jar.ir.expr.*;
@@ -708,7 +709,7 @@ public class TypeTransformer implements Transformer {
                     Object value = cst.value;
                     if (value instanceof String) {
                         provideAs(cst, "Ljava/lang/String;");
-                    } else if (value instanceof Constant.Type) {
+                    } else if (value instanceof DexType) {
                         provideAs(cst, "Ljava/lang/Class;");
                     } else if (value instanceof Number) {
                         if (value instanceof Integer || value instanceof Byte || value instanceof Short) {
