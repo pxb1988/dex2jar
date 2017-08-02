@@ -16,9 +16,7 @@
  */
 package com.googlecode.d2j.smali;
 
-import com.googlecode.d2j.DexLabel;
-import com.googlecode.d2j.Field;
-import com.googlecode.d2j.Method;
+import com.googlecode.d2j.*;
 import com.googlecode.d2j.node.DexDebugNode;
 import com.googlecode.d2j.reader.InstructionFormat;
 import com.googlecode.d2j.reader.Op;
@@ -237,11 +235,9 @@ import java.util.*;
     @Override
     public void visitFieldStmt(Op op, int a, int b, Field field) {
         if (op.format == InstructionFormat.kFmt22c) {// iget,iput
-            out.s("%s %s, %s, %s->%s:%s", op.displayName, reg(a), reg(b), BaksmaliDumper.escapeType(field.getOwner()),
-                    BaksmaliDumper.escapeId(field.getName()), BaksmaliDumper.escapeType(field.getType()));
+            out.s("%s %s, %s, %s", op.displayName, reg(a), reg(b), BaksmaliDumper.escapeField(field));
         } else {
-            out.s("%s %s, %s->%s:%s", op.displayName, reg(a), BaksmaliDumper.escapeType(field.getOwner()),
-                    BaksmaliDumper.escapeId(field.getName()), BaksmaliDumper.escapeType(field.getType()));
+            out.s("%s %s, %s", op.displayName, reg(a), BaksmaliDumper.escapeField(field));
         }
     }
 
@@ -341,9 +337,8 @@ import java.util.*;
 
         if (args.length > 0) {
             if (op.format == InstructionFormat.kFmt3rc) { // invoke-x/range
-                out.s("%s { %s .. %s }, %s->%s%s", op.displayName, reg(args[0]), reg(args[args.length - 1]),
-                        BaksmaliDumper.escapeType(method.getOwner()), BaksmaliDumper.escapeId(method.getName()),
-                        BaksmaliDumper.escapeMethodDesc(method));
+                out.s("%s { %s .. %s }, %s", op.displayName, reg(args[0]), reg(args[args.length - 1]),
+                        BaksmaliDumper.escapeMethod(method));
             } else {
                 boolean first = true;
                 StringBuilder buff = new StringBuilder();
@@ -355,14 +350,70 @@ import java.util.*;
                     }
                     buff.append(reg(i));
                 }
-                out.s("%s { %s }, %s->%s%s", op.displayName, buff, BaksmaliDumper.escapeType(method.getOwner()),
-                        BaksmaliDumper.escapeId(method.getName()), BaksmaliDumper.escapeMethodDesc(method));
+                out.s("%s { %s }, %s", op.displayName, buff, BaksmaliDumper.escapeMethod(method));
             }
         } else {
-            out.s("%s { }, %s->%s%s", op.displayName, BaksmaliDumper.escapeType(method.getOwner()),
-                    BaksmaliDumper.escapeId(method.getName()), BaksmaliDumper.escapeMethodDesc(method));
+            out.s("%s { }, %s", op.displayName, BaksmaliDumper.escapeMethod(method));
         }
 
+    }
+
+    @Override
+    public void visitMethodStmt(Op op, int[] args, Method method, Proto proto) {
+        if (args.length > 0) {
+            if (op.format == InstructionFormat.kFmt4rcc) { // invoke-x/range
+                out.s("%s { %s .. %s }, %s, %s", op.displayName, reg(args[0]), reg(args[args.length - 1]),
+                        BaksmaliDumper.escapeMethod(method), BaksmaliDumper.escapeMethodDesc(proto));
+            } else {
+                boolean first = true;
+                StringBuilder buff = new StringBuilder();
+                for (int i : args) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        buff.append(", ");
+                    }
+                    buff.append(reg(i));
+                }
+                out.s("%s { %s }, %s, %s", op.displayName, buff, BaksmaliDumper.escapeMethod(method),
+                        BaksmaliDumper.escapeMethodDesc(proto));
+            }
+        } else {
+            out.s("%s { }, %s, %s", op.displayName, BaksmaliDumper.escapeMethod(method),
+                    BaksmaliDumper.escapeMethodDesc(proto));
+        }
+    }
+
+    @Override
+    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ ").append( BaksmaliDumper.escapeValue(bsm)).append(", ").append(BaksmaliDumper.escapeValue(name)).append(", ").append(BaksmaliDumper.escapeMethodDesc(proto));
+        for(Object o: bsmArgs) {
+            sb.append(", ").append(BaksmaliDumper.escapeValue(o));
+        }
+        sb.append("}");
+
+
+        if (args.length > 0) {
+            if (op.format == InstructionFormat.kFmt3rc) { // invoke-x/range
+                out.s("%s { %s .. %s }, %s", op.displayName, reg(args[0]), reg(args[args.length - 1]),
+                        sb);
+            } else {
+                boolean first = true;
+                StringBuilder buff = new StringBuilder();
+                for (int i : args) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        buff.append(", ");
+                    }
+                    buff.append(reg(i));
+                }
+                out.s("%s { %s }, %s", op.displayName, buff, sb);
+            }
+        } else {
+            out.s("%s { }, %s", op.displayName, sb);
+        }
     }
 
     @Override

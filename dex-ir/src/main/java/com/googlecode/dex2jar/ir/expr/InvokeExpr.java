@@ -74,14 +74,18 @@ public class InvokeExpr extends AbstractInvokeExpr {
     public String toString0() {
         StringBuilder sb = new StringBuilder();
 
+        int i = 0;
         if (super.vt == VT.INVOKE_NEW) {
-            sb.append("new ").append(Util.toShortClassName(method.getOwner())).append('(');
+            sb.append("new ").append(Util.toShortClassName(method.getOwner()));
+        } else if (super.vt == VT.INVOKE_STATIC) {
+            sb.append(Util.toShortClassName(method.getOwner())).append('.')
+                    .append(this.method.getName());
         } else {
-            sb.append(super.vt == VT.INVOKE_STATIC ? Util.toShortClassName(method.getOwner()) : ops[0]).append('.')
-                    .append(this.method.getName()).append('(');
+            sb.append(ops[i++]).append('.').append(this.method.getName());
         }
+        sb.append('(');
         boolean first = true;
-        for (int i = (vt == VT.INVOKE_STATIC || vt == VT.INVOKE_NEW) ? 0 : 1; i < ops.length; i++) {
+        for (; i < ops.length; i++) {
             if (first) {
                 first = false;
             } else {

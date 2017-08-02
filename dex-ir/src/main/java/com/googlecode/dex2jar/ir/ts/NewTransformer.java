@@ -103,8 +103,7 @@ public class NewTransformer implements Transformer {
                     if (orgOps[0].vt == NEW) {
                         NewExpr newExpr = (NewExpr) ie.getOps()[0];
                         if (newExpr != null) {
-                            Value[] nOps = new Value[orgOps.length - 1];
-                            System.arraycopy(orgOps, 1, nOps, 0, nOps.length);
+                            Value[] nOps = Arrays.copyOfRange(orgOps, 1, orgOps.length);
                             InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.getArgs(), ie.getOwner());
                             method.stmts.insertBefore(p, Stmts.nVoidInvoke(invokeNew));
                             it.remove();
@@ -156,8 +155,7 @@ public class NewTransformer implements Transformer {
             }
             InvokeExpr ie = findInvokeExpr(obj.invokeStmt, null);
             Value[] orgOps = ie.getOps();
-            Value[] nOps = new Value[orgOps.length - 1];
-            System.arraycopy(orgOps, 1, nOps, 0, nOps.length);
+            Value[] nOps = Arrays.copyOfRange(orgOps, 1, orgOps.length);
             InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.getArgs(), ie.getOwner());
             method.stmts.replace(obj.invokeStmt, Stmts.nAssign(obj.local, invokeNew));
         }

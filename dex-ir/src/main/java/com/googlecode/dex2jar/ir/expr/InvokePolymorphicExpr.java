@@ -18,6 +18,7 @@ package com.googlecode.dex2jar.ir.expr;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.Proto;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
+import com.googlecode.dex2jar.ir.Util;
 
 public class InvokePolymorphicExpr extends AbstractInvokeExpr {
     public Proto proto;
@@ -54,8 +55,22 @@ public class InvokePolymorphicExpr extends AbstractInvokeExpr {
     @Override
     public String toString0() {
         StringBuilder sb = new StringBuilder();
+        int i = 0;
+        sb.append(ops[i++]).append('.').append(this.method.getName());
+        String[] argTypes = getProto().getParameterTypes();
+        sb.append('(');
+        int j = 0;
+        boolean first = true;
+        for (; i < ops.length; i++) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(',');
+            }
+            sb.append("(").append(Util.toShortClassName(argTypes[j++])).append(")").append(ops[i]);
+        }
+        sb.append(')');
 
-        sb.append("InvokePolymorphicExpr(...)");
         return sb.toString();
     }
 }
