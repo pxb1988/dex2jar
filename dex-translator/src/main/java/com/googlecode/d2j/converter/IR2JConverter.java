@@ -710,19 +710,12 @@ public class IR2JConverter implements Opcodes {
             String argTypes[] = ipe.getProto().getParameterTypes();
             Value[] vbs = ipe.getOps();
             accept(vbs[0], asm);
-            asm.visitLdcInsn(vbs.length - 1);
-            asm.visitTypeInsn(ANEWARRAY, "java/lang/Object");
             for (int i = 1; i < vbs.length; i++) {
-                asm.visitInsn(DUP);
-                asm.visitLdcInsn(i - 1);
                 Value vb = vbs[i];
                 accept(vb, asm);
                 insertI2x(vb.valueType, argTypes[i - 1], asm);
-                box(argTypes[i - 1], "Ljava/lang/Object;", asm);
-                asm.visitInsn(AASTORE);
             }
-            asm.visitMethodInsn(INVOKEVIRTUAL, toInternal(m.getOwner()), m.getName(), m.getDesc(), false);
-            box(ipe.method.getReturnType(), ipe.getProto().getReturnType(), asm);
+            asm.visitMethodInsn(INVOKEVIRTUAL, toInternal(m.getOwner()), m.getName(), ipe.getProto().getDesc(), false);
         }
         }
     }
