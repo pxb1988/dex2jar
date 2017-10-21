@@ -119,7 +119,13 @@ public class BaksmaliDumper implements DexConstants {
         }
     }
 
+    static String escapeMethod(Method method) {
+        return BaksmaliDumper.escapeType(method.getOwner()) + "->" + BaksmaliDumper.escapeId(method.getName()) + BaksmaliDumper.escapeMethodDesc(method);
+    }
     static String escapeMethodDesc(Method m) {
+        return escapeMethodDesc(m.getProto());
+    }
+    static String escapeMethodDesc(Proto m) {
         StringBuilder escapeBuff = new StringBuilder();
         escapeBuff.append("(");
         for (String t : m.getParameterTypes()) {
@@ -211,10 +217,12 @@ public class BaksmaliDumper implements DexConstants {
         if (obj instanceof DexType) {
             return escapeType(((DexType) obj).desc);
         }
-
-        // if (obj instanceof Method) {
-        // return v((Method) obj);
-        // }
+        if(obj instanceof Proto) {
+            return escapeMethodDesc((Proto) obj);
+        }
+        if(obj instanceof MethodHandle) {
+            return escapeMethodHandle((MethodHandle) obj);
+        }
         if (obj instanceof Field) {
             Field f = ((Field) obj);
             String owner = f.getOwner();
@@ -262,20 +270,37 @@ public class BaksmaliDumper implements DexConstants {
             return ((Boolean) obj).toString();
         }
         if (obj instanceof Method) {
-            Method m = (Method) obj;
-            StringBuilder buf = new StringBuilder();
-            escapeType0(buf, m.getOwner());
-            buf.append("->");
-            escapeId0(buf, m.getName());
-            buf.append("(");
-            for (String a : m.getParameterTypes()) {
-                escapeType0(buf, a);
-            }
-            buf.append(")");
-            escapeType0(buf, m.getReturnType());
-            return buf.toString();
+            return escapeMethod((Method) obj);
         }
         return null;
+    }
+
+    private static String escapeMethodHandle(MethodHandle obj) {
+        switch (obj.getType()) {
+        case MethodHandle.INSTANCE_GET:
+            return ".iget " + escapeField(obj.getField());
+        case MethodHandle.INSTANCE_PUT:
+            return ".iput " + escapeField(obj.getField());
+        case MethodHandle.STATIC_GET:
+            return ".sget " + escapeField(obj.getField());
+        case MethodHandle.STATIC_PUT:
+            return ".sput " + escapeField(obj.getField());
+
+        case MethodHandle.INVOKE_INSTANCE:
+            return ".invoke-instance " + escapeMethod(obj.getMethod());
+        case MethodHandle.INVOKE_STATIC:
+            return ".invoke-static " + escapeMethod(obj.getMethod());
+        default:
+        }
+        return "?";
+    }
+
+    public static String escapeField(Field f) {
+        String owner = f.getOwner();
+        if (owner == null) {
+            owner = f.getType();
+        }
+        return escapeType(owner) + "->" + f.getName() + ":" + escapeType(f.getType());
     }
 
     private static void dumpAnns(List<DexAnnotationNode> anns, Out out) {

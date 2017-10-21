@@ -84,27 +84,30 @@ public class DexFileReader implements BaseDexFileReader {
     static final int DBG_FIRST_SPECIAL = 0x0a;
     static final int DBG_LINE_BASE = -4;
     static final int DBG_LINE_RANGE = 15;
-    private static final int MAGIC_DEX = 0x0A786564 & 0x00FFFFFF;// hex for 'dex ', ignore the 0A
-    private static final int MAGIC_ODEX = 0x0A796564 & 0x00FFFFFF;// hex for 'dey ', ignore the 0A
-    private static final int MAGIC_035 = 0x00353330;
-    private static final int MAGIC_036 = 0x00363330;
+
     private static final int ENDIAN_CONSTANT = 0x12345678;
-    private static final int VALUE_BYTE = 0;
-    private static final int VALUE_SHORT = 2;
-    private static final int VALUE_CHAR = 3;
-    private static final int VALUE_INT = 4;
-    private static final int VALUE_LONG = 6;
-    private static final int VALUE_FLOAT = 16;
-    private static final int VALUE_DOUBLE = 17;
-    private static final int VALUE_STRING = 23;
-    private static final int VALUE_TYPE = 24;
-    private static final int VALUE_FIELD = 25;
-    private static final int VALUE_METHOD = 26;
-    private static final int VALUE_ENUM = 27;
-    private static final int VALUE_ARRAY = 28;
-    private static final int VALUE_ANNOTATION = 29;
-    private static final int VALUE_NULL = 30;
-    private static final int VALUE_BOOLEAN = 31;
+    private static final int VALUE_BYTE = 0x00;
+    private static final int VALUE_SHORT = 0x02;
+    private static final int VALUE_CHAR = 0x03;
+    private static final int VALUE_INT = 0x04;
+    private static final int VALUE_LONG = 0x06;
+    private static final int VALUE_FLOAT = 0x10;
+    private static final int VALUE_DOUBLE = 0x11;
+    private static final int VALUE_METHOD_TYPE = 0x15;
+    private static final int VALUE_METHOD_HANDLE = 0x16;
+    private static final int VALUE_STRING = 0x17;
+    private static final int VALUE_TYPE = 0x18;
+    private static final int VALUE_FIELD = 0x19;
+    private static final int VALUE_METHOD = 0x1a;
+    private static final int VALUE_ENUM = 0x1b;
+    private static final int VALUE_ARRAY = 0x1c;
+    private static final int VALUE_ANNOTATION = 0x1d;
+    private static final int VALUE_NULL = 0x1e;
+    private static final int VALUE_BOOLEAN = 0x1f;
+
+    private static final int TYPE_CALL_SITE_ID_ITEM = 0x0007;
+    private static final int TYPE_METHOD_HANDLE_ITEM = 0x0008;
+
     final ByteBuffer annotationSetRefListIn;
     final ByteBuffer annotationsDirectoryItemIn;
     final ByteBuffer annotationSetItemIn;
@@ -121,11 +124,17 @@ public class DexFileReader implements BaseDexFileReader {
     final ByteBuffer typeListIn;
     final ByteBuffer stringDataIn;
     final ByteBuffer debugInfoIn;
+    final ByteBuffer callSiteIdIn;
+    final ByteBuffer methodHandleIdIn;
     final int string_ids_size;
     final int type_ids_size;
+    final int proto_ids_size;
     final int field_ids_size;
     final int method_ids_size;
     final private int class_defs_size;
+    final int call_site_ids_size;
+    final int method_handle_ids_size;
+    final int dex_version;
 
     /**
      * read dex from a {@link ByteBuffer}.
@@ -134,8 +143,12 @@ public class DexFileReader implements BaseDexFileReader {
      */
     public DexFileReader(ByteBuffer in) {
         in.position(0);
-        in = in.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
-        int magic = in.getInt() & 0x00FFFFFF;
+        in = in.asReadOnlyBuffer().order(ByteOrder.BIG_ENDIAN);
+        int magic = in.getInt() & 0xFFFFFF00;
+
+        final int MAGIC_DEX = 0x6465780A & 0xFFFFFF00;// hex for 'dex ', ignore the 0A
+        final int MAGIC_ODEX = 0x6465790A & 0xFFFFFF00;// hex for 'dey ', ignore the 0A
+
         if (magic == MAGIC_DEX) {
             ;
         } else if (magic == MAGIC_ODEX) {
@@ -143,10 +156,12 @@ public class DexFileReader implements BaseDexFileReader {
         } else {
             throw new DexException("not support magic.");
         }
-        int version = in.getInt() & 0x00FFFFFF;
-        if (version != MAGIC_035 && version != MAGIC_036) {
+        int version = in.getInt() >> 8;
+        if (version < 0 || version < DEX_035) {
             throw new DexException("not support version.");
         }
+        this.dex_version = version;
+        in.order(ByteOrder.LITTLE_ENDIAN);
 
         // skip uint checksum
         // and 20 bytes signature
@@ -161,14 +176,15 @@ public class DexFileReader implements BaseDexFileReader {
 
         // skip uint link_size
         // and uint link_off
-        // and uint map_off
-        skip(in, 4 + 4 + 4);
+        skip(in, 4 + 4);
+
+        int map_off = in.getInt();
 
         string_ids_size = in.getInt();
         int string_ids_off = in.getInt();
         type_ids_size = in.getInt();
         int type_ids_off = in.getInt();
-        int proto_ids_size = in.getInt();
+        proto_ids_size = in.getInt();
         int proto_ids_off = in.getInt();
         field_ids_size = in.getInt();
         int field_ids_off = in.getInt();
@@ -178,12 +194,43 @@ public class DexFileReader implements BaseDexFileReader {
         int class_defs_off = in.getInt();
         // skip uint data_size data_off
 
+        int call_site_ids_off = 0;
+        int call_site_ids_size = 0;
+        int method_handle_ids_off = 0;
+        int method_handle_ids_size = 0;
+        if (dex_version > DEX_037) {
+            in.position(map_off);
+            int size = in.getInt();
+            for (int i = 0; i < size; i++) {
+                int type = in.getShort() & 0xFFFF;
+                in.getShort(); // unused;
+                int item_size = in.getInt();
+                int item_offset = in.getInt();
+                switch (type) {
+                case TYPE_CALL_SITE_ID_ITEM:
+                    call_site_ids_off = item_offset;
+                    call_site_ids_size = item_size;
+                    break;
+                case TYPE_METHOD_HANDLE_ITEM:
+                    method_handle_ids_off = item_offset;
+                    method_handle_ids_size = item_size;
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        this.call_site_ids_size = call_site_ids_size;
+        this.method_handle_ids_size = method_handle_ids_size;
+
         stringIdIn = slice(in, string_ids_off, string_ids_size * 4);
         typeIdIn = slice(in, type_ids_off, type_ids_size * 4);
         protoIdIn = slice(in, proto_ids_off, proto_ids_size * 12);
         fieldIdIn = slice(in, field_ids_off, field_ids_size * 8);
         methoIdIn = slice(in, method_ids_off, method_ids_size * 8);
         classDefIn = slice(in, class_defs_off, class_defs_size * 32);
+        callSiteIdIn = slice(in, call_site_ids_off, call_site_ids_size * 4);
+        methodHandleIdIn = slice(in, method_handle_ids_off, method_handle_ids_size * 8);
 
         in.position(0);
         annotationsDirectoryItemIn = in.duplicate().order(ByteOrder.LITTLE_ENDIAN);
@@ -528,6 +575,11 @@ public class DexFileReader implements BaseDexFileReader {
         }
     }
 
+    @Override
+    public int getDexVersion() {
+        return dex_version;
+    }
+
     /**
      * equals to {@link #accept(DexFileVisitor, int)} with 0 as config
      * 
@@ -592,6 +644,7 @@ public class DexFileReader implements BaseDexFileReader {
         int static_values_off = classDefIn.getInt();
 
         String className = getType(class_idx);
+        if(ignoreClass(className)) return;
         String superClassName = getType(superclass_idx);
         String[] interfaceNames = getTypeList(interfaces_off);
         try {
@@ -611,6 +664,10 @@ public class DexFileReader implements BaseDexFileReader {
         }
     }
 
+    public Boolean ignoreClass(String className){
+       return false;
+    }
+
     private Object readEncodedValue(ByteBuffer in) {
         int b = 0xFF & in.get();
         int type = b & 0x1f;
@@ -621,47 +678,43 @@ public class DexFileReader implements BaseDexFileReader {
         case VALUE_SHORT:
             return new Short((short) readIntBits(in, b));
 
+        case VALUE_CHAR:
+            return new Character((char) readUIntBits(in, b));
+
         case VALUE_INT:
             return new Integer((int) readIntBits(in, b));
 
         case VALUE_LONG:
             return new Long(readIntBits(in, b));
 
-        case VALUE_CHAR:
-            return new Character((char) readUIntBits(in, b));
-
-        case VALUE_STRING:
-            return getString((int) readUIntBits(in, b));
-
         case VALUE_FLOAT:
             return Float.intBitsToFloat((int) (readFloatBits(in, b) >> 32));
 
         case VALUE_DOUBLE:
             return Double.longBitsToDouble(readFloatBits(in, b));
+        case VALUE_METHOD_TYPE:
+            return getProto((int) readUIntBits(in, b));
+        case VALUE_METHOD_HANDLE:
+            return getMethodHandle((int) readUIntBits(in, b));
 
-        case VALUE_NULL:
-            return null;
+        case VALUE_STRING:
+            return getString((int) readUIntBits(in, b));
 
-        case VALUE_BOOLEAN: {
-            return new Boolean(((b >> 5) & 0x3) != 0);
-
-        }
         case VALUE_TYPE: {
             int type_id = (int) readUIntBits(in, b);
             return new DexType(getType(type_id));
         }
-        case VALUE_ENUM: {
-            return getField((int) readUIntBits(in, b));
+        case VALUE_FIELD: {
+            int field_id = (int) readUIntBits(in, b);
+            return getField(field_id);
         }
-
         case VALUE_METHOD: {
             int method_id = (int) readUIntBits(in, b);
             return getMethod(method_id);
 
         }
-        case VALUE_FIELD: {
-            int field_id = (int) readUIntBits(in, b);
-            return getField(field_id);
+        case VALUE_ENUM: {
+            return getField((int) readUIntBits(in, b));
         }
         case VALUE_ARRAY: {
             return read_encoded_array(in);
@@ -669,8 +722,34 @@ public class DexFileReader implements BaseDexFileReader {
         case VALUE_ANNOTATION: {
             return read_encoded_annotation(in);
         }
+        case VALUE_NULL:
+            return null;
+        case VALUE_BOOLEAN: {
+            return new Boolean(((b >> 5) & 0x3) != 0);
+        }
         default:
             throw new DexException("Not support yet.");
+        }
+    }
+
+    private MethodHandle getMethodHandle(int i) {
+        methodHandleIdIn.position(i * 8);
+        int method_handle_type = methodHandleIdIn.getShort() & 0xFFFF;
+        methodHandleIdIn.getShort();//unused
+        int field_or_method_id = methodHandleIdIn.getShort() & 0xFFFF;
+
+        switch (method_handle_type) {
+        case MethodHandle.INSTANCE_GET:
+        case MethodHandle.INSTANCE_PUT:
+        case MethodHandle.STATIC_GET:
+        case MethodHandle.STATIC_PUT:
+            return new MethodHandle(method_handle_type, getField(field_or_method_id));
+
+        case MethodHandle.INVOKE_INSTANCE:
+        case MethodHandle.INVOKE_STATIC:
+            return new MethodHandle(method_handle_type, getMethod(field_or_method_id));
+        default:
+            throw new RuntimeException();
         }
     }
 
@@ -846,11 +925,7 @@ public class DexFileReader implements BaseDexFileReader {
         return types;
     }
 
-    private Method getMethod(int id) {
-        methoIdIn.position(id * 8);
-        int owner_idx = 0xFFFF & methoIdIn.getShort();
-        int proto_idx = 0xFFFF & methoIdIn.getShort();
-        int name_idx = methoIdIn.getInt();
+    private Proto getProto(int proto_idx) {
         String[] parameterTypes;
         String returnType;
 
@@ -862,9 +937,15 @@ public class DexFileReader implements BaseDexFileReader {
         returnType = getType(return_type_idx);
 
         parameterTypes = getTypeList(parameters_off);
+        return new Proto(parameterTypes, returnType);
+    }
 
-        return new Method(getType(owner_idx), getString(name_idx), parameterTypes, returnType);
-
+    private Method getMethod(int id) {
+        methoIdIn.position(id * 8);
+        int owner_idx = 0xFFFF & methoIdIn.getShort();
+        int proto_idx = 0xFFFF & methoIdIn.getShort();
+        int name_idx = methoIdIn.getInt();
+        return new Method(getType(owner_idx), getString(name_idx), getProto(proto_idx));
     }
 
     private String getString(int id) {
@@ -1191,6 +1272,15 @@ public class DexFileReader implements BaseDexFileReader {
             case kIndexFieldRef:
                 idx = ushort(insns, u1offset + 2);
                 canContinue = idx < field_ids_size;
+                break;
+            case kIndexCallSiteRef:
+                idx = ushort(insns, u1offset + 2);
+                canContinue = idx < call_site_ids_size;
+                break;
+            case kIndexMethodAndProtoRef:
+                idx = ushort(insns, u1offset + 2);
+                int idx2 = ushort(insns, u1offset + 6);
+                canContinue = idx < method_ids_size && idx2 < proto_ids_size;
                 break;
             default:
             }
@@ -1532,6 +1622,10 @@ public class DexFileReader implements BaseDexFileReader {
                 }
                 if (op.indexType == InstructionIndexType.kIndexTypeRef) {
                     dcv.visitFilledNewArrayStmt(op, regs, getType(b));
+                } else if (op.indexType == InstructionIndexType.kIndexCallSiteRef) {
+                    Object[] callsite = getCallSite(b);
+                    Object[] constArgs = Arrays.copyOfRange(callsite, 3, callsite.length);
+                    dcv.visitMethodStmt(op, regs, (String) callsite[1], (Proto) callsite[2], (MethodHandle) callsite[0], constArgs);
                 } else {
                     dcv.visitMethodStmt(op, regs, getMethod(b));
                 }
@@ -1547,11 +1641,50 @@ public class DexFileReader implements BaseDexFileReader {
                 }
                 if (op.indexType == InstructionIndexType.kIndexTypeRef) {
                     dcv.visitFilledNewArrayStmt(op, regs, getType(b));
+                } else if (op.indexType == InstructionIndexType.kIndexCallSiteRef) {
+                    Object[] callsite = getCallSite(b);
+                    Object[] constArgs = Arrays.copyOfRange(callsite, 3, callsite.length - 3);
+                    dcv.visitMethodStmt(op, regs, (String) callsite[1], (Proto) callsite[2], (MethodHandle) callsite[0], constArgs);
                 } else {
                     dcv.visitMethodStmt(op, regs, getMethod(b));
                 }
             }
                 break;
+            case kFmt45cc: {
+                a = ubyte(insns, u1offset + 1);
+                b = ushort(insns, u1offset + 2);
+                int dc = ubyte(insns, u1offset + 4); // DC
+                int fe = ubyte(insns, u1offset + 5); // FE
+                int h = ushort(insns, u1offset + 6);
+
+                int regs[] = new int[a >> 4];
+                switch (a >> 4) {
+                case 5:
+                    regs[4] = a & 0xF;// G
+                case 4:
+                    regs[3] = 0xF & (fe >> 4);// F
+                case 3:
+                    regs[2] = 0xF & (fe >> 0);// E
+                case 2:
+                    regs[1] = 0xF & (dc >> 4);// D
+                case 1:
+                    regs[0] = 0xF & (dc >> 0);// C
+                }
+                dcv.visitMethodStmt(op, regs, getMethod(b), getProto(h));
+            }
+            break;
+            case kFmt4rcc: {
+                a = ubyte(insns, u1offset + 1);
+                b = ushort(insns, u1offset + 2);
+                c = ushort(insns, u1offset + 4);
+                int h = ushort(insns, u1offset + 6);
+                int regs[] = new int[a];
+                for (int i = 0; i < a; i++) {
+                    regs[i] = c + i;
+                }
+                dcv.visitMethodStmt(op, regs, getMethod(b), getProto(h));
+            }
+            break;
             case kFmt22x:
                 a = ubyte(insns, u1offset + 1);
                 b = ushort(insns, u1offset + 2);
@@ -1631,6 +1764,13 @@ public class DexFileReader implements BaseDexFileReader {
                 break;
             }
         }
+    }
+
+    private Object[] getCallSite(int b) {
+        callSiteIdIn.position(b * 4);
+        int call_site_off = callSiteIdIn.getInt();
+
+        return read_encoded_array_item(call_site_off);
     }
 
     /**

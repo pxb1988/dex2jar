@@ -25,10 +25,6 @@ import java.util.Arrays;
  */
 public class Method {
     /**
-     * descriptor of the method, this will build after {@link #getDesc()}.
-     */
-    private String desc;
-    /**
      * name of the method.
      */
     private String name;
@@ -39,32 +35,24 @@ public class Method {
     /**
      * parameter types of the method, in TypeDescriptor format.
      */
-    private String[] parameterTypes;
+    private Proto proto;
 
-    /**
-     * return type of the method, in TypeDescriptor format.
-     */
-    private String returnType;
+    public Proto getProto() {
+        return proto;
+    }
 
     public Method(String owner, String name, String[] parameterTypes, String returnType) {
         this.owner = owner;
         this.name = name;
-        this.parameterTypes = parameterTypes;
-        this.returnType = returnType;
+        this.proto = new Proto(parameterTypes, returnType);
     }
-
+    public Method(String owner, String name, Proto proto) {
+        this.owner = owner;
+        this.name = name;
+        this.proto = proto;
+    }
     public String getDesc() {
-        if (desc == null) {
-            StringBuilder ps = new StringBuilder("(");
-            if (parameterTypes != null) {
-                for (String t : parameterTypes) {
-                    ps.append(t);
-                }
-            }
-            ps.append(")").append(returnType);
-            desc = ps.toString();
-        }
-        return desc;
+        return proto.getDesc();
     }
 
     /**
@@ -85,68 +73,38 @@ public class Method {
      * @return the parameterTypes
      */
     public String[] getParameterTypes() {
-        return parameterTypes;
+        return proto.getParameterTypes();
     }
 
     public String getReturnType() {
-        return returnType;
+        return proto.getReturnType();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Method method = (Method) o;
+
+        if (name != null ? !name.equals(method.name) : method.name != null) return false;
+        if (owner != null ? !owner.equals(method.owner) : method.owner != null) return false;
+        return proto.equals(method.proto);
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((owner == null) ? 0 : owner.hashCode());
-        result = prime * result + Arrays.hashCode(parameterTypes);
-        result = prime * result + ((returnType == null) ? 0 : returnType.hashCode());
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (owner != null ? owner.hashCode() : 0);
+        result = 31 * result + proto.hashCode();
         return result;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        Method other = (Method) obj;
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-        if (owner == null) {
-            if (other.owner != null) {
-                return false;
-            }
-        } else if (!owner.equals(other.owner)) {
-            return false;
-        }
-        if (!Arrays.equals(parameterTypes, other.parameterTypes)) {
-            return false;
-        }
-        if (returnType == null) {
-            if (other.returnType != null) {
-                return false;
-            }
-        } else if (!returnType.equals(other.returnType)) {
-            return false;
-        }
-        return true;
-    }
-
     /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#toString()
-     */
+         * (non-Javadoc)
+         *
+         * @see java.lang.Object#toString()
+         */
     @Override
     public String toString() {
         return this.getOwner() + "." + this.getName() + this.getDesc();

@@ -139,7 +139,7 @@ public class AggTransformer extends StatedTransformer {
         boolean shouldExclude = false;
         if (op.vt == Value.VT.INVOKE_STATIC) {
             InvokeExpr ie = (InvokeExpr) op;
-            if (ie.name.equals("valueOf") && ie.owner.startsWith("Ljava/lang/") && ie.args.length == 1 && ie.args[0].length() == 1) {
+            if (ie.getName().equals("valueOf") && ie.getOwner().startsWith("Ljava/lang/") && ie.getArgs().length == 1 && ie.getArgs()[0].length() == 1) {
                 shouldExclude = true;
             }
         }
@@ -318,7 +318,7 @@ public class AggTransformer extends StatedTransformer {
             case En:
                 if (op.vt == Value.VT.INVOKE_STATIC) {
                     InvokeExpr ie = (InvokeExpr) op;
-                    if (ie.name.equals("valueOf") && ie.owner.startsWith("Ljava/lang/") && ie.args.length == 1 && ie.args[0].length() == 1) {
+                    if (ie.getName().equals("valueOf") && ie.getOwner().startsWith("Ljava/lang/") && ie.getArgs().length == 1 && ie.getArgs()[0].length() == 1) {
                         for (Value v : op.getOps()) {
                             if (!isLocationInsensitive(v)) {
                                 return false;

@@ -117,6 +117,10 @@ public enum Op implements CFG {
     SPUT_SHORT(0x6d, "sput-short", kFmt21c, kIndexFieldRef, kInstrCanContinue | kInstrCanThrow, false), //
     INVOKE_VIRTUAL(0x6e, "invoke-virtual", kFmt35c, kIndexMethodRef, kInstrCanContinue | kInstrCanThrow | kInstrInvoke,
             true), //
+
+    /**
+     *  Behavior changed in 037, interface method is allowed
+     */
     INVOKE_SUPER(0x6f, "invoke-super", kFmt35c, kIndexMethodRef, kInstrCanContinue | kInstrCanThrow | kInstrInvoke,
             true), //
     INVOKE_DIRECT(0x70, "invoke-direct", kFmt35c, kIndexMethodRef, kInstrCanContinue | kInstrCanThrow | kInstrInvoke,
@@ -242,6 +246,14 @@ public enum Op implements CFG {
     SHL_INT_LIT8(0xe0, "shl-int/lit8", kFmt22b, kIndexNone, kInstrCanContinue, true), //
     SHR_INT_LIT8(0xe1, "shr-int/lit8", kFmt22b, kIndexNone, kInstrCanContinue, true), //
     USHR_INT_LIT8(0xe2, "ushr-int/lit8", kFmt22b, kIndexNone, kInstrCanContinue, true), //
+    INVOKE_POLYMORPHIC(0xfa, "invoke-polymorphic", kFmt45cc, kIndexMethodAndProtoRef, kInstrCanContinue | kInstrCanThrow
+            | kInstrInvoke, true), //
+    INVOKE_POLYMORPHIC_RANGE(0xfb, "invoke-polymorphic/range", kFmt4rcc, kIndexMethodAndProtoRef, kInstrCanContinue | kInstrCanThrow
+            | kInstrInvoke, true), //
+    INVOKE_CUSTOM(0xfc, "invoke-custom", kFmt35c, kIndexCallSiteRef, kInstrCanContinue | kInstrCanThrow
+            | kInstrInvoke, true), //
+    INVOKE_CUSTOM_RANGE(0xfd, "invoke-custom/range", kFmt3rc, kIndexCallSiteRef, kInstrCanContinue | kInstrCanThrow
+            | kInstrInvoke, true), //
     BAD_OP(-1, "bad-opcode", null, kIndexNone, 0, false), //
     ;
     public int opcode;

@@ -15,9 +15,7 @@
  */
 package com.googlecode.d2j.visitors;
 
-import com.googlecode.d2j.DexLabel;
-import com.googlecode.d2j.Field;
-import com.googlecode.d2j.Method;
+import com.googlecode.d2j.*;
 import com.googlecode.d2j.reader.Op;
 
 /**
@@ -223,6 +221,29 @@ public class DexCodeVisitor {
     public void visitMethodStmt(Op op, int[] args, Method method) {
         if (visitor != null) {
             visitor.visitMethodStmt(op, args, method);
+        }
+    }
+
+    /**
+     * <pre>
+     * OP_INVOKE_CUSTOM
+     * </pre>
+     */
+    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
+        if (visitor != null) {
+            visitor.visitMethodStmt(op, args, name, proto, bsm, bsmArgs);
+        }
+    }
+
+    /**
+     * <pre>
+     * OP_INVOKE_POLYMORPHIC
+     * </pre>
+     *
+     */
+    public void visitMethodStmt(Op op, int[] args, Method bsm, Proto proto) {
+        if (visitor != null) {
+            visitor.visitMethodStmt(op, args, bsm, proto);
         }
     }
 

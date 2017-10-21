@@ -98,14 +98,13 @@ public class NewTransformer implements Transformer {
             InvokeExpr ie = findInvokeExpr(p, null);
 
             if (ie != null) {
-                if ("<init>".equals(ie.name) && "V".equals(ie.ret)) {
+                if ("<init>".equals(ie.getName()) && "V".equals(ie.getRet())) {
                     Value[] orgOps = ie.getOps();
                     if (orgOps[0].vt == NEW) {
                         NewExpr newExpr = (NewExpr) ie.getOps()[0];
                         if (newExpr != null) {
-                            Value[] nOps = new Value[orgOps.length - 1];
-                            System.arraycopy(orgOps, 1, nOps, 0, nOps.length);
-                            InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.args, ie.owner);
+                            Value[] nOps = Arrays.copyOfRange(orgOps, 1, orgOps.length);
+                            InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.getArgs(), ie.getOwner());
                             method.stmts.insertBefore(p, Stmts.nVoidInvoke(invokeNew));
                             it.remove();
                         }
@@ -156,9 +155,8 @@ public class NewTransformer implements Transformer {
             }
             InvokeExpr ie = findInvokeExpr(obj.invokeStmt, null);
             Value[] orgOps = ie.getOps();
-            Value[] nOps = new Value[orgOps.length - 1];
-            System.arraycopy(orgOps, 1, nOps, 0, nOps.length);
-            InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.args, ie.owner);
+            Value[] nOps = Arrays.copyOfRange(orgOps, 1, orgOps.length);
+            InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.getArgs(), ie.getOwner());
             method.stmts.replace(obj.invokeStmt, Stmts.nAssign(obj.local, invokeNew));
         }
     }
@@ -211,7 +209,7 @@ public class NewTransformer implements Transformer {
                     if (op.vt == INVOKE_SPECIAL) {
                         if (op.getOps().length >= 1) {
                             InvokeExpr ie = (InvokeExpr) op;
-                            if ("<init>".equals(ie.name)) {
+                            if ("<init>".equals(ie.getName())) {
                                 Value thiz = op.getOps()[0];
                                 if (thiz.vt == LOCAL) {
                                     Local local = (Local) thiz;

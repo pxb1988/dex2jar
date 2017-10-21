@@ -19,8 +19,11 @@ package org.objectweb.asm;
 import org.objectweb.asm.tree.MethodNode;
 
 public class AsmBridge {
-    public static boolean isMethodWriter(MethodVisitor mv) {
-        return mv instanceof MethodWriter;
+    public static MethodVisitor searchMethodWriter(MethodVisitor mv) {
+        while (mv != null && !(mv instanceof MethodWriter)) {
+            mv = mv.mv;
+        }
+        return mv;
     }
 
     public static int sizeOfMethodWriter(MethodVisitor mv) {
@@ -28,9 +31,8 @@ public class AsmBridge {
         return mw.getSize();
     }
 
-    public static void removeMethodWriter(MethodVisitor mv) {
+    private static void removeMethodWriter(MethodWriter mw) {
         // mv must be the last element
-        MethodWriter mw = (MethodWriter) mv;
         ClassWriter cw = mw.cw;
         MethodWriter p = cw.firstMethod;
         if (p == mw) {
@@ -57,6 +59,6 @@ public class AsmBridge {
         MethodWriter mw = (MethodWriter) mv;
         ClassWriter cw = mw.cw;
         mn.accept(cw);
-        removeMethodWriter(mv);
+        removeMethodWriter(mw);
     }
 }

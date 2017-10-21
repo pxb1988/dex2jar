@@ -1,5 +1,7 @@
 package com.googlecode.d2j.node.analysis;
 
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.node.insn.*;
 import com.googlecode.d2j.reader.Op;
 
@@ -259,18 +261,29 @@ public class DvmFrame<V> {
             case INVOKE_STATIC_RANGE:
             case INVOKE_STATIC:
             case INVOKE_INTERFACE_RANGE:
-            case INVOKE_INTERFACE: {
+            case INVOKE_INTERFACE:
+            case INVOKE_CUSTOM:
+            case INVOKE_CUSTOM_RANGE:
+            case INVOKE_POLYMORPHIC:
+            case INVOKE_POLYMORPHIC_RANGE: {
                 int i = 0;
-                MethodStmtNode methodStmtNode = (MethodStmtNode) insn;
+                AbstractMethodStmtNode methodStmtNode = (AbstractMethodStmtNode) insn;
                 List<V> v;
+                Proto proto = methodStmtNode.getProto();
+                boolean isStatic = false;
                 if (insn.op == Op.INVOKE_STATIC || insn.op == Op.INVOKE_STATIC_RANGE) {
-                    v = new ArrayList<>(methodStmtNode.method.getParameterTypes().length);
+                    isStatic = true;
+                } else if (insn.op == Op.INVOKE_CUSTOM || insn.op == Op.INVOKE_CUSTOM_RANGE) {
+                    isStatic = true;
+                }
+                if (isStatic) {
+                    v = new ArrayList<>(proto.getParameterTypes().length);
                 } else {
-                    v = new ArrayList<>(methodStmtNode.method.getParameterTypes().length + 1);
+                    v = new ArrayList<>(proto.getParameterTypes().length + 1);
                     v.add(getReg(methodStmtNode.args[i++]));
                 }
 
-                for (String type : methodStmtNode.method.getParameterTypes()) {
+                for (String type : proto.getParameterTypes()) {
                     v.add(getReg(methodStmtNode.args[i]));
                     char t = type.charAt(0);
                     if (t == 'J' || t == 'D') {

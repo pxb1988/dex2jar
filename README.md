@@ -3,8 +3,8 @@
 | _ | Mirror | Wiki | Downloads | Issues |
 |--:|:-----|:----:|:---------:|:------:|
 | sf | https://sourceforge.net/p/dex2jar | [Wiki](https://sourceforge.net/p/dex2jar/wiki) | [Downloads](https://sourceforge.net/projects/dex2jar/files/) | [Tickets](https://sourceforge.net/p/dex2jar/tickets/) |
-| bb | https://bitbucket.org/pxb1988/dex2jar |[Wiki](https://bitbucket.org/pxb1988/dex2jar/wiki)| [Downloads](https://bitbucket.org/pxb1988/dex2jar/downloads) | [Issues](https://bitbucket.org/pxb1988/dex2jar/issues) |
-| gh | https://github.com/pxb1988/dex2jar | | | [Issues](https://github.com/pxb1988/dex2jar/issues) |
+| bb | https://bitbucket.org/pxb1988/dex2jar | [Wiki](https://bitbucket.org/pxb1988/dex2jar/wiki) | [Downloads](https://bitbucket.org/pxb1988/dex2jar/downloads) | [Issues](https://bitbucket.org/pxb1988/dex2jar/issues) |
+| gh | https://github.com/pxb1988/dex2jar | [Wiki](https://github.com/pxb1988/dex2jar/wiki) | [Releases](https://github.com/pxb1988/dex2jar/releases) | [Issues](https://github.com/pxb1988/dex2jar/issues) |
 | gc | https://code.google.com/p/dex2jar | [old](http://code.google.com/p/dex2jar/w/list) | [old](http://code.google.com/p/dex2jar/downloads/list) | [old](http://code.google.com/p/dex2jar/issues/list)|
 
 
@@ -19,6 +19,12 @@ Tools to work with android .dex and java .class files
     disassemble dex to smali files and assemble dex from smali files. different implementation to [smali/baksmali](http://code.google.com/p/smali), same syntax, but we support escape in type desc "Lcom/dex2jar\t\u1234;"
 4. other tools:
     [d2j-decrypt-string](https://sourceforge.net/p/dex2jar/wiki/DecryptStrings)
+
+## Usage
+
+> sh d2j-dex2jar.sh -f ~/path/to/apk_to_decompile.apk
+
+And the output file will be `apk_to_decompile-dex2jar.jar`.
 
 ## Need help ?
 send email to dex2jar@googlegroups.com 

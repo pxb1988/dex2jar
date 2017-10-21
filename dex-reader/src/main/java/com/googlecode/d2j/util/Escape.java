@@ -15,10 +15,7 @@
  */
 package com.googlecode.d2j.util;
 
-import com.googlecode.d2j.DexConstants;
-import com.googlecode.d2j.DexType;
-import com.googlecode.d2j.Field;
-import com.googlecode.d2j.Method;
+import com.googlecode.d2j.*;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
@@ -165,6 +162,29 @@ public class Escape implements DexConstants {
         return String.format("new Method(%s,%s,%s,%s)", v(m.getOwner()), v(m.getName()), v(m.getParameterTypes()),
                 v(m.getReturnType()));
     }
+    public static String v(Proto m) {
+        return String.format("new Proto(%s,%s)", v(m.getParameterTypes()), v(m.getReturnType()));
+    }
+
+    public static String v(MethodHandle m) {
+        switch (m.getType()) {
+        case MethodHandle.INSTANCE_GET:
+            return String.format("new MethodHandle(MethodHandle.INSTANCE_GET,%s)", v(m.getField()));
+        case MethodHandle.INSTANCE_PUT:
+            return String.format("new MethodHandle(MethodHandle.INSTANCE_PUT,%s)", v(m.getField()));
+        case MethodHandle.STATIC_GET:
+            return String.format("new MethodHandle(MethodHandle.STATIC_GET,%s)", v(m.getField()));
+        case MethodHandle.STATIC_PUT:
+            return String.format("new MethodHandle(MethodHandle.STATIC_PUT,%s)", v(m.getField()));
+
+        case MethodHandle.INVOKE_INSTANCE:
+            return String.format("new MethodHandle(MethodHandle.INVOKE_INSTANCE,%s)", v(m.getMethod()));
+        case MethodHandle.INVOKE_STATIC:
+            return String.format("new MethodHandle(MethodHandle.INVOKE_STATIC,%s)", v(m.getMethod()));
+        default:
+            throw new RuntimeException();
+        }
+    }
 
     public static String v(String s) {
         if (s == null) {
@@ -254,6 +274,12 @@ public class Escape implements DexConstants {
         }
         if (obj instanceof Field) {
             return v((Field) obj);
+        }
+        if (obj instanceof Proto) {
+            return v((Proto) obj);
+        }
+        if (obj instanceof MethodHandle) {
+            return v((MethodHandle) obj);
         }
 
         if (obj instanceof Integer) {

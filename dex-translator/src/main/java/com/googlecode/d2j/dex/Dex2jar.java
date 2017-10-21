@@ -41,6 +41,8 @@ import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
+import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.commons.RemappingClassAdapter;
 
 public class Dex2jar {
     public static Dex2jar from(byte[] in) throws IOException {
@@ -90,23 +92,24 @@ public class Dex2jar {
         ClassVisitorFactory cvf = new ClassVisitorFactory() {
             @Override
             public ClassVisitor create(final String name) {
-                return new ClassVisitor(Opcodes.ASM4, new ClassWriter(ClassWriter.COMPUTE_MAXS)) {
+                final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
+                return new ClassVisitor(Opcodes.ASM5, rca) {
                     @Override
                     public void visitEnd() {
                         super.visitEnd();
-                        ClassWriter cw = (ClassWriter) super.cv;
-
+                        String className = rca.getClassName();
                         byte[] data;
                         try {
                             // FIXME handle 'java.lang.RuntimeException: Method code too large!'
                             data = cw.toByteArray();
                         } catch (Exception ex) {
-                            System.err.println(String.format("ASM fail to generate .class file: %s", name));
+                            System.err.println(String.format("ASM fail to generate .class file: %s", className));
                             exceptionHandler.handleFileException(ex);
                             return;
                         }
                         try {
-                            Path dist1 = dist.resolve(name + ".class");
+                            Path dist1 = dist.resolve(className + ".class");
                             Path parent = dist1.getParent();
                             if (parent != null && !Files.exists(parent)) {
                                 Files.createDirectories(parent);

@@ -15,6 +15,7 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
+import com.googlecode.d2j.DexType;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.Util;
 import com.googlecode.dex2jar.ir.expr.Value.E0Expr;
@@ -28,21 +29,6 @@ import java.lang.reflect.Array;
  * @version $Rev$
  */
 public class Constant extends E0Expr {
-    static public class Type {
-        public Type(String desc) {
-            this.desc = desc;
-        }
-
-        /**
-         * type descriptor, in TypeDescriptor format
-         */
-        final public String desc;
-
-        @Override
-        public String toString() {
-            return desc;
-        }
-    }
 
     public static final Object Null = new Object();
 
@@ -81,8 +67,8 @@ public class Constant extends E0Expr {
             StringBuffer buf = new StringBuffer();
             Util.appendString(buf, (String) value);
             return buf.toString();
-        } else if (value instanceof Type) {
-            return Util.toShortClassName(((Type) value).desc) + ".class";
+        } else if (value instanceof DexType) {
+            return Util.toShortClassName(((DexType) value).desc) + ".class";
         } else if (value.getClass().isArray()) {
             StringBuilder sb = new StringBuilder();
             sb.append("[");

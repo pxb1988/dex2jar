@@ -15,26 +15,16 @@
  */
 package com.googlecode.d2j.node.insn;
 
-import com.googlecode.d2j.Method;
 import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.reader.Op;
-import com.googlecode.d2j.visitors.DexCodeVisitor;
 
-public class MethodStmtNode extends AbstractMethodStmtNode {
-    public final Method method;
+public abstract class AbstractMethodStmtNode extends DexStmtNode {
+    public final int[] args;
 
-    public MethodStmtNode(Op op, int[] args, Method method) {
-        super(op, args);
-        this.method = method;
+    public AbstractMethodStmtNode(Op op, int[] args) {
+        super(op);
+        this.args = args;
     }
 
-    @Override
-    public void accept(DexCodeVisitor cv) {
-        cv.visitMethodStmt(op, args, method);
-    }
-
-    @Override
-    public Proto getProto() {
-        return method.getProto();
-    }
+    public abstract Proto getProto();
 }

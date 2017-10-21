@@ -19,6 +19,7 @@ package com.googlecode.dex2jar.ir.ts;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.googlecode.d2j.DexType;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Constant;
 import com.googlecode.dex2jar.ir.expr.Exprs;
@@ -82,7 +83,7 @@ public class JimpleTransformer implements Transformer {
                 switch (x.vt) {
                 case CONSTANT:
                     Constant cst = (Constant) x;
-                    if (cst.value instanceof String || cst.value instanceof Constant.Type
+                    if (cst.value instanceof String || cst.value instanceof DexType
                             || cst.value.getClass().isArray()) {
                         return tmp.newAssign(x);
                     }

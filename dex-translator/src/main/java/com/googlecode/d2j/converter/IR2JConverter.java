@@ -16,7 +16,11 @@
  */
 package com.googlecode.d2j.converter;
 
+import com.googlecode.d2j.DexType;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.asm.LdcOptimizeAdapter;
+import com.googlecode.d2j.dex.Dex2Asm;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.*;
@@ -27,10 +31,7 @@ import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.*;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 
 import java.lang.reflect.Array;
 import java.util.HashMap;
@@ -68,7 +69,7 @@ public class IR2JConverter implements Opcodes {
     /**
      * an empty try-catch block will cause other crash, we check this by finding non-label stmts between
      * {@link Trap#start} and {@link Trap#end}. if find we add the try-catch or we drop the try-catch.
-     * 
+     *
      * @param ir
      * @param asm
      */
@@ -96,7 +97,7 @@ public class IR2JConverter implements Opcodes {
         return Type.getType(n).getInternalName();
     }
 
-    
+
 
     private void reBuildInstructions(IrMethod ir, MethodVisitor asm) {
         asm = new LdcOptimizeAdapter(asm);
@@ -395,7 +396,7 @@ public class IR2JConverter implements Opcodes {
 
     /**
      * insert I2x instruction
-     * 
+     *
      * @param tos
      * @param expect
      * @param mv
@@ -518,7 +519,7 @@ public class IR2JConverter implements Opcodes {
     }
 
     /**
-     * 
+     *
      * @param v
      * @param op
      *            DUP
@@ -567,8 +568,8 @@ public class IR2JConverter implements Opcodes {
                 Constant cst = (Constant) value;
                 if (cst.value.equals(Constant.Null)) {
                     asm.visitInsn(ACONST_NULL);
-                } else if (cst.value instanceof Constant.Type) {
-                    asm.visitLdcInsn(Type.getType(((Constant.Type) cst.value).desc));
+                } else if (cst.value instanceof DexType) {
+                    asm.visitLdcInsn(Type.getType(((DexType) cst.value).desc));
                 } else {
                     asm.visitLdcInsn(cst.value);
                 }
@@ -635,13 +636,13 @@ public class IR2JConverter implements Opcodes {
             asm.visitMultiANewArrayInsn(sb.toString(), value.ops.length);
             break;
         case INVOKE_NEW:
-            asm.visitTypeInsn(NEW, toInternal(((InvokeExpr) value).owner));
+            asm.visitTypeInsn(NEW, toInternal(((InvokeExpr) value).getOwner()));
             asm.visitInsn(DUP);
             // pass through
         case INVOKE_INTERFACE:
         case INVOKE_SPECIAL:
         case INVOKE_STATIC:
-        case INVOKE_VIRTUAL:
+        case INVOKE_VIRTUAL: {
             InvokeExpr ie = (InvokeExpr) value;
             int i = 0;
             if (value.vt != VT.INVOKE_STATIC && value.vt != VT.INVOKE_NEW) {
@@ -651,7 +652,7 @@ public class IR2JConverter implements Opcodes {
             for (int j = 0; i < value.ops.length; i++, j++) {
                 Value vb = value.ops[i];
                 accept(vb, asm);
-                insertI2x(vb.valueType, ie.args[j], asm);
+                insertI2x(vb.valueType, ie.getArgs()[j], asm);
             }
 
             int opcode;
@@ -673,21 +674,178 @@ public class IR2JConverter implements Opcodes {
                 opcode = -1;
             }
 
-            asm.visitMethodInsn(opcode, toInternal(ie.owner), ie.name,
-                    buildMethodDesc(ie.vt == VT.INVOKE_NEW ? "V" : ie.ret, ie.args));
-            break;
+            Proto p = ie.getProto();
+            if (ie.vt == VT.INVOKE_NEW) {
+                p = new Proto(p.getParameterTypes(), "V");
+            }
+            asm.visitMethodInsn(opcode, toInternal(ie.getOwner()), ie.getName(), p.getDesc());
+        }
+        break;
+        case INVOKE_CUSTOM: {
+            InvokeCustomExpr ice = (InvokeCustomExpr) value;
+            String argTypes[] = ice.getProto().getParameterTypes();
+            Value[] vbs = ice.getOps();
+            if (argTypes.length == vbs.length) {
+                for (int i = 0; i < vbs.length; i++) {
+                    Value vb = vbs[i];
+                    accept(vb, asm);
+                    insertI2x(vb.valueType, argTypes[i], asm);
+                }
+            } else if (argTypes.length + 1 == vbs.length) {
+                accept(vbs[0], asm);
+                for (int i = 1; i < vbs.length; i++) {
+                    Value vb = vbs[i];
+                    accept(vb, asm);
+                    insertI2x(vb.valueType, argTypes[i - 1], asm);
+                }
+            } else {
+                throw new RuntimeException();
+            }
+            asm.visitInvokeDynamicInsn(ice.name, ice.proto.getDesc(), (Handle) Dex2Asm.convertConstantValue(ice.handle), Dex2Asm.convertConstantValues(ice.bsmArgs));
+        }
+        break;
+        case INVOKE_POLYMORPHIC: {
+            InvokePolymorphicExpr ipe = (InvokePolymorphicExpr) value;
+            Method m = ipe.method;
+            String argTypes[] = ipe.getProto().getParameterTypes();
+            Value[] vbs = ipe.getOps();
+            accept(vbs[0], asm);
+            for (int i = 1; i < vbs.length; i++) {
+                Value vb = vbs[i];
+                accept(vb, asm);
+                insertI2x(vb.valueType, argTypes[i - 1], asm);
+            }
+            asm.visitMethodInsn(INVOKEVIRTUAL, toInternal(m.getOwner()), m.getName(), ipe.getProto().getDesc(), false);
+        }
         }
     }
 
-    static String buildMethodDesc(String ret, String... ps) {
-        StringBuilder sb = new StringBuilder();
-        sb.append('(');
-        for (String p : ps) {
-            sb.append(p);
+    private static void box(String provideType, String expectedType, MethodVisitor asm) {
+        if(provideType.equals(expectedType)){
+            return;
         }
-        sb.append(')');
-        sb.append(ret);
-        return sb.toString();
+        if(expectedType.equals("V")){
+            switch (provideType.charAt(0)) {
+            case 'J':
+            case 'D':
+                asm.visitInsn(POP2);
+                break;
+            default:
+                asm.visitInsn(POP);
+                break;
+            }
+            return;
+        }
+
+        char p = provideType.charAt(0);
+        char e = expectedType.charAt(0);
+
+        if (expectedType.equals("Ljava/lang/Object;") && (p == '[' || p == 'L')) {
+            return;
+        }
+        if (provideType.equals("Ljava/lang/Object;") && (e == '[' || e == 'L')) {
+            asm.visitTypeInsn(CHECKCAST, toInternal(expectedType));
+            return;
+        }
+
+        switch (provideType + expectedType) {
+        case "ZLjava/lang/Object;":
+        case "ZLjava/lang/Boolean;":
+            asm.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+            break;
+        case "BLjava/lang/Object;":
+        case "BLjava/lang/Byte;":
+            asm.visitMethodInsn(INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
+            break;
+        case "SLjava/lang/Object;":
+        case "SLjava/lang/Short;":
+            asm.visitMethodInsn(INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
+            break;
+        case "CLjava/lang/Object;":
+        case "CLjava/lang/Character;":
+            asm.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+            break;
+        case "ILjava/lang/Object;":
+        case "ILjava/lang/Integer;":
+            asm.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+            break;
+        case "FLjava/lang/Object;":
+        case "FLjava/lang/Float;":
+            asm.visitMethodInsn(INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
+            break;
+        case "JLjava/lang/Object;":
+        case "JLjava/lang/Long;":
+            asm.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+            break;
+        case "DLjava/lang/Object;":
+        case "DLjava/lang/Double;":
+            asm.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+            break;
+
+        case "Ljava/lang/Object;Z":
+            asm.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
+            // pass through
+        case "Ljava/lang/Boolean;Z":
+            asm.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+            break;
+
+
+        case "Ljava/lang/Object;B":
+            asm.visitTypeInsn(CHECKCAST, "java/lang/Byte");
+            // pass through
+        case "Ljava/lang/Byte;B":
+            asm.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
+            break;
+
+
+        case "Ljava/lang/Object;S":
+            asm.visitTypeInsn(CHECKCAST, "java/lang/Short");
+            // pass through
+        case "Ljava/lang/Short;S":
+            asm.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
+            break;
+
+
+        case "Ljava/lang/Object;C":
+            asm.visitTypeInsn(CHECKCAST, "java/lang/Character");
+            // pass through
+        case "Ljava/lang/Character;C":
+            asm.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
+            break;
+
+
+        case "Ljava/lang/Object;I":
+            asm.visitTypeInsn(CHECKCAST, "java/lang/Integer");
+            // pass through
+        case "Ljava/lang/Integer;I":
+            asm.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+            break;
+
+        case "Ljava/lang/Object;F":
+            asm.visitTypeInsn(CHECKCAST, "java/lang/Float");
+            // pass through
+        case "Ljava/lang/Float;F":
+            asm.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
+            break;
+
+
+        case "Ljava/lang/Object;J":
+            asm.visitTypeInsn(CHECKCAST, "java/lang/Long");
+            // pass through
+        case "Ljava/lang/Long;J":
+            asm.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
+            break;
+
+        case "Ljava/lang/Object;D":
+            asm.visitTypeInsn(CHECKCAST, "java/lang/Double");
+            // pass through
+        case "Ljava/lang/Double;D":
+            asm.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
+            break;
+
+        default:
+            throw new RuntimeException("i have trouble to auto convert from " + provideType + " to " + expectedType + " currently");
+        }
     }
 
     private static void reBuildE1Expression(E1Expr e1, MethodVisitor asm) {

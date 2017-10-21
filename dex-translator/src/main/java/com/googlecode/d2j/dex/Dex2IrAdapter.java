@@ -440,7 +440,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
             x(nAssign(locals[toReg], nLong((Long) value)));
             break;
         case CONST_CLASS:
-            x(nAssign(locals[toReg], nType(((DexType) value).desc)));
+            x(nAssign(locals[toReg], nType((DexType) value)));
             break;
         case CONST_STRING:
         case CONST_STRING_JUMBO:

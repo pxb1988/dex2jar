@@ -15,6 +15,10 @@
  */
 package com.googlecode.dex2jar.ir.expr;
 
+import com.googlecode.d2j.DexType;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
 import com.googlecode.dex2jar.ir.expr.Value.VT;
 
 public final class Exprs {
@@ -38,7 +42,10 @@ public final class Exprs {
     }
 
     public static Constant nType(String desc) {
-        return new Constant(new Constant.Type(desc));
+        return new Constant(new DexType(desc));
+    }
+    public static Constant nType(DexType t) {
+        return new Constant(t);
     }
 
     public static Constant nDouble(double i) {
@@ -186,6 +193,14 @@ public final class Exprs {
     public static InvokeExpr nInvokeVirtual(Value[] regs, String owner, String name, String[] argmentTypes,
             String returnType) {
         return new InvokeExpr(VT.INVOKE_VIRTUAL, regs, owner, name, argmentTypes, returnType);
+    }
+
+    public static InvokeCustomExpr nInvokeCustom(Value[] regs, String name, Proto proto, MethodHandle handle, Object[] bsmArgs) {
+        return new InvokeCustomExpr(VT.INVOKE_CUSTOM, regs , name, proto, handle,  bsmArgs);
+    }
+
+    public static InvokePolymorphicExpr nInvokePolymorphic(Value[] regs, Proto proto, Method method) {
+        return new InvokePolymorphicExpr(VT.INVOKE_POLYMORPHIC, regs , proto, method);
     }
 
     public static BinopExpr nLCmp(Value a, Value b) {

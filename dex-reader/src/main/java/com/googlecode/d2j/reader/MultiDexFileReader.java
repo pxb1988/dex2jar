@@ -71,6 +71,18 @@ public class MultiDexFileReader implements BaseDexFileReader {
     }
 
     @Override
+    public int getDexVersion() {
+        int max = DEX_035;
+        for (DexFileReader r : readers) {
+            int v = r.getDexVersion();
+            if (v > max) {
+                max = v;
+            }
+        }
+        return max;
+    }
+
+    @Override
     public void accept(DexFileVisitor dv) {
         accept(dv, 0);
     }
