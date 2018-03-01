@@ -102,20 +102,24 @@ public class Dex2jarCmd extends BaseCmd {
             Path file = output == null ? currentDir.resolve(baseName + "-dex2jar.jar") : output;
             System.err.println("dex2jar " + fileName + " -> " + file);
 
-            BaseDexFileReader reader = MultiDexFileReader.open(Files.readAllBytes(new File(fileName).toPath()));
-            BaksmaliBaseDexExceptionHandler handler = notHandleException ? null : new BaksmaliBaseDexExceptionHandler();
-            Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort()
+            try(InputStream input =  new FileInputStream(new File(fileName))){
+                BaseDexFileReader reader = MultiDexFileReader.open(IOUtils.toByteArray(input));
+                BaksmaliBaseDexExceptionHandler handler = notHandleException ? null : new BaksmaliBaseDexExceptionHandler();
+                Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort()
                     .skipDebug(!debugInfo).optimizeSynchronized(this.optmizeSynchronized).printIR(printIR)
                     .noCode(noCode).to(file);
 
-            if (!notHandleException) {
-                if (handler.hasException()) {
-                    Path errorFile = exceptionFile == null ? currentDir.resolve(baseName + "-error.zip")
+                if (!notHandleException) {
+                    if (handler.hasException()) {
+                        Path errorFile = exceptionFile == null ? currentDir.resolve(baseName + "-error.zip")
                             : exceptionFile;
-                    System.err.println("Detail Error Information in File " + errorFile);
-                    System.err.println(BaksmaliBaseDexExceptionHandler.REPORT_MESSAGE);
-                    handler.dump(errorFile, orginalArgs);
+                        System.err.println("Detail Error Information in File " + errorFile);
+                        System.err.println(BaksmaliBaseDexExceptionHandler.REPORT_MESSAGE);
+                        handler.dump(errorFile, orginalArgs);
+                    }
                 }
+            }catch(Exception e) {
+                throw e;
             }
             // long endTS = System.currentTimeMillis();
             // System.err.println(String.format("%.2f", (float) (endTS - baseTS) / 1000));
