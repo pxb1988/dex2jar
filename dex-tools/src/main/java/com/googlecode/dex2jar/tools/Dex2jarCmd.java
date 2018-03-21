@@ -60,6 +60,9 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "os", longOpt = "optmize-synchronized", hasArg = false, description = "optimize-synchronized")
     private boolean optmizeSynchronized = false;
 
+    @Opt(longOpt = "skip-exceptions", hasArg = false, description = "skip-exceptions")
+    private boolean skipExceptions = false;
+
     @Opt(opt = "nc", longOpt = "no-code", hasArg = false, description = "")
     private boolean noCode = false;
 
@@ -106,7 +109,7 @@ public class Dex2jarCmd extends BaseCmd {
             BaksmaliBaseDexExceptionHandler handler = notHandleException ? null : new BaksmaliBaseDexExceptionHandler();
             Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort()
                     .skipDebug(!debugInfo).optimizeSynchronized(this.optmizeSynchronized).printIR(printIR)
-                    .noCode(noCode).to(file);
+                    .noCode(noCode).skipExceptions(skipExceptions).to(file);
 
             if (!notHandleException) {
                 if (handler.hasException()) {

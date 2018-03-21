@@ -298,4 +298,13 @@ public class Dex2jar {
         this.exceptionHandler = exceptionHandler;
         return this;
     }
+
+    public Dex2jar skipExceptions(boolean b) {
+        if (b) {
+            this.readerConfig |= DexFileReader.SKIP_EXCEPTION;
+        } else {
+            this.readerConfig &= ~DexFileReader.SKIP_EXCEPTION;
+        }
+        return this;
+    }
 }

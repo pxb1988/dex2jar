@@ -69,6 +69,11 @@ public class DexFileReader implements BaseDexFileReader {
      */
     public static final int KEEP_CLINIT = 1 << 7;
 
+    /**
+     * keep clinit method when {@link #SKIP_DEBUG}
+     */
+    public static final int SKIP_EXCEPTION = 1 << 8;
+
     // private static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
 
     static final int DBG_END_SEQUENCE = 0x00;
@@ -1384,7 +1389,9 @@ public class DexFileReader implements BaseDexFileReader {
             if ((insns & 0x01) != 0) {// skip padding
                 in.getShort();
             }
-            findTryCatch(in, dcv, tries_size, insns, labelsMap, handlers);
+            if (0 == (config & SKIP_EXCEPTION)) {
+                findTryCatch(in, dcv, tries_size, insns, labelsMap, handlers);
+            }
         }
         // 处理debug信息
         if (debug_info_off != 0 && (0 == (config & SKIP_DEBUG))) {
