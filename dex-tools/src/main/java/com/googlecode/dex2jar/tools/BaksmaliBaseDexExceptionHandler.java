@@ -43,7 +43,7 @@ public class BaksmaliBaseDexExceptionHandler extends BaseDexExceptionHandler {
     public static final String REPORT_MESSAGE = "Please report this file to one of following link if possible (any one).\n" + //
             "    https://sourceforge.net/p/dex2jar/tickets/\n" + //
             "    https://bitbucket.org/pxb1988/dex2jar/issues\n" + //
-            "    https://github.com/pxb1988/dex2jar/issues [no attachment support, not preferred]\n" + //
+            "    https://github.com/pxb1988/dex2jar/issues\n" + //
             "    dex2jar@googlegroups.com";
 
     private Map<DexMethodNode, Exception> exceptionMap = new HashMap<>();
