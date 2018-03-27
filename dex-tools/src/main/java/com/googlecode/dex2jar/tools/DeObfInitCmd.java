@@ -19,12 +19,14 @@ package com.googlecode.dex2jar.tools;
 import com.googlecode.d2j.tools.jar.InitOut;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class DeObfInitCmd extends BaseCmd {
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
     @Opt(opt = "o", longOpt = "output", description = "output .jar file, default is $current_dir/[file-name]-deobf-init.txt", argName = "out-file")
-    private File output;
+    private Path output;
     @Opt(opt = "min", longOpt = "min-length", description = "do the rename if the length < MIN, default is 2", argName = "MIN")
     private int min = 2;
     @Opt(opt = "max", longOpt = "max-length", description = "do the rename if the length > MIN, default is 40", argName = "MAX")
@@ -45,27 +47,27 @@ public class DeObfInitCmd extends BaseCmd {
             return;
         }
 
-        File jar = new File(remainingArgs[0]);
-        if (!jar.exists()) {
+        Path jar = new File(remainingArgs[0]).toPath();
+        if (!Files.exists(jar)) {
             System.err.println(jar + " is not exists");
             usage();
             return;
         }
         if (output == null) {
-            if (jar.isDirectory()) {
-                output = new File(jar.getName() + "-deobf-init.txt");
+            if (Files.isDirectory(jar)) {
+                output = new File(jar.getFileName().toString() + "-deobf-init.txt").toPath();
             } else {
-                output = new File(getBaseName(jar.getName()) + "-deobf-init.txt");
+                output = new File(getBaseName(jar.getFileName().toString()) + "-deobf-init.txt").toPath();
             }
         }
 
-        if (output.exists() && !forceOverwrite) {
+        if (Files.exists(output) && !forceOverwrite) {
             System.err.println(output + " exists, use --force to overwrite");
             usage();
             return;
         }
         System.out.println("generate " + jar + " -> " + output);
-        new InitOut().from(jar).maxLength(max).minLength(min).to(output.toPath());
+        new InitOut().from(jar).maxLength(max).minLength(min).to(output);
     }
 
 }

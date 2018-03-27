@@ -1,5 +1,6 @@
 package com.googlecode.d2j.tools.jar;
 
+import com.googlecode.dex2jar.tools.BaseCmd;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -8,7 +9,9 @@ import org.objectweb.asm.tree.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -26,7 +29,7 @@ public class InitOut {
     private int clzIndex = 0;
     private Set<String> clzMap = new TreeSet<String>();
     private Set<String> clzSet = new TreeSet<String>();
-    private File from;
+    private Path from;
     private int maxLength = 40;
     private Set<String> memberMap = new TreeSet<String>();
     private int minLength = 2;
@@ -135,7 +138,7 @@ public class InitOut {
         }
     }
 
-    private List<ClassInfo> collect(File file) throws IOException {
+    private List<ClassInfo> collect(Path file) throws IOException {
         final List<ClassInfo> clzList = new ArrayList<ClassInfo>();
         final ClassVisitor collectVisitor = new ClassVisitor(ASM4) {
             private static final String ASSERTION_DISABLED_FIELD_NAME = "$assertionsDisabled";
@@ -255,16 +258,18 @@ public class InitOut {
                 isEnum = isEnum(access);
             }
         };
-//        FileWalker fileWalker = new FileWalker().withStreamHandler(new FileWalker.StreamHandler() {
-//
-//            @Override
-//            public void handle(boolean isDir, String name, FileWalker.StreamOpener current, Object nameObject) throws IOException {
-//                if ((!isDir) && name.endsWith(".class")) {
-//                    new ClassReader(current.get()).accept(collectVisitor, ClassReader.EXPAND_FRAMES);
-//                }
-//            }
-//        });
-//        fileWalker.walk(file);
+
+      try(FileSystem fs = BaseCmd.openZip(file)) {
+          BaseCmd.walkJarOrDir(fs.getPath("/"), new BaseCmd.FileVisitorX() {
+              @Override
+              public void visitFile(Path file, String relative) throws IOException {
+                  if (relative.endsWith(".class")) {
+                      byte data[] = Files.readAllBytes(file);
+                      new ClassReader(data).accept(collectVisitor, ClassReader.EXPAND_FRAMES);
+                  }
+              }
+          });
+      }
         return clzList;
     }
 
@@ -287,7 +292,7 @@ public class InitOut {
         }
     }
 
-    public InitOut from(File from) {
+    public InitOut from(Path from) {
         this.from = from;
         return this;
     }
