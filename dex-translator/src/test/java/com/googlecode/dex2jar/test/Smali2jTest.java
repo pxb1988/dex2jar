@@ -67,7 +67,15 @@ public class Smali2jTest {
             String dirx = file.substring(0, file.length() - testClass.getName().length() - ".class".length());
 
             System.out.println("dirx is " + dirx);
-            final Path basePath = new File(dirx, "smalis").toPath();
+            Path dirxpath = new File(dirx).toPath();
+
+            Path basePath0 = dirxpath.resolve("smalis");
+            if (!Files.exists(basePath0)) {
+                basePath0 = dirxpath.resolve("../resources/smalis/");
+            }
+
+            final Path basePath = basePath0;
+
             final Set<Path> files = new TreeSet<>();
             try {
                 Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
