@@ -207,10 +207,17 @@ public class RemoveLocalFromSSA extends StatedTransformer {
     }
 
     static <T> void fixReplace(Map<Local, T> toReplace) {
+        TreeSet<Map.Entry<Local, T>> set = new TreeSet<>(new Comparator<Map.Entry<Local, T>>() {
+            @Override
+            public int compare(Map.Entry<Local, T> localTEntry, Map.Entry<Local, T> t1) {
+                return Integer.compare(localTEntry.getKey()._ls_index, t1.getKey()._ls_index);
+            }
+        });
+        set.addAll(toReplace.entrySet());
         boolean changed = true;
         while (changed) {
             changed = false;
-            for (Map.Entry<Local, T> e : toReplace.entrySet()) {
+            for (Map.Entry<Local, T> e : set) {
                 T b = e.getValue();
                 if(b instanceof  Local) {
                     T n = toReplace.get(b);

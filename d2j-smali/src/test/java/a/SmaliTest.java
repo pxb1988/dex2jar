@@ -28,7 +28,9 @@ public class SmaliTest {
     @Test
     public void test() throws IOException {
         DexFileNode dfn = new DexFileNode();
-        Smali.smaliFile(new File("src/test/resources/a.smali").toPath(), dfn);
+        try (InputStream is = SmaliTest.class.getResourceAsStream("/a.smali")) {
+            Smali.smaliFile("a.smali", is, dfn);
+        }
         for (DexClassNode dcn : dfn.clzs) {
             BufferedWriter w = new BufferedWriter(new OutputStreamWriter(System.out));
             new BaksmaliDumper(true, true).baksmaliClass(dcn, new BaksmaliDumpOut(w));
@@ -49,11 +51,12 @@ public class SmaliTest {
 
     @Test
     public void test2() throws IOException {
-        File dir=new File( "../dex-translator/src/test/resources/dexes");
-        File[]fs=dir.listFiles();
-        if(fs!=null) {
+        File dir = new File("../dex-translator/src/test/resources/dexes");
+        File[] fs = dir.listFiles();
+        if (fs != null) {
             for (File f : fs) {
                 if (f.getName().endsWith(".dex") || f.getName().endsWith(".apk")) {
+                    System.out.println(f.getName());
                     dotest(f);
                 }
             }
@@ -61,7 +64,13 @@ public class SmaliTest {
     }
 
     private void dotest(File dexFile) throws IOException {
-        DexBackedDexFile dex = DexFileFactory.loadDexFile(dexFile, 14, false);
+        DexBackedDexFile dex;
+        try {
+            dex = DexFileFactory.loadDexFile(dexFile, 14, false);
+        } catch (DexBackedDexFile.NotADexFile ex) {
+            ex.printStackTrace();
+            return;
+        }
         Map<String, DexClassNode> map = readDex(dexFile);
 
         for (DexBackedClassDef def : dex.getClasses()) {

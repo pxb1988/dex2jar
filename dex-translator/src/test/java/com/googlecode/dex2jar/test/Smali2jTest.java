@@ -58,23 +58,16 @@ public class Smali2jTest {
         List<Runner> runners;
 
         public void init(final Class<?> testClass) throws InitializationError {
-            URL url = testClass.getResource("/" + testClass.getName().replace('.', '/') + ".class");
+            URL url = testClass.getResource("/smalis/writeString.smali");
             System.out.println("url is " + url);
             Assert.assertNotNull(url);
 
             final String file = url.getFile();
             Assert.assertNotNull(file);
-            String dirx = file.substring(0, file.length() - testClass.getName().length() - ".class".length());
 
-            System.out.println("dirx is " + dirx);
-            Path dirxpath = new File(dirx).toPath();
+            Path dirxpath = new File(file).toPath();
 
-            Path basePath0 = dirxpath.resolve("smalis");
-            if (!Files.exists(basePath0)) {
-                basePath0 = dirxpath.resolve("../resources/smalis/");
-            }
-
-            final Path basePath = basePath0;
+            final Path basePath = dirxpath.getParent();
 
             final Set<Path> files = new TreeSet<>();
             try {

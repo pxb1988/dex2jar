@@ -18,6 +18,7 @@ package com.googlecode.dex2jar.test;
 import com.android.dx.cf.direct.DirectClassFile;
 import com.android.dx.cf.direct.StdAttributeFactory;
 import com.android.dx.cf.iface.ParseException;
+import com.android.dx.command.dexer.DxContext;
 import com.android.dx.dex.DexOptions;
 import com.android.dx.dex.cf.CfOptions;
 import com.android.dx.dex.cf.CfTranslator;
@@ -344,7 +345,7 @@ public abstract class TestUtils {
         dcf.setAttributeFactory(new StdAttributeFactory());
         com.android.dx.dex.file.DexFile dxFile = new com.android.dx.dex.file.DexFile(dexOptions);
         try {
-            CfTranslator.translate(dcf, data, cfOptions, dexOptions, dxFile);
+            CfTranslator.translate(new DxContext(), dcf, data, cfOptions, dexOptions, dxFile);
         } catch (ParseException e) {
             if ("MethodHandle not supported".equals(e.getMessage())) {
                 e.printStackTrace();

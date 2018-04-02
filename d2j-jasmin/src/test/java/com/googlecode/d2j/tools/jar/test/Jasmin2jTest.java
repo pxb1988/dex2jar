@@ -53,14 +53,13 @@ public class Jasmin2jTest {
         List<Path> runners = new ArrayList<>();
 
         public void init(final Class<?> testClass) throws InitializationError {
-            URL url = testClass.getResource("/" + testClass.getName().replace('.', '/') + ".class");
+            URL url = testClass.getResource("/jasmins/type.j");
             Assert.assertNotNull(url);
 
             final String file = url.getFile();
             Assert.assertNotNull(file);
-            String dirx = file.substring(0, file.length() - testClass.getName().length() - ".class".length());
 
-            basePath = new File(dirx, "jasmins").toPath();
+            basePath = new File(file).toPath().getParent();
 
             System.out.println("jasmins dir is " + basePath);
 

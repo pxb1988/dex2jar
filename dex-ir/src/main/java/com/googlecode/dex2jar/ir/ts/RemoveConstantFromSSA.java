@@ -56,7 +56,7 @@ public class RemoveConstantFromSSA extends StatedTransformer {
     public boolean transformReportChanged(IrMethod method) {
         boolean changed = false;
         List<AssignStmt> assignStmtList = new ArrayList<>();
-        Map<Local, Object> cstMap = new TreeMap<>(LOCAL_COMPARATOR);
+        Map<Local, Object> cstMap = new HashMap<>();
         for (Stmt p = method.stmts.getFirst(); p != null; p = p.getNext()) {
             if (p.st == Stmt.ST.ASSIGN) {
                 AssignStmt as = (AssignStmt) p;
@@ -74,7 +74,7 @@ public class RemoveConstantFromSSA extends StatedTransformer {
             return false;
         }
         RemoveLocalFromSSA.fixReplace(cstMap);
-        final Map<Local, Value> toReplace = new TreeMap<>(LOCAL_COMPARATOR);
+        final Map<Local, Value> toReplace = new HashMap<>();
         Set<Value> usedInPhi = new HashSet<>();
         List<LabelStmt> phiLabels = method.phiLabels;
         if (phiLabels != null) {
