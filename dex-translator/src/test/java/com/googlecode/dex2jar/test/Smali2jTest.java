@@ -114,7 +114,7 @@ public class Smali2jTest {
 
                     @Override
                     protected Description describeChild(DexClassNode child) {
-                        return Description.createTestDescription(testClass, "s [" + child.className + "]");
+                        return Description.createTestDescription(testClass, "[" + child.className + "]");
                     }
 
                     @Override
@@ -122,7 +122,15 @@ public class Smali2jTest {
                         runLeaf(new Statement() {
                             @Override
                             public void evaluate() throws Throwable {
-                                TestUtils.translateAndCheck(fileNode, child);
+                                if(p.getFileName().toString().contains("mayfail")) {
+                                    try {
+                                        TestUtils.translateAndCheck(fileNode, child);
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                } else {
+                                    TestUtils.translateAndCheck(fileNode, child);
+                                }
                             }
                         }, describeChild(child), notifier);
                     }
