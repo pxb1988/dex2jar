@@ -300,7 +300,7 @@ public class Cfg {
 
     }
 
-    public static Value travelMod(Value value, TravelCallBack callback) {
+    public static Value travelMod(Value value, OnUseCallBack callback) {
         switch (value.et) {
         case E0:
             if (value.vt == VT.LOCAL) {
