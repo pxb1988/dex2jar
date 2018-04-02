@@ -609,6 +609,10 @@ public class TypeTransformer implements Transformer {
             } else if (!ta.fixed && tb.fixed) {
                 return b;
             } else if (ta.fixed && tb.fixed) {
+                // special allow merge of Z and I
+                if ((ta == TypeClass.INT && tb == TypeClass.BOOLEAN) || (tb == TypeClass.INT && ta == TypeClass.BOOLEAN)) {
+                    return "I";
+                }
                 if (ta != tb) {
                     throw new RuntimeException();
                 }
