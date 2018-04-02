@@ -212,10 +212,12 @@ public class RemoveLocalFromSSA extends StatedTransformer {
             changed = false;
             for (Map.Entry<Local, T> e : toReplace.entrySet()) {
                 T b = e.getValue();
-                T n = toReplace.get(b);
-                if (n != null && b != n) {
-                    changed = true;
-                    e.setValue(n);
+                if(b instanceof  Local) {
+                    T n = toReplace.get(b);
+                    if (n != null && b != n) {
+                        changed = true;
+                        e.setValue(n);
+                    }
                 }
             }
         }
