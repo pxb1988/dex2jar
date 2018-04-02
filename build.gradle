@@ -20,9 +20,6 @@ subprojects {
   }
   artifacts.archives packageSources
   repositories {
-    maven {
-      url "http://repository-dex2jar.forge.cloudbees.com/release/"
-    }
     mavenCentral()
   }
 
@@ -34,16 +31,15 @@ subprojects {
       main { compileClasspath += configurations.provided }
       test {
         compileClasspath += configurations.provided
-
-        // make sure the resources and class output to same dir, for simple unit test
-        output.resourcesDir = output.classesDir
       }
   }
 // == end
 
   [compileJava, compileTestJava]*.options.collect {options ->options.encoding = 'UTF-8'}
-    dependencies {
+
+  dependencies {
     testCompile group: 'junit', name: 'junit', version:'4.11'
+    compile fileTree(dir: 'libs', include: '*.jar')
   }
 
   jar {
