@@ -235,12 +235,16 @@ public class ZipFile implements AutoCloseable, ZipConstants {
         boolean skipCommentsAndExtra = true;
 
         if (commentLength > 0) {
-            if (skipCommentsAndExtra) {
-                skip(raf, commentLength);
+            if (commentLength > raf.remaining()) {
+                System.err.println("WARN: the zip comment exceed the zip content");
             } else {
-                byte[] commentBytes = new byte[commentLength];
-                raf.get(commentBytes);
-                comment = new String(commentBytes, 0, commentBytes.length, StandardCharsets.UTF_8);
+                if (skipCommentsAndExtra) {
+                    skip(raf, commentLength);
+                } else {
+                    byte[] commentBytes = new byte[commentLength];
+                    raf.get(commentBytes);
+                    comment = new String(commentBytes, 0, commentBytes.length, StandardCharsets.UTF_8);
+                }
             }
         }
 
