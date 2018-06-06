@@ -267,6 +267,32 @@ public class UnSSATransformer implements Transformer {
         if (method.phiLabels == null || method.phiLabels.size() == 0) {
             return;
         }
+
+        // fix issue in github 186
+        // .?.....?.?.?.x?x.x..?x.?.??.x.... | L24e82f43: // [a15 = φ(a4, a23), a17 = φ(a5, a20)]
+        // .?x....?.?.?.x?x.x..?x.?.??.x.... | L16e1a441: // [a2 = φ(a4, a15)]
+        // the local a15 is fixed to x15 in fixPhi
+        // .?.....?.?.?.x?x.x..?x.?.??.x.... | L24e82f43: // [x15 = φ(a4, a23), a17 = φ(a5, a20)]
+        //                                   | a15 = x15
+        // .?x....?.?.?.x?x.x..?x.?.??.x.... | L16e1a441: // [a2 = φ(a4, a15)]
+        //  after that, when demote a2, it is inserted after L24e82f43, which will cause a15 undefined
+        // .?.....?.?.?.x?x.x..?x.?.??.x.... | L24e82f43: // [x15 = φ(a4, a23), a17 = φ(a5, a20)]
+        //                                   | a2 = a15
+        //                                   | a15 = x15
+        // .?x....?.?.?.x?x.x..?x.?.??.x.... | L16e1a441: // [a2 = φ(a4, a15)]
+
+        // this is simple fix to github 186
+        // insert a Nop between two LabelStmt if both have phis
+        for (LabelStmt phiLabel : method.phiLabels) {
+            Stmt stmt = phiLabel.getNext();
+            if (stmt.st == ST.LABEL) {
+                LabelStmt labelStmt2 = (LabelStmt) stmt;
+                if (labelStmt2.phis != null && labelStmt2.phis.size() > 0) {
+                    method.stmts.insertAfter(phiLabel, Stmts.nNop());
+                }
+            }
+        }
+
         // 1. Live analyze the method,
         // a. remove Phi,
         // b. record parameter reference
