@@ -27,6 +27,8 @@ import com.googlecode.d2j.node.DexAnnotationNode;
 import com.googlecode.d2j.util.Mutf8;
 import com.googlecode.d2j.visitors.*;
 
+import static com.googlecode.d2j.DexConstants.*;
+
 /**
  * Open and read a dex file.this is the entrance of dex-reader. to read a dex/odex, use the following code:
  * 
@@ -618,6 +620,7 @@ public class DexFileReader implements BaseDexFileReader {
      */
     @Override
     public void accept(DexFileVisitor dv, int config) {
+        dv.visitDexFileVersion(this.dex_version);
         for (int cid = 0; cid < class_defs_size; cid++) {
             accept(dv, cid, config);
         }

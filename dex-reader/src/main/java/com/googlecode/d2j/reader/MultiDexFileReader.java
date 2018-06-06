@@ -1,5 +1,6 @@
 package com.googlecode.d2j.reader;
 
+import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.util.zip.AccessBufByteArrayOutputStream;
 import com.googlecode.d2j.util.zip.ZipEntry;
 import com.googlecode.d2j.util.zip.ZipFile;
@@ -72,7 +73,7 @@ public class MultiDexFileReader implements BaseDexFileReader {
 
     @Override
     public int getDexVersion() {
-        int max = DEX_035;
+        int max = DexConstants.DEX_035;
         for (DexFileReader r : readers) {
             int v = r.getDexVersion();
             if (v > max) {

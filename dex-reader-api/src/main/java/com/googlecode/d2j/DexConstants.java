@@ -51,4 +51,9 @@ public abstract interface DexConstants {
     String ANNOTATION_ENCLOSING_METHOD_TYPE = "Ldalvik/annotation/EnclosingMethod;";
     String ANNOTATION_INNER_CLASS_TYPE = "Ldalvik/annotation/InnerClass;";
     String ANNOTATION_MEMBER_CLASSES_TYPE = "Ldalvik/annotation/MemberClasses;";
+
+    int DEX_035 = 0x00303335;
+    int DEX_036 = 0x00303336;
+    int DEX_037 = 0x00303337;
+    int DEX_038 = 0x00303338;
 }

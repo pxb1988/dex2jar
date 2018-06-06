@@ -325,11 +325,14 @@ public class Dex2Asm {
     }
 
     public void convertClass(DexClassNode classNode, ClassVisitorFactory cvf, DexFileNode fileNode) {
-        convertClass(classNode, cvf, collectClzInfo(fileNode));
+        convertClass(fileNode.dexVersion, classNode, cvf, collectClzInfo(fileNode));
     }
 
     public void convertClass(DexClassNode classNode, ClassVisitorFactory cvf) {
-        convertClass(classNode, cvf, new HashMap<String, Clz>());
+        convertClass(DexConstants.DEX_035, classNode, cvf);
+    }
+    public void convertClass(int dexVersion, DexClassNode classNode, ClassVisitorFactory cvf) {
+        convertClass(dexVersion, classNode, cvf, new HashMap<String, Clz>());
     }
 
     private static boolean isJavaIdentifier(String str) {
@@ -348,6 +351,12 @@ public class Dex2Asm {
     }
 
     public void convertClass(DexClassNode classNode, ClassVisitorFactory cvf, Map<String, Clz> classes) {
+        convertClass(DexConstants.DEX_035, classNode, cvf, classes);
+    }
+    public void convertClass(DexFileNode dfn, DexClassNode classNode, ClassVisitorFactory cvf, Map<String, Clz> classes) {
+        convertClass(dfn.dexVersion, classNode, cvf, classes);
+    }
+    public void convertClass(int dexVersion, DexClassNode classNode, ClassVisitorFactory cvf, Map<String, Clz> classes) {
         ClassVisitor cv = cvf.create(toInternalName(classNode.className));
         if (cv == null) {
             return;
@@ -391,7 +400,8 @@ public class Dex2Asm {
         }
         access = clearClassAccess(isInnerClass, access);
 
-        cv.visit(Opcodes.V1_6, access, toInternalName(classNode.className), signature,
+        int version = dexVersion >= DexConstants.DEX_037 ? Opcodes.V1_7 : Opcodes.V1_6;
+        cv.visit(version, access, toInternalName(classNode.className), signature,
                 classNode.superClass == null ? null : toInternalName(classNode.superClass), interfaceInterNames);
 
         List<InnerClassNode> innerClassNodes = new ArrayList<InnerClassNode>(5);
@@ -447,7 +457,7 @@ public class Dex2Asm {
         if (fileNode.clzs != null) {
             Map<String, Clz> classes = collectClzInfo(fileNode);
             for (DexClassNode classNode : fileNode.clzs) {
-                convertClass(classNode, cvf, classes);
+                convertClass(fileNode, classNode, cvf, classes);
             }
         }
     }

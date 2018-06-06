@@ -16,6 +16,7 @@
  */
 package com.googlecode.d2j.node;
 
+import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexFileVisitor;
 
@@ -24,6 +25,13 @@ import java.util.List;
 
 public class DexFileNode extends DexFileVisitor {
     public List<DexClassNode> clzs = new ArrayList<>();
+    public int dexVersion = DexConstants.DEX_035;
+
+    @Override
+    public void visitDexFileVersion(int version) {
+        this.dexVersion = version;
+        super.visitDexFileVersion(version);
+    }
 
     @Override
     public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {

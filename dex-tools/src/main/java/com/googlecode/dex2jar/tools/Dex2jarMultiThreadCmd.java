@@ -138,7 +138,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
         new ExDex2Asm(exceptionHandler) {
 
             @Override
-            public void convertDex(DexFileNode fileNode, final ClassVisitorFactory cvf) {
+            public void convertDex(final DexFileNode fileNode, final ClassVisitorFactory cvf) {
                 if (fileNode.clzs != null) {
                     final Map<String, Clz> classes = collectClzInfo(fileNode);
                     final List<Future<?>> results = new ArrayList<>(fileNode.clzs.size());
@@ -146,7 +146,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
                         results.add(executorService.submit(new Runnable() {
                             @Override
                             public void run() {
-                                convertClass(classNode, cvf, classes);
+                                convertClass(fileNode, classNode, cvf, classes);
                             }
                         }));
                     }
