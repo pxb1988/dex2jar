@@ -149,18 +149,13 @@ public abstract class TestUtils {
     public static List<Path> listTestDexFiles() {
 
         Class<?> testClass = TestUtils.class;
-        URL url = testClass.getResource("/" + testClass.getName().replace('.', '/') + ".class");
+        URL url = testClass.getResource("/dexes/i_jetty.dex");
         Assert.assertNotNull(url);
 
         final String fileStr = url.getFile();
         Assert.assertNotNull(fileStr);
-        String dirx = fileStr.substring(0, fileStr.length() - testClass.getName().length() - ".class".length());
 
-        System.out.println("dirx is " + dirx);
-
-        File file = new File(dirx, "dexes");
-
-        return listPath(file, ".apk", ".dex", ".zip");
+        return listPath(new File(fileStr).getParentFile(), ".apk", ".dex", ".zip");
     }
 
     public static List<Path> listPath(File file, final String... exts) {
