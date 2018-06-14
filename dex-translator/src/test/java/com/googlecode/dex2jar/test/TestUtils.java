@@ -335,7 +335,7 @@ public abstract class TestUtils {
         CfOptions cfOptions = new CfOptions();
         cfOptions.strictNameCheck = false;
         DexOptions dexOptions = new DexOptions();
-        if (fileNode.dexVersion >= DexConstants.DEX_037) {
+        if (fileNode != null && fileNode.dexVersion >= DexConstants.DEX_037) {
             dexOptions.minSdkVersion = 26;
         }
 
