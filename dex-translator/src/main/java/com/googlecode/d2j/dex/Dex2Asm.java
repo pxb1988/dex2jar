@@ -400,7 +400,7 @@ public class Dex2Asm {
         }
         access = clearClassAccess(isInnerClass, access);
 
-        int version = dexVersion >= DexConstants.DEX_037 ? Opcodes.V1_7 : Opcodes.V1_6;
+        int version = dexVersion >= DexConstants.DEX_037 ? Opcodes.V1_8 : Opcodes.V1_6;
         cv.visit(version, access, toInternalName(classNode.className), signature,
                 classNode.superClass == null ? null : toInternalName(classNode.superClass), interfaceInterNames);
 
