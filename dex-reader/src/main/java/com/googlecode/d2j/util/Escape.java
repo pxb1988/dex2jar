@@ -181,6 +181,12 @@ public class Escape implements DexConstants {
             return String.format("new MethodHandle(MethodHandle.INVOKE_INSTANCE,%s)", v(m.getMethod()));
         case MethodHandle.INVOKE_STATIC:
             return String.format("new MethodHandle(MethodHandle.INVOKE_STATIC,%s)", v(m.getMethod()));
+        case MethodHandle.INVOKE_CONSTRUCTOR:
+            return String.format("new MethodHandle(MethodHandle.INVOKE_CONSTRUCTOR,%s)", v(m.getMethod()));
+        case MethodHandle.INVOKE_DIRECT:
+            return String.format("new MethodHandle(MethodHandle.INVOKE_DIRECT,%s)", v(m.getMethod()));
+        case MethodHandle.INVOKE_INTERFACE:
+            return String.format("new MethodHandle(MethodHandle.INVOKE_INTERFACE,%s)", v(m.getMethod()));
         default:
             throw new RuntimeException();
         }

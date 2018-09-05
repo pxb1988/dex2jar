@@ -22,6 +22,10 @@ public class MethodHandle {
     public static final int INSTANCE_GET = 0x03;
     public static final int INVOKE_STATIC = 0x04;
     public static final int INVOKE_INSTANCE = 0x05;
+    public static final int INVOKE_CONSTRUCTOR = 0x06;
+    public static final int INVOKE_DIRECT = 0x07;
+    public static final int INVOKE_INTERFACE = 0x08;
+
     private int type;
     private Field field;
     private Method method;

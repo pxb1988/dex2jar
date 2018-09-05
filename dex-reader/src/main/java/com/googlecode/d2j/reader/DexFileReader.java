@@ -755,6 +755,9 @@ public class DexFileReader implements BaseDexFileReader {
 
         case MethodHandle.INVOKE_INSTANCE:
         case MethodHandle.INVOKE_STATIC:
+        case MethodHandle.INVOKE_CONSTRUCTOR:
+        case MethodHandle.INVOKE_DIRECT:
+        case MethodHandle.INVOKE_INTERFACE:
             return new MethodHandle(method_handle_type, getMethod(field_or_method_id));
         default:
             throw new RuntimeException();

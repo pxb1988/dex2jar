@@ -290,6 +290,12 @@ public class BaksmaliDumper implements DexConstants {
             return ".invoke-instance " + escapeMethod(obj.getMethod());
         case MethodHandle.INVOKE_STATIC:
             return ".invoke-static " + escapeMethod(obj.getMethod());
+        case MethodHandle.INVOKE_CONSTRUCTOR:
+            return ".invoke-constructor " + escapeMethod(obj.getMethod());
+        case MethodHandle.INVOKE_DIRECT:
+            return ".invoke-direct " + escapeMethod(obj.getMethod());
+        case MethodHandle.INVOKE_INTERFACE:
+            return ".invoke-interface " + escapeMethod(obj.getMethod());
         default:
         }
         return "?";

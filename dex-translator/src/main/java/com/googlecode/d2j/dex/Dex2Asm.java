@@ -529,8 +529,19 @@ public class Dex2Asm {
                 case MethodHandle.INVOKE_STATIC:
                     h = new Handle(Opcodes.H_INVOKESTATIC, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc());
                     break;
+                case MethodHandle.INVOKE_CONSTRUCTOR:
+                    h = new Handle(Opcodes.H_NEWINVOKESPECIAL, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc());
+                    break;
+                case MethodHandle.INVOKE_DIRECT:
+                    h = new Handle(Opcodes.H_INVOKESPECIAL, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc());
+                    break;
+                case MethodHandle.INVOKE_INTERFACE:
+                    h = new Handle(Opcodes.H_INVOKEINTERFACE, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc());
+                    break;
             }
             ele = h;
+        } else if (ele instanceof Proto) {
+            ele = Type.getMethodType(((Proto) ele).getDesc());
         }
         return ele;
     }
