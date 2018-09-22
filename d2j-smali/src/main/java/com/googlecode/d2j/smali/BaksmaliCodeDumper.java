@@ -245,7 +245,7 @@ import java.util.*;
     public void visitFilledNewArrayStmt(Op op, int[] args, String type) {
         if (args.length > 0) {
             if (op.format == InstructionFormat.kFmt3rc) { // invoke-x/range
-                out.s("%s { %d .. %d }, %s", op.displayName, reg(args[0]), reg(args[args.length - 1]),
+                out.s("%s { %s .. %s }, %s", op.displayName, reg(args[0]), reg(args[args.length - 1]),
                         BaksmaliDumper.escapeType(type));
             } else {
                 StringBuilder buff = new StringBuilder();
