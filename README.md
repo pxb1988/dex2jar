@@ -1,6 +1,6 @@
 # dex2jar 
 
-**Project move to [SourceForge](https://sourceforge.net/p/dex2jar) and [Bitbucket](https://bitbucket.org/pxb1988/dex2jar) and [Github](https://github.com/pxb1988/dex2jar)**
+**Project move to [SourceForge](https://sourceforge.net/p/dex2jar) and [Bitbucket](https://bitbucket.org/pxb1988/dex2jar) and [GitHub](https://github.com/pxb1988/dex2jar)**
 
 | _ | Mirror | Wiki | Downloads | Issues |
 |--:|:-----|:----:|:---------:|:------:|
