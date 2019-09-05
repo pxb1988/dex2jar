@@ -40,6 +40,9 @@ public class CleanLabel implements Transformer {
         addTrap(irMethod.traps, uselabels);
         addVars(irMethod.vars, uselabels);
         addStmt(irMethod.stmts, uselabels);
+        if (irMethod.phiLabels != null) {
+            uselabels.addAll(irMethod.phiLabels);
+        }
         rmUnused(irMethod.stmts, uselabels);
     }
 
