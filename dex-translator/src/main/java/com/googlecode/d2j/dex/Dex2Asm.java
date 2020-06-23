@@ -13,6 +13,8 @@ import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.ts.*;
 import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
 
+import sun.reflect.generics.tree.Tree;
+
 public class Dex2Asm {
 
     protected static class Clz {
@@ -590,6 +592,59 @@ public class Dex2Asm {
             }
         }
 
+        if (methodNode.codeNode != null && methodNode.codeNode.debugNode != null) {
+            DexDebugNode debugNode = methodNode.codeNode.debugNode;
+            boolean isStatic = (methodNode.access & Opcodes.ACC_STATIC) != 0;
+            String[] paramTypes = methodNode.method.getParameterTypes();
+
+            Map<Integer, LocalVar> localVars = new TreeMap<>();
+            if (!isStatic) {
+                LocalVar local = new LocalVar(0, "this", methodNode.method.getOwner(), null);
+                localVars.put(local.reg, local);
+            }
+
+            // Handle debugNode.parameterNames
+            if (debugNode.parameterNames != null) {
+                for (int i = 0; i < debugNode.parameterNames.size(); i++) {
+                    String paramName = debugNode.parameterNames.get(i);
+
+                    // Put parameter name in MethodParameters attribute
+                    mv.visitParameter(paramName, 0);
+
+                    // Also put it into the LocalVariableTable
+                    if (paramName != null) {
+                        LocalVar local = new LocalVar(isStatic ? i : i + 1, paramName, paramTypes[i], null);
+                        localVars.put(local.reg, local);
+                    }
+                }
+            }
+
+            // Handle debugNodes to create a LocalVariableTable
+            int localsOffset = paramTypes.length + (isStatic ? 0 : 1);
+            if (debugNode.debugNodes != null) {
+                for (DexDebugNode.DexDebugOpNode opDebugNode : debugNode.debugNodes) {
+                    if (opDebugNode instanceof DexDebugNode.DexDebugOpNode.StartLocalNode) {
+                        DexDebugNode.DexDebugOpNode.StartLocalNode startLocalNode = (DexDebugNode.DexDebugOpNode.StartLocalNode) opDebugNode;
+                        LocalVar localVar = new LocalVar(localsOffset + startLocalNode.reg, startLocalNode.name, startLocalNode.type, startLocalNode.signature);
+                        localVar.start = startLocalNode.label;
+                        localVars.put(localVar.reg, localVar);
+                    } else if (opDebugNode instanceof DexDebugNode.DexDebugOpNode.EndLocal) {
+                        DexDebugNode.DexDebugOpNode.EndLocal endLocalNode = (DexDebugNode.DexDebugOpNode.EndLocal) opDebugNode;
+                        LocalVar localVar = localVars.get(localsOffset + endLocalNode.reg);
+                        if (localVar != null) {
+                            localVar.end = endLocalNode.label;
+                        }
+                    }
+                }
+            }
+
+            for (LocalVar localVar : localVars.values()) {
+                Label startLabel = new Label(); //FIXME: map from localVar.start
+                Label endLabel = new Label(); //FIXME: map from localVar.start
+                mv.visitLocalVariable(localVar.name, localVar.type, localVar.signature, startLabel, endLabel, localVar.reg);
+            }
+        }
+
         if ((NO_CODE_MASK & methodNode.access) == 0) { // has code
             if (methodNode.codeNode != null) {
                 mv.visitCode();
@@ -599,6 +654,22 @@ public class Dex2Asm {
 
         mv.visitEnd();
 
+    }
+
+    class LocalVar {
+        int reg;
+        String name;
+        String type;
+        String signature;
+        DexLabel start;
+        DexLabel end;
+
+        public LocalVar(int reg, String name, String type, String signature) {
+            this.reg = reg;
+            this.name = name;
+            this.type = type;
+            this.signature = signature;
+        }
     }
 
     public IrMethod dex2ir(DexMethodNode methodNode) {
