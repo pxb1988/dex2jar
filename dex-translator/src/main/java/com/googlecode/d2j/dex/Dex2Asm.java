@@ -1,17 +1,60 @@
 package com.googlecode.d2j.dex;
 
-import java.util.*;
-
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.DexType;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
+import com.googlecode.d2j.Visibility;
 import com.googlecode.d2j.converter.Dex2IRConverter;
-import org.objectweb.asm.*;
+import com.googlecode.d2j.converter.IR2JConverter;
+import com.googlecode.d2j.node.DexAnnotationNode;
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexDebugNode;
+import com.googlecode.d2j.node.DexFieldNode;
+import com.googlecode.d2j.node.DexFileNode;
+import com.googlecode.d2j.node.DexMethodNode;
+import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.ts.AggTransformer;
+import com.googlecode.dex2jar.ir.ts.CleanLabel;
+import com.googlecode.dex2jar.ir.ts.DeadCodeTransformer;
+import com.googlecode.dex2jar.ir.ts.EndRemover;
+import com.googlecode.dex2jar.ir.ts.ExceptionHandlerTrim;
+import com.googlecode.dex2jar.ir.ts.Ir2JRegAssignTransformer;
+import com.googlecode.dex2jar.ir.ts.MultiArrayTransformer;
+import com.googlecode.dex2jar.ir.ts.NewTransformer;
+import com.googlecode.dex2jar.ir.ts.NpeTransformer;
+import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
+import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
+import com.googlecode.dex2jar.ir.ts.TypeTransformer;
+import com.googlecode.dex2jar.ir.ts.UnSSATransformer;
+import com.googlecode.dex2jar.ir.ts.VoidInvokeTransformer;
+import com.googlecode.dex2jar.ir.ts.ZeroTransformer;
+import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
+
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InnerClassNode;
 
-import com.googlecode.d2j.*;
-import com.googlecode.d2j.converter.IR2JConverter;
-import com.googlecode.d2j.node.*;
-import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.ts.*;
-import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+import java.util.TreeMap;
 
 public class Dex2Asm {
 
@@ -590,6 +633,70 @@ public class Dex2Asm {
             }
         }
 
+        if (methodNode.codeNode != null && methodNode.codeNode.debugNode != null) {
+            DexDebugNode debugNode = methodNode.codeNode.debugNode;
+            boolean isStatic = (methodNode.access & Opcodes.ACC_STATIC) != 0;
+            String[] paramTypes = methodNode.method.getParameterTypes();
+
+            int localsOffset = 0;
+            Map<Integer, LocalVar> localVars = new TreeMap<>();
+            if (!isStatic) {
+                LocalVar local = new LocalVar(localsOffset, "this", methodNode.method.getOwner(), null);
+                localVars.put(local.reg, local);
+                localsOffset++;
+            }
+
+            // Handle debugNode.parameterNames
+            if (debugNode.parameterNames != null) {
+                for (int i = 0; i < paramTypes.length; i++) {
+                    String paramName = i < debugNode.parameterNames.size() ? debugNode.parameterNames.get(i) : null;
+                    String paramType = paramTypes[i];
+
+                    // Put parameter name in MethodParameters attribute
+                    mv.visitParameter(paramName, 0);
+
+                    // Also put it into the LocalVariableTable
+                    if (paramName != null) {
+                        LocalVar local = new LocalVar(localsOffset, paramName, paramType, null);
+                        localVars.put(local.reg, local);
+                    }
+
+                    // If the local variable at index is of type double or long, it occupies both index and index + 1.
+                    if ("J".equals(paramType) || "D".equals(paramType)) {
+                        localsOffset += 2;
+                    } else {
+                        localsOffset++;
+                    }
+                }
+            }
+
+            // Handle debugNodes to create a LocalVariableTable
+            /*
+            if (debugNode.debugNodes != null) {
+                for (DexDebugNode.DexDebugOpNode opDebugNode : debugNode.debugNodes) {
+                    if (opDebugNode instanceof DexDebugNode.DexDebugOpNode.StartLocalNode) {
+                        DexDebugNode.DexDebugOpNode.StartLocalNode startLocalNode = (DexDebugNode.DexDebugOpNode.StartLocalNode) opDebugNode;
+                        LocalVar localVar = new LocalVar(localsOffset + startLocalNode.reg, startLocalNode.name, startLocalNode.type, startLocalNode.signature);
+                        localVar.start = startLocalNode.label;
+                        localVars.put(localVar.reg, localVar);
+                    } else if (opDebugNode instanceof DexDebugNode.DexDebugOpNode.EndLocal) {
+                        DexDebugNode.DexDebugOpNode.EndLocal endLocalNode = (DexDebugNode.DexDebugOpNode.EndLocal) opDebugNode;
+                        LocalVar localVar = localVars.get(localsOffset + endLocalNode.reg);
+                        if (localVar != null) {
+                            localVar.end = endLocalNode.label;
+                            localVars.remove(endLocalNode.reg);
+                        }
+                    }
+                }
+            }*/
+
+            for (LocalVar localVar : localVars.values()) {
+                Label startLabel = new Label(); //FIXME: map from localVar.start
+                Label endLabel = new Label(); //FIXME: map from localVar.start
+                mv.visitLocalVariable(localVar.name, localVar.type, localVar.signature, startLabel, endLabel, localVar.reg);
+            }
+        }
+
         if ((NO_CODE_MASK & methodNode.access) == 0) { // has code
             if (methodNode.codeNode != null) {
                 mv.visitCode();
@@ -599,6 +706,22 @@ public class Dex2Asm {
 
         mv.visitEnd();
 
+    }
+
+    class LocalVar {
+        int reg;
+        String name;
+        String type;
+        String signature;
+        DexLabel start;
+        DexLabel end;
+
+        public LocalVar(int reg, String name, String type, String signature) {
+            this.reg = reg;
+            this.name = name;
+            this.type = type;
+            this.signature = signature;
+        }
     }
 
     public IrMethod dex2ir(DexMethodNode methodNode) {
