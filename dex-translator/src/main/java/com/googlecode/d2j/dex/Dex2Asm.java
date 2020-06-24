@@ -671,6 +671,7 @@ public class Dex2Asm {
             }
 
             // Handle debugNodes to create a LocalVariableTable
+            /*
             if (debugNode.debugNodes != null) {
                 for (DexDebugNode.DexDebugOpNode opDebugNode : debugNode.debugNodes) {
                     if (opDebugNode instanceof DexDebugNode.DexDebugOpNode.StartLocalNode) {
@@ -683,10 +684,11 @@ public class Dex2Asm {
                         LocalVar localVar = localVars.get(localsOffset + endLocalNode.reg);
                         if (localVar != null) {
                             localVar.end = endLocalNode.label;
+                            localVars.remove(endLocalNode.reg);
                         }
                     }
                 }
-            }
+            }*/
 
             for (LocalVar localVar : localVars.values()) {
                 Label startLabel = new Label(); //FIXME: map from localVar.start
