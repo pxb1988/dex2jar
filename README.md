@@ -1,3 +1,5 @@
+# dex2jar
+
 # Downloads
 **To download latest builds, head to the [Releases](https://github.com/geilige/dex2jar/releases).**
 
@@ -13,7 +15,7 @@
 | gc | https://code.google.com/p/dex2jar | [old](http://code.google.com/p/dex2jar/w/list) | [old](http://code.google.com/p/dex2jar/downloads/list) | [old](http://code.google.com/p/dex2jar/issues/list)|
 
 
-#dex2jar [![Build Status](https://travis-ci.org/pxb1988/dex2jar.svg?branch=2.x)](https://travis-ci.org/pxb1988/dex2jar)
+[![Build Status](https://travis-ci.org/pxb1988/dex2jar.svg?branch=2.x)](https://travis-ci.org/pxb1988/dex2jar)
 Tools to work with android .dex and java .class files
 
 1. dex-reader/writer:
@@ -26,6 +28,13 @@ Tools to work with android .dex and java .class files
     [d2j-decrypt-string](https://sourceforge.net/p/dex2jar/wiki/DecryptStrings)
 
 ## Usage
+
+1. In the root directory run: ./gradlew distZip
+2. cd dex-tools/build/distributions
+3. Unzip the file dex-tools-2.1-SNAPSHOT.zip (file size should be ~5 MB)
+4. Run d2j-dex2jar.sh from the unzipped directory
+
+### Example usage:
 
 > sh d2j-dex2jar.sh -f ~/path/to/apk_to_decompile.apk
 
