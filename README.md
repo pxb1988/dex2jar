@@ -1,4 +1,4 @@
-# dex2jar
+# dex2jar Merge some PR to fix some issues
 
 # Downloads
 **To download latest builds, head to the [Releases](https://github.com/geilige/dex2jar/releases).**
