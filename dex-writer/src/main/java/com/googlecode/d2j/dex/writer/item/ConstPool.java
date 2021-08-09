@@ -208,8 +208,8 @@ public class ConstPool {
         return uniqMethod(key);
     }
 
-    public MethodIdItem uniqMethod(String owner, String name, String parms[], String ret) {
-        MethodIdItem key = new MethodIdItem(uniqType(owner), uniqString(name), uniqProto(parms, ret));
+    public MethodIdItem uniqMethod(String owner, String name, String[] params, String ret) {
+        MethodIdItem key = new MethodIdItem(uniqType(owner), uniqString(name), uniqProto(params, ret));
         return uniqMethod(key);
     }
 
@@ -279,7 +279,7 @@ public class ConstPool {
         return key;
     }
 
-    private static final TypeListItem ZERO_SIZE_TYPE_LIST = new TypeListItem(Collections.EMPTY_LIST);
+    private static final TypeListItem ZERO_SIZE_TYPE_LIST = new TypeListItem(new ArrayList<>());
     static {
         // make sure the offset is 0
         ZERO_SIZE_TYPE_LIST.offset = 0;
@@ -315,7 +315,7 @@ public class ConstPool {
     }
 
     public AnnotationSetItem uniqAnnotationSetItem(AnnotationSetItem key) {
-        List<AnnotationItem> copy = new ArrayList<AnnotationItem>(key.annotations);
+        List<AnnotationItem> copy = new ArrayList<>(key.annotations);
         key.annotations.clear();
         for (AnnotationItem annotationItem : copy) {
             key.annotations.add(uniqAnnotationItem(annotationItem));

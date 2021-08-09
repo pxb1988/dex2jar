@@ -146,7 +146,7 @@ public class AntlrSmaliUtil {
         final SmaliCodeVisitor scv = new SmaliCodeVisitor(dexCodeVisitor);
         final DexDebugVisitor dexDebugVisitor = scv.visitDebug();
         final List<SmaliParser.SInstructionContext> instructionContexts = ctx.sInstruction();
-        final SmaliBaseVisitor v = new SmaliBaseVisitor() {
+        final SmaliBaseVisitor<Object> v = new SmaliBaseVisitor<Object>() {
             @Override
             public Object visitFregisters(SmaliParser.FregistersContext ctx) {
                 return null;

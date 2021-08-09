@@ -678,12 +678,12 @@ public class IR2JConverter implements Opcodes {
             if (ie.vt == VT.INVOKE_NEW) {
                 p = new Proto(p.getParameterTypes(), "V");
             }
-            asm.visitMethodInsn(opcode, toInternal(ie.getOwner()), ie.getName(), p.getDesc());
+            asm.visitMethodInsn(opcode, toInternal(ie.getOwner()), ie.getName(), p.getDesc(), opcode == INVOKEINTERFACE);
         }
         break;
         case INVOKE_CUSTOM: {
             InvokeCustomExpr ice = (InvokeCustomExpr) value;
-            String argTypes[] = ice.getProto().getParameterTypes();
+            String[] argTypes = ice.getProto().getParameterTypes();
             Value[] vbs = ice.getOps();
             if (argTypes.length == vbs.length) {
                 for (int i = 0; i < vbs.length; i++) {

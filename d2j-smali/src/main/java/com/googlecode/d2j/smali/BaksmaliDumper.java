@@ -528,11 +528,8 @@ public class BaksmaliDumper implements DexConstants {
         if (codeNode.debugNode != null) {
             DexDebugNode debugNode = codeNode.debugNode;
             for (DexDebugNode.DexDebugOpNode opNode : debugNode.debugNodes) {
-                List<DexDebugNode.DexDebugOpNode> list = debugLabelMap.get(opNode.label);
-                if (list == null) {
-                    list = new ArrayList<>(3);
-                    debugLabelMap.put(opNode.label, list);
-                }
+                List<DexDebugNode.DexDebugOpNode> list = debugLabelMap.computeIfAbsent(opNode.label,
+                        k -> new ArrayList<>(3));
                 list.add(opNode);
             }
         }

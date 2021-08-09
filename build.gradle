@@ -15,6 +15,9 @@ subprojects {
     targetCompatibility = 1.8
 
     task packageSources(type: Jar) {
+        if (!getTasksByName('generateGrammarSource', false).empty) {
+            dependsOn(generateGrammarSource)
+        }
         archiveClassifier.set('sources')
         from sourceSets.main.allSource
     }
@@ -36,6 +39,7 @@ subprojects {
 // == end
 
     [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
+    compileJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 
     dependencies {
         testImplementation group: 'junit', name: 'junit', version: '4.11'

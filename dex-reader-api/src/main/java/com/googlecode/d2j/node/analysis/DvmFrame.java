@@ -1,6 +1,5 @@
 package com.googlecode.d2j.node.analysis;
 
-import com.googlecode.d2j.MethodHandle;
 import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.node.insn.*;
 import com.googlecode.d2j.reader.Op;
@@ -12,6 +11,7 @@ public class DvmFrame<V> {
     public V[] values;
     public V tmp;
 
+    @SuppressWarnings("unchecked")
     public DvmFrame(int totalRegister) {
         values = (V[]) new Object[totalRegister];
     }

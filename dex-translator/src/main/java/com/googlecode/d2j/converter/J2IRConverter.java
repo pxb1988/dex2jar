@@ -66,6 +66,7 @@ public class J2IRConverter {
         return target;
     }
 
+    @SuppressWarnings("unchecked")
     IrMethod convert0(String owner, MethodNode methodNode) throws AnalyzerException {
         this.methodNode = methodNode;
         target = populate(owner, methodNode);

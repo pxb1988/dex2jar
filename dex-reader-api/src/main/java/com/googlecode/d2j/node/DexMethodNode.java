@@ -32,7 +32,7 @@ public class DexMethodNode extends DexMethodVisitor {
     public List<DexAnnotationNode> anns;
     public DexCodeNode codeNode;
     public Method method;
-    public List<DexAnnotationNode> parameterAnns[];
+    public List<DexAnnotationNode>[] parameterAnns;
 
     public DexMethodNode(DexMethodVisitor mv, int access, Method method) {
         super(mv);
@@ -83,7 +83,7 @@ public class DexMethodNode extends DexMethodVisitor {
     @Override
     public DexAnnotationVisitor visitAnnotation(String name, Visibility visibility) {
         if (anns == null) {
-            anns = new ArrayList<DexAnnotationNode>(5);
+            anns = new ArrayList<>(5);
         }
         DexAnnotationNode annotation = new DexAnnotationNode(name, visibility);
         anns.add(annotation);
@@ -104,19 +104,15 @@ public class DexMethodNode extends DexMethodVisitor {
             parameterAnns = new List[method.getParameterTypes().length];
         }
 
-        return new DexAnnotationAble() {
-
-            @Override
-            public DexAnnotationVisitor visitAnnotation(String name, Visibility visibility) {
-                List<DexAnnotationNode> pas = parameterAnns[index];
-                if (pas == null) {
-                    pas = new ArrayList<DexAnnotationNode>(5);
-                    parameterAnns[index] = pas;
-                }
-                DexAnnotationNode annotation = new DexAnnotationNode(name, visibility);
-                pas.add(annotation);
-                return annotation;
+        return (name, visibility) -> {
+            List<DexAnnotationNode> pas = parameterAnns[index];
+            if (pas == null) {
+                pas = new ArrayList<>(5);
+                parameterAnns[index] = pas;
             }
+            DexAnnotationNode annotation = new DexAnnotationNode(name, visibility);
+            pas.add(annotation);
+            return annotation;
         };
     }
 

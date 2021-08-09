@@ -59,6 +59,7 @@ public class Dex2IRConverter {
         return i;
     }
 
+    @SuppressWarnings("unchecked")
     public IrMethod convert(boolean isStatic, Method method, DexCodeNode dexCodeNode) {
         this.dexCodeNode = dexCodeNode;
         IrMethod irMethod = new IrMethod();
