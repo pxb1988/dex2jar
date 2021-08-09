@@ -1,14 +1,14 @@
 description = 'Dex Translator'
 
 dependencies {
-  compile project(':dex-reader')
-  compile project(':dex-ir')
-  compile project(':d2j-base-cmd')
-  compile group: 'org.ow2.asm', name: 'asm', version: '9.2'
-  compile group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
-  compile group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
-  compile group: 'org.ow2.asm', name: 'asm-commons', version: '9.2'
-  testCompile project(':d2j-smali')
-  testCompile project(':d2j-jasmin')
+    implementation project(':dex-reader-api')
+    implementation project(':dex-reader')
+    implementation project(':dex-ir')
+    implementation project(':d2j-base-cmd')
+    implementation group: 'org.ow2.asm', name: 'asm', version: '9.2'
+    implementation group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
+    implementation group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
+    implementation group: 'org.ow2.asm', name: 'asm-commons', version: '9.2'
+    testImplementation project(':d2j-smali')
+    testImplementation project(':d2j-jasmin')
 }
-

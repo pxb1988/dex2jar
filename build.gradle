@@ -1,90 +1,90 @@
-allprojects  {
-  apply plugin: 'maven'
-  apply plugin: 'idea'
-  apply plugin: 'eclipse'
-  group = 'com.googlecode.d2j'
-  version = '2.1-SNAPSHOT'
+allprojects {
+    apply plugin: 'maven-publish'
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    group = 'com.googlecode.d2j'
+    version = '2.1-SNAPSHOT'
 }
 
-defaultTasks('clean','distZip')
+defaultTasks('clean', 'distZip')
 
 subprojects {
-  apply plugin: 'java'
-  apply plugin: 'maven'
-  sourceCompatibility = 1.7
-  targetCompatibility = 1.7
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
-  task packageSources(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-  }
-  artifacts.archives packageSources
-  repositories {
-    mavenCentral()
-  }
+    task packageSources(type: Jar) {
+        archiveClassifier.set('sources')
+        from sourceSets.main.allSource
+    }
+    artifacts.archives packageSources
+    repositories {
+        mavenCentral()
+    }
 
 // == support provided scope
-  configurations {
-    provided
-  }
-  sourceSets {
-      main { compileClasspath += configurations.provided }
-      test {
-        compileClasspath += configurations.provided
-      }
-  }
+    configurations {
+        provided
+    }
+    sourceSets {
+        main { compileClasspath += configurations.provided }
+        test {
+            compileClasspath += configurations.provided
+        }
+    }
 // == end
 
-  [compileJava, compileTestJava]*.options.collect {options ->options.encoding = 'UTF-8'}
+    [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
 
-  dependencies {
-    testCompile group: 'junit', name: 'junit', version:'4.11'
-    compile fileTree(dir: 'libs', include: '*.jar')
-  }
+    dependencies {
+        testImplementation group: 'junit', name: 'junit', version: '4.11'
+        implementation fileTree(dir: 'libs', include: '*.jar')
+    }
 
-  jar {
-    manifest {
-      attributes("Implementation-Title": project.name,
-                 "Implementation-Version": project.version,
-                 "Build-Time": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                 "Revision":"${getRevision()}",
-                 "Build-Number": System.env.BUILD_NUMBER?System.env.BUILD_NUMBER:"-1",
-      )
+    jar {
+        manifest {
+            attributes("Implementation-Title": project.name,
+                    "Implementation-Version": project.version,
+                    "Build-Time": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                    "Revision": "${getRevision()}",
+                    "Build-Number": System.env.BUILD_NUMBER ? System.env.BUILD_NUMBER : "-1",
+            )
+        }
+        from(project.parent.projectDir) {
+            include 'NOTICE.txt'
+            include 'LICENSE.txt'
+            into('META-INF')
+        }
     }
-    from (project.parent.projectDir)  {
-      include 'NOTICE.txt'
-      include 'LICENSE.txt'
-      into('META-INF')
-    }
-  }
 }
 
-def getRevision() {
-  if (System.env.BUILD_REVISION) {
-    return System.env.BUILD_REVISION
-  }
-  if (System.env.GIT_REVISION) {
-    return System.env.GIT_REVISION
-  }
-  if (System.env.MERCURIAL_REVISION) {
-    System.env.MERCURIAL_REVISION
-  }
-
-  def ver = null;
-  try {
-    ver = 'git rev-parse --short HEAD'.execute().text.trim()
-  } catch (e) {
-    // ignore
-  }
-  if (!ver) {
-    try {
-      ver = 'hg id -i -b -t'.execute().text.split(' ')[0];
-    } catch (e) {
-      // ignore
+static def getRevision() {
+    if (System.env.BUILD_REVISION) {
+        return System.env.BUILD_REVISION
     }
-  }
-  if (!ver) {
-    ver = "HEAD"
-  }
-  return ver
+    if (System.env.GIT_REVISION) {
+        return System.env.GIT_REVISION
+    }
+    if (System.env.MERCURIAL_REVISION) {
+        System.env.MERCURIAL_REVISION
+    }
+
+    def ver = null
+    try {
+        ver = 'git rev-parse --short HEAD'.execute().text.trim()
+    } catch (ignored) {
+        // ignore
+    }
+    if (!ver) {
+        try {
+            ver = 'hg id -i -b -t'.execute().text.split(' ')[0]
+        } catch (ignored) {
+            // ignore
+        }
+    }
+    if (!ver) {
+        ver = "HEAD"
+    }
+    return ver
 }

@@ -1,8 +1,6 @@
 description = 'Dex Reader'
 
 dependencies {
-    compile project(':dex-reader-api')
-    testCompile (group: 'org.apache.commons', name: 'commons-compress', version:'1.21')
+    implementation project(':dex-reader-api')
+    testImplementation(group: 'org.apache.commons', name: 'commons-compress', version: '1.21')
 }
-
-

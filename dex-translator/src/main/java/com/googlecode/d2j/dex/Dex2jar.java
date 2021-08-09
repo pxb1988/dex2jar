@@ -79,7 +79,7 @@ public class Dex2jar {
         readerConfig |= DexFileReader.SKIP_DEBUG;
     }
 
-    private void doTranslate(final Path dist) throws IOException {
+    private void doTranslate(final Path dist) {
 
         DexFileNode fileNode = new DexFileNode();
         try {
@@ -102,7 +102,7 @@ public class Dex2jar {
                             // FIXME handle 'java.lang.RuntimeException: Method code too large!'
                             data = cw.toByteArray();
                         } catch (Exception ex) {
-                            System.err.println(String.format("ASM fail to generate .class file: %s", className));
+                            System.err.printf("ASM fail to generate .class file: %s%n", className);
                             exceptionHandler.handleFileException(ex);
                             return;
                         }

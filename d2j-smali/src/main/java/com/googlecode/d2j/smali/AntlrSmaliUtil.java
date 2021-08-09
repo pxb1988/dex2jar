@@ -87,7 +87,7 @@ public class AntlrSmaliUtil {
     private static class M {
         int locals;
         String[] paramNames;
-        int map[];
+        int[] map;
         public int total;
 
         void setNameByIdx(int index, String name) {
@@ -116,7 +116,7 @@ public class AntlrSmaliUtil {
         M(Method method, int totals, int ins, boolean isStatic) {
             this.locals = totals - ins;
             this.total = totals;
-            String paramTypes[] = method.getParameterTypes();
+            String[] paramTypes = method.getParameterTypes();
             paramNames = new String[paramTypes.length];
             map = new int[ins];
             int start = 0;
@@ -242,8 +242,8 @@ public class AntlrSmaliUtil {
             public Object visitFspareswitch(SmaliParser.FspareswitchContext ctx) {
                 List<TerminalNode> ints = ctx.INT();
                 List<TerminalNode> ts = ctx.LABEL();
-                int cases[] = new int[ts.size()];
-                DexLabel labels[] = new DexLabel[ts.size()];
+                int[] cases = new int[ts.size()];
+                DexLabel[] labels = new DexLabel[ts.size()];
                 for (int i = 0; i < ts.size(); i++) {
                     cases[i] = parseInt(ints.get(i).getSymbol().getText());
                     labels[i] = getLabel(ts.get(i).getSymbol().getText());
@@ -404,7 +404,7 @@ public class AntlrSmaliUtil {
                 Op op = getOp(ctx.op);
 
                 List<TerminalNode> ts = ctx.REGISTER();
-                int rs[] = new int[ts.size()];
+                int[] rs = new int[ts.size()];
                 for (int i = 0; i < ts.size(); i++) {
                     rs[i] = m.pareReg(ts.get(i).getSymbol().getText());
                 }
@@ -417,7 +417,7 @@ public class AntlrSmaliUtil {
                 Op op = getOp(ctx.op);
 
                 List<TerminalNode> ts = ctx.REGISTER();
-                int rs[] = new int[ts.size()];
+                int[] rs = new int[ts.size()];
                 for (int i = 0; i < ts.size(); i++) {
                     rs[i] = m.pareReg(ts.get(i).getSymbol().getText());
                 }
@@ -431,7 +431,7 @@ public class AntlrSmaliUtil {
                     int start = m.pareReg(ctx.rstart.getText());
                     int end = m.pareReg(ctx.rend.getText());
                     int size = end - start + 1;
-                    int rs[] = new int[size];
+                    int[] rs = new int[size];
                     for (int i = 0; i < size; i++) {
                         rs[i] = start + i;
                     }
@@ -448,7 +448,7 @@ public class AntlrSmaliUtil {
                     int start = m.pareReg(ctx.rstart.getText());
                     int end = m.pareReg(ctx.rend.getText());
                     int size = end - start + 1;
-                    int rs[] = new int[size];
+                    int[] rs = new int[size];
                     for (int i = 0; i < size; i++) {
                         rs[i] = start + i;
                     }
@@ -487,7 +487,7 @@ public class AntlrSmaliUtil {
             public Object visitFpackageswitch(SmaliParser.FpackageswitchContext ctx) {
                 int start = parseInt(ctx.start.getText());
                 List<TerminalNode> ts = ctx.LABEL();
-                DexLabel labels[] = new DexLabel[ts.size()];
+                DexLabel[] labels = new DexLabel[ts.size()];
                 for (int i = 0; i < ts.size(); i++) {
                     labels[i] = getLabel(ts.get(i).getSymbol().getText());
                 }

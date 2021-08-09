@@ -26,7 +26,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -34,9 +33,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 @BaseCmd.Syntax(cmd = "d2j-jasmin2jar", syntax = "[options] <jar>", desc = "Assemble .j files to .class file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Jasmin")
 public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
-    private static int versions[] = { 0, V1_1, V1_2, V1_3, V1_4, V1_5, V1_6, V1_7, 52 // V1_8 ?
-            , 53 // V1_9 ?
-    };
+    private static final int[] versions = { 0, V1_1, V1_2, V1_3, V1_4, V1_5, V1_6, V1_7, V1_8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18 };
     @Opt(opt = "g", longOpt = "autogenerate-linenumbers", hasArg = false, description = "autogenerate-linenumbers")
     boolean autogenLines = false;
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
@@ -52,8 +49,11 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
     @Opt( longOpt = "no-compute-max", description = "", hasArg = false)
     private boolean noComputeMax;
 
-    @Opt(opt = "cv", longOpt = "class-version", description = "default .class version, [1~9], default 6 for JAVA6")
-    private int classVersion = 6;
+    @Opt(opt = "cv", longOpt = "class-version", description = "default .class version, [1~9], default 8 for JAVA8")
+    private int classVersion = 8;
+
+    public Jasmin2JarCmd() {
+    }
 
     public static void main(String... args) throws ClassNotFoundException, SecurityException {
         new Jasmin2JarCmd().doMain(args);
@@ -65,8 +65,8 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
             usage();
             return;
         }
-        if (classVersion < 1 || classVersion > 9) {
-            throw new HelpException("-cv,--class-version out of range, 1-9 is supported.");
+        if (classVersion < 1 || classVersion > 18) {
+            throw new HelpException("-cv,--class-version out of range, 1-18 is supported.");
         }
 
         Path jar = new File(remainingArgs[0]).toPath().toAbsolutePath();
@@ -97,7 +97,7 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
         }
     }
 
-    private void assemble0(Path in, Path output) throws IOException, URISyntaxException {
+    private void assemble0(Path in, Path output) throws IOException {
         if (Files.isDirectory(in)) { // a dir
             travelFileTree(in, output);
         } else if (in.toString().endsWith(".j")) {

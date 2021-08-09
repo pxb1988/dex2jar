@@ -1,16 +1,17 @@
 apply plugin: 'antlr'
 
 dependencies {
-  compile 'org.antlr:antlr4-runtime:4.9.2'
-  compile project(':dex-reader')
-  antlr 'org.antlr:antlr4:4.9.2'
-  compile project(':d2j-base-cmd')
-  compile project(':dex-writer')
-  testCompile 'org.smali:baksmali:2.5.2'
+    implementation 'org.antlr:antlr4-runtime:4.9.2'
+    implementation project(':dex-reader')
+    implementation project(':dex-reader-api')
+    antlr 'org.antlr:antlr4:4.9.2'
+    implementation project(':d2j-base-cmd')
+    implementation project(':dex-writer')
+    testImplementation 'org.smali:baksmali:2.5.2'
 }
 
 generateGrammarSource {
-    arguments += ['-no-listener', '-visitor','-package','com.googlecode.d2j.smali.antlr4']
+    arguments += ['-no-listener', '-visitor', '-package', 'com.googlecode.d2j.smali.antlr4']
 }
 
 sourceSets {

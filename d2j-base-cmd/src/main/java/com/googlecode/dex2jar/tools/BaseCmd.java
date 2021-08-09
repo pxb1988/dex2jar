@@ -25,7 +25,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -103,7 +102,6 @@ public abstract class BaseCmd {
         throw new IOException("cant find zipfs support");
     }
 
-    @SuppressWarnings("serial")
     protected static class HelpException extends RuntimeException {
 
         public HelpException() {
@@ -118,7 +116,7 @@ public abstract class BaseCmd {
 
     @Retention(value = RetentionPolicy.RUNTIME)
     @Target(value = { ElementType.FIELD })
-    static public @interface Opt {
+    public @interface Opt {
         String argName() default "";
 
         String description() default "";
@@ -188,7 +186,7 @@ public abstract class BaseCmd {
 
     @Retention(value = RetentionPolicy.RUNTIME)
     @Target(value = { ElementType.TYPE })
-    static public @interface Syntax {
+    public @interface Syntax {
 
         String cmd();
 
@@ -210,8 +208,8 @@ public abstract class BaseCmd {
     @Opt(opt = "h", longOpt = "help", hasArg = false, description = "Print this help message")
     private boolean printHelp = false;
 
-    protected String remainingArgs[];
-    protected String orginalArgs[];
+    protected String[] remainingArgs;
+    protected String[] originalArgs;
 
     public BaseCmd() {
     }
@@ -233,8 +231,8 @@ public abstract class BaseCmd {
         this.desc = header;
     }
 
-    private Set<Option> collectRequriedOptions(Map<String, Option> optMap) {
-        Set<Option> options = new HashSet<Option>();
+    private Set<Option> collectRequiredOptions(Map<String, Option> optMap) {
+        Set<Option> options = new HashSet<>();
         for (Map.Entry<String, Option> e : optMap.entrySet()) {
             Option option = e.getValue();
             if (option.required) {
@@ -273,13 +271,11 @@ public abstract class BaseCmd {
         try {
             type.asSubclass(Enum.class);
             return Enum.valueOf(type, value);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
 
         throw new RuntimeException("can't convert [" + value + "] to type " + type);
     }
-
-    ;
 
     protected abstract void doCommandLine() throws Exception;
 
@@ -416,7 +412,7 @@ public abstract class BaseCmd {
             return;
         }
         Class<?> clz = Class.forName(args[0]);
-        String newArgs[] = new String[args.length - 1];
+        String[] newArgs = new String[args.length - 1];
         System.arraycopy(args, 1, newArgs, 0, newArgs.length);
         if (BaseCmd.class.isAssignableFrom(clz)) {
             BaseCmd baseCmd = (BaseCmd) clz.newInstance();
@@ -429,15 +425,15 @@ public abstract class BaseCmd {
     }
     
     protected void parseSetArgs(String... args) throws IllegalArgumentException, IllegalAccessException {
-        this.orginalArgs = args;
-        List<String> remainsOptions = new ArrayList<String>();
-        Set<Option> requiredOpts = collectRequriedOptions(optMap);
+        this.originalArgs = args;
+        List<String> remainsOptions = new ArrayList<>();
+        Set<Option> requiredOpts = collectRequiredOptions(optMap);
         Option needArgOpt = null;
         for (String s : args) {
             if (needArgOpt != null) {
                 needArgOpt.field.set(this, convert(s, needArgOpt.field.getType()));
                 needArgOpt = null;
-            } else if (s.startsWith("-")) {// its a short or long option
+            } else if (s.startsWith("-")) {// it's a short or long option
                 Option opt = optMap.get(s);
                 requiredOpts.remove(opt);
                 if (opt == null) {
@@ -459,7 +455,7 @@ public abstract class BaseCmd {
             System.err.println("ERROR: Option " + needArgOpt.getOptAndLongOpt() + " need an argument value");
             throw new HelpException();
         }
-        this.remainingArgs = remainsOptions.toArray(new String[remainsOptions.size()]);
+        this.remainingArgs = remainsOptions.toArray(new String[0]);
         if (this.printHelp) {
             throw new HelpException();
         }
@@ -476,7 +472,7 @@ public abstract class BaseCmd {
                 sb.append(option.getOptAndLongOpt());
             }
             sb.append(" is required");
-            System.err.println(sb.toString());
+            System.err.println(sb);
             throw new HelpException();
         }
 
@@ -496,7 +492,7 @@ public abstract class BaseCmd {
         // .-a,--aa.<arg>...desc1
         // .................desc2
         // .-b,--bb
-        TreeSet<Option> options = new TreeSet<Option>(this.optMap.values());
+        TreeSet<Option> options = new TreeSet<>(this.optMap.values());
         int palength = -1;
         for (Option option : options) {
             int pa = 4 + option.getOptAndLongOpt().length();
@@ -540,7 +536,7 @@ public abstract class BaseCmd {
                         nextStart = desc.length();
                         sb.setLength(0);
                     } else {
-                        sb.append(desc.substring(nextStart, nextStart + pblength));
+                        sb.append(desc, nextStart, nextStart + pblength);
                         out.println(sb);
                         nextStart += pblength;
                         sb.setLength(0);

@@ -92,11 +92,11 @@ public class Jar2Dex extends BaseCmd {
             Class<?> c = Class.forName("com.android.dx.command.Main");
             Method m = c.getMethod("main", String[].class);
 
-            List<String> ps = new ArrayList<String>();
-            ps.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + output.toAbsolutePath().toString(), realJar
+            List<String> ps = new ArrayList<>(Arrays.asList("--dex", "--no-strict",
+                    "--output=" + output.toAbsolutePath(), realJar
                     .toAbsolutePath().toString()));
             System.out.println("call com.android.dx.command.Main.main" + ps);
-            m.invoke(null, new Object[] { ps.toArray(new String[ps.size()]) });
+            m.invoke(null, new Object[] { ps.toArray(new String[0]) });
         } finally {
             if (tmp != null) {
                 Files.deleteIfExists(tmp);

@@ -21,7 +21,7 @@ package com.googlecode.d2j;
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
-public abstract interface DexConstants {
+public interface DexConstants {
 
     int ACC_PUBLIC = 0x0001; // class, field, method
     int ACC_PRIVATE = 0x0002; // class, field, method
@@ -44,6 +44,10 @@ public abstract interface DexConstants {
     int ACC_CONSTRUCTOR = 0x10000;// constructor method (class or instance initializer)
     int ACC_DECLARED_SYNCHRONIZED = 0x20000;
 
+    int ACC_VISIBILITY_FLAGS = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
+    int ACC_DEX_HIDDEN_BIT = 0x00000020; // field, method (not native)
+    int ACC_DEX_HIDDEN_BIT_NATIVE = 0x00000200; // method (native)
+
     String ANNOTATION_DEFAULT_TYPE = "Ldalvik/annotation/AnnotationDefault;";
     String ANNOTATION_SIGNATURE_TYPE = "Ldalvik/annotation/Signature;";
     String ANNOTATION_THROWS_TYPE = "Ldalvik/annotation/Throws;";
@@ -56,4 +60,5 @@ public abstract interface DexConstants {
     int DEX_036 = 0x00303336;
     int DEX_037 = 0x00303337;
     int DEX_038 = 0x00303338;
+    int DEX_039 = 0x00303339;
 }

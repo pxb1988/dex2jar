@@ -75,7 +75,7 @@ public class RemoveLocalFromSSA extends StatedTransformer {
                         }
                     }
                     set.remove(phi.getOp1());
-                    phi.getOp2().setOps(set.toArray(new Value[set.size()]));
+                    phi.getOp2().setOps(set.toArray(new Value[0]));
                     set.clear();
                 }
             }
@@ -171,12 +171,7 @@ public class RemoveLocalFromSSA extends StatedTransformer {
             }
             for (Iterator<LabelStmt> itLabel = phiLabels.iterator(); itLabel.hasNext(); ) {
                 LabelStmt labelStmt = itLabel.next();
-                for (Iterator<AssignStmt> it = labelStmt.phis.iterator(); it.hasNext(); ) {
-                    AssignStmt phi = it.next();
-                    if (toDeletePhiAssign.contains(phi.getOp1())) {
-                        it.remove();
-                    }
-                }
+                labelStmt.phis.removeIf(phi -> toDeletePhiAssign.contains(phi.getOp1()));
                 if (labelStmt.phis.size() == 0) {
                     labelStmt.phis = null;
                     itLabel.remove();
@@ -208,12 +203,7 @@ public class RemoveLocalFromSSA extends StatedTransformer {
 
     static <T> void fixReplace(Map<Local, T> toReplace) {
         List<Map.Entry<Local, T>> set = new ArrayList<>(toReplace.entrySet());
-        Collections.sort(set, new Comparator<Map.Entry<Local, T>>() {
-            @Override
-            public int compare(Map.Entry<Local, T> localTEntry, Map.Entry<Local, T> t1) {
-                return Integer.compare(localTEntry.getKey()._ls_index, t1.getKey()._ls_index);
-            }
-        });
+        set.sort(Comparator.comparingInt(localTEntry -> localTEntry.getKey()._ls_index));
 
         boolean changed = true;
         while (changed) {

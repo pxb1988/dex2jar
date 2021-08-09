@@ -1,14 +1,14 @@
 apply plugin: 'antlr'
 
 dependencies {
-  compile(group: 'org.antlr', name: 'antlr-runtime', version:'3.5.2') {
+    implementation(group: 'org.antlr', name: 'antlr-runtime', version: '3.5.2') {
         exclude(module: 'stringtemplate')
-  }
-  compile group: 'org.ow2.asm', name: 'asm', version: '9.2'
-  compile group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
-  compile group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
-  compile project(':d2j-base-cmd')
-  antlr "org.antlr:antlr:3.5.2"
+    }
+    implementation group: 'org.ow2.asm', name: 'asm', version: '9.2'
+    implementation group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
+    implementation group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
+    implementation project(':d2j-base-cmd')
+    antlr "org.antlr:antlr:3.5.2"
 }
 
 sourceSets.main.antlr.srcDirs = ['src/main/antlr3']
