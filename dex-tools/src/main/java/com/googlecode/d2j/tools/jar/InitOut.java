@@ -1,6 +1,7 @@
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
+import com.googlecode.dex2jar.tools.Constants;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -130,22 +131,22 @@ public class InitOut {
                 }
                 sb.append(short4LongName(member.name));
                 if (x > 0) {
-                    memberMap.add("m " + owner + "." + member.name + "[" + member.desc + "]" + "=" + sb.toString());
+                    memberMap.add("m " + owner + "." + member.name + "[" + member.desc + "]" + "=" + sb);
                 } else {
-                    memberMap.add("m " + owner + "." + member.name + "=" + sb.toString());
+                    memberMap.add("m " + owner + "." + member.name + "=" + sb);
                 }
             }
         }
     }
 
     private List<ClassInfo> collect(Path file) throws IOException {
-        final List<ClassInfo> clzList = new ArrayList<ClassInfo>();
-        final ClassVisitor collectVisitor = new ClassVisitor(ASM4) {
+        final List<ClassInfo> clzList = new ArrayList<>();
+        final ClassVisitor collectVisitor = new ClassVisitor(Constants.ASM_VERSION) {
             private static final String ASSERTION_DISABLED_FIELD_NAME = "$assertionsDisabled";
             private static final String ENUM_VALUES_FIELD_NAME = "ENUM$VALUES";
             ClassInfo clz;
             boolean isEnum = false;
-            Map<String, String> enumFieldMap = new HashMap<String, String>();
+            Map<String, String> enumFieldMap = new HashMap<>();
 
             @Override
             public void visitSource(String source, String debug) {
@@ -159,7 +160,7 @@ public class InitOut {
                 clz.addMethod(access, name, desc);
                 if (initEnumNames && isEnum && name.equals("<clinit>")) {
                     final String thisDesc = "L" + clz.name + ";";
-                    return new MethodNode(ASM4, access, name, desc, signature, exceptions) {
+                    return new MethodNode(Constants.ASM_VERSION, access, name, desc, signature, exceptions) {
                         @Override
                         public void visitEnd() {
                             if (this.instructions != null) {
@@ -260,13 +261,10 @@ public class InitOut {
         };
 
       try(FileSystem fs = BaseCmd.openZip(file)) {
-          BaseCmd.walkJarOrDir(fs.getPath("/"), new BaseCmd.FileVisitorX() {
-              @Override
-              public void visitFile(Path file, String relative) throws IOException {
-                  if (relative.endsWith(".class")) {
-                      byte[] data = Files.readAllBytes(file);
-                      new ClassReader(data).accept(collectVisitor, ClassReader.EXPAND_FRAMES);
-                  }
+          BaseCmd.walkJarOrDir(fs.getPath("/"), (file1, relative) -> {
+              if (relative.endsWith(".class")) {
+                  byte[] data = Files.readAllBytes(file1);
+                  new ClassReader(data).accept(collectVisitor, ClassReader.EXPAND_FRAMES);
               }
           });
       }
@@ -314,7 +312,7 @@ public class InitOut {
     public void to(Path config) throws IOException {
         List<ClassInfo> classInfoList = collect(from);
         transform(classInfoList);
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         list.addAll(pkgMap);
         list.addAll(clzMap);
         list.addAll(memberMap);
@@ -357,9 +355,9 @@ public class InitOut {
         MemberInfoComparator comparator = new MemberInfoComparator();
         for (ClassInfo ci : classInfoList) {
             doClass0(ci.name);
-            Collections.sort(ci.fields, comparator);
+            ci.fields.sort(comparator);
             transformerMember(ci.name, ci.fields);
-            Collections.sort(ci.methods, comparator);
+            ci.methods.sort(comparator);
             transformerMember(ci.name, ci.methods);
         }
 
@@ -368,8 +366,8 @@ public class InitOut {
     static private class ClassInfo {
 
         final public String name;
-        public List<MemberInfo> fields = new ArrayList<MemberInfo>(5);
-        public List<MemberInfo> methods = new ArrayList<MemberInfo>(5);
+        public List<MemberInfo> fields = new ArrayList<>(5);
+        public List<MemberInfo> methods = new ArrayList<>(5);
         public String suggestName;
 
         public ClassInfo(String name) {

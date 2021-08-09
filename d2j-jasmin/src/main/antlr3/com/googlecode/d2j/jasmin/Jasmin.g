@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.math.BigInteger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
+import static com.googlecode.dex2jar.tools.Constants.*;
 import static org.objectweb.asm.Opcodes.*;
 }
 @lexer::header {
@@ -25,7 +26,7 @@ package com.googlecode.d2j.jasmin;
     public boolean rebuildLine=false;
     private java.util.Map<String, Label> labelMap = new java.util.HashMap<>();
     private void reset0() {
-        cn = new ClassNode(ASM4);
+        cn = new ClassNode(ASM_VERSION);
         fn = null;
         mn = null;
     }
@@ -1103,7 +1104,7 @@ sMethod	@init{
         cn.methods=new ArrayList<>();
     }
     currentAv=mnv;
-    mn=new MethodNode(ASM4);
+    mn=new MethodNode(ASM_VERSION);
     cn.methods.add(mn);
     labelMap.clear();
     if(mn.exceptions==null){

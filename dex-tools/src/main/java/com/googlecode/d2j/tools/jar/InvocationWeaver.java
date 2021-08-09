@@ -17,6 +17,7 @@
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
+import com.googlecode.dex2jar.tools.Constants;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
@@ -360,7 +361,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                     src.owner = t1.owner;
                     src.name = name;
                     src.desc = desc;
-                    return new MethodNode(Opcodes.ASM4, access, name, desc, signature, exceptions) {
+                    return new MethodNode(Constants.ASM_VERSION, access, name, desc, signature, exceptions) {
                         @Override
                         public void visitEnd() {
 
@@ -417,7 +418,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             }
             class ReplaceMethodVisitor extends MethodVisitor {
                 public ReplaceMethodVisitor(MethodVisitor mv) {
-                    super(Opcodes.ASM4, mv);
+                    super(Constants.ASM_VERSION, mv);
                 }
 
                 @Override

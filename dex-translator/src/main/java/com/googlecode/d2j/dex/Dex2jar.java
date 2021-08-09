@@ -16,6 +16,7 @@
  */
 package com.googlecode.d2j.dex;
 
+import com.googlecode.dex2jar.tools.Constants;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,7 +93,7 @@ public class Dex2jar {
             public ClassVisitor create(final String name) {
                 final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
-                return new ClassVisitor(Opcodes.ASM5, rca) {
+                return new ClassVisitor(Constants.ASM_VERSION, rca) {
                     @Override
                     public void visitEnd() {
                         super.visitEnd();

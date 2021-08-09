@@ -73,7 +73,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
                     System.err.println("class " + classInternalName + " is already exists, skipping.");
                     return null;
                 }
-                return new ClassVisitor(Opcodes.ASM4, new ClassWriter(ClassWriter.COMPUTE_MAXS)) {
+                return new ClassVisitor(Constants.ASM_VERSION, new ClassWriter(ClassWriter.COMPUTE_MAXS)) {
                     @Override
                     public void visitEnd() {
                         super.visitEnd();

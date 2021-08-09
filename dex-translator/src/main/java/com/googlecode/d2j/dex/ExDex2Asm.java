@@ -16,6 +16,7 @@
  */
 package com.googlecode.d2j.dex;
 
+import com.googlecode.dex2jar.tools.Constants;
 import org.objectweb.asm.AsmBridge;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -34,7 +35,7 @@ public class ExDex2Asm extends Dex2Asm {
     @Override
     public void convertCode(DexMethodNode methodNode, MethodVisitor mv) {
         MethodVisitor mw = AsmBridge.searchMethodWriter(mv);
-        MethodNode mn = new MethodNode(Opcodes.ASM5, methodNode.access, methodNode.method.getName(),
+        MethodNode mn = new MethodNode(Constants.ASM_VERSION, methodNode.access, methodNode.method.getName(),
                 methodNode.method.getDesc(), null, null);
         try {
             super.convertCode(methodNode, mn);

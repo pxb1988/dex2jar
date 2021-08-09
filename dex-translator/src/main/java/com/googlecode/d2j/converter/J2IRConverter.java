@@ -5,6 +5,7 @@ import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.tools.Constants;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -318,7 +319,7 @@ public class J2IRConverter {
     }
 
     private Interpreter<JvmValue> buildInterpreter() {
-        return new Interpreter<JvmValue>(Opcodes.ASM4) {
+        return new Interpreter<JvmValue>(Constants.ASM_VERSION) {
             @Override
             public JvmValue newValue(Type type) {
                 return null;

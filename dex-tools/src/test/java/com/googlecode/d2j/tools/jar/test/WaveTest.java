@@ -4,6 +4,7 @@ import com.googlecode.d2j.asm.LdcOptimizeAdapter;
 import com.googlecode.d2j.jasmin.JasminDumper;
 import com.googlecode.d2j.jasmin.Jasmins;
 import com.googlecode.d2j.tools.jar.InvocationWeaver;
+import com.googlecode.dex2jar.tools.Constants;
 import org.antlr.runtime.RecognitionException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -84,7 +85,7 @@ public class WaveTest {
         expected.accept(LdcOptimizeAdapter.wrap(cw));
 
         ClassReader cr = new ClassReader(cw.toByteArray());
-        ClassNode n = new ClassNode(Opcodes.ASM4);
+        ClassNode n = new ClassNode(Constants.ASM_VERSION);
         cr.accept(n, ClassReader.EXPAND_FRAMES | ClassReader.SKIP_FRAMES);
 
         StringWriter stringWriter = new StringWriter();

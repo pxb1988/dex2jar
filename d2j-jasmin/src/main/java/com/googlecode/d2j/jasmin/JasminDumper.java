@@ -29,6 +29,7 @@
  */
 package com.googlecode.d2j.jasmin;
 
+import com.googlecode.dex2jar.tools.Constants;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -307,7 +308,7 @@ public class JasminDumper implements Opcodes {
                            pw.print("    ");
                        }
                     }
-                    in.accept(new MethodVisitor(ASM4) {
+                    in.accept(new MethodVisitor(Constants.ASM_VERSION) {
 
                         @Override
                         public void visitInsn(int opcode) {

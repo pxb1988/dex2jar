@@ -15,6 +15,7 @@
  */
 package com.googlecode.d2j.asm;
 
+import com.googlecode.dex2jar.tools.Constants;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -30,7 +31,7 @@ public class LdcOptimizeAdapter extends MethodVisitor implements Opcodes {
      * @param mv
      */
     public LdcOptimizeAdapter(MethodVisitor mv) {
-        super(Opcodes.ASM4, mv);
+        super(Constants.ASM_VERSION, mv);
     }
 
     /*
@@ -120,7 +121,7 @@ public class LdcOptimizeAdapter extends MethodVisitor implements Opcodes {
     }
 
     public static ClassVisitor wrap(ClassVisitor cv) {
-        return cv == null ? null : new ClassVisitor(Opcodes.ASM4, cv) {
+        return cv == null ? null : new ClassVisitor(Constants.ASM_VERSION, cv) {
             @Override
             public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
                 return wrap(super.visitMethod(access, name, desc, signature, exceptions));
