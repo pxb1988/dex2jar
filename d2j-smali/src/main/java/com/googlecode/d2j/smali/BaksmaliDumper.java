@@ -440,6 +440,7 @@ public class BaksmaliDumper implements DexConstants {
         buff.append(".method ");
         Method method = m.method;
         appendAccess(m.access, buff);
+        int register = (m.access & ACC_STATIC) != 0 ? 0 : 1;
         buff.append(escapeId(method.getName())).append(escapeMethodDesc(method));
         out.s(buff.toString());
         out.push();
@@ -470,18 +471,22 @@ public class BaksmaliDumper implements DexConstants {
             String type = method.getParameterTypes()[i];
             String debugName = parameterNames == null ? null : i < parameterNames.size() ? parameterNames.get(i) : null;
             if (debugName != null) {
-                out.s(".parameter \"" + escapeId(debugName) + "\" # " + type);
+                out.s(".param p" + register++ + ", \"" + escapeId(debugName) + "\" # " + type);
             } else {
-                out.s(".parameter # " + type);
+                out.s(".param p" + register++ + " # " + type);
             }
+
+            if (isWideType(type)) {
+                register++;
+            }
+
             List<DexAnnotationNode> ps = m.parameterAnns == null ? null : m.parameterAnns[i];
-            if (ps != null && ps.size() != 0) {
+            if (ps != null && !ps.isEmpty()) {
                 out.push();
                 dumpAnns(ps, out);
                 out.pop();
-                out.s(".end parameter");
+                out.s(".end param");
             }
-            // FIXME support '.param' REGISTER, STRING
         }
 
         if (m.codeNode != null) {
@@ -490,6 +495,13 @@ public class BaksmaliDumper implements DexConstants {
 
         out.pop();
         out.s(".end method");
+    }
+
+    private static boolean isWideType(String type) {
+        if (type == null || type.isEmpty())
+            return false;
+        char c = type.charAt(0);
+        return c == 'J' || c == 'D';
     }
 
     public void baksmaliCode(DexMethodNode methodNode, DexCodeNode codeNode, Out out) {
