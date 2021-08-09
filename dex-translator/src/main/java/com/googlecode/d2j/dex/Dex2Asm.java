@@ -482,7 +482,7 @@ public class Dex2Asm {
         Object value = convertConstantValue(fieldNode.cst);
         final int FieldCleanFlag = ~DexConstants.ACC_DECLARED_SYNCHRONIZED;
         FieldVisitor fv = cv.visitField(fieldNode.access & FieldCleanFlag, fieldNode.field.getName(),
-                fieldNode.field.getType(), signature, value);
+                fieldNode.field.getType(), signature == null || !signature.contains(";") ? null : signature, value);
         if (fv == null) {
             return;
         }

@@ -334,23 +334,18 @@ public class TypeTransformer implements Transformer {
 
         public boolean addUses(String ele) {
             assert this.next == null;
-            TypeRef t = this;
-            if (t.uses != null) {
-                return t.uses.add(ele);
-            } else {
-                t.uses = new HashSet<>();
-                return t.uses.add(ele);
+            if (this.uses == null) {
+                this.uses = new HashSet<>();
             }
+            return this.uses.add(ele);
         }
 
         public boolean addAllUses(Set<String> uses) {
             assert this.next == null;
-            if (uses != null) {
-                return uses.addAll(uses);
-            } else {
-                uses = new HashSet<>();
-                return uses.addAll(uses);
+            if (this.uses == null) {
+                this.uses = new HashSet<>();
             }
+            return this.uses.addAll(uses);
         }
     }
 
@@ -634,7 +629,7 @@ public class TypeTransformer implements Transformer {
                         String elementTypeB = a.substring(bs);
                         if (as < bs) {
                             return buildArray(elementTypeB.charAt(0) == 'L' ? bs : bs - 1, "L");
-                        } else if (bs > as) {
+                        } else if (as > bs) {
                             return buildArray(elementTypeA.charAt(0) == 'L' ? as : as - 1, "L");
                         } else { // as==bs
                             if (elementTypeA.charAt(0) != 'L' || elementTypeB.charAt(0) != 'L') {
