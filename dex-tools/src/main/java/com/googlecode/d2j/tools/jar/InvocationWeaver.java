@@ -18,8 +18,8 @@ package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
 import org.objectweb.asm.*;
+import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -218,7 +218,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
     }
 
     public ClassVisitor wrapper(final ClassVisitor cv) {
-        return new RemappingClassAdapter(cv, remapper) {
+        return new ClassRemapper(cv, remapper) {
             Map<MtdInfo, MtdInfo> toCreate = new HashMap<MtdInfo, MtdInfo>();
             String clzName;
 

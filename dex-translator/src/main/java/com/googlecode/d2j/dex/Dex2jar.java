@@ -41,8 +41,6 @@ import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
-import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 
 public class Dex2jar {
     public static Dex2jar from(byte[] in) throws IOException {

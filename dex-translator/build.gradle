@@ -4,7 +4,10 @@ dependencies {
   compile project(':dex-reader')
   compile project(':dex-ir')
   compile project(':d2j-base-cmd')
-  compile 'org.ow2.asm:asm-debug-all:5.0.3'
+  compile group: 'org.ow2.asm', name: 'asm', version: '9.2'
+  compile group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
+  compile group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
+  compile group: 'org.ow2.asm', name: 'asm-commons', version: '9.2'
   testCompile project(':d2j-smali')
   testCompile project(':d2j-jasmin')
 }

@@ -202,10 +202,10 @@ public class JasminDumper implements Opcodes {
             pw.print(' ');
             pw.print(fn.desc);
             if (fn.value instanceof String) {
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 Printer.appendString(buf, (String) fn.value);
                 pw.print(" = ");
-                pw.print(buf.toString());
+                pw.print(buf);
             } else if (fn.value != null) {
                 pw.print(" = ");
                 print(fn.value);
@@ -627,9 +627,9 @@ public class JasminDumper implements Opcodes {
 
     protected void print(final Object cst) {
         if (cst instanceof String) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             Printer.appendString(buf, (String) cst);
-            pw.print(buf.toString());
+            pw.print(buf);
         } else if (cst instanceof Float) {
             Float f = (Float) cst;
             if (!f.isNaN() && !f.isInfinite()) {

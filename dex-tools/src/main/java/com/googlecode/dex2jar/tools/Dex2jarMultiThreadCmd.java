@@ -37,8 +37,6 @@ import com.googlecode.d2j.dex.ExDex2Asm;
 import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.reader.DexFileReader;
-import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 
 @BaseCmd.Syntax(cmd = "d2j-mt-dex2jar", syntax = "[options] <file0> [file1 ... fileN]", desc = "convert dex to jar")
 public class Dex2jarMultiThreadCmd extends BaseCmd {

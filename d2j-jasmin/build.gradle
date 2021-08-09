@@ -4,7 +4,9 @@ dependencies {
   compile(group: 'org.antlr', name: 'antlr-runtime', version:'3.5.2') {
         exclude(module: 'stringtemplate')
   }
-  compile "org.ow2.asm:asm-debug-all:5.0.3"
+  compile group: 'org.ow2.asm', name: 'asm', version: '9.2'
+  compile group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
+  compile group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
   compile project(':d2j-base-cmd')
   antlr "org.antlr:antlr:3.5.2"
 }

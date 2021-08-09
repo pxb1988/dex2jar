@@ -33,7 +33,7 @@ HEX_DIGIT : ('0'..'9'|'a'..'f'|'A'..'F') ;
 
 fragment
 ESC_SEQ
-    :   '\\' ('b'|'t'|'n'|'f'|'r'|'\''|'\"'|'\\')
+    :   '\\' ('b'|'t'|'n'|'f'|'r'|'\''|'"'|'\\')
     |   UNICODE_ESC
     |   OCTAL_ESC
     ;
@@ -58,7 +58,7 @@ fragment
 FRAGMENT_ARRAY_TYPE: ('[')+ (FRAGMENT_PRIMITIVE_TYPE|FRAGMENT_OBJECT_TYPE);
 
 fragment
-FRAGMENT_ID: (ESC_SEQ| ~('\\'|'\r'|'\n'|'\t'|' '|':'|'-'|'='|','|'{'|'}'|'('|')'|'+'|'\"'|'\''|'#'|'/'|'.'|';'))+;
+FRAGMENT_ID: (ESC_SEQ| ~('\\'|'\r'|'\n'|'\t'|' '|':'|'-'|'='|','|'{'|'}'|'('|')'|'+'|'"'|'\''|'#'|'/'|'.'|';'))+;
 fragment
 FRAGMENT_METHOD_PROTO: '(' (FRAGMENT_OBJECT_TYPE|FRAGMENT_ARRAY_TYPE|FRAGMENT_PRIMITIVE_TYPE)* ')' ('V' | FRAGMENT_OBJECT_TYPE|FRAGMENT_ARRAY_TYPE|FRAGMENT_PRIMITIVE_TYPE)
 ;
