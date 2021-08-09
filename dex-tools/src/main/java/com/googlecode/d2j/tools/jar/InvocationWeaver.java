@@ -17,9 +17,10 @@
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
+
 import org.objectweb.asm.*;
+import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -218,7 +219,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
     }
 
     public ClassVisitor wrapper(final ClassVisitor cv) {
-        return new RemappingClassAdapter(cv, remapper) {
+        return new ClassRemapper(cv, remapper) {
             Map<MtdInfo, MtdInfo> toCreate = new HashMap<MtdInfo, MtdInfo>();
             String clzName;
 
@@ -361,7 +362,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                     src.owner = t.owner;
                     src.name = name;
                     src.desc = desc;
-                    return new MethodNode(Opcodes.ASM4, access, name, desc, signature, exceptions) {
+                    return new MethodNode(ASM9, access, name, desc, signature, exceptions) {
                         @Override
                         public void visitEnd() {
 
@@ -418,7 +419,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             }
             class ReplaceMethodVisitor extends MethodVisitor {
                 public ReplaceMethodVisitor(MethodVisitor mv) {
-                    super(Opcodes.ASM4, mv);
+                    super(ASM9, mv);
                 }
 
                 @Override

@@ -41,8 +41,6 @@ import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
-import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 
 public class Dex2jar {
     public static Dex2jar from(byte[] in) throws IOException {
@@ -94,7 +92,7 @@ public class Dex2jar {
             public ClassVisitor create(final String name) {
                 final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
-                return new ClassVisitor(Opcodes.ASM5, rca) {
+                return new ClassVisitor(Opcodes.ASM9, rca) {
                     @Override
                     public void visitEnd() {
                         super.visitEnd();

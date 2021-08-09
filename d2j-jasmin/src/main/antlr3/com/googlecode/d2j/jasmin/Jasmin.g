@@ -25,7 +25,7 @@ package com.googlecode.d2j.jasmin;
     public boolean rebuildLine=false;
     private java.util.Map<String, Label> labelMap = new java.util.HashMap<>();
     private void reset0() {
-        cn = new ClassNode(ASM4);
+        cn = new ClassNode(Opcodes.ASM9);
         fn = null;
         mn = null;
     }
@@ -1103,7 +1103,7 @@ sMethod	@init{
         cn.methods=new ArrayList<>();
     }
     currentAv=mnv;
-    mn=new MethodNode(ASM4);
+    mn=new MethodNode(Opcodes.ASM9);
     cn.methods.add(mn);
     labelMap.clear();
     if(mn.exceptions==null){

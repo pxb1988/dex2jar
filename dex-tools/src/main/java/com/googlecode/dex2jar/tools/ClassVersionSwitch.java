@@ -52,7 +52,7 @@ public class ClassVersionSwitch {
                         if (zipEntry.getName().endsWith(".class")) {
                             ClassReader cr = new ClassReader(is);
                             ClassWriter cw = new ClassWriter(0);
-                            ClassVisitor cv = new ClassVisitor(Opcodes.ASM4, cw) {
+                            ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) {
                                 @Override
                                 public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                                     super.visit(jVersion, access, name, signature, superName, interfaces);

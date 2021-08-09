@@ -165,7 +165,7 @@ public class JarAccessCmd extends BaseCmd implements Opcodes {
                         final ClassReader r = new ClassReader(Files.readAllBytes(file));
 
                         ClassWriter cr = new ClassWriter(0);
-                        r.accept(new ClassVisitor(ASM4, cr) {
+                        r.accept(new ClassVisitor(ASM9, cr) {
 
                             @Override
                             public void visit(int version, int access, String name, String signature, String superName,
