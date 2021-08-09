@@ -43,8 +43,10 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.BasicValue;
 import org.objectweb.asm.tree.analysis.BasicVerifier;
 import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.Value;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
@@ -192,9 +194,9 @@ public abstract class TestUtils {
         buf.setAccessible(true);
     }
 
-    static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)
+    static <T extends Value> void printAnalyzerResult(MethodNode method, Analyzer<T> a, final PrintWriter pw)
             throws IllegalArgumentException, IllegalAccessException {
-        Frame[] frames = a.getFrames();
+        Frame<T>[] frames = a.getFrames();
         Textifier t = new Textifier();
         TraceMethodVisitor mv = new TraceMethodVisitor(t);
         String format = "%05d %-" + (method.maxStack + method.maxLocals + 6) + "s|%s";
@@ -202,7 +204,7 @@ public abstract class TestUtils {
             method.instructions.get(j).accept(mv);
 
             StringBuffer s = new StringBuffer();
-            Frame f = frames[j];
+            Frame<T> f = frames[j];
             if (f == null) {
                 s.append('?');
             } else {
@@ -250,7 +252,7 @@ public abstract class TestUtils {
             }
 
             BasicVerifier verifier = new BasicVerifier();
-            Analyzer a = new Analyzer(verifier);
+            Analyzer<BasicValue> a = new Analyzer<>(verifier);
             try {
                 a.analyze(cn.name, method);
             } catch (Exception e) {
