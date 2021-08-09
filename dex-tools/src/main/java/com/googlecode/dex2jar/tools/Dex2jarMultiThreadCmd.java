@@ -52,8 +52,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
 
     @Override
     protected void doCommandLine() throws Exception {
-        List<String> f = new ArrayList<>();
-        f.addAll(Arrays.asList(remainingArgs));
+        List<String> f = new ArrayList<>(Arrays.asList(remainingArgs));
         if (fileList != null) {
             f.addAll(Files.readAllLines(fileList, StandardCharsets.UTF_8));
         }
@@ -117,7 +116,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
                             // FIXME handle 'java.lang.RuntimeException: Method code too large!'
                             data = cw.toByteArray();
                         } catch (Exception ex) {
-                            System.err.println(String.format("ASM fail to generate .class file: %s", className));
+                            System.err.printf("ASM fail to generate .class file: %s%n", className);
                             exceptionHandler.handleFileException(ex);
                             return;
                         }

@@ -61,16 +61,16 @@ public class TypeTransformer implements Transformer {
                             cst.value = Constant.Null;
                         }
                         if (type.equals("[F") && cst.value instanceof int[]) {
-                            int x[] = (int[]) cst.value;
-                            float f[] = new float[x.length];
+                            int[] x = (int[]) cst.value;
+                            float[] f = new float[x.length];
                             for (int i = 0; i < x.length; i++) {
                                 f[i] = Float.intBitsToFloat(x[i]);
                             }
                             cst.value = f;
                         }
                         if (type.equals("[D") && cst.value instanceof long[]) {
-                            long x[] = (long[]) cst.value;
-                            double f[] = new double[x.length];
+                            long[] x = (long[]) cst.value;
+                            double[] f = new double[x.length];
                             for (int i = 0; i < x.length; i++) {
                                 f[i] = Double.longBitsToDouble(x[i]);
                             }
@@ -283,7 +283,7 @@ public class TypeTransformer implements Transformer {
                 }
                 return thiz.provideDesc;
             }
-            if (clz == TypeClass.JD) { // prefere Long if wide
+            if (clz == TypeClass.JD) { // prefer Long if wide
                 return "J";
             }
             if (thiz.uses != null) {
@@ -296,15 +296,14 @@ public class TypeTransformer implements Transformer {
 
             switch (clz) {
                 case ZI:
-                    return "I";
-                case ZIFL:
-                case ZIF:
-                case ZIL:
-                    return "Z";
-                case INT:
-                case IF:
-                    return "I";
-                default:
+            case INT:
+            case IF:
+                return "I";
+            case ZIFL:
+            case ZIF:
+            case ZIL:
+                return "Z";
+            default:
             }
             throw new RuntimeException();
         }
@@ -352,7 +351,7 @@ public class TypeTransformer implements Transformer {
 
     private static class TypeAnalyze {
         protected IrMethod method;
-        private List<TypeRef> refs = new ArrayList<>();
+        private final List<TypeRef> refs = new ArrayList<>();
 
         public TypeAnalyze(IrMethod method) {
             super();
@@ -485,7 +484,7 @@ public class TypeTransformer implements Transformer {
                     return a;
                 } else if (!ta.fixed && tb.fixed) {
                     return b;
-                } else if (ta.fixed && tb.fixed) {
+                } else if (ta.fixed) {
                     if (ta != tb) {
                         if (as == 0) {
                             throw new RuntimeException();
@@ -603,7 +602,7 @@ public class TypeTransformer implements Transformer {
                 return a;
             } else if (!ta.fixed && tb.fixed) {
                 return b;
-            } else if (ta.fixed && tb.fixed) {
+            } else if (ta.fixed) {
                 // special allow merge of Z and I
                 if ((ta == TypeClass.INT && tb == TypeClass.BOOLEAN) || (tb == TypeClass.INT && ta == TypeClass.BOOLEAN)) {
                     return "I";
@@ -910,7 +909,7 @@ public class TypeTransformer implements Transformer {
         }
 
         private void enexpr(EnExpr enExpr) {
-            Value vbs[] = enExpr.ops;
+            Value[] vbs = enExpr.ops;
             switch (enExpr.vt) {
                 case INVOKE_NEW:
                 case INVOKE_INTERFACE:
@@ -924,7 +923,7 @@ public class TypeTransformer implements Transformer {
                     provideAs(enExpr, type);
                     useAs(enExpr, type); // no one else will use it
 
-                    String argTypes[] = ice.getProto().getParameterTypes();
+                    String[] argTypes = ice.getProto().getParameterTypes();
                     if (argTypes.length == vbs.length) {
                         for (int i = 0; i < vbs.length; i++) {
                             useAs(vbs[i], argTypes[i]);
@@ -996,7 +995,7 @@ public class TypeTransformer implements Transformer {
         private TypeRef getDefTypeRef(Value v) {
             Object object = v.tag;
             TypeRef typeRef;
-            if (object == null || !(object instanceof TypeRef)) {
+            if (!(object instanceof TypeRef)) {
                 typeRef = new TypeRef(v);
                 refs.add(typeRef);
                 v.tag = typeRef;
@@ -1060,8 +1059,6 @@ public class TypeTransformer implements Transformer {
                 case LOOKUP_SWITCH:
                 case TABLE_SWITCH:
                     useAs(op, "I");
-                    break;
-                case GOTO:
                     break;
                 case IF:
                     useAs(op, "Z");

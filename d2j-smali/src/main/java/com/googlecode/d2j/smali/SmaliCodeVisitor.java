@@ -110,7 +110,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
 
     public static class SparseSwitchStmt extends DexStmtNode {
         int[] cases;
-        DexLabel labels[];
+        DexLabel[] labels;
 
         public SparseSwitchStmt(int[] cases, DexLabel[] labels) {
             super(null);
@@ -123,7 +123,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
         }
     }
 
-    private List<DexStmtNode> needCareStmts = new ArrayList<DexStmtNode>();
+    private List<DexStmtNode> needCareStmts = new ArrayList<>();
 
     @Override
     public void visitEnd() {
@@ -207,7 +207,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
                         int[] vs1 = new int[vs.length / 4];
                         for (int i = 0; i < vs1.length; i++) {
                             int base = i * 4;
-                            vs1[i] = (vs[base + 0] & 0xFF) | ((vs[base + 1] & 0xFF) << 8)
+                            vs1[i] = (vs[base] & 0xFF) | ((vs[base + 1] & 0xFF) << 8)
                                     | ((vs[base + 2] & 0xFF) << 16) | ((vs[base + 3] & 0xFF) << 24);
                         }
                         v = vs1;
@@ -217,9 +217,9 @@ public class SmaliCodeVisitor extends DexCodeNode {
                         long[] vs1 = new long[vs.length / 8];
                         for (int i = 0; i < vs1.length; i++) {
                             int base = i * 8;
-                            int a = ((vs[base + 0] & 0xFF) << 0) | ((vs[base + 1] & 0xFF) << 8)
+                            int a = ((vs[base] & 0xFF)) | ((vs[base + 1] & 0xFF) << 8)
                                     | ((vs[base + 2] & 0xFF) << 16) | ((vs[base + 3] & 0xFF) << 24);
-                            int b = ((vs[base + 4] & 0xFF) << 0) | ((vs[base + 5] & 0xFF) << 8)
+                            int b = ((vs[base + 4] & 0xFF)) | ((vs[base + 5] & 0xFF) << 8)
                                     | ((vs[base + 6] & 0xFF) << 16) | ((vs[base + 7] & 0xFF) << 24);
                             vs1[i] = (((long) b) << 32) | a;
                         }

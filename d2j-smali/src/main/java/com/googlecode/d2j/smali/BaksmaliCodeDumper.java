@@ -47,7 +47,7 @@ import java.util.*;
         this.debugLabelMap = debugLabelMap;
     }
 
-    class PackedSwitchStmt {
+    static class PackedSwitchStmt {
         int first_case;
 
         DexLabel[] labels;
@@ -59,7 +59,7 @@ import java.util.*;
         }
     }
 
-    class SparseSwitchStmt {
+    static class SparseSwitchStmt {
         int[] cases;
 
         DexLabel[] labels;
@@ -86,7 +86,7 @@ import java.util.*;
         dx.displayName = "L" + nextLabelNumber++;
         usedLabel.add(dx);
         out.s("%s %s, %s", op.displayName, reg(ra), xLabel(dx));
-        appendLast.add(new AbstractMap.SimpleEntry<DexLabel, Object>(dx, array));
+        appendLast.add(new AbstractMap.SimpleEntry<>(dx, array));
     }
 
     @SuppressWarnings("incomplete-switch")
@@ -105,12 +105,12 @@ import java.util.*;
         }
         case CONST_WIDE_32: {
             Long v = (Long) value;
-            value = (int) v.intValue();
+            value = v.intValue();
             break;
         }
         case CONST_HIGH16: {
             Integer v = (Integer) value;
-            value = (int) v.intValue() >> 16;
+            value = v >> 16;
             break;
         }
         }
@@ -147,8 +147,8 @@ import java.util.*;
                     out.s(".array-data 1");
                     out.push();
                     byte[] vs = (byte[]) array;
-                    for (int i = 0; i < vs.length; i++) {
-                        out.s(BaksmaliDumper.escapeValue(vs[i]));
+                    for (byte b : vs) {
+                        out.s(BaksmaliDumper.escapeValue(b));
                     }
                     out.pop();
                     out.s(".end array-data");
@@ -156,8 +156,7 @@ import java.util.*;
                     out.s(".array-data 2");
                     out.push();
                     short[] vs = (short[]) array;
-                    for (int i = 0; i < vs.length; i++) {
-                        short a = vs[i];
+                    for (short a : vs) {
                         out.s("%s %s", BaksmaliDumper.escapeValue((byte) (a & 0xFF)),
                                 BaksmaliDumper.escapeValue((byte) (0xFF & (a >> 8))));
                     }
@@ -167,8 +166,7 @@ import java.util.*;
                     out.s(".array-data 4");
                     out.push();
                     int[] vs = (int[]) array;
-                    for (int i = 0; i < vs.length; i++) {
-                        int a = vs[i];
+                    for (int a : vs) {
                         out.s("%s %s %s %s", BaksmaliDumper.escapeValue((byte) (a & 0xFF)),
                                 BaksmaliDumper.escapeValue((byte) (0xFF & (a >> 8))),
                                 BaksmaliDumper.escapeValue((byte) (0xFF & (a >> 16))),
@@ -180,8 +178,8 @@ import java.util.*;
                     out.s(".array-data 4");
                     out.push();
                     float[] vs = (float[]) array;
-                    for (int i = 0; i < vs.length; i++) {
-                        int a = Float.floatToIntBits(vs[i]);
+                    for (float value : vs) {
+                        int a = Float.floatToIntBits(value);
                         out.s("%s %s %s %s", BaksmaliDumper.escapeValue((byte) (a & 0xFF)),
                                 BaksmaliDumper.escapeValue((byte) (0xFF & (a >> 8))),
                                 BaksmaliDumper.escapeValue((byte) (0xFF & (a >> 16))),
@@ -193,8 +191,7 @@ import java.util.*;
                     out.s(".array-data 8");
                     out.push();
                     long[] vs = (long[]) array;
-                    for (int i = 0; i < vs.length; i++) {
-                        long ttt = vs[i];
+                    for (long ttt : vs) {
                         int a = (int) ttt;
                         int b = (int) (ttt >>> 32);
                         out.s("%s %s %s %s %s %s %s %s", BaksmaliDumper.escapeValue((byte) (a & 0xFF)),
@@ -212,8 +209,8 @@ import java.util.*;
                     out.s(".array-data 8");
                     out.push();
                     double[] vs = (double[]) array;
-                    for (int i = 0; i < vs.length; i++) {
-                        long ttt = Double.doubleToLongBits(vs[i]);
+                    for (double value : vs) {
+                        long ttt = Double.doubleToLongBits(value);
                         int a = (int) ttt;
                         int b = (int) (ttt >>> 32);
                         out.s("%s %s %s %s %s %s %s %s", BaksmaliDumper.escapeValue((byte) (a & 0xFF)),

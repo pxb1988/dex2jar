@@ -117,7 +117,7 @@ public class Dex2jarCmd extends BaseCmd {
                             : exceptionFile;
                     System.err.println("Detail Error Information in File " + errorFile);
                     System.err.println(BaksmaliBaseDexExceptionHandler.REPORT_MESSAGE);
-                    handler.dump(errorFile, orginalArgs);
+                    handler.dump(errorFile, originalArgs);
                 }
             }
             // long endTS = System.currentTimeMillis();

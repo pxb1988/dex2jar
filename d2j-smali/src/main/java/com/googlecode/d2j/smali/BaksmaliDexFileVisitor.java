@@ -15,13 +15,13 @@ import java.util.Set;
 public class BaksmaliDexFileVisitor extends DexFileVisitor {
     private final Path dir;
     private final BaksmaliDumper bs;
-    private Set<String> hases;
+    private final Set<String> hashes;
     private int i;
 
     public BaksmaliDexFileVisitor(Path dir, BaksmaliDumper bs) {
         this.dir = dir;
         this.bs = bs;
-        hases = new HashSet<String>();
+        hashes = new HashSet<>();
         i = 1;
     }
 
@@ -29,10 +29,10 @@ public class BaksmaliDexFileVisitor extends DexFileVisitor {
         s = BaksmaliDumper.escapeId(s);
         s = s.replace('\\', '-');
         String low = s.toLowerCase();
-        if (hases.contains(low)) {
+        if (hashes.contains(low)) {
             return s + "_d2j" + i++;
         } else {
-            hases.add(low);
+            hashes.add(low);
         }
         return s;
     }
