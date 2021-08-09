@@ -28,10 +28,10 @@ public class AsmBridge {
 
     public static int sizeOfMethodWriter(MethodVisitor mv) {
         MethodWriter mw = (MethodWriter) mv;
-        return mw.getSize();
+        return mw.computeMethodInfoSize();
     }
 
-    private static void removeMethodWriter(MethodWriter mw) {
+    /*private static void removeMethodWriter(MethodWriter mw) {
         // mv must be the last element
         ClassWriter cw = mw.cw;
         MethodWriter p = cw.firstMethod;
@@ -53,12 +53,9 @@ public class AsmBridge {
                 }
             }
         }
-    }
+    }*/
 
     public static void replaceMethodWriter(MethodVisitor mv, MethodNode mn) {
-        MethodWriter mw = (MethodWriter) mv;
-        ClassWriter cw = mw.cw;
-        mn.accept(cw);
-        removeMethodWriter(mw);
+        mn.accept(mv);
     }
 }
