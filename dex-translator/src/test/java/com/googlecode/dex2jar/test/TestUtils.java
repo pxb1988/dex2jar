@@ -33,19 +33,16 @@ import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.visitors.DexClassVisitor;
+import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.BasicVerifier;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.util.CheckClassAdapter;
@@ -68,7 +65,6 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 /**
@@ -81,7 +77,7 @@ public abstract class TestUtils {
     public static void breakPoint() {
     }
 
-    public static void checkZipFile(File zip) throws ZipException, Exception {
+    public static void checkZipFile(File zip) throws Exception {
         ZipFile zipFile = new ZipFile(zip);
         for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
             ZipEntry entry = e.nextElement();
@@ -92,7 +88,7 @@ public abstract class TestUtils {
                 try (InputStream is = zipFile.getInputStream(entry)) {
                     verify(new ClassReader(ZipUtil.toByteArray(is)));
                 }
-                Assert.assertTrue(sw.toString(), sw.toString().length() == 0);
+                Assert.assertEquals(sw.toString(), 0, sw.toString().length());
             }
         }
     }
@@ -116,8 +112,8 @@ public abstract class TestUtils {
         if (distFile == null) {
             distFile = File.createTempFile("dex", ".dex");
         }
-        List<String> args = new ArrayList<String>();
-        args.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + distFile.getCanonicalPath()));
+        List<String> args = new ArrayList<>(Arrays.asList("--dex", "--no-strict",
+                "--output=" + distFile.getCanonicalPath()));
         for (Path f : files) {
             args.add(f.toAbsolutePath().toString());
         }
@@ -132,8 +128,8 @@ public abstract class TestUtils {
         if (distFile == null) {
             distFile = File.createTempFile("dex", ".dex");
         }
-        List<String> args = new ArrayList<String>();
-        args.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + distFile.getCanonicalPath()));
+        List<String> args = new ArrayList<>(Arrays.asList("--dex", "--no-strict",
+                "--output=" + distFile.getCanonicalPath()));
         for (File f : files) {
             args.add(f.getCanonicalPath());
         }
@@ -188,7 +184,7 @@ public abstract class TestUtils {
     static Field buf;
     static {
         try {
-            buf = Printer.class.getDeclaredField("buf");
+            buf = Printer.class.getDeclaredField("text");
         } catch (NoSuchFieldException | SecurityException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -221,32 +217,28 @@ public abstract class TestUtils {
             pw.printf(format, j, s, buf.get(t)); // mv.text.get(j));
         }
         for (int j = 0; j < method.tryCatchBlocks.size(); ++j) {
-            ((TryCatchBlockNode) method.tryCatchBlocks.get(j)).accept(mv);
+            method.tryCatchBlocks.get(j).accept(mv);
             pw.print(" " + buf.get(t));
         }
         pw.println();
         pw.flush();
     }
 
-    public static void verify(final ClassReader cr) throws AnalyzerException, IllegalArgumentException,
+    public static void verify(final ClassReader cr) throws IllegalArgumentException,
             IllegalAccessException {
-        try {
-            verify(cr, new PrintWriter(new OutputStreamWriter(System.out, "UTF-8")));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        verify(cr, new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8)));
     }
 
     @SuppressWarnings("rawtypes")
-    public static void verify(final ClassReader cr, PrintWriter out) throws AnalyzerException,
+    public static void verify(final ClassReader cr, PrintWriter out) throws
             IllegalArgumentException, IllegalAccessException {
         ClassNode cn = new ClassNode();
         cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
 
         List methods = cn.methods;
 
-        for (int i = 0; i < methods.size(); ++i) {
-            MethodNode method = (MethodNode) methods.get(i);
+        for (Object o : methods) {
+            MethodNode method = (MethodNode) o;
 
             List tryCatchBlocks = method.tryCatchBlocks;
             for (int j = 0; j < tryCatchBlocks.size(); j++) {
@@ -291,7 +283,7 @@ public abstract class TestUtils {
         return translateAndCheck(clzNode);
     }
 
-    public static byte[] translateAndCheck(DexFileNode fileNode, DexClassNode clzNode) throws AnalyzerException,
+    public static byte[] translateAndCheck(DexFileNode fileNode, DexClassNode clzNode) throws
             IllegalAccessException {
         // 1. convert to .class
         Dex2Asm dex2Asm = new Dex2Asm() {
@@ -302,7 +294,7 @@ public abstract class TestUtils {
                 } catch (Exception ex) {
                     BaksmaliDumper d = new BaksmaliDumper();
                     try {
-                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(System.err, "UTF-8"));
+                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(System.err, StandardCharsets.UTF_8));
                         d.baksmaliMethod(methodNode, out);
                         out.flush();
                     } catch (IOException e) {
@@ -314,12 +306,7 @@ public abstract class TestUtils {
         };
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
         final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
-        ClassVisitorFactory cvf = new ClassVisitorFactory() {
-            @Override
-            public ClassVisitor create(String classInternalName) {
-                return rca;
-            }
-        };
+        ClassVisitorFactory cvf = classInternalName -> rca;
         if (fileNode != null) {
             dex2Asm.convertClass(clzNode, cvf, fileNode);
         } else {
@@ -354,7 +341,7 @@ public abstract class TestUtils {
         return data;
     }
 
-    public static byte[] translateAndCheck(DexClassNode clzNode) throws AnalyzerException, IllegalAccessException {
+    public static byte[] translateAndCheck(DexClassNode clzNode) throws IllegalAccessException {
         return translateAndCheck(null, clzNode);
     }
 

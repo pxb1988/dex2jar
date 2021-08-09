@@ -11,4 +11,5 @@ dependencies {
     implementation group: 'org.ow2.asm', name: 'asm-commons', version: '9.2'
     testImplementation project(':d2j-smali')
     testImplementation project(':d2j-jasmin')
+    testImplementation fileTree(dir: 'libs', include: '*.jar')
 }

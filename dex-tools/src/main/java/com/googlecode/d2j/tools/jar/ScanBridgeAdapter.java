@@ -48,8 +48,8 @@ public class ScanBridgeAdapter extends ClassVisitor implements Opcodes {
             mv = new MethodVisitor(ASM4, mv) {
 
                 @Override
-                public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-                    super.visitMethodInsn(opcode, owner, name, desc);
+                public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {
+                    super.visitMethodInsn(opcode, owner, name, desc, isInterface);
                     if (!name.equals(member.name)) {
                         bridge.put(owner + '.' + name + desc.substring(0, desc.lastIndexOf(')') + 1), member);
                     }

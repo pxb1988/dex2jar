@@ -393,11 +393,6 @@ public class JasminDumper implements Opcodes {
                         }
 
                         @Override
-                        public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-                            visitMethodInsn(opcode, owner, name, desc, opcode == INVOKEINTERFACE);
-                        }
-
-                        @Override
                         public void visitJumpInsn(int opcode, Label label) {
                             print(opcode);
                             pw.print(' ');

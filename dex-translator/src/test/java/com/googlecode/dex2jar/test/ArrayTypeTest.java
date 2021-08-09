@@ -28,10 +28,10 @@ public class ArrayTypeTest {
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "b", new String[] {}, "V"));
         DexCodeVisitor code = mv.visitCode();
         code.visitRegister(3);
-        code.visitConstStmt(CONST, 0, Integer.valueOf(0));
+        code.visitConstStmt(CONST, 0, 0);
         code.visitMethodStmt(INVOKE_VIRTUAL, new int[] { 0 }, new Method("Ljava/lang/String;", "toString",
                 new String[] {}, "Ljava/lang/String;"));
-        code.visitConstStmt(CONST, 1, Integer.valueOf(0));
+        code.visitConstStmt(CONST, 1, 0);
         code.visitStmt2R(ARRAY_LENGTH, 2, 1);
         code.visitStmt0R(RETURN_VOID);
         code.visitEnd();
@@ -43,8 +43,8 @@ public class ArrayTypeTest {
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "b", new String[] {}, "V"));
         DexCodeVisitor code = mv.visitCode();
         code.visitRegister(3);
-        code.visitConstStmt(CONST, 0, Integer.valueOf(0));
-        code.visitConstStmt(CONST, 2, Integer.valueOf(1));
+        code.visitConstStmt(CONST, 0, 0);
+        code.visitConstStmt(CONST, 2, 1);
         code.visitStmt3R(AGET, 1, 0, 2);
         code.visitStmt0R(RETURN_VOID);
         code.visitEnd();
