@@ -40,6 +40,7 @@ subprojects {
 
     [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
     compileJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    compileTestJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 
     dependencies {
         testImplementation group: 'junit', name: 'junit', version: '4.13.2'

@@ -24,7 +24,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -428,20 +427,12 @@ public abstract class BaseCmd {
         String[] newArgs = new String[args.length - 1];
         System.arraycopy(args, 1, newArgs, 0, newArgs.length);
         if (BaseCmd.class.isAssignableFrom(clz)) {
-            BaseCmd baseCmd = (BaseCmd) getConstructor(clz).newInstance();
+            BaseCmd baseCmd = (BaseCmd) clz.getDeclaredConstructor().newInstance();
             baseCmd.doMain(newArgs);
         } else {
             Method m = clz.getMethod("main", String[].class);
             m.setAccessible(true);
             m.invoke(null, (Object) newArgs);
-        }
-    }
-
-    private static <T> Constructor<T> getConstructor(Class<T> clz) throws Exception {
-        try {
-            return clz.getConstructor();
-        } catch (Throwable t) {
-            return clz.getDeclaredConstructor();
         }
     }
 

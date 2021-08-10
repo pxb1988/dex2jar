@@ -61,7 +61,7 @@ public class AutoCastTest implements DexConstants {
     public void test() throws Exception {
         byte[] data = TestUtils.testDexASMifier(getClass(), "strict", "a");
         Class<?> clz = TestUtils.defineClass("a", data);
-        Object c = clz.newInstance();
+        Object c = clz.getDeclaredConstructor().newInstance();
         Assert.assertNotNull(c);
         java.lang.reflect.Field f = clz.getDeclaredField("theField");
         f.setAccessible(true);

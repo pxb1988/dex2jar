@@ -41,7 +41,7 @@ public abstract class BaseTransformerTest<T extends Transformer> {
         Class<?> transformerType = (Class<?>) t.getActualTypeArguments()[0];
 
         try {
-            this.transformer = (Transformer) transformerType.newInstance();
+            this.transformer = (Transformer) transformerType.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -283,7 +283,7 @@ public abstract class TestUtils {
         if (Modifier.isStatic(m.getModifiers())) {
             m.invoke(null, clzNode);
         } else {
-            m.invoke(clz.newInstance(), clzNode);
+            m.invoke(clz.getDeclaredConstructor().newInstance(), clzNode);
         }
         return translateAndCheck(clzNode);
     }
