@@ -14,7 +14,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@BaseCmd.Syntax(cmd = "d2j-generate-stub-from-odex", syntax = "[options] <odex0> [odex1 ... odexN]", desc = "Genenerate no-code jar from odex")
+@BaseCmd.Syntax(cmd = "d2j-generate-stub-from-odex", syntax = "[options] <odex0> [odex1 ... odexN]", desc =
+        "Generate no-code jar from odex")
 public class GenerateCompileStubFromOdex extends BaseCmd {
     private static final int MAGIC_ODEX = 0x0A796564 & 0x00FFFFFF;// hex for 'dey ', ignore the 0A
     private static final int MAGIC_DEX = 0x0A786564 & 0x00FFFFFF;// hex for 'dex ', ignore the 0A
@@ -31,7 +32,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
     @Override
     protected void doCommandLine() throws Exception {
         if (remainingArgs.length == 0) {
-            throw new HelpException("no odex");
+            throw new HelpException("No odex");
         }
         if (output == null) {
             output = new File("stub.jar").toPath();
@@ -40,7 +41,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
         try (FileSystem fs = createZip(output)) {
             Path out = fs.getPath("/");
             for (String x : remainingArgs) {
-                System.err.println("process " + x + " ...");
+                System.err.println("Processing " + x + " ...");
                 ByteBuffer bs = ByteBuffer.wrap(Files.readAllBytes(new File(x).toPath()))
                         .order(ByteOrder.LITTLE_ENDIAN);
                 int magic = bs.getInt(0) & 0x00FFFFFF;
@@ -53,7 +54,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
                 } else if (magic == MAGIC_DEX) {
                     doDex(bs, out);
                 } else {
-                    throw new RuntimeException("file " + x + " is not an dex or odex");
+                    throw new RuntimeException("File " + x + " is not an dex or odex");
                 }
 
             }
@@ -70,7 +71,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
             public ClassVisitor create(final String classInternalName) {
                 final Path target = out.resolve(classInternalName + ".class");
                 if (Files.exists(target)) {
-                    System.err.println("class " + classInternalName + " is already exists, skipping.");
+                    System.err.println("Class " + classInternalName + " already exists, skipping.");
                     return null;
                 }
                 return new ClassVisitor(Opcodes.ASM4, new ClassWriter(ClassWriter.COMPUTE_MAXS)) {

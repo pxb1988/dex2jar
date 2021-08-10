@@ -118,7 +118,7 @@ public class AsmVerify extends BaseCmd {
         for (String fn : remainingArgs) {
             Path file = new File(fn).toPath();
             if (!Files.exists(file)) {
-                System.err.println(fn + " is not exists");
+                System.err.println(fn + " doesn't exist");
                 usage();
                 return;
             }

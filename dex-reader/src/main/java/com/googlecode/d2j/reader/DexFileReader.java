@@ -281,7 +281,7 @@ public class DexFileReader implements BaseDexFileReader {
     }
 
     /**
-     * Reads a string index. String indicies are offset by 1, and a 0 value in the stream (-1 as returned by this
+     * Reads a string index. String indices are offset by 1, and a 0 value in the stream (-1 as returned by this
      * method) means "null"
      * 
      * @return index into file's string ids table, -1 means null
@@ -1095,7 +1095,7 @@ public class DexFileReader implements BaseDexFileReader {
                     read_annotation_set_item(param_annotation_offset, dpav);
                 }
             } catch (Exception e) {
-                throw new DexException(e, "while accept parameter annotation in parameter:[%d]", j);
+                throw new DexException(e, "While accepting parameter annotation in parameter: [%d]", j);
             }
         }
     }

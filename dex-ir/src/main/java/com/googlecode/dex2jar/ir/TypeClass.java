@@ -101,7 +101,7 @@ public enum TypeClass {
                     if ((thizCls == INT && clz == BOOLEAN) || (thizCls == BOOLEAN || clz == INT)) {
                         return INT;
                     }
-                    throw new RuntimeException("can not merge " + thizCls + " and " + clz);
+                    throw new RuntimeException("Can't merge " + thizCls + " and " + clz);
                 } else {
                     return thizCls;
                 }
@@ -123,7 +123,7 @@ public enum TypeClass {
      */
     private static TypeClass merge0(TypeClass a, TypeClass b) {
         if (a == JD || b == JD) {
-            throw new RuntimeException("can not merge " + a + " and " + b);
+            throw new RuntimeException("Can't merge " + a + " and " + b);
         }
         switch (a) {
             case ZIL:

@@ -162,7 +162,7 @@ public class DecryptStringCmd extends BaseCmd {
 
         final Path jar = new File(remainingArgs[0]).toPath();
         if (!Files.exists(jar)) {
-            System.err.println(jar + " is not exists");
+            System.err.println(jar + " doesn't exist");
             return;
         }
         if (output == null) {

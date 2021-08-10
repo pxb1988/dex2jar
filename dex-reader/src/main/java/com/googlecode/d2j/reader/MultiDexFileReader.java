@@ -55,7 +55,7 @@ public class MultiDexFileReader implements BaseDexFileReader {
                 return new MultiDexFileReader(dexFileReaders.values());
             }
         }
-        throw new IOException("the src file not a .dex or zip file");
+        throw new IOException("The source file is not a .dex or .zip file");
     }
 
     void init() {
