@@ -11,6 +11,7 @@ This is [Nico Mexis'](https://github.com/ThexXTURBOXx) fork of the dex2jar proje
 * Fixed many `StringIndexOutOfBoundsException`s relating to signatures
 * Fixed `TypeTransformer` related issues
 * Fixed many `NullPointerException`s and other crashes
+* Fixed grammar of error messages
 * Update libraries (especially ASM to `9.2`)
 * Library fat-jar can be used for other projects (Automatically produced by [GitHub Actions](https://github.com/ThexXTURBOXx/dex2jar/actions))
 * Smali now outputs `.param` instead of the outdated `.parameter` syntax
