@@ -40,7 +40,7 @@ public class BaksmaliCmd extends BaseCmd {
 
         File dex = new File(remainingArgs[0]);
         if (!dex.exists()) {
-            System.err.println("ERROR: " + dex + " is not exists");
+            System.err.println("ERROR: " + dex + " doesn't exist");
             return;
         }
         if (output == null) {

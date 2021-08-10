@@ -44,7 +44,7 @@ public class DexRecomputeChecksum extends BaseCmd {
 
         Path jar = new File(remainingArgs[0]).toPath();
         if (!Files.exists(jar)) {
-            System.err.println(jar + " is not exists");
+            System.err.println(jar + " doesn't exist");
             usage();
             return;
         }

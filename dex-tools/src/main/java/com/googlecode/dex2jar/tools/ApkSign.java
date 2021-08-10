@@ -54,7 +54,7 @@ public class ApkSign extends BaseCmd {
 
         Path apkIn = new File(remainingArgs[0]).toPath();
         if (!Files.exists(apkIn)) {
-            System.err.println(apkIn + " is not exists");
+            System.err.println(apkIn + " doesn't exist");
             usage();
             return;
         }
