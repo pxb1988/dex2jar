@@ -22,6 +22,7 @@ import com.android.dx.command.dexer.DxContext;
 import com.android.dx.dex.DexOptions;
 import com.android.dx.dex.cf.CfOptions;
 import com.android.dx.dex.cf.CfTranslator;
+import com.android.dx.dex.file.DexFile;
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.DexException;
 import com.googlecode.d2j.dex.ClassVisitorFactory;
@@ -333,7 +334,7 @@ public abstract class TestUtils {
 
         DirectClassFile dcf = new DirectClassFile(data, rca.getClassName() + ".class", true);
         dcf.setAttributeFactory(new StdAttributeFactory());
-        com.android.dx.dex.file.DexFile dxFile = new com.android.dx.dex.file.DexFile(dexOptions);
+        DexFile dxFile = new DexFile(dexOptions);
         try {
             CfTranslator.translate(new DxContext(), dcf, data, cfOptions, dexOptions, dxFile);
         } catch (ParseException e) {

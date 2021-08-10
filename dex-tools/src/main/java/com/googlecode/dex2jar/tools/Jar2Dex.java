@@ -21,9 +21,7 @@ import java.lang.reflect.Method;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 @BaseCmd.Syntax(cmd = "d2j-jar2dex", syntax = "[options] <dir>", desc = "Convert jar to dex by invoking dx.")
 public class Jar2Dex extends BaseCmd {
@@ -89,11 +87,11 @@ public class Jar2Dex extends BaseCmd {
             Class<?> c = Class.forName("com.android.dx.command.Main");
             Method m = c.getMethod("main", String[].class);
 
-            List<String> ps = new ArrayList<>(Arrays.asList("--dex", "--no-strict",
-                    "--output=" + output.toAbsolutePath(), realJar
-                            .toAbsolutePath().toString()));
-            System.out.println("call com.android.dx.command.Main.main" + ps);
-            m.invoke(null, new Object[]{ps.toArray(new String[0])});
+            String[] ps = new String[]{"--dex", "--no-strict",
+                    "--output=" + output.toAbsolutePath(),
+                    realJar.toAbsolutePath().toString()};
+            System.out.println("call com.android.dx.command.Main.main" + Arrays.toString(ps));
+            m.invoke(null, (Object) ps);
         } finally {
             if (tmp != null) {
                 Files.deleteIfExists(tmp);
