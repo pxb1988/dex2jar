@@ -23,7 +23,9 @@ jobs:
         java-version: 1.8
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-    - name: Build with Gradle
+    - name: Build library with Gradle
+      run: ./gradlew build --exclude-task test
+    - name: Build dex-tools with Gradle
       run: ./gradlew distZip
       
     - name: Create Release
@@ -48,9 +50,16 @@ jobs:
         asset_name: dex-tools-2.1-SNAPSHOT.zip
         asset_content_type: application/zip
 
-    - name: Archive artifacts
+    - name: Archive dex tools
       uses: actions/upload-artifact@v2
       if: success()
       with:
         name: dex-tools-2.1-SNAPSHOT
         path: dex-tools/build/distributions/dex-tools-2.1-SNAPSHOT.zip
+
+    - name: Archive uber-jar
+      uses: actions/upload-artifact@v2
+      if: success()
+      with:
+        name: d2j-all-2.1-SNAPSHOT-all
+        path: d2j-all/build/libs/d2j-all-2.1-SNAPSHOT-all.jar

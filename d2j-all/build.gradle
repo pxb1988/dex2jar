@@ -1,0 +1,51 @@
+plugins {
+    id "java"
+    id "com.github.johnrengelman.shadow" version "7.0.0"
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+description = 'Module for creating a uber-jar'
+group 'com.googlecode.d2j'
+version '2.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(project(":d2j-base-cmd")) {
+        transitive = false
+    }
+    implementation(project(":d2j-j6")) {
+        transitive = false
+    }
+    implementation(project(":d2j-jasmin")) {
+        transitive = false
+    }
+    implementation(project(":d2j-smali")) {
+        transitive = false
+    }
+    implementation(project(":dex-ir")) {
+        transitive = false
+    }
+    implementation(project(":dex-reader")) {
+        transitive = false
+    }
+    implementation(project(":dex-reader-api")) {
+        transitive = false
+    }
+    implementation(project(":dex-tools")) {
+        transitive = false
+    }
+    implementation(project(":dex-translator")) {
+        transitive = false
+    }
+    implementation(project(":dex-writer")) {
+        transitive = false
+    }
+}
+
+tasks.packageSources.enabled = false // Don't build sources jar
+tasks.jar.enabled = false // Don't build normal jar
+tasks.assemble.dependsOn tasks.shadowJar // Build uber-jar on build task
