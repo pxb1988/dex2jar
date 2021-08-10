@@ -8,16 +8,26 @@ import com.googlecode.d2j.visitors.DexMethodVisitor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static com.googlecode.d2j.DexConstants.*;
-import static com.googlecode.d2j.reader.Op.*;
+import static com.googlecode.d2j.DexConstants.ACC_PUBLIC;
+import static com.googlecode.d2j.DexConstants.ACC_STATIC;
+import static com.googlecode.d2j.reader.Op.CONST_STRING;
+import static com.googlecode.d2j.reader.Op.GOTO;
+import static com.googlecode.d2j.reader.Op.IF_EQZ;
+import static com.googlecode.d2j.reader.Op.INVOKE_DIRECT;
+import static com.googlecode.d2j.reader.Op.INVOKE_STATIC;
+import static com.googlecode.d2j.reader.Op.MOVE_EXCEPTION;
+import static com.googlecode.d2j.reader.Op.MOVE_RESULT_OBJECT;
+import static com.googlecode.d2j.reader.Op.NEW_INSTANCE;
+import static com.googlecode.d2j.reader.Op.RETURN_OBJECT;
+import static com.googlecode.d2j.reader.Op.THROW;
 
 @RunWith(DexTranslatorRunner.class)
 public class I121Test {
 
     @Test
     public static void i121(DexClassVisitor cv) {
-        DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "a", new String[] {
-                "Ljava/lang/String;", "Ljava/lang/String;" }, "Ljava/lang/String;"));
+        DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "a", new String[]{
+                "Ljava/lang/String;", "Ljava/lang/String;"}, "Ljava/lang/String;"));
         DexCodeVisitor code = mv.visitCode();
         int p0 = 2;
         int p1 = 3;
@@ -30,8 +40,8 @@ public class I121Test {
         DexLabel catch_a = new DexLabel();
         DexLabel goto_2 = new DexLabel();
 
-        code.visitTryCatch(try_start_2, try_end_9, new DexLabel[] { catch_a },
-                new String[] { "Ljava/io/UnsupportedEncodingException;" });
+        code.visitTryCatch(try_start_2, try_end_9, new DexLabel[]{catch_a},
+                new String[]{"Ljava/io/UnsupportedEncodingException;"});
 
         code.visitRegister(4);
 
@@ -40,8 +50,8 @@ public class I121Test {
         code.visitLabel(goto_2);
         code.visitLabel(try_start_2);
 
-        code.visitMethodStmt(INVOKE_STATIC, new int[] { p0, p1 }, new Method("Ljava/net/URLEncoder;", "encode",
-                new String[] { "Ljava/lang/String;", "Ljava/lang/String;" }, "Ljava/lang/String;"));
+        code.visitMethodStmt(INVOKE_STATIC, new int[]{p0, p1}, new Method("Ljava/net/URLEncoder;", "encode",
+                new String[]{"Ljava/lang/String;", "Ljava/lang/String;"}, "Ljava/lang/String;"));
         code.visitStmt1R(MOVE_RESULT_OBJECT, v0);
         code.visitStmt1R(RETURN_OBJECT, v0);
         code.visitLabel(cond_7);
@@ -52,8 +62,8 @@ public class I121Test {
         code.visitLabel(catch_a);
         code.visitStmt1R(MOVE_EXCEPTION, v0);
         code.visitTypeStmt(NEW_INSTANCE, v1, -1, "Ljava/lang/IllegalArgumentException;");
-        code.visitMethodStmt(INVOKE_DIRECT, new int[] { v1, v0 }, new Method("Ljava/lang/IllegalArgumentException;",
-                "<init>", new String[] { "Ljava/lang/Throwable;" }, "V"));
+        code.visitMethodStmt(INVOKE_DIRECT, new int[]{v1, v0}, new Method("Ljava/lang/IllegalArgumentException;",
+                "<init>", new String[]{"Ljava/lang/Throwable;"}, "V"));
         code.visitStmt1R(THROW, v1);
         code.visitEnd();
         mv.visitEnd();

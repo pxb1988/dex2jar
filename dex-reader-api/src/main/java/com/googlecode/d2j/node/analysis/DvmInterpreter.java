@@ -1,24 +1,21 @@
 package com.googlecode.d2j.node.analysis;
 
 import com.googlecode.d2j.node.insn.DexStmtNode;
-
 import java.util.List;
 
 public abstract class DvmInterpreter<V> {
-    
+
     /**
      * CONST*
      * SGET*
      * NEW
-     *
-     *
      */
-    public abstract V newOperation(DexStmtNode insn) ;
+    public abstract V newOperation(DexStmtNode insn);
 
     /**
      * MOVE*
      */
-    public abstract V copyOperation(DexStmtNode insn, V value) ;
+    public abstract V copyOperation(DexStmtNode insn, V value);
 
     /**
      * NEG*
@@ -30,14 +27,12 @@ public abstract class DvmInterpreter<V> {
      * MONITOR_*
      * CHECK_CAST
      * INSTANCEOF
-
      */
     public abstract V unaryOperation(DexStmtNode insn, V value);
 
     /**
      * AGET*
      * IPUT*
-     *
      */
     public abstract V binaryOperation(DexStmtNode insn, V value1, V value2);
 
@@ -45,7 +40,7 @@ public abstract class DvmInterpreter<V> {
      * APUT
      */
     public abstract V ternaryOperation(DexStmtNode insn, V value1,
-                                       V value2, V value3) ;
+                                       V value2, V value3);
 
     /**
      * INVOKE*
@@ -53,7 +48,7 @@ public abstract class DvmInterpreter<V> {
      * FilledNewArrayStmt
      */
     public abstract V naryOperation(DexStmtNode insn,
-                                    List<? extends V> values) ;
+                                    List<? extends V> values);
 
     /**
      * RETURN*

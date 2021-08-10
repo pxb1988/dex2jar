@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,27 +15,25 @@
  */
 package com.googlecode.dex2jar.ir.stmt;
 
-import java.util.Set;
-import java.util.TreeSet;
-
 import com.googlecode.dex2jar.ir.ET;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.expr.Value;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Represent a statement
- * 
- * @see ST
- * @see ET
- * 
+ *
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
+ * @see ST
+ * @see ET
  */
 public abstract class Stmt {
 
     /**
      * Represent a statement with no argument
-     * 
+     *
      * @see ET#E0
      */
     public static abstract class E0Stmt extends Stmt {
@@ -47,7 +45,7 @@ public abstract class Stmt {
 
     /**
      * Represent a statement with 1 argument
-     * 
+     *
      * @see ET#E1
      */
     public static abstract class E1Stmt extends Stmt {
@@ -72,7 +70,7 @@ public abstract class Stmt {
 
     /**
      * Represent a statement with 2 arguments
-     * 
+     *
      * @see ET#E2
      */
     public static abstract class E2Stmt extends Stmt {
@@ -110,22 +108,23 @@ public abstract class Stmt {
     public static final int CAN_BRNANCH = 1 << 1;
     public static final int CAN_SWITCH = 1 << 2;
     public static final int CAN_THROW = 1 << 3;
-    public static final int MAY_THROW=1<<4;
+    public static final int MAY_THROW = 1 << 4;
 
     /**
      * Statement Type
-     * 
      */
     public static enum ST {
 
         LOCAL_START(CAN_CONTINUE), // same as ASSIGN but left must keep and must be local
         LOCAL_END(CAN_CONTINUE), // must keep and op must be local
-        ASSIGN(CAN_CONTINUE | MAY_THROW), IDENTITY(CAN_CONTINUE), LABEL(CAN_CONTINUE), LOCK(CAN_CONTINUE | CAN_THROW), NOP(
+        ASSIGN(CAN_CONTINUE | MAY_THROW), IDENTITY(CAN_CONTINUE), LABEL(CAN_CONTINUE), LOCK(CAN_CONTINUE | CAN_THROW)
+        , NOP(
                 CAN_CONTINUE), UNLOCK(CAN_CONTINUE | CAN_THROW), VOID_INVOKE(CAN_CONTINUE | CAN_THROW), FILL_ARRAY_DATA(
                 CAN_CONTINUE | CAN_THROW), //
         RETURN(MAY_THROW), RETURN_VOID(0), THROW(CAN_THROW), //
         GOTO(CAN_BRNANCH), IF(CAN_CONTINUE | CAN_BRNANCH | MAY_THROW), //
-        LOOKUP_SWITCH(CAN_SWITCH | MAY_THROW), TABLE_SWITCH(CAN_SWITCH | MAY_THROW), ;
+        LOOKUP_SWITCH(CAN_SWITCH | MAY_THROW), TABLE_SWITCH(CAN_SWITCH | MAY_THROW),
+        ;
         private int config;
 
         ST(int config) {
@@ -207,11 +206,8 @@ public abstract class Stmt {
     public final ST st;
 
     /**
-     * 
-     * @param st
-     *            Statement Type
-     * @param et
-     *            The number of argument
+     * @param st Statement Type
+     * @param et The number of argument
      */
     protected Stmt(ST st, ET et) {
         this.st = st;
@@ -221,7 +217,6 @@ public abstract class Stmt {
     public abstract Stmt clone(LabelAndLocalMapper mapper);
 
     /**
-     * 
      * @return Next statement in {@link StmtList}, null if it is the last statement in {@link StmtList}
      */
     public final Stmt getNext() {
@@ -245,7 +240,6 @@ public abstract class Stmt {
     }
 
     /**
-     * 
      * @return Previous statement in {@link StmtList}, null if it is the first statement in {@link StmtList}
      */
     public final Stmt getPre() {

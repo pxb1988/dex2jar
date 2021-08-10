@@ -2,20 +2,19 @@ package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.d2j.tools.jar.ClassInfo.MemberInfo;
 import com.googlecode.dex2jar.tools.Constants;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import static com.googlecode.d2j.util.AccUtils.isBridge;
 import static com.googlecode.d2j.util.AccUtils.isSynthetic;
 
 public class ScanBridgeAdapter extends ClassVisitor implements Opcodes {
 
-    private Map<String, MemberInfo> bridge = new HashMap<String, MemberInfo>();
+    private Map<String, MemberInfo> bridge = new HashMap<>();
 
     public ScanBridgeAdapter(ClassVisitor cv) {
         super(Constants.ASM_VERSION, cv);

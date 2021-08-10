@@ -1,7 +1,6 @@
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,8 +15,7 @@ import java.util.Set;
 public class WebApp {
 
     /**
-     * @param args
-     * @throws IOException
+     *
      */
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
@@ -42,7 +40,7 @@ public class WebApp {
         final File lib = new File(webApp, "WEB-INF/lib");
         Path tmpLib = new File(webApp, "WEB-INF/Nlib").toPath();
 
-        final Set<String> ignores = new HashSet<String>();
+        final Set<String> ignores = new HashSet<>();
         if (jarIgnore != null && Files.exists(jarIgnore)) {
             ignores.addAll(Files.readAllLines(jarIgnore, StandardCharsets.UTF_8));
         } else {

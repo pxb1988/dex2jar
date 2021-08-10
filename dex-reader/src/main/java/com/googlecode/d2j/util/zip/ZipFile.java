@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,10 @@
  */
 package com.googlecode.d2j.util.zip;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -29,13 +32,12 @@ import java.util.zip.ZipException;
 
 /**
  * This is code is get from Android 4.4.2 intent to read as more zip as possible
- * 
+ * <p>
  * Ignore GPBF_ENCRYPTED_FLAG
- * 
+ * <p>
  * Allow duplicate ZipEntry
- * 
+ * <p>
  * Allow Nul byte in ZipEntry name
- * 
  */
 public class ZipFile implements AutoCloseable, ZipConstants {
     /**
@@ -93,9 +95,8 @@ public class ZipFile implements AutoCloseable, ZipConstants {
     /**
      * Returns this file's comment, or null if it doesn't have one. See {@link java.util.zip.ZipOutputStream#setComment}
      * .
-     * 
-     * @throws IllegalStateException
-     *             if this zip file has been closed.
+     *
+     * @throws IllegalStateException if this zip file has been closed.
      * @since 1.7
      */
     public String getComment() {
@@ -131,16 +132,11 @@ public class ZipFile implements AutoCloseable, ZipConstants {
 
     /**
      * Returns an input stream on the data of the specified {@code android.ZipEntry}.
-     * 
-     * @param entry
-     *            the android.ZipEntry.
+     *
+     * @param entry the android.ZipEntry.
      * @return an input stream of the data contained in the {@code android.ZipEntry}.
-     * @throws java.io.IOException
-     *             if an {@code IOException} occurs.
-     * @throws IllegalStateException
-     *             if this zip file has been closed.
      */
-    public InputStream getInputStream(ZipEntry entry) throws IOException {
+    public InputStream getInputStream(ZipEntry entry) {
         long entryDataStart = getEntryDataStart(entry);
         ByteBuffer is = (ByteBuffer) raf.duplicate().position((int) entryDataStart);
 
@@ -161,10 +157,9 @@ public class ZipFile implements AutoCloseable, ZipConstants {
 
     /**
      * Returns the number of {@code ZipEntries} in this {@code android.ZipFile}.
-     * 
+     *
      * @return the number of entries in this file.
-     * @throws IllegalStateException
-     *             if this zip file has been closed.
+     * @throws IllegalStateException if this zip file has been closed.
      */
     public int size() {
         return entries.size();
@@ -172,12 +167,12 @@ public class ZipFile implements AutoCloseable, ZipConstants {
 
     /**
      * Find the central directory and read the contents.
-     * 
+     *
      * <p>
      * The central directory can be followed by a variable-length comment field, so we have to scan through it
      * backwards. The comment is at most 64K, plus we have 18 bytes for the end-of-central-dir stuff itself, plus
      * apparently sometimes people throw random junk on the end just for the fun of it.
-     * 
+     *
      * <p>
      * This is all a little wobbly. If the wrong value ends up in the EOCD area, we're hosed. This appears to be the way
      * that everybody handles it though, so we're in good company if this fails.
@@ -272,7 +267,7 @@ public class ZipFile implements AutoCloseable, ZipConstants {
 
     @Override
     public void close() throws IOException {
-        if(file!=null){
+        if (file != null) {
             file.close();
         }
     }
@@ -318,7 +313,7 @@ public class ZipFile implements AutoCloseable, ZipConstants {
         }
 
         @Override
-        public int read() throws IOException {
+        public int read() {
             if (!buf.hasRemaining()) {
                 return -1;
             }
@@ -326,7 +321,7 @@ public class ZipFile implements AutoCloseable, ZipConstants {
         }
 
         @Override
-        public int read(byte[] b, int off, int len) throws IOException {
+        public int read(byte[] b, int off, int len) {
             if (!buf.hasRemaining()) {
                 return -1;
             }

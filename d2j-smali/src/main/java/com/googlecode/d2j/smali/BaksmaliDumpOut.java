@@ -17,7 +17,6 @@
 package com.googlecode.d2j.smali;
 
 import com.googlecode.d2j.util.Out;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 

@@ -16,9 +16,8 @@
  */
 package org.objectweb.asm;
 
-import org.objectweb.asm.tree.MethodNode;
-
 import java.lang.reflect.Field;
+import org.objectweb.asm.tree.MethodNode;
 
 public class AsmBridge {
     public static MethodVisitor searchMethodWriter(MethodVisitor methodVisitor) {
@@ -74,8 +73,7 @@ public class AsmBridge {
                     }
                 }
             }
-        }
-        catch (IllegalAccessException | NoSuchFieldException exc) {
+        } catch (IllegalAccessException | NoSuchFieldException exc) {
             exc.printStackTrace();
         }
     }
@@ -96,8 +94,7 @@ public class AsmBridge {
 
             methodNode.accept(classWriter);
             removeMethodWriter(methodWriter);
-        }
-        catch (IllegalAccessException | NoSuchFieldException exc) {
+        } catch (IllegalAccessException | NoSuchFieldException exc) {
             exc.printStackTrace();
         }
     }

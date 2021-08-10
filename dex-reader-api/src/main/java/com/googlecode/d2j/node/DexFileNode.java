@@ -19,7 +19,6 @@ package com.googlecode.d2j.node;
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexFileVisitor;
-
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,11 +1,6 @@
 package com.googlecode.dex2jar.tools;
 
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,9 +9,13 @@ import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
 public class ClassVersionSwitch {
-    static final int jVersions[] = new int[]{
+    static final int[] jVersions = new int[]{
             0,
             Opcodes.V1_1,
             Opcodes.V1_2,
@@ -54,11 +53,12 @@ public class ClassVersionSwitch {
                             ClassWriter cw = new ClassWriter(0);
                             ClassVisitor cv = new ClassVisitor(Constants.ASM_VERSION, cw) {
                                 @Override
-                                public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                                public void visit(int version, int access, String name, String signature,
+                                                  String superName, String[] interfaces) {
                                     super.visit(jVersion, access, name, signature, superName, interfaces);
                                 }
                             };
-                            cr.accept(cv, ClassReader.EXPAND_FRAMES|ClassReader.SKIP_FRAMES);
+                            cr.accept(cv, ClassReader.EXPAND_FRAMES | ClassReader.SKIP_FRAMES);
                             zos.write(cw.toByteArray());
                         } else {
                             for (int c = is.read(buff); c > 0; c = is.read(buff)) {

@@ -1,8 +1,6 @@
 package com.googlecode.dex2jar.test;
 
 import com.googlecode.d2j.DexConstants;
-import org.junit.Test;
-
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
@@ -10,6 +8,7 @@ import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -20,7 +19,7 @@ public class I63Test implements DexConstants {
 
     @Test
     public static void i63(DexClassVisitor cv) {
-        DexMethodVisitor mv = cv.visitMethod(ACC_STATIC, new Method("La;", "b", new String[] {}, "V"));
+        DexMethodVisitor mv = cv.visitMethod(ACC_STATIC, new Method("La;", "b", new String[]{}, "V"));
         if (mv != null) {
             DexCodeVisitor code = mv.visitCode();
             if (code != null) {
@@ -32,7 +31,7 @@ public class I63Test implements DexConstants {
                 code.visitLabel(L2);
                 code.visitStmt0R(Op.RETURN_VOID);
                 code.visitEnd();
-                code.visitTryCatch(L1, L2, new DexLabel[] { L2 }, new String[] { "La;" });
+                code.visitTryCatch(L1, L2, new DexLabel[]{L2}, new String[]{"La;"});
             }
             mv.visitEnd();
         }

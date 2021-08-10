@@ -1,17 +1,19 @@
 package com.googlecode.dex2jar.ir.test;
 
-import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.googlecode.dex2jar.ir.stmt.*;
-import org.junit.After;
-import org.junit.Before;
-
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Transformer;
+import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.After;
+import org.junit.Before;
 
 public abstract class BaseTransformerTest<T extends Transformer> {
 
@@ -76,7 +78,7 @@ public abstract class BaseTransformerTest<T extends Transformer> {
         }
         return phi;
     }
-    
+
     public void initMethod(boolean isStatic, String ret, String... args) {
         method.ret = ret;
         method.args = args;

@@ -1,18 +1,31 @@
 package com.googlecode.dex2jar.ir.test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
+import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
 import com.googlecode.dex2jar.ir.ts.SSATransformer;
+import org.junit.Assert;
+import org.junit.Test;
+
+import static com.googlecode.dex2jar.ir.expr.Exprs.nExceptionRef;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNull;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.expr.Exprs.niGt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.njGt;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nLabel;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 
 public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
 
@@ -82,7 +95,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         LabelStmt L2 = newLabel();
         LabelStmt L3 = newLabel();
         LabelStmt L4 = newLabel();
-        method.traps.add(new Trap(L1, L2, new LabelStmt[] { L3 }, new String[] { exType }));
+        method.traps.add(new Trap(L1, L2, new LabelStmt[]{L3}, new String[]{exType}));
 
         Local b = addLocal("a");
         Local ex = addLocal("ex");
@@ -103,7 +116,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         assertPhiStmt(L4);
     }
 
-    public void transform(){
+    public void transform() {
         super.transform();
         new RemoveLocalFromSSA().transform(method);
     }
@@ -130,7 +143,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         addStmt(L2);
         addStmt(Stmts.nIf(Exprs.niEq(nInt(1), nInt(2)), L3));
         addStmt(Stmts.nAssign(c,
-                Exprs.nInvokeStatic(new Value[] { b }, "Ljava/lang/String;", "someMethod", new String[] { "I" }, "V")));
+                Exprs.nInvokeStatic(new Value[]{b}, "Ljava/lang/String;", "someMethod", new String[]{"I"}, "V")));
         addStmt(Stmts.nReturnVoid());
         addStmt(L3);
 
@@ -202,14 +215,14 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
 
     /**
      * test for
-     * 
+     *
      * <pre>
      * if (xxx) {
      *     a = 1;
      * } else {
      *     a = 2;
      * }// phi here
-     * 
+     *
      * if (xxx) {
      *     if (xxx) {
      *         a = 3;
@@ -283,7 +296,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
 
     /**
      * for
-     * 
+     *
      * <pre>
      *     a=12;
      *     b=34;
@@ -292,9 +305,8 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
      *     c=b;
      *     L1:
      *     return c;
-     * 
+     *
      * </pre>
-     * 
      */
     @Test
     public void test11NotDeleteAssignWherePhiIsConfused() {

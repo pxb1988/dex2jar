@@ -3,7 +3,7 @@ package com.googlecode.dex2jar.ir;
 public class TransformerException extends RuntimeException {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 

@@ -16,14 +16,12 @@
  */
 package com.googlecode.d2j.dex;
 
+import com.googlecode.d2j.DexException;
+import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.dex2jar.tools.Constants;
 import org.objectweb.asm.AsmBridge;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
-
-import com.googlecode.d2j.DexException;
-import com.googlecode.d2j.node.DexMethodNode;
 
 public class ExDex2Asm extends Dex2Asm {
     final protected DexExceptionHandler exceptionHandler;

@@ -20,8 +20,16 @@ import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.dex.writer.DexWriteException;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+import java.util.TreeMap;
 
 public class ConstPool {
     public List<EncodedArrayItem> encodedArrayItems = new ArrayList<>();
@@ -204,7 +212,8 @@ public class ConstPool {
     }
 
     public MethodIdItem uniqMethod(Method method) {
-        MethodIdItem key = new MethodIdItem(uniqType(method.getOwner()), uniqString(method.getName()), uniqProto(method));
+        MethodIdItem key = new MethodIdItem(uniqType(method.getOwner()), uniqString(method.getName()),
+                uniqProto(method));
         return uniqMethod(key);
     }
 
@@ -280,6 +289,7 @@ public class ConstPool {
     }
 
     private static final TypeListItem ZERO_SIZE_TYPE_LIST = new TypeListItem(new ArrayList<>());
+
     static {
         // make sure the offset is 0
         ZERO_SIZE_TYPE_LIST.offset = 0;

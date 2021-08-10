@@ -18,8 +18,9 @@ package com.googlecode.d2j.util.zip;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.zip.*;
+import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Auto calc size/crc for STORED

@@ -16,8 +16,6 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
-import java.util.*;
-
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
@@ -25,6 +23,16 @@ import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class RemoveLocalFromSSA extends StatedTransformer {
     static <T extends Value> void replaceAssign(List<AssignStmt> assignStmtList, Map<Local, T> toReplace) {
@@ -210,7 +218,7 @@ public class RemoveLocalFromSSA extends StatedTransformer {
             changed = false;
             for (Map.Entry<Local, T> e : set) {
                 T b = e.getValue();
-                if(b instanceof  Local) {
+                if (b instanceof Local) {
                     T n = toReplace.get(b);
                     if (n != null && b != n) {
                         changed = true;

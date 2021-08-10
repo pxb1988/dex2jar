@@ -3,16 +3,25 @@ package com.googlecode.dex2jar.ir.ts.array;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.StmtTraveler;
-import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.expr.ArrayExpr;
+import com.googlecode.dex2jar.ir.expr.Constant;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Cfg;
 import com.googlecode.dex2jar.ir.ts.StatedTransformer;
-
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * require SSA, element index are const
@@ -254,17 +263,17 @@ public class ArrayElementTransformer extends StatedTransformer {
                     }
                 } else {
                     switch (stmt.et) {
-                        case E0:
-                            break;
-                        case E1:
-                            use(stmt.getOp());
-                            break;
-                        case E2:
-                            use(stmt.getOp1());
-                            use(stmt.getOp2());
-                            break;
-                        case En:
-                            throw new RuntimeException();
+                    case E0:
+                        break;
+                    case E1:
+                        use(stmt.getOp());
+                        break;
+                    case E2:
+                        use(stmt.getOp1());
+                        use(stmt.getOp2());
+                        break;
+                    case En:
+                        throw new RuntimeException();
                     }
                 }
 
@@ -273,30 +282,30 @@ public class ArrayElementTransformer extends StatedTransformer {
 
             private void use(Value v) {
                 switch (v.et) {
-                    case E0:
-                        break;
-                    case E1:
-                        use(v.getOp());
-                        break;
-                    case E2:
-                        Value op1 = v.getOp1();
-                        Value op2 = v.getOp2();
-                        use(op1);
-                        use(op2);
-                        if (v.vt == Value.VT.ARRAY) {
-                            if (op1.vt == Value.VT.LOCAL && (op2.vt == Value.VT.LOCAL || op2.vt == Value.VT.CONSTANT)) {
-                                Local local = (Local) op1;
-                                if (local._ls_index > 0) {
-                                    used.add(currentStmt);
-                                }
+                case E0:
+                    break;
+                case E1:
+                    use(v.getOp());
+                    break;
+                case E2:
+                    Value op1 = v.getOp1();
+                    Value op2 = v.getOp2();
+                    use(op1);
+                    use(op2);
+                    if (v.vt == Value.VT.ARRAY) {
+                        if (op1.vt == Value.VT.LOCAL && (op2.vt == Value.VT.LOCAL || op2.vt == Value.VT.CONSTANT)) {
+                            Local local = (Local) op1;
+                            if (local._ls_index > 0) {
+                                used.add(currentStmt);
                             }
                         }
-                        break;
-                    case En:
-                        for (Value op : v.getOps()) {
-                            use(op);
-                        }
-                        break;
+                    }
+                    break;
+                case En:
+                    for (Value op : v.getOps()) {
+                        use(op);
+                    }
+                    break;
                 }
             }
         });

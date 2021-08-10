@@ -2,26 +2,45 @@ package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
 import com.googlecode.dex2jar.tools.Constants;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.tree.*;
-
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 
-import static com.googlecode.d2j.util.AccUtils.*;
-import static org.objectweb.asm.Opcodes.*;
+import static com.googlecode.d2j.util.AccUtils.isEnum;
+import static com.googlecode.d2j.util.AccUtils.isFinal;
+import static com.googlecode.d2j.util.AccUtils.isPrivate;
+import static com.googlecode.d2j.util.AccUtils.isProtected;
+import static com.googlecode.d2j.util.AccUtils.isPublic;
+import static com.googlecode.d2j.util.AccUtils.isStatic;
+import static com.googlecode.d2j.util.AccUtils.isSynthetic;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.LDC;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.PUTSTATIC;
 
 public class InitOut {
-    private static final Set<String> keywords = new HashSet<String>(Arrays.asList("abstract", "continue", "for", "new",
+    private static final Set<String> keywords = new HashSet<>(Arrays.asList("abstract", "continue", "for", "new",
             "switch", "assert", "default", "goto", "package", "synchronized", "boolean", "do", "if", "private", "this",
             "break", "double", "implements", "protected", "throw", "byte", "else", "import", "public", "throws",
             "case", "enum", "instanceof", "return", "transient", "catch", "extends", "int", "short", "try", "char",
@@ -156,7 +175,8 @@ public class InitOut {
             }
 
             @Override
-            public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+                                             String[] exceptions) {
                 clz.addMethod(access, name, desc);
                 if (initEnumNames && isEnum && name.equals("<clinit>")) {
                     final String thisDesc = "L" + clz.name + ";";
@@ -194,7 +214,7 @@ public class InitOut {
                                         } else {
                                             status = 0;
                                         }
-                                    } else if (status == 3) {  //find LDC
+                                    } else {  //find LDC
                                         if (p.getOpcode() == PUTSTATIC) {
                                             FieldInsnNode fin = (FieldInsnNode) p;
                                             if (fin.owner.equals(thisDesc) && fin.desc.equals(thisDesc)) {
@@ -254,20 +274,21 @@ public class InitOut {
             }
 
             @Override
-            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+            public void visit(int version, int access, String name, String signature, String superName,
+                              String[] interfaces) {
                 this.clz = new ClassInfo(name);
                 isEnum = isEnum(access);
             }
         };
 
-      try(FileSystem fs = BaseCmd.openZip(file)) {
-          BaseCmd.walkJarOrDir(fs.getPath("/"), (file1, relative) -> {
-              if (relative.endsWith(".class")) {
-                  byte[] data = Files.readAllBytes(file1);
-                  new ClassReader(data).accept(collectVisitor, ClassReader.EXPAND_FRAMES);
-              }
-          });
-      }
+        try (FileSystem fs = BaseCmd.openZip(file)) {
+            BaseCmd.walkJarOrDir(fs.getPath("/"), (file1, relative) -> {
+                if (relative.endsWith(".class")) {
+                    byte[] data = Files.readAllBytes(file1);
+                    new ClassReader(data).accept(collectVisitor, ClassReader.EXPAND_FRAMES);
+                }
+            });
+        }
         return clzList;
     }
 
@@ -316,7 +337,7 @@ public class InitOut {
         list.addAll(pkgMap);
         list.addAll(clzMap);
         list.addAll(memberMap);
-        Files.write(config,list, StandardCharsets.UTF_8);
+        Files.write(config, list, StandardCharsets.UTF_8);
     }
 
     private void transformerMember(String owner, List<MemberInfo> members) {

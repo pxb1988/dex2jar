@@ -11,6 +11,7 @@ public interface MethodInvocation {
     String getMethodDesc();
 
     Object getThis();
+
     // @Nullale
     Object[] getArguments();
 }

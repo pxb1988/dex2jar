@@ -5,7 +5,7 @@ configurations {
 dependencies {
     implementation project(':dex-tools')
     jarjar 'com.googlecode.jarjar:jarjar:1.3'
-    proguard 'net.sf.proguard:proguard-base:6.2.2'
+    proguard 'com.guardsquare:proguard-base:7.1.1'
 }
 task allinone(type: Jar, dependsOn: jar) {
     archiveFileName = 'all-in-one.jar'

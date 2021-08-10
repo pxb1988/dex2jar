@@ -7,8 +7,12 @@ import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class AggTransformer extends StatedTransformer {
     @Override
@@ -35,14 +39,14 @@ public class AggTransformer extends StatedTransformer {
             Stmt next = stmt.getNext();
 
             switch (next.st) {
-                case LABEL:
-                case GOTO:
-                case IDENTITY:
-                case FILL_ARRAY_DATA:
-                case NOP:
-                case RETURN_VOID:
-                    continue;
-                default:
+            case LABEL:
+            case GOTO:
+            case IDENTITY:
+            case FILL_ARRAY_DATA:
+            case NOP:
+            case RETURN_VOID:
+                continue;
+            default:
             }
             try {
                 localCanExecFirst(local, next);
@@ -76,34 +80,34 @@ public class AggTransformer extends StatedTransformer {
     private static void localCanExecFirst(Local local, Stmt target) throws MergeResult {
 
         switch (target.et) {
-            case E0: // impossible
-            case En: // no EnStmt yet
-                throw FAIL;
-            case E1:
-                localCanExecFirst(local, target.getOp());
+        case E0: // impossible
+        case En: // no EnStmt yet
+            throw FAIL;
+        case E1:
+            localCanExecFirst(local, target.getOp());
+            break;
+        case E2:
+            AssignStmt as = (AssignStmt) target;
+            Value op1 = as.getOp1();
+            Value op2 = as.getOp2();
+            switch (op1.vt) {
+            case LOCAL:
+                localCanExecFirst(local, op2);
                 break;
-            case E2:
-                AssignStmt as = (AssignStmt) target;
-                Value op1 = as.getOp1();
-                Value op2 = as.getOp2();
-                switch (op1.vt) {
-                    case LOCAL:
-                        localCanExecFirst(local, op2);
-                        break;
-                    case FIELD:
-                        localCanExecFirst(local, op1.getOp());
-                        // pass through
-                    case STATIC_FIELD:
-                        localCanExecFirst(local, op2);
-                        break;
-                    case ARRAY:
-                        localCanExecFirst(local, op1.getOp1());
-                        localCanExecFirst(local, op1.getOp2());
-                        localCanExecFirst(local, op2);
-                        break;
-                    default:
-                }
+            case FIELD:
+                localCanExecFirst(local, op1.getOp());
+                // pass through
+            case STATIC_FIELD:
+                localCanExecFirst(local, op2);
                 break;
+            case ARRAY:
+                localCanExecFirst(local, op1.getOp1());
+                localCanExecFirst(local, op1.getOp2());
+                localCanExecFirst(local, op2);
+                break;
+            default:
+            }
+            break;
         }
         throw FAIL;
     }
@@ -116,24 +120,24 @@ public class AggTransformer extends StatedTransformer {
      */
     private static void localCanExecFirst(Local local, Value op) throws MergeResult {
         switch (op.et) {
-            case E0:
-                if (local.vt == Value.VT.LOCAL) {
-                    if (op == local) {
-                        throw SUCCESS;
-                    }
+        case E0:
+            if (local.vt == Value.VT.LOCAL) {
+                if (op == local) {
+                    throw SUCCESS;
                 }
-                break;
-            case E1:
-                localCanExecFirst(local, op.getOp());
-                break;
-            case E2:
-                localCanExecFirst(local, op.getOp1());
-                localCanExecFirst(local, op.getOp2());
-                break;
-            case En:
-                for (Value v : op.getOps()) {
-                    localCanExecFirst(local, v);
-                }
+            }
+            break;
+        case E1:
+            localCanExecFirst(local, op.getOp());
+            break;
+        case E2:
+            localCanExecFirst(local, op.getOp1());
+            localCanExecFirst(local, op.getOp2());
+            break;
+        case En:
+            for (Value v : op.getOps()) {
+                localCanExecFirst(local, v);
+            }
         }
 
         boolean shouldExclude = false;
@@ -272,63 +276,53 @@ public class AggTransformer extends StatedTransformer {
 
     static boolean isLocationInsensitive(Value.VT vt) {
         switch (vt) {
-            case LOCAL:
-            case CONSTANT:
-                // +-*/
-            case ADD:
-            case SUB:
-            case MUL:
-                // case DIV:   // div is not
-            case REM:
-                // logical
-            case AND:
-            case OR:
-            case XOR:
+        case LOCAL:
+        case CONSTANT:
+            // +-*/
+        case ADD:
+        case SUB:
+        case MUL:
+            // case DIV:   // div is not
+        case REM:
+            // logical
+        case AND:
+        case OR:
+        case XOR:
 
-            case SHL:
-            case SHR:
-            case USHR:
-                //cmp
-            case GE:
-            case GT:
-            case LE:
-            case LT:
-            case EQ:
-            case NE:
-            case DCMPG:
-            case DCMPL:
-            case LCMP:
-            case FCMPG:
-            case FCMPL:
-            case NOT:
-                return true;
-            default:
+        case SHL:
+        case SHR:
+        case USHR:
+            //cmp
+        case GE:
+        case GT:
+        case LE:
+        case LT:
+        case EQ:
+        case NE:
+        case DCMPG:
+        case DCMPL:
+        case LCMP:
+        case FCMPG:
+        case FCMPL:
+        case NOT:
+            return true;
+        default:
         }
         return false;
     }
 
     static boolean isLocationInsensitive(Value op) {
         switch (op.et) {
-            case E0:
-                return isLocationInsensitive(op.vt);
-            case E1:
-                return isLocationInsensitive(op.vt) && isLocationInsensitive(op.getOp());
-            case E2:
-                return isLocationInsensitive(op.vt) && isLocationInsensitive(op.getOp1()) && isLocationInsensitive(op.getOp2());
-            case En:
-                if (op.vt == Value.VT.INVOKE_STATIC) {
-                    InvokeExpr ie = (InvokeExpr) op;
-                    if (ie.getName().equals("valueOf") && ie.getOwner().startsWith("Ljava/lang/") && ie.getArgs().length == 1 && ie.getArgs()[0].length() == 1) {
-                        for (Value v : op.getOps()) {
-                            if (!isLocationInsensitive(v)) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-                    return false;
-                }
-                if (isLocationInsensitive(op.vt)) {
+        case E0:
+            return isLocationInsensitive(op.vt);
+        case E1:
+            return isLocationInsensitive(op.vt) && isLocationInsensitive(op.getOp());
+        case E2:
+            return isLocationInsensitive(op.vt) && isLocationInsensitive(op.getOp1()) && isLocationInsensitive(op.getOp2());
+        case En:
+            if (op.vt == Value.VT.INVOKE_STATIC) {
+                InvokeExpr ie = (InvokeExpr) op;
+                if (ie.getName().equals("valueOf") && ie.getOwner().startsWith("Ljava/lang/") && ie.getArgs().length == 1 && ie.getArgs()[0].length() == 1) {
                     for (Value v : op.getOps()) {
                         if (!isLocationInsensitive(v)) {
                             return false;
@@ -337,6 +331,16 @@ public class AggTransformer extends StatedTransformer {
                     return true;
                 }
                 return false;
+            }
+            if (isLocationInsensitive(op.vt)) {
+                for (Value v : op.getOps()) {
+                    if (!isLocationInsensitive(v)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
         }
         return false;
     }

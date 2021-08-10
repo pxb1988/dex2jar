@@ -1,13 +1,13 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,15 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
-import org.objectweb.asm.*;
-
-@BaseCmd.Syntax(cmd = "d2j-jar-access", syntax = "[options] <jar>", desc = "add or remove class/method/field access in jar file")
+@BaseCmd.Syntax(cmd = "d2j-jar-access", syntax = "[options] <jar>", desc = "add or remove class/method/field access "
+        + "in jar file")
 public class JarAccessCmd extends BaseCmd implements Opcodes {
     public static void main(String... args) {
         new JarAccessCmd().doMain(args);
@@ -32,7 +37,8 @@ public class JarAccessCmd extends BaseCmd implements Opcodes {
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
-    @Opt(opt = "o", longOpt = "output", description = "output dir of .j files, default is $current_dir/[jar-name]-access.jar", argName = "out-dir")
+    @Opt(opt = "o", longOpt = "output", description = "output dir of .j files, default is "
+            + "$current_dir/[jar-name]-access.jar", argName = "out-dir")
     private Path output;
 
     @Opt(opt = "rd", longOpt = "remove-debug", hasArg = false, description = "remove debug info")
@@ -169,7 +175,7 @@ public class JarAccessCmd extends BaseCmd implements Opcodes {
 
                             @Override
                             public void visit(int version, int access, String name, String signature, String superName,
-                                    String[] interfaces) {
+                                              String[] interfaces) {
                                 int na = (access & rc) | ac;
                                 if (access != na) {
                                     System.out.println("c " + name);
@@ -179,7 +185,7 @@ public class JarAccessCmd extends BaseCmd implements Opcodes {
 
                             @Override
                             public FieldVisitor visitField(int access, String name, String desc, String signature,
-                                    Object value) {
+                                                           Object value) {
                                 int na = (access & rf) | af;
                                 if (na != access) {
                                     System.out.println("f " + r.getClassName() + "." + name);
@@ -189,7 +195,7 @@ public class JarAccessCmd extends BaseCmd implements Opcodes {
 
                             @Override
                             public MethodVisitor visitMethod(int access, String name, String desc, String signature,
-                                    String[] exceptions) {
+                                                             String[] exceptions) {
                                 int na = (access & rm) | am;
                                 if (na != access) {
                                     System.out.println("m " + r.getClassName() + "." + name + desc);

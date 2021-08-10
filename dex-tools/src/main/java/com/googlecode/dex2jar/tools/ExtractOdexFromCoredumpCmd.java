@@ -13,7 +13,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
-@BaseCmd.Syntax(cmd = "extract-odex-from-coredump", syntax = "<core.xxxx>", desc = "Extract odex from dalvik memery core dump")
+@BaseCmd.Syntax(cmd = "extract-odex-from-coredump", syntax = "<core.xxxx>", desc = "Extract odex from dalvik memory "
+        + "core dump")
 public class ExtractOdexFromCoredumpCmd extends BaseCmd {
     public static void main(String... args) {
         new ExtractOdexFromCoredumpCmd().doMain(args);
@@ -38,7 +39,7 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
         final int buffSize = 0x28 + 0x70;
         ByteBuffer head = ByteBuffer.allocate(buffSize).order(ByteOrder.LITTLE_ENDIAN); // odex+dex head
         for (long pos : possibleOdexs) {
-            System.err.println(String.format(">> Check for %08x", pos));
+            System.err.printf(">> Check for %08x%n", pos);
             channel.position(pos);
             head.position(0);
             int c = channel.read(head);
@@ -55,25 +56,29 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
                     int flags = head.getInt(32);
                     int checksum = head.getInt(36);
                     if (dexOffset != 0x28) {
-                        System.err.println(String.format(">>> dex offset is not 0x28"));
+                        System.err.println(">>> dex offset is not 0x28");
                     } else {
-                        int dexMagic = head.getInt(dexOffset + 0);
+                        int dexMagic = head.getInt(dexOffset);
                         int dexVersion = head.getInt(dexOffset + 4);
                         if (dexMagic != 0x0a786564 || !(dexVersion == 0x00363330 || dexVersion == 0x00353330)) {
-                            System.err.println(String.format(">>> dex magic is not dex.036 or dex.035: 0x%08x 0x%08x", dexMagic, dexVersion));
+                            System.err.printf(">>> dex magic is not dex.036 or dex.035: 0x%08x 0x%08x%n"
+                                    , dexMagic, dexVersion);
                         } else {
                             int fileSize = head.getInt(dexOffset + 32);
                             if (fileSize != dexLength) {
-                                System.err.println(String.format(">>> dex file size is same with dexLength in odex %d vs %d", fileSize, dexLength));
+                                System.err.printf(">>> dex file size is same with dexLength in odex %d"
+                                        + " vs %d%n", fileSize, dexLength);
                             } else {
                                 int endian = head.getInt(dexOffset + 40);
                                 if (endian != 0x12345678) {
-                                    System.err.println(String.format(">>> dex endian is not 0x12345678"));
+                                    System.err.println(">>> dex endian is not 0x12345678");
                                 } else {
                                     // find new dex
-                                    Path nFile = new File(String.format("%s-%02d.odex", namePrefix, dexIndex++)).toPath();
-                                    System.out.println(String.format(">>>> extract 0x%08x to %s", pos, nFile));
-                                    try (SeekableByteChannel channel2 = Files.newByteChannel(nFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);) {
+                                    Path nFile =
+                                            new File(String.format("%s-%02d.odex", namePrefix, dexIndex++)).toPath();
+                                    System.out.printf(">>>> extract 0x%08x to %s%n", pos, nFile);
+                                    try (SeekableByteChannel channel2 = Files.newByteChannel(nFile,
+                                            StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
 
                                         odexHead.rewind();
                                         odexHead.putInt(0x0a796564);// dey
@@ -129,7 +134,8 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
         }
     }
 
-    private static void copy(SeekableByteChannel channel, SeekableByteChannel channel2, ByteBuffer copyBuff, int fileSize) throws IOException {
+    private static void copy(SeekableByteChannel channel, SeekableByteChannel channel2, ByteBuffer copyBuff,
+                             int fileSize) throws IOException {
         int remain = fileSize;
 
         while (remain > 0) {
@@ -162,11 +168,11 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
                         int v4 = intBuffer.get(i + 1);
                         if (v4 == 0x00363330 || v4 == 0x00353330) {
                             possibleOdexs.add(position + 4 * i);
-                            System.err.println(String.format("> Possible %08x | %08x %08x", position + i * 4, u4, v4));
+                            System.err.printf("> Possible %08x | %08x %08x%n", position + i * 4, 0x0a796564, v4);
                         }
                     } else {
                         possibleOdexs.add(position + 4 * i);
-                        System.err.println(String.format("> Possible %08x | %08x", position + i * 4, u4));
+                        System.err.printf("> Possible %08x | %08x%n", position + i * 4, 0x0a796564);
                     }
                 }
             }

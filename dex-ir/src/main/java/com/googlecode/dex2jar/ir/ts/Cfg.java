@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,19 +15,24 @@
  */
 package com.googlecode.dex2jar.ir.ts;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.Stack;
-import java.util.TreeSet;
-
 import com.googlecode.dex2jar.ir.ET;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.expr.Value.VT;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
+import com.googlecode.dex2jar.ir.stmt.BaseSwitchStmt;
+import com.googlecode.dex2jar.ir.stmt.JumpStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
+import java.util.Collections;
+import java.util.Set;
+import java.util.Stack;
+import java.util.TreeSet;
 
 /**
  * TODO DOC
@@ -209,6 +214,7 @@ public class Cfg {
             }
         }
     }
+
     @SuppressWarnings("unchecked")
     public static <T> void dfs(StmtList stmts, FrameVisitor<T> sv) {
         if (stmts.getSize() == 0) {
@@ -244,14 +250,14 @@ public class Cfg {
             }
 
             T beforeExecFrame = (T) currentStmt.frame;
-            
+
             if (currentStmt.exceptionHandlers != null) {
                 for (LabelStmt labelStmt : currentStmt.exceptionHandlers) {
                     labelStmt.frame = sv.merge(beforeExecFrame, (T) labelStmt.frame, currentStmt, labelStmt);
                     stack.push(labelStmt);
                 }
             }
-            
+
             T afterExecFrame = sv.exec(beforeExecFrame, currentStmt);
 
             if (currentStmt.st.canSwitch()) {
@@ -278,7 +284,7 @@ public class Cfg {
 
         if (nop != null) {
             first._cfg_froms.remove(nop);
-        }      
+        }
     }
 
     private static void link(Stmt from, Stmt to) {
@@ -418,7 +424,6 @@ public class Cfg {
     }
 
     /**
-     * @param method
      * @return size of locals
      */
     public static int reIndexLocal(IrMethod method) {

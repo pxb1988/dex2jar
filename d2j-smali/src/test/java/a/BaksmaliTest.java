@@ -5,11 +5,10 @@ import com.googlecode.d2j.smali.BaksmaliDexFileVisitor;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.smali.Smali;
 import com.googlecode.dex2jar.tools.BaseCmd;
-import org.junit.Test;
-
 import java.io.File;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import org.junit.Test;
 
 public class BaksmaliTest {
 

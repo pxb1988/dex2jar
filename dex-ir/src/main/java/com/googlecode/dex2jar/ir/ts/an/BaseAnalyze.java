@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.ts.Cfg;
 import com.googlecode.dex2jar.ir.ts.Cfg.FrameVisitor;
 import com.googlecode.dex2jar.ir.ts.Cfg.TravelCallBack;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +31,7 @@ import java.util.List;
 public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisitor<T[]>, TravelCallBack {
     protected static final boolean DEBUG = false;
 
-    public List<T> aValues = new ArrayList<T>();
+    public List<T> aValues = new ArrayList<>();
     private boolean reindexLocal;
     private T[] currentFrame;
 
@@ -43,7 +42,7 @@ public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisito
     private T[] tmpFrame;
 
     public BaseAnalyze(IrMethod method) {
-        this(method,true);
+        this(method, true);
     }
 
     public BaseAnalyze(IrMethod method, boolean reindexLocal) {
@@ -98,7 +97,7 @@ public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisito
     }
 
     protected T getFromFrame(int idx) {
-        return (T) currentFrame[idx];
+        return currentFrame[idx];
     }
 
     protected T[] getFrame(Stmt stmt) {
@@ -162,7 +161,7 @@ public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisito
 
     @Override
     public Local onUse(Local local) {
-        T aValue = (T) currentFrame[local._ls_index];
+        T aValue = currentFrame[local._ls_index];
         onUseLocal(aValue, local);
         return local;
     }

@@ -8,7 +8,21 @@ import com.googlecode.d2j.node.DexCodeNode;
 import com.googlecode.d2j.node.TryCatchNode;
 import com.googlecode.d2j.node.analysis.DvmFrame;
 import com.googlecode.d2j.node.analysis.DvmInterpreter;
-import com.googlecode.d2j.node.insn.*;
+import com.googlecode.d2j.node.insn.BaseSwitchStmtNode;
+import com.googlecode.d2j.node.insn.ConstStmtNode;
+import com.googlecode.d2j.node.insn.DexLabelStmtNode;
+import com.googlecode.d2j.node.insn.DexStmtNode;
+import com.googlecode.d2j.node.insn.FieldStmtNode;
+import com.googlecode.d2j.node.insn.FillArrayDataStmtNode;
+import com.googlecode.d2j.node.insn.FilledNewArrayStmtNode;
+import com.googlecode.d2j.node.insn.JumpStmtNode;
+import com.googlecode.d2j.node.insn.MethodCustomStmtNode;
+import com.googlecode.d2j.node.insn.MethodPolymorphicStmtNode;
+import com.googlecode.d2j.node.insn.MethodStmtNode;
+import com.googlecode.d2j.node.insn.PackedSwitchStmtNode;
+import com.googlecode.d2j.node.insn.SparseSwitchStmtNode;
+import com.googlecode.d2j.node.insn.Stmt2R1NNode;
+import com.googlecode.d2j.node.insn.TypeStmtNode;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
@@ -16,12 +30,75 @@ import com.googlecode.dex2jar.ir.TypeClass;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.Stack;
+import java.util.TreeSet;
 
-import java.util.*;
-
-import static com.googlecode.dex2jar.ir.expr.Exprs.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nAdd;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nAnd;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nArrayValue;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nCast;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nCheckCast;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nDCmpg;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nDCmpl;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nDiv;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nFCmpg;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nFCmpl;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nField;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInstanceOf;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeCustom;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeInterface;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeNew;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokePolymorphic;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeSpecial;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeStatic;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeVirtual;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nLCmp;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nLength;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nLong;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nMul;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNeg;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNew;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNewArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNot;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nOr;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nRem;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nShl;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nShr;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nStaticField;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nSub;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nType;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nUshr;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nXor;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nFillArrayData;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nLock;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nLookupSwitch;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nNop;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nTableSwitch;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nThrow;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nUnLock;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
 
 public class Dex2IRConverter {
     Map<DexLabel, DexLabelStmtNode> labelMap = new HashMap<>();
@@ -312,7 +389,7 @@ public class Dex2IRConverter {
                 }
                 if (phiValues.size() > 0) {
                     phis.add(Stmts.nAssign(v.local, Exprs
-                            .nPhi(phiValues.toArray(new com.googlecode.dex2jar.ir.expr.Value[phiValues.size()]))));
+                            .nPhi(phiValues.toArray(new Value[0]))));
                     phiValues.clear();
                 }
             }
@@ -398,25 +475,25 @@ public class Dex2IRConverter {
             try {
                 if (p.op != null) {
                     switch (p.op) {
-                        case RETURN_VOID:
-                            emit(nReturnVoid());
-                            break;
-                        case GOTO:
-                        case GOTO_16:
-                        case GOTO_32:
-                            emit(nGoto(getLabel(((JumpStmtNode) p).label)));
-                            break;
-                        case NOP:
-                            emit(nNop());
-                            break;
-                        case BAD_OP:
-                            emit(nThrow(nInvokeNew(new Value[]{nString("bad dex opcode")}, new String[]{
-                                            "Ljava/lang/String;"},
-                                    "Ljava/lang/VerifyError;")));
-                            break;
-                        default:
-                            tmp.execute(p, interpreter);
-                            break;
+                    case RETURN_VOID:
+                        emit(nReturnVoid());
+                        break;
+                    case GOTO:
+                    case GOTO_16:
+                    case GOTO_32:
+                        emit(nGoto(getLabel(((JumpStmtNode) p).label)));
+                        break;
+                    case NOP:
+                        emit(nNop());
+                        break;
+                    case BAD_OP:
+                        emit(nThrow(nInvokeNew(new Value[]{nString("bad dex opcode")}, new String[]{
+                                        "Ljava/lang/String;"},
+                                "Ljava/lang/VerifyError;")));
+                        break;
+                    default:
+                        tmp.execute(p, interpreter);
+                        break;
                     }
                 }
             } catch (Exception exception) {
@@ -543,33 +620,33 @@ public class Dex2IRConverter {
             @Override
             public DvmValue newOperation(DexStmtNode insn) {
                 switch (insn.op) {
-                    case CONST:
-                    case CONST_16:
-                    case CONST_4:
-                    case CONST_HIGH16:
-                        return b(nInt((Integer) ((ConstStmtNode) insn).value));
-                    case CONST_WIDE:
-                    case CONST_WIDE_16:
-                    case CONST_WIDE_32:
-                    case CONST_WIDE_HIGH16:
-                        return b(nLong((Long) ((ConstStmtNode) insn).value));
-                    case CONST_CLASS:
-                        return b(nType((DexType) ((ConstStmtNode) insn).value));
-                    case CONST_STRING:
-                    case CONST_STRING_JUMBO:
-                        return b(nString((String) ((ConstStmtNode) insn).value));
-                    case SGET:
-                    case SGET_BOOLEAN:
-                    case SGET_BYTE:
-                    case SGET_CHAR:
-                    case SGET_OBJECT:
-                    case SGET_SHORT:
-                    case SGET_WIDE:
-                        Field field = ((FieldStmtNode) insn).field;
-                        return b(nStaticField(field.getOwner(), field.getName(), field.getType()));
-                    case NEW_INSTANCE:
-                        return b(nNew(((TypeStmtNode) insn).type));
-                    default:
+                case CONST:
+                case CONST_16:
+                case CONST_4:
+                case CONST_HIGH16:
+                    return b(nInt((Integer) ((ConstStmtNode) insn).value));
+                case CONST_WIDE:
+                case CONST_WIDE_16:
+                case CONST_WIDE_32:
+                case CONST_WIDE_HIGH16:
+                    return b(nLong((Long) ((ConstStmtNode) insn).value));
+                case CONST_CLASS:
+                    return b(nType((DexType) ((ConstStmtNode) insn).value));
+                case CONST_STRING:
+                case CONST_STRING_JUMBO:
+                    return b(nString((String) ((ConstStmtNode) insn).value));
+                case SGET:
+                case SGET_BOOLEAN:
+                case SGET_BYTE:
+                case SGET_CHAR:
+                case SGET_OBJECT:
+                case SGET_SHORT:
+                case SGET_WIDE:
+                    Field field = ((FieldStmtNode) insn).field;
+                    return b(nStaticField(field.getOwner(), field.getName(), field.getType()));
+                case NEW_INSTANCE:
+                    return b(nNew(((TypeStmtNode) insn).type));
+                default:
                 }
                 return null;
             }
@@ -591,194 +668,200 @@ public class Dex2IRConverter {
                 }
                 Local local = getLocal(value);
                 switch (insn.op) {
-                    case NOT_INT:
-                        return b(nNot(local, "I"));
-                    case NOT_LONG:
-                        return b(nNot(local, "J"));
+                case NOT_INT:
+                    return b(nNot(local, "I"));
+                case NOT_LONG:
+                    return b(nNot(local, "J"));
 
-                    case NEG_DOUBLE:
-                        return b(nNeg(local, "D"));
+                case NEG_DOUBLE:
+                    return b(nNeg(local, "D"));
 
-                    case NEG_FLOAT:
-                        return b(nNeg(local, "F"));
+                case NEG_FLOAT:
+                    return b(nNeg(local, "F"));
 
-                    case NEG_INT:
-                        return b(nNeg(local, "I"));
+                case NEG_INT:
+                    return b(nNeg(local, "I"));
 
-                    case NEG_LONG:
-                        return b(nNeg(local, "J"));
-                    case INT_TO_BYTE:
-                        return b(nCast(local, "I", "B"));
+                case NEG_LONG:
+                    return b(nNeg(local, "J"));
+                case INT_TO_BYTE:
+                    return b(nCast(local, "I", "B"));
 
-                    case INT_TO_CHAR:
-                        return b(nCast(local, "I", "C"));
+                case INT_TO_CHAR:
+                    return b(nCast(local, "I", "C"));
 
-                    case INT_TO_DOUBLE:
-                        return b(nCast(local, "I", "D"));
+                case INT_TO_DOUBLE:
+                    return b(nCast(local, "I", "D"));
 
-                    case INT_TO_FLOAT:
-                        return b(nCast(local, "I", "F"));
+                case INT_TO_FLOAT:
+                    return b(nCast(local, "I", "F"));
 
-                    case INT_TO_LONG:
-                        return b(nCast(local, "I", "J"));
+                case INT_TO_LONG:
+                    return b(nCast(local, "I", "J"));
 
-                    case INT_TO_SHORT:
-                        return b(nCast(local, "I", "S"));
+                case INT_TO_SHORT:
+                    return b(nCast(local, "I", "S"));
 
-                    case FLOAT_TO_DOUBLE:
-                        return b(nCast(local, "F", "D"));
+                case FLOAT_TO_DOUBLE:
+                    return b(nCast(local, "F", "D"));
 
-                    case FLOAT_TO_INT:
-                        return b(nCast(local, "F", "I"));
+                case FLOAT_TO_INT:
+                    return b(nCast(local, "F", "I"));
 
-                    case FLOAT_TO_LONG:
-                        return b(nCast(local, "F", "J"));
+                case FLOAT_TO_LONG:
+                    return b(nCast(local, "F", "J"));
 
-                    case DOUBLE_TO_FLOAT:
-                        return b(nCast(local, "D", "F"));
+                case DOUBLE_TO_FLOAT:
+                    return b(nCast(local, "D", "F"));
 
-                    case DOUBLE_TO_INT:
-                        return b(nCast(local, "D", "I"));
+                case DOUBLE_TO_INT:
+                    return b(nCast(local, "D", "I"));
 
-                    case DOUBLE_TO_LONG:
-                        return b(nCast(local, "D", "J"));
+                case DOUBLE_TO_LONG:
+                    return b(nCast(local, "D", "J"));
 
-                    case LONG_TO_DOUBLE:
-                        return b(nCast(local, "J", "D"));
+                case LONG_TO_DOUBLE:
+                    return b(nCast(local, "J", "D"));
 
-                    case LONG_TO_FLOAT:
-                        return b(nCast(local, "J", "F"));
+                case LONG_TO_FLOAT:
+                    return b(nCast(local, "J", "F"));
 
-                    case LONG_TO_INT:
-                        return b(nCast(local, "J", "I"));
+                case LONG_TO_INT:
+                    return b(nCast(local, "J", "I"));
 
-                    case ARRAY_LENGTH:
-                        return b(nLength(local));
+                case ARRAY_LENGTH:
+                    return b(nLength(local));
 
-                    case IF_EQZ:
-                        emit(nIf(Exprs
-                                .nEq(local, nInt(0), TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_EQZ:
+                    emit(nIf(Exprs
+                            .nEq(local, nInt(0), TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_GEZ:
-                        emit(nIf(Exprs.nGe(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_GEZ:
+                    emit(nIf(Exprs.nGe(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_GTZ:
-                        emit(nIf(Exprs.nGt(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_GTZ:
+                    emit(nIf(Exprs.nGt(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_LEZ:
-                        emit(nIf(Exprs.nLe(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_LEZ:
+                    emit(nIf(Exprs.nLe(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_LTZ:
-                        emit(nIf(Exprs.nLt(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_LTZ:
+                    emit(nIf(Exprs.nLt(local, nInt(0), "I"), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_NEZ:
-                        emit(nIf(Exprs
-                                .nNe(local, nInt(0), TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_NEZ:
+                    emit(nIf(Exprs
+                            .nNe(local, nInt(0), TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case PACKED_SWITCH:
-                    case SPARSE_SWITCH:
-                        DexLabel[] labels = ((BaseSwitchStmtNode) insn).labels;
-                        LabelStmt[] lss = new LabelStmt[labels.length];
-                        for (int i = 0; i < labels.length; i++) {
-                            lss[i] = getLabel(labels[i]);
-                        }
-                        LabelStmt d = new LabelStmt();
-                        if (insn.op == Op.PACKED_SWITCH) {
-                            emit(nTableSwitch(local, ((PackedSwitchStmtNode) insn).first_case, lss, d));
-                        } else {
-                            emit(nLookupSwitch(local, ((SparseSwitchStmtNode) insn).cases, lss, d));
-                        }
-                        emit(d);
-                        return null;
-
-                    case SPUT:
-                    case SPUT_BOOLEAN:
-                    case SPUT_BYTE:
-                    case SPUT_CHAR:
-                    case SPUT_OBJECT:
-                    case SPUT_SHORT:
-                    case SPUT_WIDE: {
-                        Field field = ((FieldStmtNode) insn).field;
-                        emit(nAssign(nStaticField(field.getOwner(), field.getName(), field.getType()), local));
-                        return null;
+                case PACKED_SWITCH:
+                case SPARSE_SWITCH:
+                    DexLabel[] labels = ((BaseSwitchStmtNode) insn).labels;
+                    LabelStmt[] lss = new LabelStmt[labels.length];
+                    for (int i = 0; i < labels.length; i++) {
+                        lss[i] = getLabel(labels[i]);
                     }
-                    case IGET:
-                    case IGET_BOOLEAN:
-                    case IGET_BYTE:
-                    case IGET_CHAR:
-                    case IGET_OBJECT:
-                    case IGET_SHORT:
-                    case IGET_WIDE: {
-                        Field field = ((FieldStmtNode) insn).field;
-                        return b(nField(local, field.getOwner(), field.getName(), field.getType()));
+                    LabelStmt d = new LabelStmt();
+                    if (insn.op == Op.PACKED_SWITCH) {
+                        emit(nTableSwitch(local, ((PackedSwitchStmtNode) insn).first_case, lss, d));
+                    } else {
+                        emit(nLookupSwitch(local, ((SparseSwitchStmtNode) insn).cases, lss, d));
                     }
-                    case INSTANCE_OF:
-                        return b(nInstanceOf(local, ((TypeStmtNode) insn).type));
+                    emit(d);
+                    return null;
 
-                    case NEW_ARRAY:
-                        return b(nNewArray(((TypeStmtNode) insn).type.substring(1), local));
+                case SPUT:
+                case SPUT_BOOLEAN:
+                case SPUT_BYTE:
+                case SPUT_CHAR:
+                case SPUT_OBJECT:
+                case SPUT_SHORT:
+                case SPUT_WIDE: {
+                    Field field = ((FieldStmtNode) insn).field;
+                    emit(nAssign(nStaticField(field.getOwner(), field.getName(), field.getType()), local));
+                    return null;
+                }
+                case IGET:
+                case IGET_BOOLEAN:
+                case IGET_BYTE:
+                case IGET_CHAR:
+                case IGET_OBJECT:
+                case IGET_SHORT:
+                case IGET_WIDE: {
+                    Field field = ((FieldStmtNode) insn).field;
+                    return b(nField(local, field.getOwner(), field.getName(), field.getType()));
+                }
+                case INSTANCE_OF:
+                    return b(nInstanceOf(local, ((TypeStmtNode) insn).type));
 
-                    case CHECK_CAST:
-                        return b(nCheckCast(local, ((TypeStmtNode) insn).type));
+                case NEW_ARRAY:
+                    return b(nNewArray(((TypeStmtNode) insn).type.substring(1), local));
 
-                    case MONITOR_ENTER:
-                        emit(nLock(local));
-                        return null;
-                    case MONITOR_EXIT:
-                        emit(nUnLock(local));
-                        return null;
-                    case THROW:
-                        emit(nThrow(local));
-                        return null;
-                    case ADD_INT_LIT16:
-                    case ADD_INT_LIT8:
-                        return b(nAdd(local, nInt(((Stmt2R1NNode) insn).content), "I"));
+                case CHECK_CAST:
+                    return b(nCheckCast(local, ((TypeStmtNode) insn).type));
 
-                    case RSUB_INT_LIT8:
-                    case RSUB_INT://
-                        return b(nSub(nInt(((Stmt2R1NNode) insn).content), local, "I"));
+                case MONITOR_ENTER:
+                    emit(nLock(local));
+                    return null;
+                case MONITOR_EXIT:
+                    emit(nUnLock(local));
+                    return null;
+                case THROW:
+                    emit(nThrow(local));
+                    return null;
+                case ADD_INT_LIT16:
+                case ADD_INT_LIT8:
+                    return b(nAdd(local, nInt(((Stmt2R1NNode) insn).content), "I"));
 
-                    case MUL_INT_LIT8:
-                    case MUL_INT_LIT16:
-                        return b(nMul(local, nInt(((Stmt2R1NNode) insn).content), "I"));
+                case RSUB_INT_LIT8:
+                case RSUB_INT://
+                    return b(nSub(nInt(((Stmt2R1NNode) insn).content), local, "I"));
 
-                    case DIV_INT_LIT16:
-                    case DIV_INT_LIT8:
-                        return b(nDiv(local, nInt(((Stmt2R1NNode) insn).content), "I"));
+                case MUL_INT_LIT8:
+                case MUL_INT_LIT16:
+                    return b(nMul(local, nInt(((Stmt2R1NNode) insn).content), "I"));
 
-                    case REM_INT_LIT16:
-                    case REM_INT_LIT8:
-                        return b(nRem(local, nInt(((Stmt2R1NNode) insn).content), "I"));
+                case DIV_INT_LIT16:
+                case DIV_INT_LIT8:
+                    return b(nDiv(local, nInt(((Stmt2R1NNode) insn).content), "I"));
 
-                    case AND_INT_LIT16:
-                    case AND_INT_LIT8:
-                        return b(nAnd(local, nInt(((Stmt2R1NNode) insn).content), ((Stmt2R1NNode) insn).content < 0 || ((Stmt2R1NNode) insn).content > 1 ? "I" : TypeClass.ZI.name));
+                case REM_INT_LIT16:
+                case REM_INT_LIT8:
+                    return b(nRem(local, nInt(((Stmt2R1NNode) insn).content), "I"));
 
-                    case OR_INT_LIT16:
-                    case OR_INT_LIT8:
-                        return b(nOr(local, nInt(((Stmt2R1NNode) insn).content), ((Stmt2R1NNode) insn).content < 0 || ((Stmt2R1NNode) insn).content > 1 ? "I" : TypeClass.ZI.name));
+                case AND_INT_LIT16:
+                case AND_INT_LIT8:
+                    return b(nAnd(local, nInt(((Stmt2R1NNode) insn).content),
+                            ((Stmt2R1NNode) insn).content < 0 || ((Stmt2R1NNode) insn).content > 1 ? "I" :
+                                    TypeClass.ZI.name));
 
-                    case XOR_INT_LIT16:
-                    case XOR_INT_LIT8:
-                        return b(nXor(local, nInt(((Stmt2R1NNode) insn).content), ((Stmt2R1NNode) insn).content < 0 || ((Stmt2R1NNode) insn).content > 1 ? "I" : TypeClass.ZI.name));
+                case OR_INT_LIT16:
+                case OR_INT_LIT8:
+                    return b(nOr(local, nInt(((Stmt2R1NNode) insn).content),
+                            ((Stmt2R1NNode) insn).content < 0 || ((Stmt2R1NNode) insn).content > 1 ? "I" :
+                                    TypeClass.ZI.name));
 
-                    case SHL_INT_LIT8:
-                        return b(nShl(local, nInt(((Stmt2R1NNode) insn).content), "I"));
+                case XOR_INT_LIT16:
+                case XOR_INT_LIT8:
+                    return b(nXor(local, nInt(((Stmt2R1NNode) insn).content),
+                            ((Stmt2R1NNode) insn).content < 0 || ((Stmt2R1NNode) insn).content > 1 ? "I" :
+                                    TypeClass.ZI.name));
 
-                    case SHR_INT_LIT8:
-                        return b(nShr(local, nInt(((Stmt2R1NNode) insn).content), "I"));
+                case SHL_INT_LIT8:
+                    return b(nShl(local, nInt(((Stmt2R1NNode) insn).content), "I"));
 
-                    case USHR_INT_LIT8:
-                        return b(nUshr(local, nInt(((Stmt2R1NNode) insn).content), "I"));
-                    case FILL_ARRAY_DATA:
-                        emit(nFillArrayData(local, nArrayValue(((FillArrayDataStmtNode) insn).array)));
-                        return null;
+                case SHR_INT_LIT8:
+                    return b(nShr(local, nInt(((Stmt2R1NNode) insn).content), "I"));
+
+                case USHR_INT_LIT8:
+                    return b(nUshr(local, nInt(((Stmt2R1NNode) insn).content), "I"));
+                case FILL_ARRAY_DATA:
+                    emit(nFillArrayData(local, nArrayValue(((FillArrayDataStmtNode) insn).array)));
+                    return null;
                 }
                 throw new RuntimeException();
             }
@@ -792,270 +875,270 @@ public class Dex2IRConverter {
                 Local local1 = getLocal(value1);
                 Local local2 = getLocal(value2);
                 switch (insn.op) {
-                    case AGET:
-                        return b(nArray(local1, local2, TypeClass.IF.name));
+                case AGET:
+                    return b(nArray(local1, local2, TypeClass.IF.name));
 
-                    case AGET_BOOLEAN:
-                        return b(nArray(local1, local2, "Z"));
+                case AGET_BOOLEAN:
+                    return b(nArray(local1, local2, "Z"));
 
-                    case AGET_BYTE:
-                        return b(nArray(local1, local2, "B"));
+                case AGET_BYTE:
+                    return b(nArray(local1, local2, "B"));
 
-                    case AGET_CHAR:
-                        return b(nArray(local1, local2, "C"));
+                case AGET_CHAR:
+                    return b(nArray(local1, local2, "C"));
 
-                    case AGET_OBJECT:
-                        return b(nArray(local1, local2, "L"));
+                case AGET_OBJECT:
+                    return b(nArray(local1, local2, "L"));
 
-                    case AGET_SHORT:
-                        return b(nArray(local1, local2, "S"));
+                case AGET_SHORT:
+                    return b(nArray(local1, local2, "S"));
 
-                    case AGET_WIDE:
-                        return b(nArray(local1, local2, TypeClass.JD.name));
+                case AGET_WIDE:
+                    return b(nArray(local1, local2, TypeClass.JD.name));
 
-                    case CMP_LONG:
-                        return b(nLCmp(local1, local2));
+                case CMP_LONG:
+                    return b(nLCmp(local1, local2));
 
-                    case CMPG_DOUBLE:
-                        return b(nDCmpg(local1, local2));
+                case CMPG_DOUBLE:
+                    return b(nDCmpg(local1, local2));
 
-                    case CMPG_FLOAT:
-                        return b(nFCmpg(local1, local2));
+                case CMPG_FLOAT:
+                    return b(nFCmpg(local1, local2));
 
-                    case CMPL_DOUBLE:
-                        return b(nDCmpl(local1, local2));
+                case CMPL_DOUBLE:
+                    return b(nDCmpl(local1, local2));
 
-                    case CMPL_FLOAT:
-                        return b(nFCmpl(local1, local2));
+                case CMPL_FLOAT:
+                    return b(nFCmpl(local1, local2));
 
-                    case ADD_DOUBLE:
-                        return b(nAdd(local1, local2, "D"));
+                case ADD_DOUBLE:
+                    return b(nAdd(local1, local2, "D"));
 
-                    case ADD_FLOAT:
-                        return b(nAdd(local1, local2, "F"));
+                case ADD_FLOAT:
+                    return b(nAdd(local1, local2, "F"));
 
-                    case ADD_INT:
-                        return b(nAdd(local1, local2, "I"));
+                case ADD_INT:
+                    return b(nAdd(local1, local2, "I"));
 
-                    case ADD_LONG:
-                        return b(nAdd(local1, local2, "J"));
+                case ADD_LONG:
+                    return b(nAdd(local1, local2, "J"));
 
-                    case SUB_DOUBLE:
-                        return b(nSub(local1, local2, "D"));
+                case SUB_DOUBLE:
+                    return b(nSub(local1, local2, "D"));
 
-                    case SUB_FLOAT:
-                        return b(nSub(local1, local2, "F"));
+                case SUB_FLOAT:
+                    return b(nSub(local1, local2, "F"));
 
-                    case SUB_INT:
-                        return b(nSub(local1, local2, "I"));
+                case SUB_INT:
+                    return b(nSub(local1, local2, "I"));
 
-                    case SUB_LONG:
-                        return b(nSub(local1, local2, "J"));
+                case SUB_LONG:
+                    return b(nSub(local1, local2, "J"));
 
-                    case MUL_DOUBLE:
-                        return b(nMul(local1, local2, "D"));
+                case MUL_DOUBLE:
+                    return b(nMul(local1, local2, "D"));
 
-                    case MUL_FLOAT:
-                        return b(nMul(local1, local2, "F"));
+                case MUL_FLOAT:
+                    return b(nMul(local1, local2, "F"));
 
-                    case MUL_INT:
-                        return b(nMul(local1, local2, "I"));
+                case MUL_INT:
+                    return b(nMul(local1, local2, "I"));
 
-                    case MUL_LONG:
-                        return b(nMul(local1, local2, "J"));
+                case MUL_LONG:
+                    return b(nMul(local1, local2, "J"));
 
-                    case DIV_DOUBLE:
-                        return b(nDiv(local1, local2, "D"));
+                case DIV_DOUBLE:
+                    return b(nDiv(local1, local2, "D"));
 
-                    case DIV_FLOAT:
-                        return b(nDiv(local1, local2, "F"));
+                case DIV_FLOAT:
+                    return b(nDiv(local1, local2, "F"));
 
-                    case DIV_INT:
-                        return b(nDiv(local1, local2, "I"));
+                case DIV_INT:
+                    return b(nDiv(local1, local2, "I"));
 
-                    case DIV_LONG:
-                        return b(nDiv(local1, local2, "J"));
+                case DIV_LONG:
+                    return b(nDiv(local1, local2, "J"));
 
-                    case REM_DOUBLE:
-                        return b(nRem(local1, local2, "D"));
+                case REM_DOUBLE:
+                    return b(nRem(local1, local2, "D"));
 
-                    case REM_FLOAT:
-                        return b(nRem(local1, local2, "F"));
+                case REM_FLOAT:
+                    return b(nRem(local1, local2, "F"));
 
-                    case REM_INT:
-                        return b(nRem(local1, local2, "I"));
+                case REM_INT:
+                    return b(nRem(local1, local2, "I"));
 
-                    case REM_LONG:
-                        return b(nRem(local1, local2, "J"));
+                case REM_LONG:
+                    return b(nRem(local1, local2, "J"));
 
-                    case AND_INT:
-                        return b(nAnd(local1, local2, TypeClass.ZI.name));
+                case AND_INT:
+                    return b(nAnd(local1, local2, TypeClass.ZI.name));
 
-                    case AND_LONG:
-                        return b(nAnd(local1, local2, "J"));
+                case AND_LONG:
+                    return b(nAnd(local1, local2, "J"));
 
-                    case OR_INT:
-                        return b(nOr(local1, local2, TypeClass.ZI.name));
+                case OR_INT:
+                    return b(nOr(local1, local2, TypeClass.ZI.name));
 
-                    case OR_LONG:
-                        return b(nOr(local1, local2, "J"));
+                case OR_LONG:
+                    return b(nOr(local1, local2, "J"));
 
-                    case XOR_INT:
-                        return b(nXor(local1, local2, TypeClass.ZI.name));
+                case XOR_INT:
+                    return b(nXor(local1, local2, TypeClass.ZI.name));
 
-                    case XOR_LONG:
-                        return b(nXor(local1, local2, "J"));
+                case XOR_LONG:
+                    return b(nXor(local1, local2, "J"));
 
-                    case SHL_INT:
-                        return b(nShl(local1, local2, "I"));
+                case SHL_INT:
+                    return b(nShl(local1, local2, "I"));
 
-                    case SHL_LONG:
-                        return b(nShl(local1, local2, "J"));
+                case SHL_LONG:
+                    return b(nShl(local1, local2, "J"));
 
-                    case SHR_INT:
-                        return b(nShr(local1, local2, "I"));
+                case SHR_INT:
+                    return b(nShr(local1, local2, "I"));
 
-                    case SHR_LONG:
-                        return b(nShr(local1, local2, "J"));
+                case SHR_LONG:
+                    return b(nShr(local1, local2, "J"));
 
-                    case USHR_INT:
-                        return b(nUshr(local1, local2, "I"));
+                case USHR_INT:
+                    return b(nUshr(local1, local2, "I"));
 
-                    case USHR_LONG:
-                        return b(nUshr(local1, local2, "J"));
+                case USHR_LONG:
+                    return b(nUshr(local1, local2, "J"));
 
-                    case IF_EQ:
-                        emit(nIf(Exprs
-                                .nEq(local1, local2, TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_EQ:
+                    emit(nIf(Exprs
+                            .nEq(local1, local2, TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_GE:
-                        emit(nIf(Exprs.nGe(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_GE:
+                    emit(nIf(Exprs.nGe(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_GT:
-                        emit(nIf(Exprs.nGt(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_GT:
+                    emit(nIf(Exprs.nGt(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_LE:
-                        emit(nIf(Exprs.nLe(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_LE:
+                    emit(nIf(Exprs.nLe(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_LT:
-                        emit(nIf(Exprs.nLt(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_LT:
+                    emit(nIf(Exprs.nLt(local1, local2, "I"), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IF_NE:
-                        emit(nIf(Exprs
-                                .nNe(local1, local2, TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
-                        return null;
+                case IF_NE:
+                    emit(nIf(Exprs
+                            .nNe(local1, local2, TypeClass.ZIL.name), getLabel(((JumpStmtNode) insn).label)));
+                    return null;
 
-                    case IPUT:
-                    case IPUT_BOOLEAN:
-                    case IPUT_BYTE:
-                    case IPUT_CHAR:
-                    case IPUT_OBJECT:
-                    case IPUT_SHORT:
-                    case IPUT_WIDE:
-                        Field field = ((FieldStmtNode) insn).field;
-                        emit(nAssign(nField(local1, field.getOwner(), field.getName(), field.getType()), local2));
-                        return null;
+                case IPUT:
+                case IPUT_BOOLEAN:
+                case IPUT_BYTE:
+                case IPUT_CHAR:
+                case IPUT_OBJECT:
+                case IPUT_SHORT:
+                case IPUT_WIDE:
+                    Field field = ((FieldStmtNode) insn).field;
+                    emit(nAssign(nField(local1, field.getOwner(), field.getName(), field.getType()), local2));
+                    return null;
 
-                    case ADD_DOUBLE_2ADDR:
-                        return b(nAdd(local1, local2, "D"));
+                case ADD_DOUBLE_2ADDR:
+                    return b(nAdd(local1, local2, "D"));
 
-                    case ADD_FLOAT_2ADDR:
-                        return b(nAdd(local1, local2, "F"));
+                case ADD_FLOAT_2ADDR:
+                    return b(nAdd(local1, local2, "F"));
 
-                    case ADD_INT_2ADDR:
-                        return b(nAdd(local1, local2, "I"));
+                case ADD_INT_2ADDR:
+                    return b(nAdd(local1, local2, "I"));
 
-                    case ADD_LONG_2ADDR:
-                        return b(nAdd(local1, local2, "J"));
+                case ADD_LONG_2ADDR:
+                    return b(nAdd(local1, local2, "J"));
 
-                    case SUB_DOUBLE_2ADDR:
-                        return b(nSub(local1, local2, "D"));
+                case SUB_DOUBLE_2ADDR:
+                    return b(nSub(local1, local2, "D"));
 
-                    case SUB_FLOAT_2ADDR:
-                        return b(nSub(local1, local2, "F"));
+                case SUB_FLOAT_2ADDR:
+                    return b(nSub(local1, local2, "F"));
 
-                    case SUB_INT_2ADDR:
-                        return b(nSub(local1, local2, "I"));
+                case SUB_INT_2ADDR:
+                    return b(nSub(local1, local2, "I"));
 
-                    case SUB_LONG_2ADDR:
-                        return b(nSub(local1, local2, "J"));
+                case SUB_LONG_2ADDR:
+                    return b(nSub(local1, local2, "J"));
 
-                    case MUL_DOUBLE_2ADDR:
-                        return b(nMul(local1, local2, "D"));
+                case MUL_DOUBLE_2ADDR:
+                    return b(nMul(local1, local2, "D"));
 
-                    case MUL_FLOAT_2ADDR:
-                        return b(nMul(local1, local2, "F"));
+                case MUL_FLOAT_2ADDR:
+                    return b(nMul(local1, local2, "F"));
 
-                    case MUL_INT_2ADDR:
-                        return b(nMul(local1, local2, "I"));
+                case MUL_INT_2ADDR:
+                    return b(nMul(local1, local2, "I"));
 
-                    case MUL_LONG_2ADDR:
-                        return b(nMul(local1, local2, "J"));
+                case MUL_LONG_2ADDR:
+                    return b(nMul(local1, local2, "J"));
 
-                    case DIV_DOUBLE_2ADDR:
-                        return b(nDiv(local1, local2, "D"));
+                case DIV_DOUBLE_2ADDR:
+                    return b(nDiv(local1, local2, "D"));
 
-                    case DIV_FLOAT_2ADDR:
-                        return b(nDiv(local1, local2, "F"));
+                case DIV_FLOAT_2ADDR:
+                    return b(nDiv(local1, local2, "F"));
 
-                    case DIV_INT_2ADDR:
-                        return b(nDiv(local1, local2, "I"));
+                case DIV_INT_2ADDR:
+                    return b(nDiv(local1, local2, "I"));
 
-                    case DIV_LONG_2ADDR:
-                        return b(nDiv(local1, local2, "J"));
+                case DIV_LONG_2ADDR:
+                    return b(nDiv(local1, local2, "J"));
 
-                    case REM_DOUBLE_2ADDR:
-                        return b(nRem(local1, local2, "D"));
+                case REM_DOUBLE_2ADDR:
+                    return b(nRem(local1, local2, "D"));
 
-                    case REM_FLOAT_2ADDR:
-                        return b(nRem(local1, local2, "F"));
+                case REM_FLOAT_2ADDR:
+                    return b(nRem(local1, local2, "F"));
 
-                    case REM_INT_2ADDR:
-                        return b(nRem(local1, local2, "I"));
+                case REM_INT_2ADDR:
+                    return b(nRem(local1, local2, "I"));
 
-                    case REM_LONG_2ADDR:
-                        return b(nRem(local1, local2, "J"));
+                case REM_LONG_2ADDR:
+                    return b(nRem(local1, local2, "J"));
 
-                    case AND_INT_2ADDR:
-                        return b(nAnd(local1, local2, TypeClass.ZI.name));
+                case AND_INT_2ADDR:
+                    return b(nAnd(local1, local2, TypeClass.ZI.name));
 
-                    case AND_LONG_2ADDR:
-                        return b(nAnd(local1, local2, "J"));
+                case AND_LONG_2ADDR:
+                    return b(nAnd(local1, local2, "J"));
 
-                    case OR_INT_2ADDR:
-                        return b(nOr(local1, local2, TypeClass.ZI.name));
+                case OR_INT_2ADDR:
+                    return b(nOr(local1, local2, TypeClass.ZI.name));
 
-                    case OR_LONG_2ADDR:
-                        return b(nOr(local1, local2, "J"));
+                case OR_LONG_2ADDR:
+                    return b(nOr(local1, local2, "J"));
 
-                    case XOR_INT_2ADDR:
-                        return b(nXor(local1, local2, TypeClass.ZI.name));
+                case XOR_INT_2ADDR:
+                    return b(nXor(local1, local2, TypeClass.ZI.name));
 
-                    case XOR_LONG_2ADDR:
-                        return b(nXor(local1, local2, "J"));
+                case XOR_LONG_2ADDR:
+                    return b(nXor(local1, local2, "J"));
 
-                    case SHL_INT_2ADDR:
-                        return b(nShl(local1, local2, "I"));
+                case SHL_INT_2ADDR:
+                    return b(nShl(local1, local2, "I"));
 
-                    case SHL_LONG_2ADDR:
-                        return b(nShl(local1, local2, "J"));
+                case SHL_LONG_2ADDR:
+                    return b(nShl(local1, local2, "J"));
 
-                    case SHR_INT_2ADDR:
-                        return b(nShr(local1, local2, "I"));
+                case SHR_INT_2ADDR:
+                    return b(nShr(local1, local2, "I"));
 
-                    case SHR_LONG_2ADDR:
-                        return b(nShr(local1, local2, "J"));
+                case SHR_LONG_2ADDR:
+                    return b(nShr(local1, local2, "J"));
 
-                    case USHR_INT_2ADDR:
-                        return b(nUshr(local1, local2, "I"));
+                case USHR_INT_2ADDR:
+                    return b(nUshr(local1, local2, "I"));
 
-                    case USHR_LONG_2ADDR:
-                        return b(nUshr(local1, local2, "J"));
+                case USHR_LONG_2ADDR:
+                    return b(nUshr(local1, local2, "J"));
 
                 }
                 throw new RuntimeException();
@@ -1071,27 +1154,27 @@ public class Dex2IRConverter {
                 Local localIndex = getLocal(value2);
                 Local localValue = getLocal(value3);
                 switch (insn.op) {
-                    case APUT:
-                        emit(nAssign(nArray(localArray, localIndex, TypeClass.IF.name), localValue));
-                        break;
-                    case APUT_BOOLEAN:
-                        emit(nAssign(nArray(localArray, localIndex, "Z"), localValue));
-                        break;
-                    case APUT_BYTE:
-                        emit(nAssign(nArray(localArray, localIndex, "B"), localValue));
-                        break;
-                    case APUT_CHAR:
-                        emit(nAssign(nArray(localArray, localIndex, "C"), localValue));
-                        break;
-                    case APUT_OBJECT:
-                        emit(nAssign(nArray(localArray, localIndex, "L"), localValue));
-                        break;
-                    case APUT_SHORT:
-                        emit(nAssign(nArray(localArray, localIndex, "S"), localValue));
-                        break;
-                    case APUT_WIDE:
-                        emit(nAssign(nArray(localArray, localIndex, TypeClass.JD.name), localValue));
-                        break;
+                case APUT:
+                    emit(nAssign(nArray(localArray, localIndex, TypeClass.IF.name), localValue));
+                    break;
+                case APUT_BOOLEAN:
+                    emit(nAssign(nArray(localArray, localIndex, "Z"), localValue));
+                    break;
+                case APUT_BYTE:
+                    emit(nAssign(nArray(localArray, localIndex, "B"), localValue));
+                    break;
+                case APUT_CHAR:
+                    emit(nAssign(nArray(localArray, localIndex, "C"), localValue));
+                    break;
+                case APUT_OBJECT:
+                    emit(nAssign(nArray(localArray, localIndex, "L"), localValue));
+                    break;
+                case APUT_SHORT:
+                    emit(nAssign(nArray(localArray, localIndex, "S"), localValue));
+                    break;
+                case APUT_WIDE:
+                    emit(nAssign(nArray(localArray, localIndex, TypeClass.JD.name), localValue));
+                    break;
                 }
                 return null;
             }
@@ -1107,94 +1190,94 @@ public class Dex2IRConverter {
 
 
                 switch (insn.op) {
-                    case FILLED_NEW_ARRAY:
-                    case FILLED_NEW_ARRAY_RANGE:
-                        DvmValue value = new DvmValue();
-                        FilledNewArrayStmtNode filledNewArrayStmtNode = (FilledNewArrayStmtNode) insn;
-                        String type = filledNewArrayStmtNode.type;
+                case FILLED_NEW_ARRAY:
+                case FILLED_NEW_ARRAY_RANGE:
+                    DvmValue value = new DvmValue();
+                    FilledNewArrayStmtNode filledNewArrayStmtNode = (FilledNewArrayStmtNode) insn;
+                    String type = filledNewArrayStmtNode.type;
 
-                        String elem = type.substring(1);
-                        emit(nAssign(getLocal(value), nNewArray(elem, nInt(values.size()))));
-                        for (int i = 0; i < values.size(); i++) {
-                            emit(nAssign(nArray(getLocal(value), nInt(i), elem), getLocal(values.get(i))));
-                        }
+                    String elem = type.substring(1);
+                    emit(nAssign(getLocal(value), nNewArray(elem, nInt(values.size()))));
+                    for (int i = 0; i < values.size(); i++) {
+                        emit(nAssign(nArray(getLocal(value), nInt(i), elem), getLocal(values.get(i))));
+                    }
 
-                        return value;
-                    case INVOKE_CUSTOM:
-                    case INVOKE_CUSTOM_RANGE: {
-                        Value[] vs = new Value[values.size()];
-                        for (int i = 0; i < vs.length; i++) {
-                            vs[i] = getLocal(values.get(i));
-                        }
-                        MethodCustomStmtNode n = (MethodCustomStmtNode) insn;
-                        Value invoke = nInvokeCustom(vs, n.name, n.proto, n.bsm, n.bsmArgs);
-                        if ("V".equals(n.getProto().getReturnType())) {
-                            emit(nVoidInvoke(invoke));
-                            return null;
-                        } else {
-                            return b(invoke);
-                        }
+                    return value;
+                case INVOKE_CUSTOM:
+                case INVOKE_CUSTOM_RANGE: {
+                    Value[] vs = new Value[values.size()];
+                    for (int i = 0; i < vs.length; i++) {
+                        vs[i] = getLocal(values.get(i));
                     }
-                    case INVOKE_POLYMORPHIC:
-                    case INVOKE_POLYMORPHIC_RANGE: {
-                        Value[] vs = new Value[values.size()];
-                        for (int i = 0; i < vs.length; i++) {
-                            vs[i] = getLocal(values.get(i));
-                        }
-                        MethodPolymorphicStmtNode n = (MethodPolymorphicStmtNode) insn;
-                        Value invoke = nInvokePolymorphic(vs, n.proto, n.method);
-                        if ("V".equals(n.getProto().getReturnType())) {
-                            emit(nVoidInvoke(invoke));
-                            return null;
-                        } else {
-                            return b(invoke);
-                        }
+                    MethodCustomStmtNode n = (MethodCustomStmtNode) insn;
+                    Value invoke = nInvokeCustom(vs, n.name, n.proto, n.bsm, n.bsmArgs);
+                    if ("V".equals(n.getProto().getReturnType())) {
+                        emit(nVoidInvoke(invoke));
+                        return null;
+                    } else {
+                        return b(invoke);
                     }
+                }
+                case INVOKE_POLYMORPHIC:
+                case INVOKE_POLYMORPHIC_RANGE: {
+                    Value[] vs = new Value[values.size()];
+                    for (int i = 0; i < vs.length; i++) {
+                        vs[i] = getLocal(values.get(i));
+                    }
+                    MethodPolymorphicStmtNode n = (MethodPolymorphicStmtNode) insn;
+                    Value invoke = nInvokePolymorphic(vs, n.proto, n.method);
+                    if ("V".equals(n.getProto().getReturnType())) {
+                        emit(nVoidInvoke(invoke));
+                        return null;
+                    } else {
+                        return b(invoke);
+                    }
+                }
+                default:
+                    Op op = insn.op;
+                    Value[] vs = new Value[values.size()];
+                    for (int i = 0; i < vs.length; i++) {
+                        vs[i] = getLocal(values.get(i));
+                    }
+
+                    Method method = ((MethodStmtNode) insn).method;
+                    Value invoke;
+                    switch (op) {
+                    case INVOKE_VIRTUAL_RANGE:
+                    case INVOKE_VIRTUAL:
+                        invoke = nInvokeVirtual(vs, method.getOwner(), method.getName(), method
+                                        .getParameterTypes(),
+                                method.getReturnType());
+                        break;
+                    case INVOKE_SUPER_RANGE:
+                    case INVOKE_DIRECT_RANGE:
+                    case INVOKE_SUPER:
+                    case INVOKE_DIRECT:
+                        invoke = nInvokeSpecial(vs, method.getOwner(), method.getName(), method
+                                        .getParameterTypes(),
+                                method.getReturnType());
+                        break;
+                    case INVOKE_STATIC_RANGE:
+                    case INVOKE_STATIC:
+                        invoke = nInvokeStatic(vs, method.getOwner(), method.getName(), method
+                                        .getParameterTypes(),
+                                method.getReturnType());
+                        break;
+                    case INVOKE_INTERFACE_RANGE:
+                    case INVOKE_INTERFACE:
+                        invoke = nInvokeInterface(vs, method.getOwner(), method.getName(), method
+                                        .getParameterTypes(),
+                                method.getReturnType());
+                        break;
                     default:
-                        Op op = insn.op;
-                        Value[] vs = new Value[values.size()];
-                        for (int i = 0; i < vs.length; i++) {
-                            vs[i] = getLocal(values.get(i));
-                        }
-
-                        Method method = ((MethodStmtNode) insn).method;
-                        Value invoke = null;
-                        switch (op) {
-                            case INVOKE_VIRTUAL_RANGE:
-                            case INVOKE_VIRTUAL:
-                                invoke = nInvokeVirtual(vs, method.getOwner(), method.getName(), method
-                                                .getParameterTypes(),
-                                        method.getReturnType());
-                                break;
-                            case INVOKE_SUPER_RANGE:
-                            case INVOKE_DIRECT_RANGE:
-                            case INVOKE_SUPER:
-                            case INVOKE_DIRECT:
-                                invoke = nInvokeSpecial(vs, method.getOwner(), method.getName(), method
-                                                .getParameterTypes(),
-                                        method.getReturnType());
-                                break;
-                            case INVOKE_STATIC_RANGE:
-                            case INVOKE_STATIC:
-                                invoke = nInvokeStatic(vs, method.getOwner(), method.getName(), method
-                                                .getParameterTypes(),
-                                        method.getReturnType());
-                                break;
-                            case INVOKE_INTERFACE_RANGE:
-                            case INVOKE_INTERFACE:
-                                invoke = nInvokeInterface(vs, method.getOwner(), method.getName(), method
-                                                .getParameterTypes(),
-                                        method.getReturnType());
-                                break;
-                            default:
-                                throw new RuntimeException();
-                        }
-                        if ("V".equals(method.getReturnType())) {
-                            emit(nVoidInvoke(invoke));
-                            return null;
-                        } else {
-                            return b(invoke);
-                        }
+                        throw new RuntimeException();
+                    }
+                    if ("V".equals(method.getReturnType())) {
+                        emit(nVoidInvoke(invoke));
+                        return null;
+                    } else {
+                        return b(invoke);
+                    }
 
                 }
 
@@ -1204,14 +1287,14 @@ public class Dex2IRConverter {
             void emitNotFindOperand(DexStmtNode insn) {
                 String msg;
                 switch (insn.op) {
-                    case MOVE_RESULT:
-                    case MOVE_RESULT_OBJECT:
-                    case MOVE_RESULT_WIDE:
-                        msg = "can't get operand(s) for " + insn.op + ", wrong position ?";
-                        break;
-                    default:
-                        msg = "can't get operand(s) for " + insn.op + ", out-of-range or not initialized ?";
-                        break;
+                case MOVE_RESULT:
+                case MOVE_RESULT_OBJECT:
+                case MOVE_RESULT_WIDE:
+                    msg = "can't get operand(s) for " + insn.op + ", wrong position ?";
+                    break;
+                default:
+                    msg = "can't get operand(s) for " + insn.op + ", out-of-range or not initialized ?";
+                    break;
                 }
 
                 System.err.println("WARN: " + msg);

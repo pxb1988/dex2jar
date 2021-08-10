@@ -18,13 +18,12 @@ package com.googlecode.d2j.dex.writer.item;
 
 import com.googlecode.d2j.dex.writer.insn.Label;
 import com.googlecode.d2j.dex.writer.io.DataOut;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class DebugInfoItem extends BaseItem {
     public List<DNode> debugNodes = new ArrayList<>();
-    public StringIdItem parameterNames[];
+    public StringIdItem[] parameterNames;
     public int firstLine;
     public StringIdItem fileName;
 
@@ -146,11 +145,11 @@ public class DebugInfoItem extends BaseItem {
                 }
                 addr = opNode.label.offset;
             }
-                offset += 1;// op;
-                offset += lengthOfUleb128(opNode.reg);
-                offset += lengthOfUleb128(opNode.name.index + 1);
-                offset += lengthOfUleb128(opNode.type.index + 1);
-                break;
+            offset += 1;// op;
+            offset += lengthOfUleb128(opNode.reg);
+            offset += lengthOfUleb128(opNode.name.index + 1);
+            offset += lengthOfUleb128(opNode.type.index + 1);
+            break;
             case DBG_RESTART_LOCAL:
             case DBG_END_LOCAL: {
                 int pcData = opNode.label.offset - addr;
@@ -163,9 +162,9 @@ public class DebugInfoItem extends BaseItem {
                 }
                 addr = opNode.label.offset;
             }
-                offset += 1;// op;
-                offset += lengthOfUleb128(opNode.reg);
-                break;
+            offset += 1;// op;
+            offset += lengthOfUleb128(opNode.reg);
+            break;
             case DBG_SET_EPILOGUE_BEGIN:
             case DBG_SET_PROLOGUE_END:
                 offset += 1;
@@ -187,12 +186,10 @@ public class DebugInfoItem extends BaseItem {
                     if (addrDelta > 15) { // pc not ok, add addvance_PC
                         offset += 1;
                         offset += lengthOfUleb128(addrDelta);
-                        addrDelta = 0;
                     }
                     if (lineDelta < -4 || lineDelta > 10) { // line not ok, add DBG_ADVANCE_LINE
                         offset += 1;
                         offset += lengthOfSleb128(lineDelta);
-                        lineDelta = 0;
                     }
                 }
                 // int op = lineDelta + 4 + addrDelta * DBG_LINE_RANGE + DBG_FIRST_SPECIAL;
@@ -237,12 +234,12 @@ public class DebugInfoItem extends BaseItem {
                 }
                 addr = opNode.label.offset;
             }
-                out.sbyte("DBG_START_LOCAL_EXTENDED", DBG_START_LOCAL_EXTENDED);
-                out.uleb128("reg", opNode.reg);
-                out.uleb128p1("name", opNode.name.index);
-                out.uleb128p1("type", opNode.type.index);
-                out.uleb128p1("sig", opNode.sig.index);
-                break;
+            out.sbyte("DBG_START_LOCAL_EXTENDED", DBG_START_LOCAL_EXTENDED);
+            out.uleb128("reg", opNode.reg);
+            out.uleb128p1("name", opNode.name.index);
+            out.uleb128p1("type", opNode.type.index);
+            out.uleb128p1("sig", opNode.sig.index);
+            break;
             case DBG_START_LOCAL: {
                 int pcDelta = opNode.label.offset - addr;
                 if (pcDelta < 0) {
@@ -252,12 +249,12 @@ public class DebugInfoItem extends BaseItem {
                 }
                 addr = opNode.label.offset;
             }
-                out.sbyte("DBG_START_LOCAL", DBG_START_LOCAL);
-                out.uleb128("reg", opNode.reg);
-                out.uleb128p1("name", opNode.name.index);
-                out.uleb128p1("type", opNode.type.index);
+            out.sbyte("DBG_START_LOCAL", DBG_START_LOCAL);
+            out.uleb128("reg", opNode.reg);
+            out.uleb128p1("name", opNode.name.index);
+            out.uleb128p1("type", opNode.type.index);
 
-                break;
+            break;
             case DBG_RESTART_LOCAL: {
                 int pcDelta = opNode.label.offset - addr;
                 if (pcDelta < 0) {
@@ -268,9 +265,9 @@ public class DebugInfoItem extends BaseItem {
                 addr = opNode.label.offset;
             }
 
-                out.sbyte("DBG_RESTART_LOCAL", DBG_RESTART_LOCAL);
-                out.uleb128("reg", opNode.reg);
-                break;
+            out.sbyte("DBG_RESTART_LOCAL", DBG_RESTART_LOCAL);
+            out.uleb128("reg", opNode.reg);
+            break;
             case DBG_END_LOCAL: {
                 int pcDelta = opNode.label.offset - addr;
                 if (pcDelta < 0) {
@@ -281,9 +278,9 @@ public class DebugInfoItem extends BaseItem {
                 addr = opNode.label.offset;
             }
 
-                out.sbyte("DBG_END_LOCAL", DBG_END_LOCAL);
-                out.uleb128("reg", opNode.reg);
-                break;
+            out.sbyte("DBG_END_LOCAL", DBG_END_LOCAL);
+            out.uleb128("reg", opNode.reg);
+            break;
             case DBG_SET_EPILOGUE_BEGIN:
                 out.sbyte("DBG_SET_EPILOGUE_BEGIN", DBG_SET_EPILOGUE_BEGIN);
                 break;

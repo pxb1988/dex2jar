@@ -20,9 +20,7 @@ import com.googlecode.d2j.dex.writer.ann.Idx;
 import com.googlecode.d2j.dex.writer.ann.Off;
 import com.googlecode.d2j.dex.writer.ev.EncodedValue;
 import com.googlecode.d2j.dex.writer.io.DataOut;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -115,26 +113,12 @@ public class ClassDataItem extends BaseItem {
     }
 
     public void prepare(ConstPool cp) {
-        Comparator<EncodedField> fc = new Comparator<EncodedField>() {
-
-            @Override
-            public int compare(EncodedField arg0, EncodedField arg1) {
-                return arg0.field.compareTo(arg1.field);
-            }
-        };
-        Comparator<EncodedMethod> mc = new
-
-                Comparator<EncodedMethod>() {
-
-                    @Override
-                    public int compare(EncodedMethod arg0, EncodedMethod arg1) {
-                        return arg0.method.compareTo(arg1.method);
-                    }
-                };
-        Collections.sort(instanceFields, fc);
-        Collections.sort(staticFields, fc);
-        Collections.sort(directMethods, mc);
-        Collections.sort(virtualMethods, mc);
+        Comparator<EncodedField> fc = Comparator.comparing(arg0 -> arg0.field);
+        Comparator<EncodedMethod> mc = Comparator.comparing(arg0 -> arg0.method);
+        instanceFields.sort(fc);
+        staticFields.sort(fc);
+        directMethods.sort(mc);
+        virtualMethods.sort(mc);
 
     }
 

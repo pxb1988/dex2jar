@@ -1,13 +1,13 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
  * Copyright (c) 2009-2013 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,19 +23,42 @@ import com.googlecode.d2j.asm.LdcOptimizeAdapter;
 import com.googlecode.d2j.dex.Dex2Asm;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.expr.ArrayExpr;
+import com.googlecode.dex2jar.ir.expr.CastExpr;
+import com.googlecode.dex2jar.ir.expr.Constant;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.FieldExpr;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
+import com.googlecode.dex2jar.ir.expr.InvokeCustomExpr;
+import com.googlecode.dex2jar.ir.expr.InvokeExpr;
+import com.googlecode.dex2jar.ir.expr.InvokePolymorphicExpr;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.NewExpr;
+import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
+import com.googlecode.dex2jar.ir.expr.StaticFieldExpr;
+import com.googlecode.dex2jar.ir.expr.TypeExpr;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.expr.Value.E1Expr;
 import com.googlecode.dex2jar.ir.expr.Value.E2Expr;
 import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
 import com.googlecode.dex2jar.ir.expr.Value.VT;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.GotoStmt;
+import com.googlecode.dex2jar.ir.stmt.IfStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-import org.objectweb.asm.*;
-
+import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
+import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Map;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 @SuppressWarnings("incomplete-switch")
 public class IR2JConverter implements Opcodes {
@@ -69,9 +92,6 @@ public class IR2JConverter implements Opcodes {
     /**
      * an empty try-catch block will cause other crash, we check this by finding non-label stmts between
      * {@link Trap#start} and {@link Trap#end}. if find we add the try-catch or we drop the try-catch.
-     *
-     * @param ir
-     * @param asm
      */
     private void reBuildTryCatchBlocks(IrMethod ir, MethodVisitor asm) {
         for (Trap trap : ir.traps) {
@@ -98,14 +118,13 @@ public class IR2JConverter implements Opcodes {
     }
 
 
-
     private void reBuildInstructions(IrMethod ir, MethodVisitor asm) {
         asm = new LdcOptimizeAdapter(asm);
         int maxLocalIndex = 0;
         for (Local local : ir.locals) {
             maxLocalIndex = Math.max(maxLocalIndex, local._ls_index);
         }
-        Map<String, Integer> lockMap = new HashMap<String, Integer>();
+        Map<String, Integer> lockMap = new HashMap<>();
         for (Stmt st : ir.stmts) {
             switch (st.st) {
             case LABEL:
@@ -203,7 +222,7 @@ public class IR2JConverter implements Opcodes {
                     break;
                 }
             }
-                break;
+            break;
             case IDENTITY: {
                 E2Stmt e2 = (E2Stmt) st;
                 if (e2.op2.vt == VT.EXCEPTION_REF) {
@@ -215,9 +234,9 @@ public class IR2JConverter implements Opcodes {
                     }
                 }
             }
-                break;
+            break;
 
-            case FILL_ARRAY_DATA:{
+            case FILL_ARRAY_DATA: {
                 E2Stmt e2 = (E2Stmt) st;
                 if (e2.getOp2().vt == VT.CONSTANT) {
                     Object arrayData = ((Constant) e2.getOp2()).value;
@@ -287,14 +306,14 @@ public class IR2JConverter implements Opcodes {
                         asm.visitVarInsn(getOpcode(v, ISTORE), nIndex);
                         lockMap.put(key, nIndex);
                     }
-                        break;
+                    break;
                     default:
                         throw new RuntimeException();
                     }
                 }
                 asm.visitInsn(MONITORENTER);
             }
-                break;
+            break;
             case UNLOCK: {
                 Value v = ((UnopStmt) st).op;
                 if (optimizeSynchronized) {
@@ -314,7 +333,7 @@ public class IR2JConverter implements Opcodes {
                             accept(v, asm);
                         }
                     }
-                        break;
+                    break;
                     // TODO other
                     default: {
                         accept(v, asm);
@@ -326,7 +345,7 @@ public class IR2JConverter implements Opcodes {
                 }
                 asm.visitInsn(MONITOREXIT);
             }
-                break;
+            break;
             case NOP:
                 break;
             case RETURN: {
@@ -335,31 +354,31 @@ public class IR2JConverter implements Opcodes {
                 insertI2x(v.valueType, ir.ret, asm);
                 asm.visitInsn(getOpcode(v, IRETURN));
             }
-                break;
+            break;
             case RETURN_VOID:
                 asm.visitInsn(RETURN);
                 break;
             case LOOKUP_SWITCH: {
                 LookupSwitchStmt lss = (LookupSwitchStmt) st;
                 accept(lss.op, asm);
-                Label targets[] = new Label[lss.targets.length];
+                Label[] targets = new Label[lss.targets.length];
                 for (int i = 0; i < targets.length; i++) {
                     targets[i] = (Label) lss.targets[i].tag;
                 }
                 asm.visitLookupSwitchInsn((Label) lss.defaultTarget.tag, lss.lookupValues, targets);
             }
-                break;
+            break;
             case TABLE_SWITCH: {
                 TableSwitchStmt tss = (TableSwitchStmt) st;
                 accept(tss.op, asm);
-                Label targets[] = new Label[tss.targets.length];
+                Label[] targets = new Label[tss.targets.length];
                 for (int i = 0; i < targets.length; i++) {
                     targets[i] = (Label) tss.targets[i].tag;
                 }
                 asm.visitTableSwitchInsn(tss.lowIndex, tss.lowIndex + targets.length - 1,
                         (Label) tss.defaultTarget.tag, targets);
             }
-                break;
+            break;
             case THROW:
                 accept(((UnopStmt) st).op, asm);
                 asm.visitInsn(ATHROW);
@@ -373,13 +392,13 @@ public class IR2JConverter implements Opcodes {
                     asm.visitInsn(POP);
                 } else if (!"V".equals(ret)) {
                     switch (ret.charAt(0)) {
-                        case 'J':
-                        case 'D':
-                            asm.visitInsn(POP2);
-                            break;
-                        default:
-                            asm.visitInsn(POP);
-                            break;
+                    case 'J':
+                    case 'D':
+                        asm.visitInsn(POP2);
+                        break;
+                    default:
+                        asm.visitInsn(POP);
+                        break;
                     }
                 }
                 break;
@@ -396,10 +415,6 @@ public class IR2JConverter implements Opcodes {
 
     /**
      * insert I2x instruction
-     *
-     * @param tos
-     * @param expect
-     * @param mv
      */
     private static void insertI2x(String tos, String expect, MethodVisitor mv) {
         switch (expect.charAt(0)) {
@@ -519,11 +534,7 @@ public class IR2JConverter implements Opcodes {
     }
 
     /**
-     *
-     * @param v
-     * @param op
-     *            DUP
-     * @return
+     * @param op DUP
      */
     static int getOpcode(Value v, int op) {
         return getOpcode(v.valueType, op);
@@ -531,28 +542,28 @@ public class IR2JConverter implements Opcodes {
 
     static int getOpcode(String v, int op) {
         switch (v.charAt(0)) {
-            case 'L':
-            case '[':
-                return Type.getType("La;").getOpcode(op);
-            case 'Z':
-                return Type.BOOLEAN_TYPE.getOpcode(op);
-            case 'B':
-                return Type.BYTE_TYPE.getOpcode(op);
-            case 'S':
-                return Type.SHORT_TYPE.getOpcode(op);
-            case 'C':
-                return Type.CHAR_TYPE.getOpcode(op);
-            case 'I':
-                return Type.INT_TYPE.getOpcode(op);
-            case 'F':
-                return Type.FLOAT_TYPE.getOpcode(op);
-            case 'J':
-                return Type.LONG_TYPE.getOpcode(op);
-            case 'D':
-                return Type.DOUBLE_TYPE.getOpcode(op);
-            default:
-                // FIXME handle undetected types
-                return Type.INT_TYPE.getOpcode(op); // treat other as int
+        case 'L':
+        case '[':
+            return Type.getType("La;").getOpcode(op);
+        case 'Z':
+            return Type.BOOLEAN_TYPE.getOpcode(op);
+        case 'B':
+            return Type.BYTE_TYPE.getOpcode(op);
+        case 'S':
+            return Type.SHORT_TYPE.getOpcode(op);
+        case 'C':
+            return Type.CHAR_TYPE.getOpcode(op);
+        case 'I':
+            return Type.INT_TYPE.getOpcode(op);
+        case 'F':
+            return Type.FLOAT_TYPE.getOpcode(op);
+        case 'J':
+            return Type.LONG_TYPE.getOpcode(op);
+        case 'D':
+            return Type.DOUBLE_TYPE.getOpcode(op);
+        default:
+            // FIXME handle undetected types
+            return Type.INT_TYPE.getOpcode(op); // treat other as int
         }
     }
 
@@ -578,8 +589,8 @@ public class IR2JConverter implements Opcodes {
                 asm.visitTypeInsn(NEW, toInternal(((NewExpr) value).type));
                 break;
             case STATIC_FIELD:
-                StaticFieldExpr sfe= (StaticFieldExpr) value;
-                asm.visitFieldInsn(GETSTATIC,toInternal(sfe.owner),sfe.name,sfe.type);
+                StaticFieldExpr sfe = (StaticFieldExpr) value;
+                asm.visitFieldInsn(GETSTATIC, toInternal(sfe.owner), sfe.name, sfe.type);
                 break;
             }
             break;
@@ -678,7 +689,8 @@ public class IR2JConverter implements Opcodes {
             if (ie.vt == VT.INVOKE_NEW) {
                 p = new Proto(p.getParameterTypes(), "V");
             }
-            asm.visitMethodInsn(opcode, toInternal(ie.getOwner()), ie.getName(), p.getDesc(), opcode == INVOKEINTERFACE);
+            asm.visitMethodInsn(opcode, toInternal(ie.getOwner()), ie.getName(), p.getDesc(),
+                    opcode == INVOKEINTERFACE);
         }
         break;
         case INVOKE_CUSTOM: {
@@ -701,13 +713,14 @@ public class IR2JConverter implements Opcodes {
             } else {
                 throw new RuntimeException();
             }
-            asm.visitInvokeDynamicInsn(ice.name, ice.proto.getDesc(), (Handle) Dex2Asm.convertConstantValue(ice.handle), Dex2Asm.convertConstantValues(ice.bsmArgs));
+            asm.visitInvokeDynamicInsn(ice.name, ice.proto.getDesc(),
+                    (Handle) Dex2Asm.convertConstantValue(ice.handle), Dex2Asm.convertConstantValues(ice.bsmArgs));
         }
         break;
         case INVOKE_POLYMORPHIC: {
             InvokePolymorphicExpr ipe = (InvokePolymorphicExpr) value;
             Method m = ipe.method;
-            String argTypes[] = ipe.getProto().getParameterTypes();
+            String[] argTypes = ipe.getProto().getParameterTypes();
             Value[] vbs = ipe.getOps();
             accept(vbs[0], asm);
             for (int i = 1; i < vbs.length; i++) {
@@ -721,10 +734,10 @@ public class IR2JConverter implements Opcodes {
     }
 
     private static void box(String provideType, String expectedType, MethodVisitor asm) {
-        if(provideType.equals(expectedType)){
+        if (provideType.equals(expectedType)) {
             return;
         }
-        if(expectedType.equals("V")){
+        if (expectedType.equals("V")) {
             switch (provideType.charAt(0)) {
             case 'J':
             case 'D':
@@ -894,18 +907,18 @@ public class IR2JConverter implements Opcodes {
                 break;
             }
         }
-            break;
+        break;
         case CHECK_CAST:
         case INSTANCE_OF: {
             TypeExpr te = (TypeExpr) e1;
             asm.visitTypeInsn(e1.vt == VT.CHECK_CAST ? CHECKCAST : INSTANCEOF, toInternal(te.type));
         }
-            break;
+        break;
         case CAST: {
             CastExpr te = (CastExpr) e1;
             cast2(e1.op.valueType, te.to, asm);
         }
-            break;
+        break;
         case LENGTH:
             asm.visitInsn(ARRAYLENGTH);
             break;
@@ -943,7 +956,7 @@ public class IR2JConverter implements Opcodes {
                     return;
                 }
             }
-                break;
+            break;
             case 'F': {
                 float s = (Float) constant.value;
                 if (s < 0) {
@@ -952,7 +965,7 @@ public class IR2JConverter implements Opcodes {
                     return;
                 }
             }
-                break;
+            break;
             case 'J': {
                 long s = (Long) constant.value;
                 if (s < 0) {
@@ -961,7 +974,7 @@ public class IR2JConverter implements Opcodes {
                     return;
                 }
             }
-                break;
+            break;
             case 'D': {
                 double s = (Double) constant.value;
                 if (s < 0) {
@@ -970,7 +983,7 @@ public class IR2JConverter implements Opcodes {
                     return;
                 }
             }
-                break;
+            break;
             }
         }
 
@@ -1072,7 +1085,7 @@ public class IR2JConverter implements Opcodes {
                 break;
             }
         }
-            break;
+        break;
         case 'J': {
             switch (t2.charAt(0)) {
             case 'I':
@@ -1086,7 +1099,7 @@ public class IR2JConverter implements Opcodes {
                 break;
             }
         }
-            break;
+        break;
         case 'D': {
             switch (t2.charAt(0)) {
             case 'I':
@@ -1100,7 +1113,7 @@ public class IR2JConverter implements Opcodes {
                 break;
             }
         }
-            break;
+        break;
         case 'F': {
             switch (t2.charAt(0)) {
             case 'I':

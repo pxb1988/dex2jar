@@ -16,8 +16,6 @@
  */
 package com.googlecode.d2j.tools.jar;
 
-import org.objectweb.asm.Type;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +23,13 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.objectweb.asm.Type;
 
 
 public class BaseWeaver {
@@ -34,14 +38,14 @@ public class BaseWeaver {
 
     protected static final String DEFAULT_RET_TYPE = "L888;";
     protected static final String DEFAULT_DESC = "(L;)" + DEFAULT_RET_TYPE;
-    protected List<Callback> callbacks = new ArrayList<Callback>();
+    protected List<Callback> callbacks = new ArrayList<>();
     protected int currentInvocationIdx = 0;
     protected int seqIndex = 1;
     protected MtdInfo key = new MtdInfo();
-    protected Set<String> ignores = new HashSet<String>();
-    protected Map<String, String> clzDescMap = new HashMap<String, String>();
-    protected Map<MtdInfo, MtdInfo> mtdMap = new HashMap<MtdInfo, MtdInfo>();
-    protected Map<MtdInfo, MtdInfo> defMap = new HashMap<MtdInfo, MtdInfo>();
+    protected Set<String> ignores = new HashSet<>();
+    protected Map<String, String> clzDescMap = new HashMap<>();
+    protected Map<MtdInfo, MtdInfo> mtdMap = new HashMap<>();
+    protected Map<MtdInfo, MtdInfo> defMap = new HashMap<>();
 
     protected String buildMethodAName(String oldName) {
         return String.format("%s_A%03d", oldName, seqIndex++);
@@ -116,62 +120,62 @@ public class BaseWeaver {
             return;
         }
         switch (Character.toLowerCase(ln.charAt(0))) {
-            case 'i':
-                ignores.add(ln.substring(2));
-                break;
-            case 'c':
-                int index = ln.lastIndexOf('=');
-                if (index > 0) {
-                    String key = toInternal(ln.substring(2, index));
-                    String value = toInternal(ln.substring(index + 1));
-                    clzDescMap.put(key, value);
-                    ignores.add(value);
-                }
-                break;
-            case 'r':
-                index = ln.lastIndexOf('=');
-                if (index > 0) {
-                    String key = ln.substring(2, index);
-                    String value = ln.substring(index + 1);
-                    MtdInfo mi = buildMethodInfo(key);
+        case 'i':
+            ignores.add(ln.substring(2));
+            break;
+        case 'c':
+            int index = ln.lastIndexOf('=');
+            if (index > 0) {
+                String key = toInternal(ln.substring(2, index));
+                String value = toInternal(ln.substring(index + 1));
+                clzDescMap.put(key, value);
+                ignores.add(value);
+            }
+            break;
+        case 'r':
+            index = ln.lastIndexOf('=');
+            if (index > 0) {
+                String key = ln.substring(2, index);
+                String value = ln.substring(index + 1);
+                MtdInfo mi = buildMethodInfo(key);
 
-                    index = value.indexOf('.');
-                    MtdInfo mtdValue = new MtdInfo();
-                    mtdValue.owner = value.substring(0, index);
+                index = value.indexOf('.');
+                MtdInfo mtdValue = new MtdInfo();
+                mtdValue.owner = value.substring(0, index);
 
-                    int index2 = value.indexOf('(', index);
-                    mtdValue.name = value.substring(index + 1, index2);
-                    mtdValue.desc = value.substring(index2);
+                int index2 = value.indexOf('(', index);
+                mtdValue.name = value.substring(index + 1, index2);
+                mtdValue.desc = value.substring(index2);
 
-                    mtdMap.put(mi, mtdValue);
+                mtdMap.put(mi, mtdValue);
 
-                }
-                break;
-            case 'd':
-                index = ln.lastIndexOf('=');
-                if (index > 0) {
-                    String key = ln.substring(2, index);
-                    String value = ln.substring(index + 1);
-                    MtdInfo mi = buildMethodInfo(key);
+            }
+            break;
+        case 'd':
+            index = ln.lastIndexOf('=');
+            if (index > 0) {
+                String key = ln.substring(2, index);
+                String value = ln.substring(index + 1);
+                MtdInfo mi = buildMethodInfo(key);
 
-                    index = value.indexOf('.');
-                    MtdInfo mtdValue = new MtdInfo();
-                    mtdValue.owner = value.substring(0, index);
+                index = value.indexOf('.');
+                MtdInfo mtdValue = new MtdInfo();
+                mtdValue.owner = value.substring(0, index);
 
-                    int index2 = value.indexOf('(', index);
-                    mtdValue.name = value.substring(index + 1, index2);
-                    mtdValue.desc = value.substring(index2);
+                int index2 = value.indexOf('(', index);
+                mtdValue.name = value.substring(index + 1, index2);
+                mtdValue.desc = value.substring(index2);
 
-                    defMap.put(mi, mtdValue);
-                }
-                break;
+                defMap.put(mi, mtdValue);
+            }
+            break;
 
-            case 'o':
-                setInvocationInterfaceDesc(ln.substring(2));
-                break;
-            case 'p':
-                invocationTypePrefix = ln.substring(2);
-                break;
+        case 'o':
+            setInvocationInterfaceDesc(ln.substring(2));
+            break;
+        case 'p':
+            invocationTypePrefix = ln.substring(2);
+            break;
         }
     }
 

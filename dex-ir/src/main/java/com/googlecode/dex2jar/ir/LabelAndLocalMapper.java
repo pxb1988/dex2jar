@@ -3,7 +3,6 @@ package com.googlecode.dex2jar.ir;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
-
 import java.util.HashMap;
 import java.util.Map;
 

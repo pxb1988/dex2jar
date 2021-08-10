@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,29 @@ import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.visitors.DexClassVisitor;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.objectweb.asm.ClassReader;
@@ -52,26 +74,8 @@ import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
-import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.net.URL;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
- * 
  */
 @Ignore
 public abstract class TestUtils {
@@ -81,7 +85,7 @@ public abstract class TestUtils {
 
     public static void checkZipFile(File zip) throws Exception {
         ZipFile zipFile = new ZipFile(zip);
-        for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
+        for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements(); ) {
             ZipEntry entry = e.nextElement();
             if (entry.getName().endsWith(".class")) {
                 StringWriter sw = new StringWriter();
@@ -96,7 +100,7 @@ public abstract class TestUtils {
     }
 
     public static File dex(File file, File distFile) throws Exception {
-        return dex(new File[] { file }, distFile);
+        return dex(new File[]{file}, distFile);
     }
 
     public static File dex(File[] files) throws Exception {
@@ -119,7 +123,7 @@ public abstract class TestUtils {
         for (Path f : files) {
             args.add(f.toAbsolutePath().toString());
         }
-        m.invoke(null, new Object[] { args.toArray(new String[0]) });
+        m.invoke(null, new Object[]{args.toArray(new String[0])});
         return distFile;
     }
 
@@ -135,7 +139,7 @@ public abstract class TestUtils {
         for (File f : files) {
             args.add(f.getCanonicalPath());
         }
-        m.invoke(null, new Object[] { args.toArray(new String[0]) });
+        m.invoke(null, new Object[]{args.toArray(new String[0])});
         return distFile;
     }
 
@@ -184,6 +188,7 @@ public abstract class TestUtils {
     }
 
     static Field buf;
+
     static {
         try {
             buf = Printer.class.getDeclaredField("text");
@@ -273,9 +278,6 @@ public abstract class TestUtils {
         DexClassNode clzNode = new DexClassNode(DexConstants.ACC_PUBLIC, "L" + generateClassName + ";",
                 "Ljava/lang/Object;", null);
         Method m = clz.getMethod(methodName, DexClassVisitor.class);
-        if (m == null) {
-            throw new java.lang.NoSuchMethodException(methodName);
-        }
         m.setAccessible(true);
         if (Modifier.isStatic(m.getModifiers())) {
             m.invoke(null, clzNode);
@@ -296,7 +298,8 @@ public abstract class TestUtils {
                 } catch (Exception ex) {
                     BaksmaliDumper d = new BaksmaliDumper();
                     try {
-                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(System.err, StandardCharsets.UTF_8));
+                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(System.err,
+                                StandardCharsets.UTF_8));
                         d.baksmaliMethod(methodNode, out);
                         out.flush();
                     } catch (IOException e) {

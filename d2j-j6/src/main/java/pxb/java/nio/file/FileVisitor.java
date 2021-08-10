@@ -3,13 +3,11 @@ package pxb.java.nio.file;
 import java.io.IOException;
 import pxb.java.nio.file.attribute.BasicFileAttributes;
 
-public interface  FileVisitor<T> {
+public interface FileVisitor<T> {
 
-    FileVisitResult preVisitDirectory(T dir, BasicFileAttributes attrs)
-            throws IOException;
+    FileVisitResult preVisitDirectory(T dir, BasicFileAttributes attrs);
 
-    FileVisitResult visitFile(T file, BasicFileAttributes attrs)
-            throws IOException;
+    FileVisitResult visitFile(T file, BasicFileAttributes attrs);
 
     FileVisitResult visitFileFailed(T file, IOException exc)
             throws IOException;

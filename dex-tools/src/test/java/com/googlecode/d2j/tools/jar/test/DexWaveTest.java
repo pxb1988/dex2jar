@@ -6,13 +6,12 @@ import com.googlecode.d2j.smali.BaksmaliDumpOut;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.smali.Smali;
 import com.googlecode.d2j.tools.jar.DexWeaver;
-import org.antlr.runtime.RecognitionException;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import org.antlr.runtime.RecognitionException;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class DexWaveTest {
     @Test

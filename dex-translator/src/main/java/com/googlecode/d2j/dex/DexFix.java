@@ -16,9 +16,6 @@
  */
 package com.googlecode.d2j.dex;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.node.DexClassNode;
@@ -27,12 +24,14 @@ import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 1. Dex omit the value of static-final filed if it is the default value.
- *
+ * <p>
  * 2. static-final field init by zero, but assigned in clinit
- *
+ * <p>
  * this method is try to fix the problems.
  */
 public class DexFix {
@@ -48,10 +47,8 @@ public class DexFix {
 
     /**
      * init value to default if the field is static and final, and the field is not init in clinit method
-     *
+     * <p>
      * erase the default value if the field is init in clinit method
-     * 
-     * @param classNode
      */
     public static void fixStaticFinalFieldValue(final DexClassNode classNode) {
         if (classNode.fields == null) {
@@ -141,14 +138,14 @@ public class DexFix {
         case 'F':
             return Float.valueOf((float) 0.0);
         case 'J':
-            return Long.valueOf((long) 0);
+            return Long.valueOf(0);
         case 'D':
             return Double.valueOf(0.0);
         case '[':
         case 'L':
         default:
             return null;
-            // impossible
+        // impossible
         }
     }
 

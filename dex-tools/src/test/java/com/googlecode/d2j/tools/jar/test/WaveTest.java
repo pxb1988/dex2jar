@@ -5,6 +5,9 @@ import com.googlecode.d2j.jasmin.JasminDumper;
 import com.googlecode.d2j.jasmin.Jasmins;
 import com.googlecode.d2j.tools.jar.InvocationWeaver;
 import com.googlecode.dex2jar.tools.Constants;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import org.antlr.runtime.RecognitionException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -12,10 +15,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 public class WaveTest {
     @Test
@@ -33,10 +32,15 @@ public class WaveTest {
 
         InvocationWeaver iw = new InvocationWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
-        iw.withConfig("r Ljava/util/ArrayList;.size=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.size(Lp;)Ljava/lang/Object;");
-        iw.withConfig("r Ljava/util/ArrayList;.add=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.add(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-        iw.withConfig("r Ljava/io/PrintStream;.append(Ljava/lang/CharSequence;)Ljava/io/PrintStream;=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.append(Lp;)Ljava/lang/Object;");
-        iw.withConfig("r Ljava/io/PrintStream;.println(Ljava/lang/String;)V=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.println(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;");
+        iw.withConfig("r Ljava/util/ArrayList;.size=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.size(Lp;)"
+                + "Ljava/lang/Object;");
+        iw.withConfig("r Ljava/util/ArrayList;.add=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.add"
+                + "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+        iw.withConfig("r Ljava/io/PrintStream;.append(Ljava/lang/CharSequence;)Ljava/io/PrintStream;"
+                + "=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.append(Lp;)Ljava/lang/Object;");
+        iw.withConfig("r Ljava/io/PrintStream;.println(Ljava/lang/String;)"
+                + "V=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.println(Ljava/lang/Object;Ljava/lang/String;)"
+                + "Ljava/lang/Object;");
 
         test0(iw, "b");
     }

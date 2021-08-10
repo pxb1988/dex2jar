@@ -16,15 +16,22 @@
  */
 package com.googlecode.d2j.smali;
 
-import com.googlecode.d2j.*;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.node.DexDebugNode;
 import com.googlecode.d2j.reader.InstructionFormat;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.util.Out;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
-
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /*package*/class BaksmaliCodeDumper extends DexCodeVisitor {
     private boolean useParameterRegisters;
@@ -36,7 +43,8 @@ import java.util.*;
     final Map<DexLabel, List<DexDebugNode.DexDebugOpNode>> debugLabelMap;
 
     public BaksmaliCodeDumper(Out out, boolean useParameterRegisters, boolean useLocals, int nextLabelNumber,
-            int startParamR, Set<DexLabel> usedLabel, Map<DexLabel, List<DexDebugNode.DexDebugOpNode>> debugLabelMap) {
+                              int startParamR, Set<DexLabel> usedLabel, Map<DexLabel,
+            List<DexDebugNode.DexDebugOpNode>> debugLabelMap) {
         super();
         this.out = out;
         this.useParameterRegisters = useParameterRegisters;
@@ -281,7 +289,8 @@ import java.util.*;
             if (signature == null) {
                 out.s(".local %s, %s:%s", reg(reg), BaksmaliDumper.escapeValue(name), type);
             } else {
-                out.s(".local %s, %s:%s, %s", reg(reg), BaksmaliDumper.escapeValue(name), type, BaksmaliDumper.escapeValue(signature));
+                out.s(".local %s, %s:%s, %s", reg(reg), BaksmaliDumper.escapeValue(name), type,
+                        BaksmaliDumper.escapeValue(signature));
             }
         }
 
@@ -384,8 +393,8 @@ import java.util.*;
     @Override
     public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{ ").append( BaksmaliDumper.escapeValue(bsm)).append(", ").append(BaksmaliDumper.escapeValue(name)).append(", ").append(BaksmaliDumper.escapeMethodDesc(proto));
-        for(Object o: bsmArgs) {
+        sb.append("{ ").append(BaksmaliDumper.escapeValue(bsm)).append(", ").append(BaksmaliDumper.escapeValue(name)).append(", ").append(BaksmaliDumper.escapeMethodDesc(proto));
+        for (Object o : bsmArgs) {
             sb.append(", ").append(BaksmaliDumper.escapeValue(o));
         }
         sb.append("}");
@@ -419,7 +428,7 @@ import java.util.*;
         dx.displayName = "L" + nextLabelNumber++;
         usedLabel.add(dx);
         out.s(op.displayName + " " + reg(ra) + ", " + xLabel(dx));
-        appendLast.add(new AbstractMap.SimpleEntry<DexLabel, Object>(dx, new PackedSwitchStmt(first_case, labels)));
+        appendLast.add(new AbstractMap.SimpleEntry<>(dx, new PackedSwitchStmt(first_case, labels)));
     }
 
     @Override
@@ -438,7 +447,7 @@ import java.util.*;
         dx.displayName = "L" + nextLabelNumber++;
         usedLabel.add(dx);
         out.s(op.displayName + " " + reg(ra) + ", " + xLabel(dx));
-        appendLast.add(new AbstractMap.SimpleEntry<DexLabel, Object>(dx, new SparseSwitchStmt(cases, labels)));
+        appendLast.add(new AbstractMap.SimpleEntry<>(dx, new SparseSwitchStmt(cases, labels)));
     }
 
     @Override

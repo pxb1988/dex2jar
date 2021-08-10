@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,9 @@
  */
 package com.googlecode.dex2jar.test;
 
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexFileNode;
+import com.googlecode.d2j.smali.Smali;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -27,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-
 import org.junit.Assert;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -37,13 +39,8 @@ import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
-import com.googlecode.d2j.node.DexClassNode;
-import com.googlecode.d2j.node.DexFileNode;
-import com.googlecode.d2j.smali.Smali;
-
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
- * 
  */
 @RunWith(Smali2jTest.S.class)
 public class Smali2jTest {
@@ -115,7 +112,7 @@ public class Smali2jTest {
                         runLeaf(new Statement() {
                             @Override
                             public void evaluate() throws Throwable {
-                                if(p.getFileName().toString().contains("mayfail")) {
+                                if (p.getFileName().toString().contains("mayfail")) {
                                     try {
                                         TestUtils.translateAndCheck(fileNode, child);
                                     } catch (Exception ex) {

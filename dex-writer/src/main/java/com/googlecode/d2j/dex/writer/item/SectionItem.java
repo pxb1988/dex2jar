@@ -18,7 +18,6 @@ package com.googlecode.d2j.dex.writer.item;
 
 import com.googlecode.d2j.dex.writer.io.DataOut;
 import com.googlecode.d2j.dex.writer.item.StringDataItem.Buffer;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;

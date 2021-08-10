@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import org.objectweb.asm.Type;
 public class LdcOptimizeAdapter extends MethodVisitor implements Opcodes {
 
     /**
-     * @param mv
+     *
      */
     public LdcOptimizeAdapter(MethodVisitor mv) {
         super(Constants.ASM_VERSION, mv);
@@ -36,7 +36,7 @@ public class LdcOptimizeAdapter extends MethodVisitor implements Opcodes {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.objectweb.asm.MethodAdapter#visitLdcInsn(java.lang.Object)
      */
     @Override
@@ -81,35 +81,35 @@ public class LdcOptimizeAdapter extends MethodVisitor implements Opcodes {
             } else {
                 super.visitLdcInsn(cst);
             }
-        } else if(cst instanceof Type){
-            Type t= (Type) cst;
+        } else if (cst instanceof Type) {
+            Type t = (Type) cst;
             switch (t.getSort()) {
-                case Type.BOOLEAN:
-                    super.visitFieldInsn(GETSTATIC, "java/lang/Boolean", "TYPE", "Ljava/lang/Class;");
-                    break;
-                case Type.BYTE:
-                    super.visitFieldInsn(GETSTATIC, "java/lang/Byte", "TYPE", "Ljava/lang/Class;");
-                    break;
-                case Type.CHAR:
-                    super.visitFieldInsn(GETSTATIC, "java/lang/Character", "TYPE", "Ljava/lang/Class;");
-                    break;
-                case Type.DOUBLE:
-                    super.visitFieldInsn(GETSTATIC, "java/lang/Double", "TYPE", "Ljava/lang/Class;");
-                    break;
-                case Type.FLOAT:
-                    super.visitFieldInsn(GETSTATIC, "java/lang/Float", "TYPE", "Ljava/lang/Class;");
-                    break;
-                case Type.INT:
-                    super.visitFieldInsn(GETSTATIC, "java/lang/Integer", "TYPE", "Ljava/lang/Class;");
-                    break;
-                case Type.LONG:
-                    super.visitFieldInsn(GETSTATIC, "java/lang/Long", "TYPE", "Ljava/lang/Class;");
-                    break;
-                case Type.SHORT:
-                    super.visitFieldInsn(GETSTATIC, "java/lang/Short", "TYPE", "Ljava/lang/Class;");
-                    break;
-                default:
-                    super.visitLdcInsn(cst);
+            case Type.BOOLEAN:
+                super.visitFieldInsn(GETSTATIC, "java/lang/Boolean", "TYPE", "Ljava/lang/Class;");
+                break;
+            case Type.BYTE:
+                super.visitFieldInsn(GETSTATIC, "java/lang/Byte", "TYPE", "Ljava/lang/Class;");
+                break;
+            case Type.CHAR:
+                super.visitFieldInsn(GETSTATIC, "java/lang/Character", "TYPE", "Ljava/lang/Class;");
+                break;
+            case Type.DOUBLE:
+                super.visitFieldInsn(GETSTATIC, "java/lang/Double", "TYPE", "Ljava/lang/Class;");
+                break;
+            case Type.FLOAT:
+                super.visitFieldInsn(GETSTATIC, "java/lang/Float", "TYPE", "Ljava/lang/Class;");
+                break;
+            case Type.INT:
+                super.visitFieldInsn(GETSTATIC, "java/lang/Integer", "TYPE", "Ljava/lang/Class;");
+                break;
+            case Type.LONG:
+                super.visitFieldInsn(GETSTATIC, "java/lang/Long", "TYPE", "Ljava/lang/Class;");
+                break;
+            case Type.SHORT:
+                super.visitFieldInsn(GETSTATIC, "java/lang/Short", "TYPE", "Ljava/lang/Class;");
+                break;
+            default:
+                super.visitLdcInsn(cst);
             }
         } else {
             super.visitLdcInsn(cst);
@@ -123,7 +123,8 @@ public class LdcOptimizeAdapter extends MethodVisitor implements Opcodes {
     public static ClassVisitor wrap(ClassVisitor cv) {
         return cv == null ? null : new ClassVisitor(Constants.ASM_VERSION, cv) {
             @Override
-            public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+                                             String[] exceptions) {
                 return wrap(super.visitMethod(access, name, desc, signature, exceptions));
             }
         };

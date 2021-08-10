@@ -1,9 +1,8 @@
 package a;
 
+import com.googlecode.d2j.dex.writer.item.ConstPool;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.googlecode.d2j.dex.writer.item.ConstPool;
 
 public class CpStringTest {
     @Test

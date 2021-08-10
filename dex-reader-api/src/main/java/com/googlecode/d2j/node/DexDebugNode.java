@@ -16,11 +16,10 @@
  */
 package com.googlecode.d2j.node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DexDebugNode extends DexDebugVisitor {
     public List<DexDebugOpNode> debugNodes = new ArrayList<>();

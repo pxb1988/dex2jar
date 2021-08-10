@@ -23,7 +23,6 @@ import com.googlecode.d2j.dex.writer.ev.EncodedValue;
 import com.googlecode.d2j.dex.writer.io.DataOut;
 import com.googlecode.d2j.dex.writer.item.ClassDataItem.EncodedField;
 import com.googlecode.d2j.dex.writer.item.ClassDataItem.EncodedMethod;
-
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -122,7 +121,8 @@ public class ClassDefItem extends BaseItem {
     }
 
     private void collectMethod(Map<MethodIdItem, AnnotationSetItem> methodAnnotations,
-                               Map<MethodIdItem, AnnotationSetRefListItem> parameterAnnotations, List<EncodedMethod> ms, ConstPool cp) {
+                               Map<MethodIdItem, AnnotationSetRefListItem> parameterAnnotations,
+                               List<EncodedMethod> ms, ConstPool cp) {
         for (EncodedMethod m : ms) {
             if (m.annotationSetItem != null) {
                 methodAnnotations.put(m.method, cp.uniqAnnotationSetItem(m.annotationSetItem));
@@ -133,7 +133,8 @@ public class ClassDefItem extends BaseItem {
         }
     }
 
-    private void collectField(Map<FieldIdItem, AnnotationSetItem> fieldAnnotations, List<EncodedField> fs, ConstPool cp) {
+    private void collectField(Map<FieldIdItem, AnnotationSetItem> fieldAnnotations, List<EncodedField> fs,
+                              ConstPool cp) {
         for (EncodedField f : fs) {
             if (f.annotationSetItem != null) {
                 fieldAnnotations.put(f.field, cp.uniqAnnotationSetItem(f.annotationSetItem));

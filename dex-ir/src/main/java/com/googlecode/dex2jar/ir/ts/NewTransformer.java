@@ -19,16 +19,29 @@ package com.googlecode.dex2jar.ir.ts;
 import com.googlecode.dex2jar.ir.ET;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.StmtTraveler;
-import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.InvokeExpr;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.NewExpr;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import java.util.*;
-
-import static com.googlecode.dex2jar.ir.expr.Value.VT.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmt.ST.*;
+import static com.googlecode.dex2jar.ir.expr.Value.VT.INVOKE_SPECIAL;
+import static com.googlecode.dex2jar.ir.expr.Value.VT.LOCAL;
+import static com.googlecode.dex2jar.ir.expr.Value.VT.NEW;
+import static com.googlecode.dex2jar.ir.stmt.Stmt.ST.ASSIGN;
+import static com.googlecode.dex2jar.ir.stmt.Stmt.ST.LABEL;
+import static com.googlecode.dex2jar.ir.stmt.Stmt.ST.VOID_INVOKE;
 
 /**
  * simply merge
@@ -117,7 +130,7 @@ public class NewTransformer implements Transformer {
     void replace0(IrMethod method, Map<Local, TObject> init, int size) {
         Set<Local> toDelete = new HashSet<>();
 
-        Local locals[] = new Local[size];
+        Local[] locals = new Local[size];
         for (Local local : method.locals) {
             locals[local._ls_index] = local;
         }

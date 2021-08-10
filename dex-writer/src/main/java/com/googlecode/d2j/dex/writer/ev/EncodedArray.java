@@ -18,7 +18,6 @@ package com.googlecode.d2j.dex.writer.ev;
 
 import com.googlecode.d2j.dex.writer.io.DataOut;
 import com.googlecode.d2j.dex.writer.item.BaseItem;
-
 import java.util.ArrayList;
 import java.util.List;
 

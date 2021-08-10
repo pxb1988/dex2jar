@@ -26,8 +26,22 @@ import com.googlecode.dex2jar.ir.ts.TypeTransformer;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nConstant;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nEq;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeStatic;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nLong;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNewMutiArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nOr;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nStaticField;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nFillArrayData;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
 
 public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
     /**
@@ -62,7 +76,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         Local b = addLocal("b");
 
         addStmt(nAssign(b, nStaticField("La;", "z", "B")));
-        addStmt(nVoidInvoke(nInvokeStatic(new Value[] { b }, "La;", "y", new String[] { "I" }, "V")));
+        addStmt(nVoidInvoke(nInvokeStatic(new Value[]{b}, "La;", "y", new String[]{"I"}, "V")));
         addStmt(nAssign(nStaticField("La;", "z", "B"), b));
         addStmt(nReturnVoid());
         transform();
@@ -76,7 +90,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         Local b = addLocal("b");
 
         addStmt(nAssign(b, nInt(255)));
-        addStmt(nVoidInvoke(nInvokeStatic(new Value[] { b }, "La;", "y", new String[] { "I" }, "V")));
+        addStmt(nVoidInvoke(nInvokeStatic(new Value[]{b}, "La;", "y", new String[]{"I"}, "V")));
         addStmt(nAssign(nStaticField("La;", "z", "C"), b));
         addStmt(nReturnVoid());
         transform();

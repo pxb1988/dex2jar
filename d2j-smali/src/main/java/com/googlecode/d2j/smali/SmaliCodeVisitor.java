@@ -1,13 +1,13 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
  * Copyright (c) 2009-2013 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,15 +16,14 @@
  */
 package com.googlecode.d2j.smali;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.node.DexCodeNode;
 import com.googlecode.d2j.node.insn.DexLabelStmtNode;
 import com.googlecode.d2j.node.insn.DexStmtNode;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SmaliCodeVisitor extends DexCodeNode {
 
@@ -36,41 +35,41 @@ public class SmaliCodeVisitor extends DexCodeNode {
     public void visitConstStmt(Op op, int ra, Object value) {
         switch (op) {
         case CONST_WIDE_16: {
-            if(value instanceof Integer) {
+            if (value instanceof Integer) {
                 short v = ((Number) value).shortValue();
                 super.visitConstStmt(op, ra, (long) v);
             } else {
                 super.visitConstStmt(op, ra, value);
             }
         }
-            break;
+        break;
         case CONST_WIDE_HIGH16: {
-            if(value instanceof Integer) {
+            if (value instanceof Integer) {
                 short v = ((Number) value).shortValue();
                 super.visitConstStmt(op, ra, ((long) v) << 48);
             } else {
                 super.visitConstStmt(op, ra, value);
             }
         }
-            break;
+        break;
         case CONST_WIDE_32: {
-            if(value instanceof Integer) {
+            if (value instanceof Integer) {
                 int v = ((Number) value).intValue();
                 super.visitConstStmt(op, ra, (long) v);
             } else {
                 super.visitConstStmt(op, ra, value);
             }
         }
-            break;
+        break;
         case CONST_HIGH16: {
             int v = ((Number) value).intValue();
-            if(0 != (v & 0xFFff0000)){
+            if (0 != (v & 0xFFff0000)) {
                 super.visitConstStmt(op, ra, v);
             } else {
                 super.visitConstStmt(op, ra, v << 16);
             }
         }
-            break;
+        break;
         default:
             super.visitConstStmt(op, ra, value);
             break;
@@ -194,7 +193,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
                     case 1: {
                         v = vs;
                     }
-                        break;
+                    break;
                     case 2: {
                         short[] vs1 = new short[vs.length / 2];
                         for (int i = 0; i < vs1.length; i++) {
@@ -202,7 +201,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
                         }
                         v = vs1;
                     }
-                        break;
+                    break;
                     case 4: {
                         int[] vs1 = new int[vs.length / 4];
                         for (int i = 0; i < vs1.length; i++) {
@@ -212,7 +211,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
                         }
                         v = vs1;
                     }
-                        break;
+                    break;
                     case 8: {
                         long[] vs1 = new long[vs.length / 8];
                         for (int i = 0; i < vs1.length; i++) {
@@ -225,7 +224,7 @@ public class SmaliCodeVisitor extends DexCodeNode {
                         }
                         v = vs1;
                     }
-                        break;
+                    break;
                     default:
                         throw new RuntimeException();
                     }

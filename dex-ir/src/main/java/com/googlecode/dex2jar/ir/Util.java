@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,13 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
 public class Util {
     public static List<String> listDesc(String desc) {
-        List<String> list = new ArrayList<String>(5);
+        List<String> list = new ArrayList<>(5);
         char[] chars = desc.toCharArray();
         int i = 0;
         while (i < chars.length) {
@@ -76,11 +75,9 @@ public class Util {
 
     /**
      * Appends a quoted string to a given buffer.
-     * 
-     * @param buf
-     *            the buffer where the string must be added.
-     * @param s
-     *            the string to be added.
+     *
+     * @param buf the buffer where the string must be added.
+     * @param s   the string to be added.
      */
     public static void appendString(final StringBuffer buf, final String s) {
         buf.append('\"');

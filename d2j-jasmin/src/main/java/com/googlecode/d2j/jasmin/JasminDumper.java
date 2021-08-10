@@ -30,15 +30,27 @@
 package com.googlecode.d2j.jasmin;
 
 import com.googlecode.dex2jar.tools.Constants;
+import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InnerClassNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LocalVariableNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.util.Printer;
-
-import java.io.PrintWriter;
-import java.util.*;
 
 /**
  * <b>get from asm example</b>
@@ -48,12 +60,12 @@ import java.util.*;
  * The trace printed when visiting the <tt>Hello</tt> class is the following:
  * <p>
  * <blockquote>
- * 
+ *
  * <pre>
  * .bytecode 45.3
  * .class public Hello
  * .super java/lang/Object
- * 
+ *
  * .method public <init>()V
  * aload 0
  * invokespecial java/lang/Object/<init>()V
@@ -61,7 +73,7 @@ import java.util.*;
  * .limit locals 1
  * .limit stack 1
  * .end method
- * 
+ *
  * .method public static main([Ljava/lang/String;)V
  * getstatic java/lang/System/out Ljava/io/PrintStream;
  * ldc "hello"
@@ -71,27 +83,28 @@ import java.util.*;
  * .limit stack 2
  * .end method
  * </pre>
- * 
+ *
  * </blockquote> where <tt>Hello</tt> is defined by:
  * <p>
  * <blockquote>
- * 
+ *
  * <pre>
  * public class Hello {
- * 
+ *
  *     public static void main(String[] args) {
  *         System.out.println(&quot;hello&quot;);
  *     }
  * }
  * </pre>
- * 
+ *
  * </blockquote>
- * 
+ *
  * @author Eric Bruneton
  */
 public class JasminDumper implements Opcodes {
     private static final Set<String> ACCESS_KWS = new HashSet<>(Arrays
-            .asList("abstract", "private", "protected", "public", "enum", "final", "interface", "static", "strictfp", "native", "super"));
+            .asList("abstract", "private", "protected", "public", "enum", "final", "interface", "static", "strictfp",
+                    "native", "super"));
 
     public JasminDumper(PrintWriter pw) {
         this.pw = pw;
@@ -196,7 +209,7 @@ public class JasminDumper implements Opcodes {
             pw.print("\n.field");
             pw.print(access_fld(fn.access));
             pw.print(' ');
-            printIdAfterAccess(pw,fn.name);
+            printIdAfterAccess(pw, fn.name);
             pw.print(' ');
             pw.print(fn.desc);
             if (fn.value instanceof String) {
@@ -302,11 +315,11 @@ public class JasminDumper implements Opcodes {
                 for (int j = 0; j < mn.instructions.size(); ++j) {
                     AbstractInsnNode in = mn.instructions.get(j);
                     if (in.getType() != AbstractInsnNode.LINE && in.getType() != AbstractInsnNode.FRAME) {
-                       if(in.getType()==AbstractInsnNode.LABEL){
-                           pw.print("  ");
-                       }else {
-                           pw.print("    ");
-                       }
+                        if (in.getType() == AbstractInsnNode.LABEL) {
+                            pw.print("  ");
+                        } else {
+                            pw.print("    ");
+                        }
                     }
                     in.accept(new MethodVisitor(Constants.ASM_VERSION) {
 
@@ -379,7 +392,8 @@ public class JasminDumper implements Opcodes {
                         }
 
                         @Override
-                        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {
+                        public void visitMethodInsn(int opcode, String owner, String name, String desc,
+                                                    boolean isInterface) {
                             print(opcode);
                             pw.print(' ');
                             pw.print(owner);
@@ -513,6 +527,7 @@ public class JasminDumper implements Opcodes {
             pw.println(arg);
         }
     }
+
     protected String access_clz(final int access) {
         StringBuilder b = new StringBuilder();
         if ((access & Opcodes.ACC_PUBLIC) != 0) {
@@ -547,6 +562,7 @@ public class JasminDumper implements Opcodes {
         }
         return b.toString();
     }
+
     protected String access_fld(final int access) {
         StringBuilder b = new StringBuilder();
         if ((access & Opcodes.ACC_PUBLIC) != 0) {
@@ -578,6 +594,7 @@ public class JasminDumper implements Opcodes {
         }
         return b.toString();
     }
+
     protected String access_mtd(final int access) {
         StringBuilder b = new StringBuilder();
         if ((access & Opcodes.ACC_PUBLIC) != 0) {
@@ -777,7 +794,7 @@ public class JasminDumper implements Opcodes {
             }
             pw.println();
         } else if (value instanceof List) {
-            List l = (List) value;
+            List<?> l = (List<?>) value;
             if (l.size() > 0) {
                 Object o = l.get(0);
                 if (o instanceof String[]) {

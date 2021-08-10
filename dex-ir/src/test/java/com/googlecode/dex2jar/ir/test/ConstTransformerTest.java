@@ -1,13 +1,5 @@
 package com.googlecode.dex2jar.ir.test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Constant;
 import com.googlecode.dex2jar.ir.expr.Exprs;
@@ -15,6 +7,13 @@ import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.ConstTransformer;
+import org.junit.Assert;
+import org.junit.Test;
+
+import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 
 public class ConstTransformerTest {
 

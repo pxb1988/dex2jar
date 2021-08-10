@@ -1,14 +1,28 @@
 package pxb.java.nio.file.spi;
 
-import pxb.java.nio.file.FileSystem;
-import pxb.java.nio.file.FileVisitor;
-import pxb.java.nio.file.Path;
-
-import java.io.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import pxb.java.nio.file.FileSystem;
+import pxb.java.nio.file.FileVisitor;
+import pxb.java.nio.file.Path;
 
 public abstract class FileSystemProvider {
     public static void copy(InputStream is, OutputStream os) throws IOException {
@@ -161,7 +175,7 @@ public abstract class FileSystemProvider {
             }
 
             @Override
-            public InputStream _newInputStream() throws IOException {
+            public InputStream _newInputStream() {
                 throw new RuntimeException();
             }
         }
@@ -268,7 +282,7 @@ public abstract class FileSystemProvider {
         }
 
         @Override
-        public OutputStream _newOutputStream() throws FileNotFoundException {
+        public OutputStream _newOutputStream() {
             throw new RuntimeException();
         }
 
@@ -295,7 +309,7 @@ public abstract class FileSystemProvider {
         }
 
         @Override
-        public void _write(byte[] b) throws IOException {
+        public void _write(byte[] b) {
             throw new RuntimeException();
         }
 

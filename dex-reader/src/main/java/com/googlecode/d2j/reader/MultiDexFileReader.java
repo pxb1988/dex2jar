@@ -5,11 +5,16 @@ import com.googlecode.d2j.util.zip.AccessBufByteArrayOutputStream;
 import com.googlecode.d2j.util.zip.ZipEntry;
 import com.googlecode.d2j.util.zip.ZipFile;
 import com.googlecode.d2j.visitors.DexFileVisitor;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class MultiDexFileReader implements BaseDexFileReader {
     final private List<DexFileReader> readers = new ArrayList<>();
@@ -73,14 +78,8 @@ public class MultiDexFileReader implements BaseDexFileReader {
 
     @Override
     public int getDexVersion() {
-        int max = DexConstants.DEX_035;
-        for (DexFileReader r : readers) {
-            int v = r.getDexVersion();
-            if (v > max) {
-                max = v;
-            }
-        }
-        return max;
+        return readers.stream().mapToInt(DexFileReader::getDexVersion)
+                .max().orElse(DexConstants.DEX_035);
     }
 
     @Override

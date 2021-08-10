@@ -1,7 +1,38 @@
 package com.googlecode.d2j.reader;
 
-import static com.googlecode.d2j.reader.InstructionFormat.*;
-import static com.googlecode.d2j.reader.InstructionIndexType.*;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt10t;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt10x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt11n;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt11x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt12x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt20t;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt21c;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt21h;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt21s;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt21t;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt22b;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt22c;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt22s;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt22t;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt22x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt23x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt30t;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt31c;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt31i;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt31t;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt32x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt35c;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt3rc;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt45cc;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt4rcc;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt51l;
+import static com.googlecode.d2j.reader.InstructionIndexType.kIndexCallSiteRef;
+import static com.googlecode.d2j.reader.InstructionIndexType.kIndexFieldRef;
+import static com.googlecode.d2j.reader.InstructionIndexType.kIndexMethodAndProtoRef;
+import static com.googlecode.d2j.reader.InstructionIndexType.kIndexMethodRef;
+import static com.googlecode.d2j.reader.InstructionIndexType.kIndexNone;
+import static com.googlecode.d2j.reader.InstructionIndexType.kIndexStringRef;
+import static com.googlecode.d2j.reader.InstructionIndexType.kIndexTypeRef;
 
 public enum Op implements CFG {
     NOP(0x00, "nop", kFmt10x, kIndexNone, kInstrCanContinue, false), //
@@ -31,7 +62,8 @@ public enum Op implements CFG {
     CONST_WIDE(0x18, "const-wide", kFmt51l, kIndexNone, kInstrCanContinue, true), //
     CONST_WIDE_HIGH16(0x19, "const-wide/high16", kFmt21h, kIndexNone, kInstrCanContinue, true), //
     CONST_STRING(0x1a, "const-string", kFmt21c, kIndexStringRef, kInstrCanContinue | kInstrCanThrow, true), //
-    CONST_STRING_JUMBO(0x1b, "const-string/jumbo", kFmt31c, kIndexStringRef, kInstrCanContinue | kInstrCanThrow, true), //
+    CONST_STRING_JUMBO(0x1b, "const-string/jumbo", kFmt31c, kIndexStringRef, kInstrCanContinue | kInstrCanThrow,
+            true), //
     CONST_CLASS(0x1c, "const-class", kFmt21c, kIndexTypeRef, kInstrCanContinue | kInstrCanThrow, true), //
     MONITOR_ENTER(0x1d, "monitor-enter", kFmt11x, kIndexNone, kInstrCanContinue | kInstrCanThrow, false), //
     MONITOR_EXIT(0x1e, "monitor-exit", kFmt11x, kIndexNone, kInstrCanContinue | kInstrCanThrow, false), //
@@ -67,7 +99,7 @@ public enum Op implements CFG {
     IF_GEZ(0x3b, "if-gez", kFmt21t, kIndexNone, kInstrCanBranch | kInstrCanContinue, false), //
     IF_GTZ(0x3c, "if-gtz", kFmt21t, kIndexNone, kInstrCanBranch | kInstrCanContinue, false), //
     IF_LEZ(0x3d, "if-lez", kFmt21t, kIndexNone, kInstrCanBranch | kInstrCanContinue, false), //
-//    UNUSED_3E(0x3e, "unused-3e", null, kIndexUnknown, 0, false), //
+    //    UNUSED_3E(0x3e, "unused-3e", null, kIndexUnknown, 0, false), //
 //    UNUSED_3F(0x3f, "unused-3f", null, kIndexUnknown, 0, false), //
 //    UNUSED_40(0x40, "unused-40", null, kIndexUnknown, 0, false), //
 //    UNUSED_41(0x41, "unused-41", null, kIndexUnknown, 0, false), //
@@ -119,7 +151,7 @@ public enum Op implements CFG {
             true), //
 
     /**
-     *  Behavior changed in 037, interface method is allowed
+     * Behavior changed in 037, interface method is allowed
      */
     INVOKE_SUPER(0x6f, "invoke-super", kFmt35c, kIndexMethodRef, kInstrCanContinue | kInstrCanThrow | kInstrInvoke,
             true), //
@@ -129,7 +161,7 @@ public enum Op implements CFG {
             true), //
     INVOKE_INTERFACE(0x72, "invoke-interface", kFmt35c, kIndexMethodRef, kInstrCanContinue | kInstrCanThrow
             | kInstrInvoke, true), //
-//    UNUSED_73(0x73, "unused-73", null, kIndexUnknown, 0, false), //
+    //    UNUSED_73(0x73, "unused-73", null, kIndexUnknown, 0, false), //
     INVOKE_VIRTUAL_RANGE(0x74, "invoke-virtual/range", kFmt3rc, kIndexMethodRef, kInstrCanContinue | kInstrCanThrow
             | kInstrInvoke, true), //
     INVOKE_SUPER_RANGE(0x75, "invoke-super/range", kFmt3rc, kIndexMethodRef, kInstrCanContinue | kInstrCanThrow
@@ -140,7 +172,7 @@ public enum Op implements CFG {
             | kInstrInvoke, true), //
     INVOKE_INTERFACE_RANGE(0x78, "invoke-interface/range", kFmt3rc, kIndexMethodRef, kInstrCanContinue | kInstrCanThrow
             | kInstrInvoke, true), //
-//    UNUSED_79(0x79, "unused-79", null, kIndexUnknown, 0, false), //
+    //    UNUSED_79(0x79, "unused-79", null, kIndexUnknown, 0, false), //
 //    UNUSED_7A(0x7a, "unused-7a", null, kIndexUnknown, 0, false), //
     NEG_INT(0x7b, "neg-int", kFmt12x, kIndexNone, kInstrCanContinue, true), //
     NOT_INT(0x7c, "not-int", kFmt12x, kIndexNone, kInstrCanContinue, true), //
@@ -248,8 +280,9 @@ public enum Op implements CFG {
     USHR_INT_LIT8(0xe2, "ushr-int/lit8", kFmt22b, kIndexNone, kInstrCanContinue, true), //
     INVOKE_POLYMORPHIC(0xfa, "invoke-polymorphic", kFmt45cc, kIndexMethodAndProtoRef, kInstrCanContinue | kInstrCanThrow
             | kInstrInvoke, true), //
-    INVOKE_POLYMORPHIC_RANGE(0xfb, "invoke-polymorphic/range", kFmt4rcc, kIndexMethodAndProtoRef, kInstrCanContinue | kInstrCanThrow
-            | kInstrInvoke, true), //
+    INVOKE_POLYMORPHIC_RANGE(0xfb, "invoke-polymorphic/range", kFmt4rcc, kIndexMethodAndProtoRef,
+            kInstrCanContinue | kInstrCanThrow
+                    | kInstrInvoke, true), //
     INVOKE_CUSTOM(0xfc, "invoke-custom", kFmt35c, kIndexCallSiteRef, kInstrCanContinue | kInstrCanThrow
             | kInstrInvoke, true), //
     INVOKE_CUSTOM_RANGE(0xfd, "invoke-custom/range", kFmt3rc, kIndexCallSiteRef, kInstrCanContinue | kInstrCanThrow
@@ -258,11 +291,12 @@ public enum Op implements CFG {
     ;
     public int opcode;
     public InstructionFormat format;
-    /* package */InstructionIndexType indexType;
-    /* package */int flags;
+    /* package */ InstructionIndexType indexType;
+    /* package */ int flags;
     public String displayName;
-    public final static Op ops[] = new Op[256];
+    public final static Op[] ops = new Op[256];
     public boolean changeFrame;
+
     static {
         Op[] ops = Op.ops;
         for (Op op : Op.values()) {
@@ -292,7 +326,8 @@ public enum Op implements CFG {
         return 0 != (flags & kInstrCanThrow);
     }
 
-    Op(int op, String displayName, InstructionFormat fmt, InstructionIndexType indexType, int flags, boolean changeFrame) {
+    Op(int op, String displayName, InstructionFormat fmt, InstructionIndexType indexType, int flags,
+       boolean changeFrame) {
         this.opcode = op;
         this.displayName = displayName;
         this.format = fmt;

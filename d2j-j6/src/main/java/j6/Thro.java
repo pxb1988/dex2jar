@@ -23,6 +23,6 @@ public class Thro {
         if (list == null) {
             return null;
         }
-        return list.toArray(new Throwable[list.size()]);
+        return list.toArray(new Throwable[0]);
     }
 }

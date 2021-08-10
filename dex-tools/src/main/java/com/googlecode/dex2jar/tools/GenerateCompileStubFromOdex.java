@@ -4,8 +4,6 @@ import com.googlecode.d2j.dex.ClassVisitorFactory;
 import com.googlecode.d2j.dex.Dex2Asm;
 import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.reader.DexFileReader;
-import org.objectweb.asm.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,8 +11,14 @@ import java.nio.ByteOrder;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
-@BaseCmd.Syntax(cmd = "d2j-generate-stub-from-odex", syntax = "[options] <odex0> [odex1 ... odexN]", desc = "Genenerate no-code jar from odex")
+@BaseCmd.Syntax(cmd = "d2j-generate-stub-from-odex", syntax = "[options] <odex0> [odex1 ... odexN]", desc =
+        "Genenerate no-code jar from odex")
 public class GenerateCompileStubFromOdex extends BaseCmd {
     private static final int MAGIC_ODEX = 0x0A796564 & 0x00FFFFFF;// hex for 'dey ', ignore the 0A
     private static final int MAGIC_DEX = 0x0A786564 & 0x00FFFFFF;// hex for 'dex ', ignore the 0A
@@ -88,7 +92,8 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
                     }
 
                     @Override
-                    public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+                    public FieldVisitor visitField(int access, String name, String desc, String signature,
+                                                   Object value) {
                         if (noPrivate && 0 != (access & Opcodes.ACC_PRIVATE)) {
                             return null;
                         }
@@ -97,7 +102,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
 
                     @Override
                     public MethodVisitor visitMethod(int access, String name, String desc, String signature,
-                            String[] exceptions) {
+                                                     String[] exceptions) {
                         if (noPrivate && 0 != (access & Opcodes.ACC_PRIVATE)) {
                             return null;
                         }

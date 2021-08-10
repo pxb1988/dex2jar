@@ -1,16 +1,21 @@
 package com.googlecode.dex2jar.ir.test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.ts.AggTransformer;
 import com.googlecode.dex2jar.ir.ts.SSATransformer;
+import org.junit.Assert;
+import org.junit.Test;
+
+import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNewIntArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.expr.Exprs.niAdd;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
 
 public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
     @Test
@@ -74,12 +79,12 @@ public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
         addStmt(nAssign(d, c));
         addStmt(nAssign(cst, nString("p1")));
         addStmt(nAssign(c,
-                Exprs.nInvokeVirtual(new Value[] { d, cst }, sbType, "append", new String[] { sType }, sbType)));
+                Exprs.nInvokeVirtual(new Value[]{d, cst}, sbType, "append", new String[]{sType}, sbType)));
         addStmt(nAssign(e, c));
         addStmt(nAssign(cst, nString("p2")));
         addStmt(nAssign(c,
-                Exprs.nInvokeVirtual(new Value[] { e, cst }, sbType, "append", new String[] { sType }, sbType)));
-        addStmt(nAssign(c, Exprs.nInvokeVirtual(new Value[] { c }, sbType, "toString", new String[0], sType)));
+                Exprs.nInvokeVirtual(new Value[]{e, cst}, sbType, "append", new String[]{sType}, sbType)));
+        addStmt(nAssign(c, Exprs.nInvokeVirtual(new Value[]{c}, sbType, "toString", new String[0], sType)));
 
         addStmt(nReturn(c));
         new SSATransformer().transform(method);

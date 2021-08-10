@@ -29,10 +29,7 @@ public class DexDebugVisitor {
     }
 
     /**
-     * 
-     * @param parameterIndex
-     *            start with the first index of DexMethod.getParameterTypes(), no 'this'
-     * @param name
+     * @param parameterIndex start with the first index of DexMethod.getParameterTypes(), no 'this'
      */
     public void visitParameterName(int parameterIndex, String name) {
         if (visitor != null) {

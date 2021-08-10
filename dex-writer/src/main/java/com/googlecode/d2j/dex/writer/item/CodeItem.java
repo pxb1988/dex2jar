@@ -25,10 +25,15 @@ import com.googlecode.d2j.dex.writer.insn.PreBuildInsn;
 import com.googlecode.d2j.dex.writer.io.DataOut;
 import com.googlecode.d2j.dex.writer.item.CodeItem.EncodedCatchHandler.AddrPair;
 import com.googlecode.d2j.reader.Op;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class CodeItem extends BaseItem {
 
@@ -45,6 +50,7 @@ public class CodeItem extends BaseItem {
     List<TryItem> _tryItems;
     List<Insn> _ops;
     List<Insn> _tailOps;
+
     @Override
     public int place(int offset) {
         prepareInsns();
@@ -127,6 +133,7 @@ public class CodeItem extends BaseItem {
         this._tailOps = tailOps;
         this._tryItems = tryItems;
     }
+
     private void prepareTries() {
         if (_tryItems.size() > 0) {
             List<CodeItem.TryItem> uniqTrys = new ArrayList<>();
@@ -147,16 +154,7 @@ public class CodeItem extends BaseItem {
                 set.clear();
                 this.tries = uniqTrys;
                 if (uniqTrys.size() > 0) {
-                    Collections.sort(uniqTrys, new Comparator<TryItem>() {
-                        @Override
-                        public int compare(TryItem o1, TryItem o2) {
-                            int x = o1.start.offset - o2.start.offset;
-                            if (x == 0) {
-                                x = o1.end.offset - o2.end.offset;
-                            }
-                            return x;
-                        }
-                    });
+                    uniqTrys.sort(Comparator.comparingInt((TryItem o) -> o.start.offset).thenComparingInt(o -> o.end.offset));
                 }
             }
             { // merge dup handlers
@@ -191,12 +189,12 @@ public class CodeItem extends BaseItem {
     }
 
     private void prepareInsns() {
-        List<JumpOp> jumpOps=new ArrayList<>();
+        List<JumpOp> jumpOps = new ArrayList<>();
         for (Insn insn : _ops) {
             if (insn instanceof CodeWriter.IndexedInsn) {
                 ((CodeWriter.IndexedInsn) insn).fit();
-            } else  if(insn instanceof JumpOp){
-                jumpOps.add((JumpOp)insn);
+            } else if (insn instanceof JumpOp) {
+                jumpOps.add((JumpOp) insn);
             }
         }
 
@@ -219,7 +217,7 @@ public class CodeItem extends BaseItem {
         }
         for (Insn insn : _tailOps) {
             if ((codeSize & 1) != 0) { // not 32bit alignment
-                Insn nop = new PreBuildInsn(new byte[] { (byte) Op.NOP.opcode, 0 }); // f10x
+                Insn nop = new PreBuildInsn(new byte[]{(byte) Op.NOP.opcode, 0}); // f10x
                 insn.offset = codeSize;
                 codeSize += nop.getCodeUnitSize();
                 _ops.add(nop);

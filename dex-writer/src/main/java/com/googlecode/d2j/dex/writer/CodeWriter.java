@@ -19,25 +19,48 @@ package com.googlecode.d2j.dex.writer;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
-import com.googlecode.d2j.dex.writer.insn.*;
-import com.googlecode.d2j.dex.writer.item.*;
+import com.googlecode.d2j.dex.writer.insn.Insn;
+import com.googlecode.d2j.dex.writer.insn.JumpOp;
+import com.googlecode.d2j.dex.writer.insn.Label;
+import com.googlecode.d2j.dex.writer.insn.OpInsn;
+import com.googlecode.d2j.dex.writer.insn.PreBuildInsn;
+import com.googlecode.d2j.dex.writer.item.BaseItem;
+import com.googlecode.d2j.dex.writer.item.ClassDataItem;
+import com.googlecode.d2j.dex.writer.item.CodeItem;
+import com.googlecode.d2j.dex.writer.item.ConstPool;
+import com.googlecode.d2j.dex.writer.item.DebugInfoItem;
+import com.googlecode.d2j.dex.writer.item.StringIdItem;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static com.googlecode.d2j.reader.InstructionFormat.*;
-import static com.googlecode.d2j.reader.Op.*;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt10x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt11x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt22b;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt22s;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt23x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt35c;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt3rc;
+import static com.googlecode.d2j.reader.Op.BAD_OP;
+import static com.googlecode.d2j.reader.Op.CONST;
+import static com.googlecode.d2j.reader.Op.CONST_16;
+import static com.googlecode.d2j.reader.Op.CONST_HIGH16;
+import static com.googlecode.d2j.reader.Op.CONST_STRING;
+import static com.googlecode.d2j.reader.Op.CONST_STRING_JUMBO;
+import static com.googlecode.d2j.reader.Op.CONST_WIDE_32;
 
 @SuppressWarnings("incomplete-switch")
 public class CodeWriter extends DexCodeVisitor {
     final CodeItem codeItem;
     final ConstPool cp;
     ByteBuffer b = ByteBuffer.allocate(10).order(ByteOrder.LITTLE_ENDIAN);
-    int in_reg_size = 0;
+    int in_reg_size;
     int max_out_reg_size = 0;
     List<Insn> ops = new ArrayList<>();
     List<Insn> tailOps = new ArrayList<>();
@@ -47,7 +70,8 @@ public class CodeWriter extends DexCodeVisitor {
     Map<DexLabel, Label> labelMap = new HashMap<>();
     ClassDataItem.EncodedMethod encodedMethod;
 
-    public CodeWriter(ClassDataItem.EncodedMethod encodedMethod, CodeItem codeItem, Method owner, boolean isStatic, ConstPool cp) {
+    public CodeWriter(ClassDataItem.EncodedMethod encodedMethod, CodeItem codeItem, Method owner, boolean isStatic,
+                      ConstPool cp) {
         this.encodedMethod = encodedMethod;
         this.codeItem = codeItem;
         this.owner = owner;
@@ -175,14 +199,14 @@ public class CodeWriter extends DexCodeVisitor {
         checkRegAA(op, "vAA", vAA);
         int realV;
         if (op == CONST_HIGH16) { // op vAA, #+BBBB0000
-            int v = ((Number) value).intValue();
+            int v = value.intValue();
             if ((v & 0xFFFF) != 0) {
                 throw new CantNotFixContentException(op, "#+BBBB0000", v);
             }
             realV = v >> 16;
 
         } else { // CONST_WIDE_HIGH16 //op vAA, #+BBBB000000000000
-            long v = ((Number) value).longValue();
+            long v = value.longValue();
             if ((v & 0x0000FFFFffffFFFFL) != 0) {
                 throw new CantNotFixContentException(op, "#+BBBB000000000000", v);
             }
@@ -383,10 +407,6 @@ public class CodeWriter extends DexCodeVisitor {
 
     /**
      * kFmt21c,kFmt31c,kFmt11n,kFmt21h,kFmt21s,kFmt31i,kFmt51l
-     * 
-     * @param op
-     * @param ra
-     * @param value
      */
     @Override
     public void visitConstStmt(Op op, int ra, Object value) {
@@ -432,22 +452,19 @@ public class CodeWriter extends DexCodeVisitor {
         if (codeItem.debugInfo != null) {
             cp.addDebugInfoItem(codeItem.debugInfo);
             List<DebugInfoItem.DNode> debugNodes = codeItem.debugInfo.debugNodes;
-            Collections.sort(debugNodes, new Comparator<DebugInfoItem.DNode>() {
-                @Override
-                public int compare(DebugInfoItem.DNode o1, DebugInfoItem.DNode o2) {
-                    int x = o1.label.offset - o2.label.offset;
-                    // if (x == 0) {
-                    // if (o1.op == o2.op) {
-                    // x = o1.reg - o2.reg;
-                    // if (x == 0) {
-                    // x = o1.line - o2.line;
-                    // }
-                    // } else {
-                    // //
-                    // }
-                    // }
-                    return x;
-                }
+            debugNodes.sort((o1, o2) -> {
+                int x = o1.label.offset - o2.label.offset;
+                // if (x == 0) {
+                // if (o1.op == o2.op) {
+                // x = o1.reg - o2.reg;
+                // if (x == 0) {
+                // x = o1.line - o2.line;
+                // }
+                // } else {
+                // //
+                // }
+                // }
+                return x;
             });
         }
 
@@ -567,9 +584,6 @@ public class CodeWriter extends DexCodeVisitor {
 
     /**
      * kFmt11x
-     * 
-     * @param op
-     * @param reg
      */
     @Override
     public void visitStmt1R(Op op, int reg) {
@@ -581,10 +595,6 @@ public class CodeWriter extends DexCodeVisitor {
 
     /**
      * kFmt12x,kFmt22x,kFmt32x
-     * 
-     * @param op
-     * @param a
-     * @param b
      */
     @Override
     public void visitStmt2R(Op op, int a, int b) {
@@ -603,11 +613,6 @@ public class CodeWriter extends DexCodeVisitor {
 
     /**
      * Only kFmt22s, kFmt22b
-     * 
-     * @param op
-     * @param distReg
-     * @param srcReg
-     * @param content
      */
     @Override
     public void visitStmt2R1N(Op op, int distReg, int srcReg, int content) {
@@ -621,11 +626,6 @@ public class CodeWriter extends DexCodeVisitor {
 
     /**
      * kFmt23x
-     * 
-     * @param op
-     * @param a
-     * @param b
-     * @param c
      */
     @Override
     public void visitStmt3R(Op op, int a, int b, int c) {
@@ -787,7 +787,7 @@ public class CodeWriter extends DexCodeVisitor {
 
         if (codeItem.debugInfo == null) {
             codeItem.debugInfo = new DebugInfoItem();
-            codeItem.debugInfo.parameterNames=new StringIdItem[owner.getParameterTypes().length];
+            codeItem.debugInfo.parameterNames = new StringIdItem[owner.getParameterTypes().length];
         }
         final DebugInfoItem debugInfoItem = codeItem.debugInfo;
         return new DexDebugVisitor() {
@@ -826,12 +826,12 @@ public class CodeWriter extends DexCodeVisitor {
 
             @Override
             public void visitPrologue(DexLabel dexLabel) {
-                debugInfoItem.debugNodes.add(DebugInfoItem.DNode.prologue( getLabel(dexLabel)));
+                debugInfoItem.debugNodes.add(DebugInfoItem.DNode.prologue(getLabel(dexLabel)));
             }
 
             @Override
             public void visitEpiogue(DexLabel dexLabel) {
-                debugInfoItem.debugNodes.add(DebugInfoItem.DNode.epiogue( getLabel(dexLabel)));
+                debugInfoItem.debugNodes.add(DebugInfoItem.DNode.epiogue(getLabel(dexLabel)));
             }
 
             @Override

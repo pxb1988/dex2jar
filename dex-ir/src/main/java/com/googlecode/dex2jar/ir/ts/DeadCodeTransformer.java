@@ -23,8 +23,11 @@ import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class DeadCodeTransformer implements Transformer {
     @Override
@@ -32,7 +35,7 @@ public class DeadCodeTransformer implements Transformer {
         Cfg.createCFG(method);
         Cfg.dfsVisit(method, null);
         if (method.traps != null) {
-            for (Iterator<Trap> it = method.traps.iterator(); it.hasNext();) {
+            for (Iterator<Trap> it = method.traps.iterator(); it.hasNext(); ) {
                 Trap t = it.next();
                 boolean allNotThrow = true;
                 for (Stmt p = t.start; p != t.end; p = p.getNext()) {
@@ -68,14 +71,14 @@ public class DeadCodeTransformer implements Transformer {
                             labelStmts.add(t.handlers[i]);
                             types.add(t.types[i]);
                         }
-                        t.handlers = labelStmts.toArray(new LabelStmt[labelStmts.size()]);
-                        t.types = types.toArray(new String[types.size()]);
+                        t.handlers = labelStmts.toArray(new LabelStmt[0]);
+                        t.types = types.toArray(new String[0]);
                     }
                 }
             }
         }
         Set<Local> definedLocals = new HashSet<>();
-        for (Iterator<Stmt> it = method.stmts.iterator(); it.hasNext();) {
+        for (Iterator<Stmt> it = method.stmts.iterator(); it.hasNext(); ) {
             Stmt p = it.next();
             if (!p.visited) {
                 it.remove();
@@ -88,7 +91,7 @@ public class DeadCodeTransformer implements Transformer {
             }
         }
         if (method.phiLabels != null) {
-            for (Iterator<LabelStmt> it = method.phiLabels.iterator(); it.hasNext();) {
+            for (Iterator<LabelStmt> it = method.phiLabels.iterator(); it.hasNext(); ) {
                 LabelStmt labelStmt = it.next();
                 if (!labelStmt.visited) {
                     it.remove();
@@ -106,7 +109,7 @@ public class DeadCodeTransformer implements Transformer {
         method.locals.addAll(definedLocals);
         Set<Value> tmp = new HashSet<>();
         if (method.phiLabels != null) {
-            for (Iterator<LabelStmt> it = method.phiLabels.iterator(); it.hasNext();) {
+            for (Iterator<LabelStmt> it = method.phiLabels.iterator(); it.hasNext(); ) {
                 LabelStmt labelStmt = it.next();
                 if (labelStmt.phis != null) {
                     for (AssignStmt phi : labelStmt.phis) {
@@ -124,7 +127,7 @@ public class DeadCodeTransformer implements Transformer {
                                     tmp.add(v);
                                 }
                             }
-                            phiExpr.setOps(tmp.toArray(new Value[tmp.size()]));
+                            phiExpr.setOps(tmp.toArray(new Value[0]));
                             tmp.clear();
                         }
                     }

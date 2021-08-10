@@ -1,13 +1,13 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
  * Copyright (c) 2009-2015 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,15 +18,6 @@ package com.googlecode.d2j.tools.jar.test;
 
 import com.googlecode.d2j.jasmin.JasminDumper;
 import com.googlecode.d2j.jasmin.Jasmins;
-import org.junit.Assert;
-import org.junit.runner.Description;
-import org.junit.runner.RunWith;
-import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.ParentRunner;
-import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.Statement;
-import org.objectweb.asm.tree.ClassNode;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -38,6 +29,14 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.runner.Description;
+import org.junit.runner.RunWith;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.ParentRunner;
+import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.Statement;
+import org.objectweb.asm.tree.ClassNode;
 
 @RunWith(Jasmin2jTest.S.class)
 public class Jasmin2jTest {
@@ -52,7 +51,7 @@ public class Jasmin2jTest {
         Path basePath;
         List<Path> runners = new ArrayList<>();
 
-        public void init(final Class<?> testClass) throws InitializationError {
+        public void init(final Class<?> testClass) {
             URL url = testClass.getResource("/jasmins/type.j");
             Assert.assertNotNull(url);
 
@@ -93,8 +92,8 @@ public class Jasmin2jTest {
             runLeaf(new Statement() {
                 @Override
                 public void evaluate() throws Throwable {
-                    ClassNode cn= Jasmins.parse(basePath.resolve(child));
-                    JasminDumper dumper=new JasminDumper(new PrintWriter(System.out,true));
+                    ClassNode cn = Jasmins.parse(basePath.resolve(child));
+                    JasminDumper dumper = new JasminDumper(new PrintWriter(System.out, true));
                     dumper.dump(cn);
                 }
             }, describeChild(child), notifier);

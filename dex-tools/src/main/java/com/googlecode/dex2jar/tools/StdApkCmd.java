@@ -16,15 +16,14 @@
  */
 package com.googlecode.dex2jar.tools;
 
+import com.googlecode.d2j.util.zip.AutoSTOREDZipOutputStream;
+import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import com.googlecode.d2j.util.zip.AutoSTOREDZipOutputStream;
-import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 
 @Syntax(cmd = "d2j-std-zip", syntax = "[options] <zip>", desc = "clean up apk to standard zip")
 public class StdApkCmd extends BaseCmd {
@@ -48,7 +47,7 @@ public class StdApkCmd extends BaseCmd {
         byte[] buffer = new byte[1000];
         try (ZipOutputStream zos = new AutoSTOREDZipOutputStream(Files.newOutputStream(output))) {
             byte[] data = Files.readAllBytes(new File(remainingArgs[0]).toPath());
-            try(com.googlecode.d2j.util.zip.ZipFile zipFile = new com.googlecode.d2j.util.zip.ZipFile(data)) {
+            try (com.googlecode.d2j.util.zip.ZipFile zipFile = new com.googlecode.d2j.util.zip.ZipFile(data)) {
                 for (com.googlecode.d2j.util.zip.ZipEntry e : zipFile.entries()) {
                     ZipEntry nEntry = new ZipEntry(e.getName());
 

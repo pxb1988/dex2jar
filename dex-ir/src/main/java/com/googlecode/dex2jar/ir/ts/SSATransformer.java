@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,13 +19,22 @@ import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
+import com.googlecode.dex2jar.ir.stmt.BaseSwitchStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Cfg.TravelCallBack;
 import com.googlecode.dex2jar.ir.ts.an.AnalyzeValue;
 import com.googlecode.dex2jar.ir.ts.an.BaseAnalyze;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * Transform Stmt to SSA form and count local read
@@ -108,7 +117,7 @@ public class SSATransformer implements Transformer {
                             phis = new ArrayList<>();
                         }
                         locals.add(v.local);
-                        phis.add(Stmts.nAssign(v.local, Exprs.nPhi(froms.toArray(new Value[froms.size()]))));
+                        phis.add(Stmts.nAssign(v.local, Exprs.nPhi(froms.toArray(new Value[0]))));
                         froms.clear();
                     }
                 }
@@ -146,8 +155,8 @@ public class SSATransformer implements Transformer {
     private boolean prepare(final IrMethod method) {
         int index = Cfg.reIndexLocal(method);
 
-        final int readCounts[] = new int[index];
-        final int writeCounts[] = new int[index];
+        final int[] readCounts = new int[index];
+        final int[] writeCounts = new int[index];
         Cfg.travel(method.stmts, new TravelCallBack() {
             @Override
             public Value onAssign(Local v, AssignStmt as) {
@@ -304,7 +313,7 @@ public class SSATransformer implements Transformer {
         }
 
         protected Set<SSAValue> markUsed() {
-            Set<SSAValue> used = new HashSet<SSAValue>(aValues.size() / 2);
+            Set<SSAValue> used = new HashSet<>(aValues.size() / 2);
             Queue<SSAValue> q = new UniqueQueue<>();
             q.addAll(aValues);
             while (!q.isEmpty()) {
@@ -406,9 +415,9 @@ public class SSATransformer implements Transformer {
 
         protected void relationMerge(SSAValue[] frame, Stmt dist, SSAValue[] distFrame) {
             for (int i = 0; i < localSize; i++) {
-                SSAValue srcValue = (SSAValue) frame[i];
+                SSAValue srcValue = frame[i];
                 if (srcValue != null) {
-                    SSAValue distValue = (SSAValue) distFrame[i];
+                    SSAValue distValue = distFrame[i];
                     if (distValue == null) {
                         if (!dist.visited) {
                             distValue = newValue();

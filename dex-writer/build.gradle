@@ -2,6 +2,6 @@ description = 'Dex Writer'
 
 dependencies {
     implementation project(':dex-reader-api')
-    testImplementation group: 'junit', name: 'junit', version: '4.10'
+    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
     testImplementation project(':dex-reader')
 }

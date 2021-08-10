@@ -4,7 +4,6 @@ import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
 import com.googlecode.dex2jar.ir.ts.ZeroTransformer;
 import org.junit.Assert;
 import org.junit.Test;

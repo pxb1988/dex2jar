@@ -1,16 +1,15 @@
 package com.googlecode.dex2jar.ir.test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.nAdd;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.JimpleTransformer;
+import org.junit.Assert;
+import org.junit.Test;
+
+import static com.googlecode.dex2jar.ir.expr.Exprs.nAdd;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 
 public class JimpleTransformerTest extends BaseTransformerTest<JimpleTransformer> {
 
@@ -36,10 +35,10 @@ public class JimpleTransformerTest extends BaseTransformerTest<JimpleTransformer
     public void test01HelloWord() {
         initMethod(true, "V");
         addStmt(Stmts.nVoidInvoke(Exprs.nInvokeVirtual(
-                new Value[] {//
-                Exprs.nStaticField("Ljava/lang/System;", "out", "Ljava/io/PrintStream;"),//
-                        Exprs.nString("Hello JNI") }, "Ljava/io/PrintStream;", "println",
-                new String[] { "Ljava/lang/String;" }, "V")));
+                new Value[]{//
+                        Exprs.nStaticField("Ljava/lang/System;", "out", "Ljava/io/PrintStream;"),//
+                        Exprs.nString("Hello JNI")}, "Ljava/io/PrintStream;", "println",
+                new String[]{"Ljava/lang/String;"}, "V")));
         transform();
         Assert.assertEquals("should expends to 3 stmts", 3, method.stmts.getSize());
         Assert.assertEquals("should expends to 2 locals", 2, method.locals.size());

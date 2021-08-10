@@ -1,13 +1,13 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,16 +21,26 @@ import com.googlecode.d2j.converter.J2IRConverter;
 import com.googlecode.d2j.util.Escape;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.StmtTraveler;
-import com.googlecode.dex2jar.ir.expr.*;
-import com.googlecode.dex2jar.ir.ts.*;
+import com.googlecode.dex2jar.ir.expr.Constant;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
+import com.googlecode.dex2jar.ir.expr.InvokeExpr;
+import com.googlecode.dex2jar.ir.expr.Value;
+import com.googlecode.dex2jar.ir.ts.AggTransformer;
+import com.googlecode.dex2jar.ir.ts.CleanLabel;
+import com.googlecode.dex2jar.ir.ts.DeadCodeTransformer;
+import com.googlecode.dex2jar.ir.ts.ExceptionHandlerTrim;
+import com.googlecode.dex2jar.ir.ts.Ir2JRegAssignTransformer;
+import com.googlecode.dex2jar.ir.ts.NewTransformer;
+import com.googlecode.dex2jar.ir.ts.NpeTransformer;
+import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
+import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
+import com.googlecode.dex2jar.ir.ts.TypeTransformer;
+import com.googlecode.dex2jar.ir.ts.UnSSATransformer;
+import com.googlecode.dex2jar.ir.ts.VoidInvokeTransformer;
+import com.googlecode.dex2jar.ir.ts.ZeroTransformer;
 import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
 import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -42,9 +52,25 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
-@Syntax(cmd = "d2j-decrypt-string", syntax = "[options] <jar>", desc = "Decrypt in class file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/DecryptStrings\nhttps://bitbucket.org/pxb1988/dex2jar/wiki/DecryptStrings")
+@Syntax(cmd = "d2j-decrypt-string", syntax = "[options] <jar>", desc = "Decrypt in class file", onlineHelp = "https"
+        + "://sourceforge.net/p/dex2jar/wiki/DecryptStrings\nhttps://bitbucket.org/pxb1988/dex2jar/wiki/DecryptStrings")
 public class DecryptStringCmd extends BaseCmd {
     public static void main(String... args) {
         new DecryptStringCmd().doMain(args);
@@ -52,24 +78,34 @@ public class DecryptStringCmd extends BaseCmd {
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
-    @Opt(opt = "o", longOpt = "output", description = "output of .jar files, default is $current_dir/[jar-name]-decrypted.jar", argName = "out")
+    @Opt(opt = "o", longOpt = "output", description = "output of .jar files, default is "
+            + "$current_dir/[jar-name]-decrypted.jar", argName = "out")
     private Path output;
-    @Opt(opt = "m", longOpt = "methods", description = "a file contain a list of methods, each line like: La/b;->decrypt(III)Ljava/lang/String;", argName = "cfg")
+    @Opt(opt = "m", longOpt = "methods", description = "a file contain a list of methods, each line like: La/b;"
+            + "->decrypt(III)Ljava/lang/String;", argName = "cfg")
     private Path method;
-    @Opt(opt = "mo", longOpt = "decrypt-method-owner", description = "the owner of the method which can decrypt the stings, example: java.lang.String", argName = "owner")
+    @Opt(opt = "mo", longOpt = "decrypt-method-owner", description = "the owner of the method which can decrypt the "
+            + "stings, example: java.lang.String", argName = "owner")
     private String methodOwner;
-    @Opt(opt = "mn", longOpt = "decrypt-method-name", description = "the owner of the method which can decrypt the stings, the method's signature must be static (parameter-type)Ljava/lang/String;. Please use -pt,--parameter-type to set the argument descrypt.", argName = "name")
+    @Opt(opt = "mn", longOpt = "decrypt-method-name", description = "the owner of the method which can decrypt the "
+            + "stings, the method's signature must be static (parameter-type)Ljava/lang/String;. Please use -pt,"
+            + "--parameter-type to set the argument decrypt.", argName = "name")
     private String methodName;
     @Opt(opt = "cp", longOpt = "classpath", description = "add extra lib to classpath", argName = "cp")
     private String classpath;
-    //extended parameter option: e.g. '-t int,byte,string' to specify a routine such as decryptionRoutine(int a, byte b, String c)
-    @Opt(opt = "t", longOpt = "arg-types", description = "comma-separated list of types:boolean,byte,short,char,int,long,float,double,string. Default is string", argName = "type")
+    //extended parameter option: e.g. '-t int,byte,string' to specify a routine such as decryptionRoutine(int a, byte
+    // b, String c)
+    @Opt(opt = "t", longOpt = "arg-types", description = "comma-separated list of types:boolean,byte,short,char,int,"
+            + "long,float,double,string. Default is string", argName = "type")
     private String parameterJTypes;
-    @Opt(opt = "pd", longOpt = "parameters-descriptor", description = "the descriptor for the method which can decrypt the stings, example1: Ljava/lang/String; example2: III, default is Ljava/lang/String;", argName = "type")
+    @Opt(opt = "pd", longOpt = "parameters-descriptor", description = "the descriptor for the method which can "
+            + "decrypt the stings, example1: Ljava/lang/String; example2: III, default is Ljava/lang/String;",
+            argName = "type")
     private String parametersDescriptor;
     @Opt(opt = "d", longOpt = "delete", hasArg = false, description = "delete the method which can decrypt the stings")
     private boolean deleteMethod = false;
-    @Opt(opt = "da", longOpt = "deep-analyze", hasArg = false, description = "use dex2jar IR to static analyze and find more values like byte[]")
+    @Opt(opt = "da", longOpt = "deep-analyze", hasArg = false, description = "use dex2jar IR to static analyze and "
+            + "find more values like byte[]")
     private boolean deepAnalyze = false;
     @Opt(opt = "v", longOpt = "verbose", hasArg = false, description = "show more on output")
     private boolean verbose = false;
@@ -189,26 +225,23 @@ public class DecryptStringCmd extends BaseCmd {
         final Map<MethodConfig, MethodConfig> map = loadMethods(jar, methodConfigs);
         try (FileSystem outputFileSystem = createZip(output)) {
             final Path outputBase = outputFileSystem.getPath("/");
-            walkJarOrDir(jar, new FileVisitorX() {
-                @Override
-                public void visitFile(Path file, String relative) throws IOException {
-                    if (file.getFileName().toString().endsWith(".class")) {
-                        Path dist1 = outputBase.resolve(relative);
-                        createParentDirectories(dist1);
-                        byte[] data = Files.readAllBytes(file);
-                        ClassNode cn = readClassNode(data);
+            walkJarOrDir(jar, (file, relative) -> {
+                if (file.getFileName().toString().endsWith(".class")) {
+                    Path dist1 = outputBase.resolve(relative);
+                    createParentDirectories(dist1);
+                    byte[] data = Files.readAllBytes(file);
+                    ClassNode cn = readClassNode(data);
 
-                        if (decrypt(cn, map)) {
-                            byte[] data2 = toByteArray(cn);
-                            Files.write(dist1, data2);
-                        } else {
-                            Files.write(dist1, data);
-                        }
+                    if (decrypt(cn, map)) {
+                        byte[] data2 = toByteArray(cn);
+                        Files.write(dist1, data2);
                     } else {
-                        Path dist1 = outputBase.resolve(relative);
-                        createParentDirectories(dist1);
-                        Files.copy(file, dist1);
+                        Files.write(dist1, data);
                     }
+                } else {
+                    Path dist1 = outputBase.resolve(relative);
+                    createParentDirectories(dist1);
+                    Files.copy(file, dist1);
                 }
             });
         }
@@ -296,13 +329,12 @@ public class DecryptStringCmd extends BaseCmd {
 
                     // copy back m3 to m
                     m.maxLocals = -1;
-                    m.maxLocals = -1;
                     m.instructions = m3.instructions;
                     m.tryCatchBlocks = m3.tryCatchBlocks;
                     m.localVariables = null;
                     changed = true;
                 } catch (Exception ex) {
-                    if(verbose) {
+                    if (verbose) {
                         ex.printStackTrace();
                     }
                 }
@@ -350,7 +382,8 @@ public class DecryptStringCmd extends BaseCmd {
                         Method jmethod = config.jmethod;
                         try {
                             int pSize = jmethod.getParameterTypes().length;
-                            // arguments' list. each parameter's value is retrieved by reading bytecode backwards, starting from the INVOKESTATIC statement
+                            // arguments' list. each parameter's value is retrieved by reading bytecode backwards,
+                            // starting from the INVOKESTATIC statement
                             Object[] as = readArgumentValues(mn, jmethod, pSize);
                             if (verbose) {
                                 System.out.println(" > calling " + jmethod + " with arguments " + v(as));
@@ -368,8 +401,8 @@ public class DecryptStringCmd extends BaseCmd {
                             removeInsts(m, mn, pSize);
                             p = nLdc;
                             changed = true;
-                        } catch (InvocationTargetException ex){
-                            if(verbose){
+                        } catch (InvocationTargetException ex) {
+                            if (verbose) {
                                 ex.getTargetException().printStackTrace();
                             }
                         } catch (Exception ex) {
@@ -435,7 +468,7 @@ public class DecryptStringCmd extends BaseCmd {
                                 throw new RuntimeException();
                             }
 
-                            Object args[] = new Object[ie.getArgs().length];
+                            Object[] args = new Object[ie.getArgs().length];
                             for (int i = 0; i < args.length; i++) {
                                 args[i] = convertIr2Jobj(ie.getOps()[i], ie.getArgs()[i]);
                             }
@@ -472,9 +505,9 @@ public class DecryptStringCmd extends BaseCmd {
             } else {
                 sb.append(",");
             }
-            if(obj instanceof String) {
+            if (obj instanceof String) {
                 sb.append(Escape.v(obj));
-            }else {
+            } else {
                 sb.append(obj);
             }
         }
@@ -488,234 +521,236 @@ public class DecryptStringCmd extends BaseCmd {
             }
         }
         switch (type) {
-            case "Z": {
+        case "Z": {
+            Object obj = ((Constant) value).value;
+            return obj instanceof Boolean ? obj : ((Number) obj).intValue() != 0;
+        }
+        case "B": {
+            Object obj = ((Constant) value).value;
+            return ((Number) obj).byteValue();
+        }
+        case "S": {
+            Object obj = ((Constant) value).value;
+            return ((Number) obj).shortValue();
+        }
+        case "C": {
+            Object obj = ((Constant) value).value;
+            return obj instanceof Character ? obj : (char) ((Number) obj).intValue();
+        }
+        case "I": {
+            Object obj = ((Constant) value).value;
+            return ((Number) obj).intValue();
+        }
+        case "J": {
+            Object obj = ((Constant) value).value;
+            return ((Number) obj).longValue();
+        }
+        case "F": {
+            Object obj = ((Constant) value).value;
+            return obj instanceof Float ? obj : Float.intBitsToFloat(((Number) obj).intValue());
+        }
+        case "D": {
+            Object obj = ((Constant) value).value;
+            return obj instanceof Double ? obj : Double.longBitsToDouble(((Number) obj).longValue());
+        }
+        case "Ljava/lang/String;":
+            return ((Constant) value).value;
+        case "[Z":
+            if (value instanceof Constant) {
                 Object obj = ((Constant) value).value;
-                return obj instanceof Boolean ? obj : ((Number) obj).intValue() != 0;
-            }
-            case "B": {
-                Object obj = ((Constant) value).value;
-                return ((Number) obj).byteValue();
-            }
-            case "S": {
-                Object obj = ((Constant) value).value;
-                return ((Number) obj).shortValue();
-            }
-            case "C": {
-                Object obj = ((Constant) value).value;
-                return obj instanceof Character ? obj : (char) ((Number) obj).intValue();
-            }
-            case "I": {
-                Object obj = ((Constant) value).value;
-                return ((Number) obj).intValue();
-            }
-            case "J": {
-                Object obj = ((Constant) value).value;
-                return ((Number) obj).longValue();
-            }
-            case "F": {
-                Object obj = ((Constant) value).value;
-                return obj instanceof Float ? obj : Float.intBitsToFloat(((Number) obj).intValue());
-            }
-            case "D": {
-                Object obj = ((Constant) value).value;
-                return obj instanceof Double ? obj : Double.longBitsToDouble(((Number) obj).longValue());
-            }
-            case "Ljava/lang/String;":
-                return (String) ((Constant) value).value;
-            case "[Z":
-                if (value instanceof Constant) {
-                    Object obj = ((Constant) value).value;
-                    if (obj instanceof boolean[]) {
-                        return obj;
-                    } else {
+                if (obj instanceof boolean[]) {
+                    return obj;
+                } else {
 
-                        boolean[] b = new boolean[Array.getLength(obj)];
-                        for (int i = 0; i < b.length; i++) {
-                            b[i] = ((Number) Array.get(obj, i)).intValue() != 0;
-                        }
-                        return b;
-                    }
-                } else if (value instanceof FilledArrayExpr) {
-                    boolean b[] = new boolean[value.getOps().length];
+                    boolean[] b = new boolean[Array.getLength(obj)];
                     for (int i = 0; i < b.length; i++) {
-                        Object obj = ((Constant) value.getOps()[i]).value;
-                        if (obj instanceof Boolean) {
-                            b[i] = ((Boolean) obj).booleanValue();
-                        } else {
-                            b[i] = ((Number) obj).intValue() != 0;
-                        }
+                        b[i] = ((Number) Array.get(obj, i)).intValue() != 0;
                     }
                     return b;
                 }
-                throw new RuntimeException();
-            case "[B":
-                if (value instanceof Constant) {
-                    Object obj = ((Constant) value).value;
-                    if (obj instanceof byte[]) {
-                        return obj;
+            } else if (value instanceof FilledArrayExpr) {
+                boolean[] b = new boolean[value.getOps().length];
+                for (int i = 0; i < b.length; i++) {
+                    Object obj = ((Constant) value.getOps()[i]).value;
+                    if (obj instanceof Boolean) {
+                        b[i] = ((Boolean) obj).booleanValue();
                     } else {
-                        byte[] b = new byte[Array.getLength(obj)];
-                        for (int i = 0; i < b.length; i++) {
-                            b[i] = ((Number) Array.get(obj, i)).byteValue();
-                        }
-                        return b;
+                        b[i] = ((Number) obj).intValue() != 0;
                     }
-                } else if (value instanceof FilledArrayExpr) {
-                    byte b[] = new byte[value.getOps().length];
+                }
+                return b;
+            }
+            throw new RuntimeException();
+        case "[B":
+            if (value instanceof Constant) {
+                Object obj = ((Constant) value).value;
+                if (obj instanceof byte[]) {
+                    return obj;
+                } else {
+                    byte[] b = new byte[Array.getLength(obj)];
                     for (int i = 0; i < b.length; i++) {
-                        Object obj = ((Constant) value.getOps()[i]).value;
-                        b[i] = ((Number) obj).byteValue();
+                        b[i] = ((Number) Array.get(obj, i)).byteValue();
                     }
                     return b;
                 }
-                throw new RuntimeException();
-            case "[S":
-                if (value instanceof Constant) {
-                    Object obj = ((Constant) value).value;
-                    if (obj instanceof short[]) {
-                        return obj;
+            } else if (value instanceof FilledArrayExpr) {
+                byte[] b = new byte[value.getOps().length];
+                for (int i = 0; i < b.length; i++) {
+                    Object obj = ((Constant) value.getOps()[i]).value;
+                    b[i] = ((Number) obj).byteValue();
+                }
+                return b;
+            }
+            throw new RuntimeException();
+        case "[S":
+            if (value instanceof Constant) {
+                Object obj = ((Constant) value).value;
+                if (obj instanceof short[]) {
+                    return obj;
+                } else {
+                    short[] b = new short[Array.getLength(obj)];
+                    for (int i = 0; i < b.length; i++) {
+                        b[i] = ((Number) Array.get(obj, i)).shortValue();
+                    }
+                    return b;
+                }
+            } else if (value instanceof FilledArrayExpr) {
+                short[] b = new short[value.getOps().length];
+                for (int i = 0; i < b.length; i++) {
+                    Object obj = ((Constant) value.getOps()[i]).value;
+                    b[i] = ((Number) obj).shortValue();
+                }
+                return b;
+            }
+            throw new RuntimeException();
+        case "[C":
+            if (value instanceof Constant) {
+                Object obj = ((Constant) value).value;
+                if (obj instanceof char[]) {
+                    return obj;
+                } else {
+                    char[] b = new char[Array.getLength(obj)];
+                    for (int i = 0; i < b.length; i++) {
+                        b[i] = (char) ((Number) Array.get(obj, i)).intValue();
+                    }
+                    return b;
+                }
+            } else if (value instanceof FilledArrayExpr) {
+                char[] b = new char[value.getOps().length];
+                for (int i = 0; i < b.length; i++) {
+                    Object obj = ((Constant) value.getOps()[i]).value;
+                    b[i] = obj instanceof Character ? ((Character) obj).charValue() : (char) ((Number) obj).intValue();
+                }
+                return b;
+            }
+            throw new RuntimeException();
+        case "[I":
+            if (value instanceof Constant) {
+                Object obj = ((Constant) value).value;
+                if (obj instanceof int[]) {
+                    return obj;
+                } else {
+                    int[] b = new int[Array.getLength(obj)];
+                    for (int i = 0; i < b.length; i++) {
+                        b[i] = ((Number) Array.get(obj, i)).intValue();
+                    }
+                    return b;
+                }
+            } else if (value instanceof FilledArrayExpr) {
+                int[] b = new int[value.getOps().length];
+                for (int i = 0; i < b.length; i++) {
+                    Object obj = ((Constant) value.getOps()[i]).value;
+                    b[i] = ((Number) obj).intValue();
+                }
+                return b;
+            }
+            throw new RuntimeException();
+        case "[J":
+            if (value instanceof Constant) {
+                Object obj = ((Constant) value).value;
+                if (obj instanceof long[]) {
+                    return obj;
+                } else {
+                    long[] b = new long[Array.getLength(obj)];
+                    for (int i = 0; i < b.length; i++) {
+                        b[i] = ((Number) Array.get(obj, i)).longValue();
+                    }
+                    return b;
+                }
+            } else if (value instanceof FilledArrayExpr) {
+                long[] b = new long[value.getOps().length];
+                for (int i = 0; i < b.length; i++) {
+                    Object obj = ((Constant) value.getOps()[i]).value;
+                    b[i] = ((Number) obj).longValue();
+                }
+                return b;
+            }
+            throw new RuntimeException();
+        case "[F":
+            if (value instanceof Constant) {
+                Object obj = ((Constant) value).value;
+                if (obj instanceof float[]) {
+                    return obj;
+                } else {
+                    float[] b = new float[Array.getLength(obj)];
+                    for (int i = 0; i < b.length; i++) {
+                        b[i] = (char) ((Number) Array.get(obj, i)).intValue();
+                    }
+                    return b;
+                }
+            } else if (value instanceof FilledArrayExpr) {
+                float[] b = new float[value.getOps().length];
+                for (int i = 0; i < b.length; i++) {
+                    Object obj = ((Constant) value.getOps()[i]).value;
+                    b[i] = obj instanceof Float ? ((Float) obj).floatValue() :
+                            Float.intBitsToFloat(((Number) obj).intValue());
+                }
+                return b;
+            }
+            throw new RuntimeException();
+        case "[D":
+            if (value instanceof Constant) {
+                Object obj = ((Constant) value).value;
+                if (obj instanceof double[]) {
+                    return obj;
+                } else {
+                    double[] b = new double[Array.getLength(obj)];
+                    for (int i = 0; i < b.length; i++) {
+                        b[i] = (char) ((Number) Array.get(obj, i)).intValue();
+                    }
+                    return b;
+                }
+            } else if (value instanceof FilledArrayExpr) {
+                double[] b = new double[value.getOps().length];
+                for (int i = 0; i < b.length; i++) {
+                    Object obj = ((Constant) value.getOps()[i]).value;
+                    b[i] = obj instanceof Double ? ((Double) obj).doubleValue() :
+                            Double.longBitsToDouble(((Number) obj).longValue());
+                }
+                return b;
+            }
+            throw new RuntimeException();
+        case "[Ljava/lang/String;":
+            if (value instanceof Constant) {
+                Object obj = ((Constant) value).value;
+                if (obj instanceof String[]) {
+                    return obj;
+                }
+            } else if (value instanceof FilledArrayExpr) {
+                String[] b = new String[value.getOps().length];
+                for (int i = 0; i < b.length; i++) {
+                    Object obj = ((Constant) value.getOps()[i]).value;
+                    if (obj instanceof String) {
+                        b[i] = (String) obj;
+                    } else if (Constant.Null.equals(obj)) {
+                        b[i] = null;
                     } else {
-                        short[] b = new short[Array.getLength(obj)];
-                        for (int i = 0; i < b.length; i++) {
-                            b[i] = ((Number) Array.get(obj, i)).shortValue();
-                        }
-                        return b;
+                        throw new RuntimeException();
                     }
-                } else if (value instanceof FilledArrayExpr) {
-                    short b[] = new short[value.getOps().length];
-                    for (int i = 0; i < b.length; i++) {
-                        Object obj = ((Constant) value.getOps()[i]).value;
-                        b[i] = ((Number) obj).shortValue();
-                    }
-                    return b;
                 }
-                throw new RuntimeException();
-            case "[C":
-                if (value instanceof Constant) {
-                    Object obj = ((Constant) value).value;
-                    if (obj instanceof char[]) {
-                        return obj;
-                    } else {
-                        char[] b = new char[Array.getLength(obj)];
-                        for (int i = 0; i < b.length; i++) {
-                            b[i] = (char) ((Number) Array.get(obj, i)).intValue();
-                        }
-                        return b;
-                    }
-                } else if (value instanceof FilledArrayExpr) {
-                    char b[] = new char[value.getOps().length];
-                    for (int i = 0; i < b.length; i++) {
-                        Object obj = ((Constant) value.getOps()[i]).value;
-                        b[i] = obj instanceof Character ? ((Character) obj).charValue() : (char) ((Number) obj).intValue();
-                    }
-                    return b;
-                }
-                throw new RuntimeException();
-            case "[I":
-                if (value instanceof Constant) {
-                    Object obj = ((Constant) value).value;
-                    if (obj instanceof int[]) {
-                        return obj;
-                    } else {
-                        int[] b = new int[Array.getLength(obj)];
-                        for (int i = 0; i < b.length; i++) {
-                            b[i] = ((Number) Array.get(obj, i)).intValue();
-                        }
-                        return b;
-                    }
-                } else if (value instanceof FilledArrayExpr) {
-                    int b[] = new int[value.getOps().length];
-                    for (int i = 0; i < b.length; i++) {
-                        Object obj = ((Constant) value.getOps()[i]).value;
-                        b[i] = ((Number) obj).intValue();
-                    }
-                    return b;
-                }
-                throw new RuntimeException();
-            case "[J":
-                if (value instanceof Constant) {
-                    Object obj = ((Constant) value).value;
-                    if (obj instanceof long[]) {
-                        return obj;
-                    } else {
-                        long[] b = new long[Array.getLength(obj)];
-                        for (int i = 0; i < b.length; i++) {
-                            b[i] = ((Number) Array.get(obj, i)).longValue();
-                        }
-                        return b;
-                    }
-                } else if (value instanceof FilledArrayExpr) {
-                    long b[] = new long[value.getOps().length];
-                    for (int i = 0; i < b.length; i++) {
-                        Object obj = ((Constant) value.getOps()[i]).value;
-                        b[i] = ((Number) obj).longValue();
-                    }
-                    return b;
-                }
-                throw new RuntimeException();
-            case "[F":
-                if (value instanceof Constant) {
-                    Object obj = ((Constant) value).value;
-                    if (obj instanceof float[]) {
-                        return obj;
-                    } else {
-                        float[] b = new float[Array.getLength(obj)];
-                        for (int i = 0; i < b.length; i++) {
-                            b[i] = (char) ((Number) Array.get(obj, i)).intValue();
-                        }
-                        return b;
-                    }
-                } else if (value instanceof FilledArrayExpr) {
-                    float b[] = new float[value.getOps().length];
-                    for (int i = 0; i < b.length; i++) {
-                        Object obj = ((Constant) value.getOps()[i]).value;
-                        b[i] = obj instanceof Float ? ((Float) obj).floatValue() : Float.intBitsToFloat(((Number) obj).intValue());
-                    }
-                    return b;
-                }
-                throw new RuntimeException();
-            case "[D":
-                if (value instanceof Constant) {
-                    Object obj = ((Constant) value).value;
-                    if (obj instanceof double[]) {
-                        return obj;
-                    } else {
-                        double[] b = new double[Array.getLength(obj)];
-                        for (int i = 0; i < b.length; i++) {
-                            b[i] = (char) ((Number) Array.get(obj, i)).intValue();
-                        }
-                        return b;
-                    }
-                } else if (value instanceof FilledArrayExpr) {
-                    double b[] = new double[value.getOps().length];
-                    for (int i = 0; i < b.length; i++) {
-                        Object obj = ((Constant) value.getOps()[i]).value;
-                        b[i] = obj instanceof Double ? ((Double) obj).doubleValue() : Double.longBitsToDouble(((Number) obj).longValue());
-                    }
-                    return b;
-                }
-                throw new RuntimeException();
-            case "[Ljava/lang/String;":
-                if (value instanceof Constant) {
-                    Object obj = ((Constant) value).value;
-                    if (obj instanceof String[]) {
-                        return obj;
-                    }
-                } else if (value instanceof FilledArrayExpr) {
-                    String b[] = new String[value.getOps().length];
-                    for (int i = 0; i < b.length; i++) {
-                        Object obj = ((Constant) value.getOps()[i]).value;
-                        if (obj instanceof String) {
-                            b[i] = (String) obj;
-                        } else if (Constant.Null.equals(obj)) {
-                            b[i] = null;
-                        } else {
-                            throw new RuntimeException();
-                        }
-                    }
-                    return b;
-                }
-                throw new RuntimeException();
+                return b;
+            }
+            throw new RuntimeException();
         }
         throw new RuntimeException();
     }
@@ -792,11 +827,6 @@ public class DecryptStringCmd extends BaseCmd {
 
     /**
      * load java methods from jar and --classpath
-     *
-     * @param jar
-     * @param methodConfigs
-     * @return
-     * @throws Exception
      */
     private Map<MethodConfig, MethodConfig> loadMethods(Path jar, List<MethodConfig> methodConfigs) throws Exception {
         final Map<MethodConfig, MethodConfig> map = new HashMap<>();
@@ -837,9 +867,6 @@ public class DecryptStringCmd extends BaseCmd {
 
     /**
      * collect methods from --methods and --method-owner,--method-name
-     *
-     * @return
-     * @throws IOException
      */
     private List<MethodConfig> collectMethodConfigs() throws IOException {
         List<MethodConfig> methodConfigs = new ArrayList<>();
@@ -863,42 +890,43 @@ public class DecryptStringCmd extends BaseCmd {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < type_list.length; i++) {
                     switch (type_list[i]) {
-                        case "boolean":
-                            sb.append("Z");
-                            break;
-                        case "byte":
-                            sb.append("B");
-                            break;
-                        case "short":
-                            sb.append("S");
-                            break;
-                        case "char":
-                            sb.append("C");
-                            break;
-                        case "int":
-                            sb.append("I");
-                            break;
-                        case "long":
-                            sb.append("J");
-                            break;
-                        case "float":
-                            sb.append("F");
-                            break;
-                        case "double":
-                            sb.append("D");
-                            break;
-                        case "string":
-                            sb.append("Ljava/lang/String;");
-                            break;
+                    case "boolean":
+                        sb.append("Z");
+                        break;
+                    case "byte":
+                        sb.append("B");
+                        break;
+                    case "short":
+                        sb.append("S");
+                        break;
+                    case "char":
+                        sb.append("C");
+                        break;
+                    case "int":
+                        sb.append("I");
+                        break;
+                    case "long":
+                        sb.append("J");
+                        break;
+                    case "float":
+                        sb.append("F");
+                        break;
+                    case "double":
+                        sb.append("D");
+                        break;
+                    case "string":
+                        sb.append("Ljava/lang/String;");
+                        break;
 
-                        default:
-                            throw new RuntimeException("not support type " + type_list[i] + " on -t/--arg-types");
+                    default:
+                        throw new RuntimeException("not support type " + type_list[i] + " on -t/--arg-types");
                     }
                 }
                 methodConfigs.add(this.build("L" + methodOwner.replace('.', '/') + ";->" + methodName + "("
                         + sb + ")Ljava/lang/String;"));
             } else {
-                methodConfigs.add(this.build("L" + methodOwner.replace('.', '/') + ";->" + methodName + "(Ljava/lang/String;)Ljava/lang/String;"));
+                methodConfigs.add(this.build("L" + methodOwner.replace('.', '/') + ";->" + methodName + "(Ljava/lang"
+                        + "/String;)Ljava/lang/String;"));
             }
         }
         return methodConfigs;
@@ -939,51 +967,51 @@ public class DecryptStringCmd extends BaseCmd {
     Object readCst(AbstractInsnNode q) {
 
         switch (q.getOpcode()) {
-            case Opcodes.LDC:
-                // LDC: String, integer, long and double cases (Opcodes.LDC comprehends LDC_W and LDC2_W)
-                // push 32bit or 64bit int/float
-                // push string/type
-                LdcInsnNode ldc = (LdcInsnNode) q;
-                if (ldc.cst instanceof Type) {
-                    throw new RuntimeException("not support .class value yet!");
-                }
-                return ldc.cst;
+        case Opcodes.LDC:
+            // LDC: String, integer, long and double cases (Opcodes.LDC comprehends LDC_W and LDC2_W)
+            // push 32bit or 64bit int/float
+            // push string/type
+            LdcInsnNode ldc = (LdcInsnNode) q;
+            if (ldc.cst instanceof Type) {
+                throw new RuntimeException("not support .class value yet!");
+            }
+            return ldc.cst;
 
-            case Opcodes.BIPUSH:
-            case Opcodes.SIPUSH:
-                // INT_INSN ("instruction with a single int operand")
-                // push 8bit or 16bit int
-                IntInsnNode in = (IntInsnNode) q;
-                return in.operand;
+        case Opcodes.BIPUSH:
+        case Opcodes.SIPUSH:
+            // INT_INSN ("instruction with a single int operand")
+            // push 8bit or 16bit int
+            IntInsnNode in = (IntInsnNode) q;
+            return in.operand;
 
-            case Opcodes.ICONST_M1:
-            case Opcodes.ICONST_0:
-            case Opcodes.ICONST_1:
-            case Opcodes.ICONST_2:
-            case Opcodes.ICONST_3:
-            case Opcodes.ICONST_4:
-            case Opcodes.ICONST_5:
-                // ICONST_*: push a tiny int, -1 <= value <= 5
-                return q.getOpcode() - Opcodes.ICONST_0;
-            case Opcodes.LCONST_0:
-            case Opcodes.LCONST_1:
-                return (long) (q.getOpcode() - Opcodes.LCONST_0);
-            case Opcodes.FCONST_0:
-            case Opcodes.FCONST_1:
-            case Opcodes.FCONST_2:
-                return (float) (q.getOpcode() - Opcodes.FCONST_0);
-            case Opcodes.DCONST_0:
-            case Opcodes.DCONST_1:
-                return (double) (q.getOpcode() - Opcodes.DCONST_0);
-            case Opcodes.ACONST_NULL:
-                return null;
+        case Opcodes.ICONST_M1:
+        case Opcodes.ICONST_0:
+        case Opcodes.ICONST_1:
+        case Opcodes.ICONST_2:
+        case Opcodes.ICONST_3:
+        case Opcodes.ICONST_4:
+        case Opcodes.ICONST_5:
+            // ICONST_*: push a tiny int, -1 <= value <= 5
+            return q.getOpcode() - Opcodes.ICONST_0;
+        case Opcodes.LCONST_0:
+        case Opcodes.LCONST_1:
+            return (long) (q.getOpcode() - Opcodes.LCONST_0);
+        case Opcodes.FCONST_0:
+        case Opcodes.FCONST_1:
+        case Opcodes.FCONST_2:
+            return (float) (q.getOpcode() - Opcodes.FCONST_0);
+        case Opcodes.DCONST_0:
+        case Opcodes.DCONST_1:
+            return (double) (q.getOpcode() - Opcodes.DCONST_0);
+        case Opcodes.ACONST_NULL:
+            return null;
         }
 
         throw new RuntimeException();
     }
 
     Class<?>[] toJavaType(Type[] pt) throws ClassNotFoundException {
-        Class<?> jt[] = new Class<?>[pt.length];
+        Class<?>[] jt = new Class<?>[pt.length];
         for (int i = 0; i < pt.length; i++) {
             jt[i] = toJavaType(pt[i]);
         }
@@ -992,28 +1020,28 @@ public class DecryptStringCmd extends BaseCmd {
 
     Class<?> toJavaType(Type t) throws ClassNotFoundException {
         switch (t.getSort()) {
-            case Type.BOOLEAN:
-                return boolean.class;
-            case Type.BYTE:
-                return byte.class;
-            case Type.SHORT:
-                return short.class;
-            case Type.CHAR:
-                return char.class;
-            case Type.INT:
-                return int.class;
-            case Type.FLOAT:
-                return float.class;
-            case Type.LONG:
-                return long.class;
-            case Type.DOUBLE:
-                return double.class;
-            case Type.OBJECT:
-                return Class.forName(t.getClassName());
-            case Type.ARRAY:
-                return Class.forName(t.getDescriptor());
-            case Type.VOID:
-                return void.class;
+        case Type.BOOLEAN:
+            return boolean.class;
+        case Type.BYTE:
+            return byte.class;
+        case Type.SHORT:
+            return short.class;
+        case Type.CHAR:
+            return char.class;
+        case Type.INT:
+            return int.class;
+        case Type.FLOAT:
+            return float.class;
+        case Type.LONG:
+            return long.class;
+        case Type.DOUBLE:
+            return double.class;
+        case Type.OBJECT:
+            return Class.forName(t.getClassName());
+        case Type.ARRAY:
+            return Class.forName(t.getDescriptor());
+        case Type.VOID:
+            return void.class;
         }
         throw new RuntimeException();
     }

@@ -1,20 +1,30 @@
 package com.googlecode.dex2jar.ir.test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
-
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Exprs;
-import com.googlecode.dex2jar.ir.stmt.Stmts;
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.UnSSATransformer;
+import org.junit.Assert;
+import org.junit.Test;
+
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeStatic;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nPhi;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.expr.Exprs.niAdd;
+import static com.googlecode.dex2jar.ir.expr.Exprs.niGt;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nLock;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
 
 public class UnSSATransformerTransformerTest extends BaseTransformerTest<UnSSATransformer> {
 
@@ -29,7 +39,7 @@ public class UnSSATransformerTransformerTest extends BaseTransformerTest<UnSSATr
         addStmt(nIf(niGt(nInt(100), nInt(0)), L1));
         Stmt s2 = addStmt(nAssign(b, nString("456")));
         addStmt(L1);
-        attachPhi(L1,nAssign(phi, nPhi(a, b)));
+        attachPhi(L1, nAssign(phi, nPhi(a, b)));
         addStmt(nReturn(phi));
         transform();
         Assert.assertEquals("insert assign after s1", ST.ASSIGN, s1.getNext().st);
@@ -109,13 +119,13 @@ public class UnSSATransformerTransformerTest extends BaseTransformerTest<UnSSATr
         LabelStmt L1 = newLabel();
         addStmt(L1);
         attachPhi(L1, nAssign(phi, nPhi(a)));
-        addStmt(nVoidInvoke(nInvokeStatic(new Value[] { phi }, "LAAA;", "bMethod",
-                new String[] { "Ljava/lang/String;" }, "V")));
+        addStmt(nVoidInvoke(nInvokeStatic(new Value[]{phi}, "LAAA;", "bMethod",
+                new String[]{"Ljava/lang/String;"}, "V")));
         addStmt(nAssign(b, nString("456")));
 
         // phi is still live here
-        Stmt s2 = addStmt(nVoidInvoke(nInvokeStatic(new Value[] { b }, "LBBB;", "cMethod",
-                new String[] { "Ljava/lang/String;" }, "V")));
+        Stmt s2 = addStmt(nVoidInvoke(nInvokeStatic(new Value[]{b}, "LBBB;", "cMethod",
+                new String[]{"Ljava/lang/String;"}, "V")));
         addStmt(nIf(niGt(nInt(100), nInt(0)), L1));
         addStmt(nReturnVoid());
         transform();
@@ -174,9 +184,9 @@ public class UnSSATransformerTransformerTest extends BaseTransformerTest<UnSSATr
         addStmt(L3);
         Stmt ref = addStmt(Stmts.nIdentity(ex, Exprs.nExceptionRef("Ljava/lang/Exception;")));
         attachPhi(L3, Stmts.nAssign(a, nPhi(a1, a2)));
-        addStmt(Stmts.nVoidInvoke(Exprs.nInvokeStatic(new Value[] { a1 }, "La;", "m", new String[] { "I" }, "V")));
+        addStmt(Stmts.nVoidInvoke(Exprs.nInvokeStatic(new Value[]{a1}, "La;", "m", new String[]{"I"}, "V")));
         addStmt(Stmts.nReturn(a));
-        method.traps.add(new Trap(L0, L2, new LabelStmt[] { L3 }, new String[] { "Ljava/lang/Exception" }));
+        method.traps.add(new Trap(L0, L2, new LabelStmt[]{L3}, new String[]{"Ljava/lang/Exception"}));
         transform();
         Assert.assertTrue("the fix assign should insert after x=@ExceptionRef", L3.getNext() == ref);
     }

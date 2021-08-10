@@ -6,7 +6,6 @@ import com.googlecode.d2j.Method;
 import com.googlecode.d2j.Visibility;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexAnnotationVisitor;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +17,7 @@ public class Utils implements DexConstants {
     public static void doAccept(DexAnnotationVisitor dexAnnotationVisitor, String k, Object value) {
         if (value instanceof ArrayList) {
             DexAnnotationVisitor a = dexAnnotationVisitor.visitArray(k);
-            for (Object o : (ArrayList) value) {
+            for (Object o : (ArrayList<?>) value) {
                 doAccept(a, null, o);
             }
             a.visitEnd();
@@ -90,46 +89,46 @@ public class Utils implements DexConstants {
         int i = 0;
         while (i < chars.length) {
             switch (chars[i]) {
-                case 'V':
-                case 'Z':
-                case 'C':
-                case 'B':
-                case 'S':
-                case 'I':
-                case 'F':
-                case 'J':
-                case 'D':
-                    list.add(Character.toString(chars[i]));
-                    i++;
-                    break;
-                case '[': {
-                    int count = 1;
-                    while (chars[i + count] == '[') {
-                        count++;
-                    }
-                    if (chars[i + count] == 'L') {
-                        count++;
-                        while (chars[i + count] != ';') {
-                            count++;
-                        }
-                    }
+            case 'V':
+            case 'Z':
+            case 'C':
+            case 'B':
+            case 'S':
+            case 'I':
+            case 'F':
+            case 'J':
+            case 'D':
+                list.add(Character.toString(chars[i]));
+                i++;
+                break;
+            case '[': {
+                int count = 1;
+                while (chars[i + count] == '[') {
                     count++;
-                    list.add(new String(chars, i, count));
-                    i += count;
-                    break;
                 }
-                case 'L': {
-                    int count = 1;
+                if (chars[i + count] == 'L') {
+                    count++;
                     while (chars[i + count] != ';') {
-                        ++count;
+                        count++;
                     }
-                    count++;
-                    list.add(new String(chars, i, count));
-                    i += count;
-                    break;
                 }
-                default:
-                    throw new RuntimeException("can't parse type list: " + desc);
+                count++;
+                list.add(new String(chars, i, count));
+                i += count;
+                break;
+            }
+            case 'L': {
+                int count = 1;
+                while (chars[i + count] != ';') {
+                    ++count;
+                }
+                count++;
+                list.add(new String(chars, i, count));
+                i += count;
+                break;
+            }
+            default:
+                throw new RuntimeException("can't parse type list: " + desc);
             }
         }
         return list;
@@ -310,34 +309,34 @@ public class Utils implements DexConstants {
             if (c == '\\') {
                 char d = str.charAt(i + 1);
                 switch (d) {
-                    // ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
-                    case 'b':
-                    case 't':
-                    case 'n':
-                    case 'f':
-                    case 'r':
-                    case '\"':
-                    case '\'':
-                    case '\\':
-                        i += 2;
-                        break;
-                    case 'u':
-                        i += 6;
-                        break;
-                    default:
-                        int x = 0;
-                        while (x < 3) {
-                            char e = str.charAt(i + 1 + x);
-                            if (e >= '0' && e <= '7') {
-                                x++;
-                            } else {
-                                break;
-                            }
+                // ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
+                case 'b':
+                case 't':
+                case 'n':
+                case 'f':
+                case 'r':
+                case '\"':
+                case '\'':
+                case '\\':
+                    i += 2;
+                    break;
+                case 'u':
+                    i += 6;
+                    break;
+                default:
+                    int x = 0;
+                    while (x < 3) {
+                        char e = str.charAt(i + 1 + x);
+                        if (e >= '0' && e <= '7') {
+                            x++;
+                        } else {
+                            break;
                         }
-                        if (x == 0) {
-                            throw new RuntimeException("can't pase string");
-                        }
-                        i += 1 + x;
+                    }
+                    if (x == 0) {
+                        throw new RuntimeException("can't pase string");
+                    }
+                    i += 1 + x;
                 }
 
             } else {
@@ -358,59 +357,59 @@ public class Utils implements DexConstants {
             if (c == '\\') {
                 char d = str.charAt(i + 1);
                 switch (d) {
-                    // ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
-                    case 'b':
-                        sb.append('\b');
-                        i += 2;
-                        break;
-                    case 't':
-                        sb.append('\t');
-                        i += 2;
-                        break;
-                    case 'n':
-                        sb.append('\n');
-                        i += 2;
-                        break;
-                    case 'f':
-                        sb.append('\f');
-                        i += 2;
-                        break;
-                    case 'r':
-                        sb.append('\r');
-                        i += 2;
-                        break;
-                    case '\"':
-                        sb.append('\"');
-                        i += 2;
-                        break;
-                    case '\'':
-                        sb.append('\'');
-                        i += 2;
-                        break;
-                    case '\\':
-                        sb.append('\\');
-                        i += 2;
-                        break;
-                    case 'u':
-                        String sub = str.substring(i + 2, i + 6);
-                        sb.append((char) Integer.parseInt(sub, 16));
-                        i += 6;
-                        break;
-                    default:
-                        int x = 0;
-                        while (x < 3) {
-                            char e = str.charAt(i + 1 + x);
-                            if (e >= '0' && e <= '7') {
-                                x++;
-                            } else {
-                                break;
-                            }
+                // ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
+                case 'b':
+                    sb.append('\b');
+                    i += 2;
+                    break;
+                case 't':
+                    sb.append('\t');
+                    i += 2;
+                    break;
+                case 'n':
+                    sb.append('\n');
+                    i += 2;
+                    break;
+                case 'f':
+                    sb.append('\f');
+                    i += 2;
+                    break;
+                case 'r':
+                    sb.append('\r');
+                    i += 2;
+                    break;
+                case '\"':
+                    sb.append('\"');
+                    i += 2;
+                    break;
+                case '\'':
+                    sb.append('\'');
+                    i += 2;
+                    break;
+                case '\\':
+                    sb.append('\\');
+                    i += 2;
+                    break;
+                case 'u':
+                    String sub = str.substring(i + 2, i + 6);
+                    sb.append((char) Integer.parseInt(sub, 16));
+                    i += 6;
+                    break;
+                default:
+                    int x = 0;
+                    while (x < 3) {
+                        char e = str.charAt(i + 1 + x);
+                        if (e >= '0' && e <= '7') {
+                            x++;
+                        } else {
+                            break;
                         }
-                        if (x == 0) {
-                            throw new RuntimeException("can't pase string");
-                        }
-                        sb.append((char) Integer.parseInt(str.substring(i + 1, i + 1 + x), 8));
-                        i += 1 + x;
+                    }
+                    if (x == 0) {
+                        throw new RuntimeException("can't pase string");
+                    }
+                    sb.append((char) Integer.parseInt(str.substring(i + 1, i + 1 + x), 8));
+                    i += 1 + x;
                 }
 
             } else {
@@ -438,13 +437,13 @@ public class Utils implements DexConstants {
         int a = isStatic ? 0 : 1;
         for (String t : m.getParameterTypes()) {
             switch (t.charAt(0)) {
-                case 'J':
-                case 'D':
-                    a += 2;
-                    break;
-                default:
-                    a += 1;
-                    break;
+            case 'J':
+            case 'D':
+                a += 2;
+                break;
+            default:
+                a += 1;
+                break;
             }
         }
         return a;
@@ -465,13 +464,13 @@ public class Utils implements DexConstants {
 
             String t = parameterTypes[i];
             switch (t.charAt(0)) {
-                case 'J':
-                case 'D':
-                    a += 2;
-                    break;
-                default:
-                    a += 1;
-                    break;
+            case 'J':
+            case 'D':
+                a += 2;
+                break;
+            default:
+                a += 1;
+                break;
             }
         }
         return -1;

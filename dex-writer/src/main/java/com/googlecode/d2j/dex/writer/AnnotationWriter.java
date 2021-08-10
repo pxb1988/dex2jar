@@ -23,7 +23,6 @@ import com.googlecode.d2j.dex.writer.ev.EncodedArray;
 import com.googlecode.d2j.dex.writer.ev.EncodedValue;
 import com.googlecode.d2j.dex.writer.item.ConstPool;
 import com.googlecode.d2j.visitors.DexAnnotationVisitor;
-
 import java.util.List;
 
 /*package*/class AnnotationWriter extends DexAnnotationVisitor {

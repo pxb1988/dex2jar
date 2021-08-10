@@ -1,13 +1,13 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,27 +16,32 @@
  */
 package com.googlecode.dex2jar.tools;
 
+import com.googlecode.d2j.dex.ClassVisitorFactory;
+import com.googlecode.d2j.dex.ExDex2Asm;
+import com.googlecode.d2j.dex.LambadaNameSafeClassAdapter;
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexFileNode;
+import com.googlecode.d2j.reader.BaseDexFileReader;
+import com.googlecode.d2j.reader.DexFileReader;
+import com.googlecode.d2j.reader.MultiDexFileReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.*;
-
-import com.googlecode.d2j.dex.LambadaNameSafeClassAdapter;
-import com.googlecode.d2j.reader.BaseDexFileReader;
-import com.googlecode.d2j.reader.MultiDexFileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-
-import com.googlecode.d2j.dex.ClassVisitorFactory;
-import com.googlecode.d2j.dex.ExDex2Asm;
-import com.googlecode.d2j.node.DexClassNode;
-import com.googlecode.d2j.node.DexFileNode;
-import com.googlecode.d2j.reader.DexFileReader;
 
 @BaseCmd.Syntax(cmd = "d2j-mt-dex2jar", syntax = "[options] <file0> [file1 ... fileN]", desc = "convert dex to jar")
 public class Dex2jarMultiThreadCmd extends BaseCmd {
@@ -140,32 +145,25 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
                     final Map<String, Clz> classes = collectClzInfo(fileNode);
                     final List<Future<?>> results = new ArrayList<>(fileNode.clzs.size());
                     for (final DexClassNode classNode : fileNode.clzs) {
-                        results.add(executorService.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                convertClass(fileNode, classNode, cvf, classes);
-                            }
-                        }));
+                        results.add(executorService.submit(() -> convertClass(fileNode, classNode, cvf, classes)));
                     }
-                    executorService.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            for (Future<?> result : results) {
-                                try {
-                                    result.get();
-                                } catch (InterruptedException | ExecutionException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                            BaksmaliBaseDexExceptionHandler exceptionHandler1 = (BaksmaliBaseDexExceptionHandler) exceptionHandler;
-                            if (exceptionHandler1.hasException()) {
-                                exceptionHandler1.dump(errorFile, new String[0]);
-                            }
+                    executorService.submit(() -> {
+                        for (Future<?> result : results) {
                             try {
-                                fs.close();
-                            } catch (IOException e) {
+                                result.get();
+                            } catch (InterruptedException | ExecutionException e) {
                                 e.printStackTrace();
                             }
+                        }
+                        BaksmaliBaseDexExceptionHandler exceptionHandler1 =
+                                (BaksmaliBaseDexExceptionHandler) exceptionHandler;
+                        if (exceptionHandler1.hasException()) {
+                            exceptionHandler1.dump(errorFile, new String[0]);
+                        }
+                        try {
+                            fs.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     });
                 }

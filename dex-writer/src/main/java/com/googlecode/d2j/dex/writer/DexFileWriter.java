@@ -18,11 +18,30 @@ package com.googlecode.d2j.dex.writer;
 
 import com.googlecode.d2j.dex.writer.io.ByteBufferOut;
 import com.googlecode.d2j.dex.writer.io.DataOut;
-import com.googlecode.d2j.dex.writer.item.*;
+import com.googlecode.d2j.dex.writer.item.AnnotationItem;
+import com.googlecode.d2j.dex.writer.item.AnnotationSetItem;
+import com.googlecode.d2j.dex.writer.item.AnnotationSetRefListItem;
+import com.googlecode.d2j.dex.writer.item.AnnotationsDirectoryItem;
+import com.googlecode.d2j.dex.writer.item.BaseItem;
+import com.googlecode.d2j.dex.writer.item.ClassDataItem;
+import com.googlecode.d2j.dex.writer.item.ClassDefItem;
+import com.googlecode.d2j.dex.writer.item.CodeItem;
+import com.googlecode.d2j.dex.writer.item.ConstPool;
+import com.googlecode.d2j.dex.writer.item.DebugInfoItem;
+import com.googlecode.d2j.dex.writer.item.EncodedArrayItem;
+import com.googlecode.d2j.dex.writer.item.FieldIdItem;
+import com.googlecode.d2j.dex.writer.item.HeadItem;
+import com.googlecode.d2j.dex.writer.item.MapListItem;
+import com.googlecode.d2j.dex.writer.item.MethodIdItem;
+import com.googlecode.d2j.dex.writer.item.ProtoIdItem;
+import com.googlecode.d2j.dex.writer.item.SectionItem;
 import com.googlecode.d2j.dex.writer.item.SectionItem.SectionType;
+import com.googlecode.d2j.dex.writer.item.StringDataItem;
+import com.googlecode.d2j.dex.writer.item.StringIdItem;
+import com.googlecode.d2j.dex.writer.item.TypeIdItem;
+import com.googlecode.d2j.dex.writer.item.TypeListItem;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexFileVisitor;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -43,57 +62,57 @@ public class DexFileWriter extends DexFileVisitor {
         return (DataOut) Proxy.newProxyInstance(
                 DexFileWriter.class.getClassLoader(),
                 new Class[]{DataOut.class}, new InvocationHandler() {
-            int indent = 0;
+                    int indent = 0;
 
-            @Override
-            public Object invoke(Object proxy, Method method,
-                                 Object[] args) throws Throwable {
+                    @Override
+                    public Object invoke(Object proxy, Method method,
+                                         Object[] args) throws Throwable {
 
-                if (method.getParameterTypes().length > 0
-                        && method.getParameterTypes()[0]
-                        .equals(String.class)) {
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < indent; i++) {
-                        sb.append("  ");
-                    }
-                    sb.append(String.format("%05d ", out0.offset()));
-                    sb.append(method.getName() + " [");
-                    for (Object arg : args) {
-                        if (arg instanceof byte[]) {
-                            byte[] data = (byte[]) arg;
-                            sb.append("0x[");
-                            int start = 0;
-                            int size = data.length;
-                            if (args.length > 2) {
-                                start = (Integer) args[2];
-                                size = (Integer) args[3];
+                        if (method.getParameterTypes().length > 0
+                                && method.getParameterTypes()[0]
+                                .equals(String.class)) {
+                            StringBuilder sb = new StringBuilder();
+                            for (int i = 0; i < indent; i++) {
+                                sb.append("  ");
                             }
-                            for (int i = 0; i < size; i++) {
-                                sb.append(String.format("%02x",
-                                        data[start + i] & 0xff));
-                                if (i != size - 1) {
-                                    sb.append(", ");
+                            sb.append(String.format("%05d ", out0.offset()));
+                            sb.append(method.getName() + " [");
+                            for (Object arg : args) {
+                                if (arg instanceof byte[]) {
+                                    byte[] data = (byte[]) arg;
+                                    sb.append("0x[");
+                                    int start = 0;
+                                    int size = data.length;
+                                    if (args.length > 2) {
+                                        start = (Integer) args[2];
+                                        size = (Integer) args[3];
+                                    }
+                                    for (int i = 0; i < size; i++) {
+                                        sb.append(String.format("%02x",
+                                                data[start + i] & 0xff));
+                                        if (i != size - 1) {
+                                            sb.append(", ");
+                                        }
+                                    }
+
+                                    sb.append("], ");
+                                } else {
+                                    sb.append(arg).append(", ");
                                 }
+
                             }
-
-                            sb.append("], ");
-                        } else {
-                            sb.append(arg).append(", ");
+                            sb.append("]");
+                            System.out.println(sb);
                         }
-
+                        if (method.getName().equals("begin")) {
+                            indent++;
+                        }
+                        if (method.getName().equals("end")) {
+                            indent--;
+                        }
+                        return method.invoke(out0, args);
                     }
-                    sb.append("]");
-                    System.out.println(sb);
-                }
-                if (method.getName().equals("begin")) {
-                    indent++;
-                }
-                if (method.getName().equals("end")) {
-                    indent--;
-                }
-                return method.invoke(out0, args);
-            }
-        });
+                });
 
     }
 
@@ -126,7 +145,7 @@ public class DexFileWriter extends DexFileVisitor {
         headItem = new HeadItem();
         SectionItem<HeadItem> headSection = new SectionItem<>(SectionType.TYPE_HEADER_ITEM);
         headSection.items.add(headItem);
-        SectionItem<MapListItem> mapSection = new SectionItem<MapListItem>(SectionType.TYPE_MAP_LIST);
+        SectionItem<MapListItem> mapSection = new SectionItem<>(SectionType.TYPE_MAP_LIST);
         mapSection.items.add(mapItem);
         SectionItem<StringIdItem> stringIdSection = new SectionItem<>(
                 SectionType.TYPE_STRING_ID_ITEM, cp.strings.values());

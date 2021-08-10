@@ -4,9 +4,12 @@ import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Local;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.GotoStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import java.util.ArrayList;
 
 /**
@@ -16,9 +19,8 @@ import java.util.ArrayList;
  * <li>Remove {@link Trap} if all {@link Stmt}s are not throw</li>
  * <li>...;GOTO L2; ... ; L2: ; return; => ...;return ; ... ; L2: ; return;</li>
  * </ol>
- * 
+ *
  * @author bob
- * 
  */
 public class EndRemover implements Transformer {
 
@@ -31,10 +33,10 @@ public class EndRemover implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-        for (Trap trap : new ArrayList<Trap>(irMethod.traps)) {// copy the list and we can remove one from original list
+        for (Trap trap : new ArrayList<>(irMethod.traps)) {// copy the list and we can remove one from original list
             LabelStmt start = null;
             boolean removeTrap = true;
-            for (Stmt p = trap.start.getNext(); p != null && p != trap.end;) {
+            for (Stmt p = trap.start.getNext(); p != null && p != trap.end; ) {
                 boolean notThrow = Cfg.notThrow(p);
                 if (!notThrow) {
                     start = null;

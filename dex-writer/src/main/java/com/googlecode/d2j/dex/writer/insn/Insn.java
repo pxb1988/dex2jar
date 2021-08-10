@@ -27,8 +27,6 @@ public abstract class Insn {
 
     /**
      * size in codeUnit
-     *
-     * @return
      */
     abstract public int getCodeUnitSize();
 

@@ -1,13 +1,13 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,10 +27,20 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public abstract class BaseCmd {
     public static String getBaseName(String fn) {
@@ -96,7 +106,7 @@ public abstract class BaseCmd {
         for (FileSystemProvider p : FileSystemProvider.installedProviders()) {
             String s = p.getScheme();
             if ("jar".equals(s) || "zip".equalsIgnoreCase(s)) {
-                return p.newFileSystem(in, new HashMap<String, Object>());
+                return p.newFileSystem(in, new HashMap<>());
             }
         }
         throw new IOException("cant find zipfs support");
@@ -115,7 +125,7 @@ public abstract class BaseCmd {
     }
 
     @Retention(value = RetentionPolicy.RUNTIME)
-    @Target(value = { ElementType.FIELD })
+    @Target(value = {ElementType.FIELD})
     public @interface Opt {
         String argName() default "";
 
@@ -170,13 +180,13 @@ public abstract class BaseCmd {
             StringBuilder sb = new StringBuilder();
             boolean havePrev = false;
             if (opt != null && opt.length() > 0) {
-            sb.append("-").append(opt);
+                sb.append("-").append(opt);
                 havePrev = true;
             }
             if (longOpt != null && longOpt.length() > 0) {
                 if (havePrev) {
-                sb.append(",");
-            }
+                    sb.append(",");
+                }
                 sb.append("--").append(longOpt);
             }
             return sb.toString();
@@ -185,7 +195,7 @@ public abstract class BaseCmd {
     }
 
     @Retention(value = RetentionPolicy.RUNTIME)
-    @Target(value = { ElementType.TYPE })
+    @Target(value = {ElementType.TYPE})
     public @interface Syntax {
 
         String cmd();
@@ -203,7 +213,7 @@ public abstract class BaseCmd {
     private String desc;
     private String onlineHelp;
 
-    protected Map<String, Option> optMap = new HashMap<String, Option>();
+    protected Map<String, Option> optMap = new HashMap<>();
 
     @Opt(opt = "h", longOpt = "help", hasArg = false, description = "Print this help message")
     private boolean printHelp = false;
@@ -242,7 +252,7 @@ public abstract class BaseCmd {
         return options;
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     protected Object convert(String value, Class type) {
         if (type.equals(String.class)) {
             return value;
@@ -327,10 +337,11 @@ public abstract class BaseCmd {
                 if ("".equals(opt.longOpt()) && "".equals(opt.opt())) {   // into automode
                     option.longOpt = fromCamel(f.getName());
                     if (f.getType().equals(boolean.class)) {
-                        option.hasArg=false;
+                        option.hasArg = false;
                         try {
                             if (f.getBoolean(this)) {
-                                throw new RuntimeException("the value of " + f + " must be false, as it is declared as no args");
+                                throw new RuntimeException("the value of " + f + " must be false, as it is declared "
+                                        + "as no args");
                             }
                         } catch (IllegalAccessException e) {
                             throw new RuntimeException(e);
@@ -347,7 +358,8 @@ public abstract class BaseCmd {
 
                     try {
                         if (f.getBoolean(this)) {
-                            throw new RuntimeException("the value of " + f + " must be false, as it is declared as no args");
+                            throw new RuntimeException("the value of " + f + " must be false, as it is declared as no"
+                                    + " args");
                         }
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException(e);
@@ -418,12 +430,12 @@ public abstract class BaseCmd {
             BaseCmd baseCmd = (BaseCmd) clz.newInstance();
             baseCmd.doMain(newArgs);
         } else {
-            Method m = clz.getMethod("main",String[].class);
+            Method m = clz.getMethod("main", String[].class);
             m.setAccessible(true);
-            m.invoke(null, (Object)newArgs);
+            m.invoke(null, (Object) newArgs);
         }
     }
-    
+
     protected void parseSetArgs(String... args) throws IllegalArgumentException, IllegalAccessException {
         this.originalArgs = args;
         List<String> remainsOptions = new ArrayList<>();

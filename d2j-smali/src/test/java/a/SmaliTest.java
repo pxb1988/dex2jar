@@ -8,7 +8,15 @@ import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.d2j.smali.BaksmaliDumpOut;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.smali.Smali;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import org.jf.baksmali.Adaptors.ClassDefinition;
 import org.jf.baksmali.BaksmaliOptions;
 import org.jf.baksmali.formatter.BaksmaliWriter;
@@ -19,10 +27,6 @@ import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.util.SyntheticAccessorResolver;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SmaliTest {
     @Test

@@ -3,11 +3,10 @@ package com.googlecode.d2j.reader.test;
 
 import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.reader.DexFileReader;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.InputStream;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class SkipDupMethod {
     @Test

@@ -27,12 +27,11 @@ import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexFileVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.objectweb.asm.Type;
-
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import org.objectweb.asm.Type;
 
 /**
  * only implement sub set of InvocationWeaver
@@ -52,7 +51,8 @@ public class DexWeaver extends BaseWeaver {
 
         dcv.visitField(DexConstants.ACC_PRIVATE | DexConstants.ACC_FINAL,
                 new Field(typeNameDesc, "thiz", "Ljava/lang/Object;"), null).visitEnd();
-        dcv.visitField(DexConstants.ACC_PRIVATE | DexConstants.ACC_FINAL, new Field(typeNameDesc, "args", "[Ljava/lang/Object;"), null)
+        dcv.visitField(DexConstants.ACC_PRIVATE | DexConstants.ACC_FINAL, new Field(typeNameDesc, "args", "[Ljava"
+                        + "/lang/Object;"), null)
                 .visitEnd();
         dcv.visitField(DexConstants.ACC_PRIVATE | DexConstants.ACC_FINAL, new Field(typeNameDesc, "idx", "I"), null)
                 .visitEnd();
@@ -60,7 +60,8 @@ public class DexWeaver extends BaseWeaver {
 
         {
             DexMethodVisitor mv = dcv
-                    .visitMethod(DexConstants.ACC_PUBLIC | DexConstants.ACC_CONSTRUCTOR, new Method(typeNameDesc, "<init>", new String[]{
+                    .visitMethod(DexConstants.ACC_PUBLIC | DexConstants.ACC_CONSTRUCTOR, new Method(typeNameDesc,
+                            "<init>", new String[]{
                             "Ljava/lang/Object;", "[Ljava/lang/Object;", "I"}, "V"));
             DexCodeVisitor codeVisitor = mv.visitCode();
             codeVisitor.visitRegister(4);
@@ -72,29 +73,15 @@ public class DexWeaver extends BaseWeaver {
             mv.visitEnd();
         }
         {
-            genSwitchMethod(dcv, typeNameDesc, "getMethodOwner", new CB() {
-                @Override
-                public String getKey(Method mtd) {
-                    return toInternal(mtd.getOwner());
-                }
-            });
-            genSwitchMethod(dcv, typeNameDesc, "getMethodName", new CB() {
-                @Override
-                public String getKey(Method mtd) {
-                    return mtd.getName();
-                }
-            });
-            genSwitchMethod(dcv, typeNameDesc, "getMethodDesc", new CB() {
-                @Override
-                public String getKey(Method mtd) {
-                    return mtd.getDesc();
-                }
-            });
+            genSwitchMethod(dcv, typeNameDesc, "getMethodOwner", mtd -> toInternal(mtd.getOwner()));
+            genSwitchMethod(dcv, typeNameDesc, "getMethodName", Method::getName);
+            genSwitchMethod(dcv, typeNameDesc, "getMethodDesc", Method::getDesc);
         }
 
         {
             DexMethodVisitor mv = dcv
-                    .visitMethod(DexConstants.ACC_PUBLIC, new Method(typeNameDesc, "getArguments", new String[0], "[Ljava/lang/Object;"));
+                    .visitMethod(DexConstants.ACC_PUBLIC, new Method(typeNameDesc, "getArguments", new String[0],
+                            "[Ljava/lang/Object;"));
             DexCodeVisitor code = mv.visitCode();
             code.visitRegister(2);
             code.visitFieldStmt(Op.IGET, 0, 1, new Field(typeNameDesc, "args", "[Ljava/lang/Object;"));
@@ -106,7 +93,8 @@ public class DexWeaver extends BaseWeaver {
 
         {
             DexMethodVisitor mv = dcv
-                    .visitMethod(DexConstants.ACC_PUBLIC, new Method(typeNameDesc, "getThis", new String[0], "Ljava/lang/Object;"));
+                    .visitMethod(DexConstants.ACC_PUBLIC, new Method(typeNameDesc, "getThis", new String[0], "Ljava"
+                            + "/lang/Object;"));
             DexCodeVisitor code = mv.visitCode();
             code.visitRegister(2);
             code.visitFieldStmt(Op.IGET, 0, 1, new Field(typeNameDesc, "thiz", "Ljava/lang/Object;"));
@@ -116,7 +104,8 @@ public class DexWeaver extends BaseWeaver {
         }
         {
             DexMethodVisitor mv = dcv
-                    .visitMethod(DexConstants.ACC_PUBLIC, new Method(typeNameDesc, "proceed", new String[0], "Ljava/lang/Object;"));
+                    .visitMethod(DexConstants.ACC_PUBLIC, new Method(typeNameDesc, "proceed", new String[0], "Ljava"
+                            + "/lang/Object;"));
             DexCodeVisitor code = mv.visitCode();
             code.visitRegister(4);
 
@@ -125,7 +114,7 @@ public class DexWeaver extends BaseWeaver {
             code.visitFieldStmt(Op.IGET, 1, 3, new Field(typeNameDesc, "args", "[Ljava/lang/Object;"));
             code.visitFieldStmt(Op.IGET, 2, 3, new Field(typeNameDesc, "idx", "I"));
 
-            DexLabel labels[] = new DexLabel[callbacks.size()];
+            DexLabel[] labels = new DexLabel[callbacks.size()];
             for (int i = 0; i < labels.length; i++) {
                 labels[i] = new DexLabel();
             }
@@ -162,12 +151,13 @@ public class DexWeaver extends BaseWeaver {
 
     private void genSwitchMethod(DexClassVisitor dcv, String typeNameDesc, String methodName, CB callback) {
         DexMethodVisitor dmv = dcv
-                .visitMethod(DexConstants.ACC_PUBLIC, new Method(typeNameDesc, methodName, new String[0], "Ljava/lang/String;"));
+                .visitMethod(DexConstants.ACC_PUBLIC, new Method(typeNameDesc, methodName, new String[0], "Ljava/lang"
+                        + "/String;"));
         DexCodeVisitor code = dmv.visitCode();
         code.visitRegister(3);
         code.visitFieldStmt(Op.IGET, 0, 2, new Field(typeNameDesc, "idx", "I"));
 
-        DexLabel labels[] = new DexLabel[callbacks.size()];
+        DexLabel[] labels = new DexLabel[callbacks.size()];
 
         Map<String, DexLabel> strMap = new TreeMap<>();
         for (int i = 0; i < labels.length; i++) {
@@ -199,7 +189,8 @@ public class DexWeaver extends BaseWeaver {
     public DexFileVisitor wrap(DexFileVisitor dcv) {
         return dcv == null ? null : new DexFileVisitor(dcv) {
             @Override
-            public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
+            public DexClassVisitor visit(int access_flags, String className, String superClass,
+                                         String[] interfaceNames) {
                 return wrap(className, super.visit(access_flags, className, superClass, interfaceNames));
             }
         };
@@ -235,7 +226,8 @@ public class DexWeaver extends BaseWeaver {
                             }
                             generateMtdACode(opcode, t, mapTo, dmv, src);
 
-                            int newAccess = (access & ~(DexConstants.ACC_PRIVATE | DexConstants.ACC_PROTECTED)) | DexConstants.ACC_PUBLIC; // make sure public
+                            int newAccess =
+                                    (access & ~(DexConstants.ACC_PRIVATE | DexConstants.ACC_PROTECTED)) | DexConstants.ACC_PUBLIC; // make sure public
                             code.accept(wrap(superVisitDexMethod(newAccess, t), dcv));
                         }
                     };
@@ -275,7 +267,8 @@ public class DexWeaver extends BaseWeaver {
                                 dmv.visitEnd();
                                 cache.put(buildKey(method.getOwner(), method.getName(), method.getDesc()), methodA);
                             }
-                            super.visitMethodStmt(isRange(op) ? Op.INVOKE_STATIC_RANGE : Op.INVOKE_STATIC, args, methodA);
+                            super.visitMethodStmt(isRange(op) ? Op.INVOKE_STATIC_RANGE : Op.INVOKE_STATIC, args,
+                                    methodA);
                         } else {
                             super.visitMethodStmt(op, args, method);
                         }
@@ -327,31 +320,31 @@ public class DexWeaver extends BaseWeaver {
                 dcv.visitMethodStmt(Op.INVOKE_STATIC, new int[]{3}, call);
                 if (!"V".equals(t.getReturnType())) {
                     switch (call.getReturnType().charAt(0)) {
-                        case '[':
-                        case 'L':
-                            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, 0);
-                            break;
-                        case 'J':
-                        case 'D':
-                            dcv.visitStmt1R(Op.MOVE_RESULT_WIDE, 0);
-                            break;
-                        default:
-                            dcv.visitStmt1R(Op.MOVE_RESULT, 0);
-                            break;
+                    case '[':
+                    case 'L':
+                        dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, 0);
+                        break;
+                    case 'J':
+                    case 'D':
+                        dcv.visitStmt1R(Op.MOVE_RESULT_WIDE, 0);
+                        break;
+                    default:
+                        dcv.visitStmt1R(Op.MOVE_RESULT, 0);
+                        break;
                     }
                     unbox(t.getReturnType(), 0, dcv);
                     switch (t.getReturnType().charAt(0)) {
-                        case '[':
-                        case 'L':
-                            dcv.visitStmt1R(Op.RETURN_OBJECT, 0);
-                            break;
-                        case 'J':
-                        case 'D':
-                            dcv.visitStmt1R(Op.RETURN_WIDE, 0);
-                            break;
-                        default:
-                            dcv.visitStmt1R(Op.RETURN, 0);
-                            break;
+                    case '[':
+                    case 'L':
+                        dcv.visitStmt1R(Op.RETURN_OBJECT, 0);
+                        break;
+                    case 'J':
+                    case 'D':
+                        dcv.visitStmt1R(Op.RETURN_WIDE, 0);
+                        break;
+                    default:
+                        dcv.visitStmt1R(Op.RETURN, 0);
+                        break;
                     }
                 } else {
                     dcv.visitStmt0R(Op.RETURN_VOID);
@@ -393,14 +386,14 @@ public class DexWeaver extends BaseWeaver {
                     argStart = totalRegs - 2;
                 }
                 dcv.visitRegister(totalRegs);
-                int args[] = new int[countArgs(t) + (isStatic ? 0 : 1)];
+                int[] args = new int[countArgs(t) + (isStatic ? 0 : 1)];
                 int args_index = 0;
                 int i = 1;
                 if (!isStatic) {
                     if (i != argStart) {
                         dcv.visitStmt2R(Op.MOVE_OBJECT, i, argStart);
                     }
-                    if(!isSuper) {
+                    if (!isSuper) {
                         dcv.visitTypeStmt(Op.CHECK_CAST, i, -1, t.getOwner());
                     }
                     args[args_index++] = i;
@@ -428,17 +421,17 @@ public class DexWeaver extends BaseWeaver {
                     dcv.visitConstStmt(Op.CONST, 0, 0);
                 } else {
                     switch (t.getReturnType().charAt(0)) {
-                        case '[':
-                        case 'L':
-                            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, 0);
-                            break;
-                        case 'J':
-                        case 'D':
-                            dcv.visitStmt1R(Op.MOVE_RESULT_WIDE, 0);
-                            break;
-                        default:
-                            dcv.visitStmt1R(Op.MOVE_RESULT, 0);
-                            break;
+                    case '[':
+                    case 'L':
+                        dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, 0);
+                        break;
+                    case 'J':
+                    case 'D':
+                        dcv.visitStmt1R(Op.MOVE_RESULT_WIDE, 0);
+                        break;
+                    default:
+                        dcv.visitStmt1R(Op.MOVE_RESULT, 0);
+                        break;
                     }
                     box(t.getReturnType().charAt(0), 0, 0, dcv);
                 }
@@ -454,7 +447,7 @@ public class DexWeaver extends BaseWeaver {
     }
 
     private String[] join(String a, String[] b) {
-        String joined[] = new String[b.length + 1];
+        String[] joined = new String[b.length + 1];
         joined[0] = a;
         System.arraycopy(b, 0, joined, 1, b.length);
         return joined;
@@ -466,71 +459,71 @@ public class DexWeaver extends BaseWeaver {
 
     private boolean isRange(Op op) {
         switch (op) {
-            case INVOKE_STATIC_RANGE:
-            case INVOKE_DIRECT_RANGE:
-            case INVOKE_INTERFACE_RANGE:
-            case INVOKE_SUPER_RANGE:
-            case INVOKE_VIRTUAL_RANGE:
-                return true;
-            default:
-                return false;
+        case INVOKE_STATIC_RANGE:
+        case INVOKE_DIRECT_RANGE:
+        case INVOKE_INTERFACE_RANGE:
+        case INVOKE_SUPER_RANGE:
+        case INVOKE_VIRTUAL_RANGE:
+            return true;
+        default:
+            return false;
         }
     }
 
     private void unbox(String argType, int i, DexCodeVisitor dcv) {
         switch (argType.charAt(0)) {
-            case '[':
-            case 'L':
-                dcv.visitTypeStmt(Op.CHECK_CAST, i, i, argType);
-                break;
-            case 'Z':
-                dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Boolean;");
-                dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
-                        i}, new Method("Ljava/lang/Boolean;", "booleanValue", new String[]{}, "Z"));
-                dcv.visitStmt1R(Op.MOVE_RESULT, i);
-                break;
-            case 'B':
-                dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Byte;");
-                dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
-                        i}, new Method("Ljava/lang/Byte;", "byteValue", new String[]{}, "B"));
-                dcv.visitStmt1R(Op.MOVE_RESULT, i);
-                break;
-            case 'S':
-                dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Short;");
-                dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
-                        i}, new Method("Ljava/lang/Short;", "shortValue", new String[]{}, "S"));
-                dcv.visitStmt1R(Op.MOVE_RESULT, i);
-                break;
-            case 'C':
-                dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Character;");
-                dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
-                        i}, new Method("Ljava/lang/Character;", "charValue", new String[]{}, "C"));
-                dcv.visitStmt1R(Op.MOVE_RESULT, i);
-                break;
-            case 'I':
-                dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Integer;");
-                dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
-                        i}, new Method("Ljava/lang/Integer;", "intValue", new String[]{}, "I"));
-                dcv.visitStmt1R(Op.MOVE_RESULT, i);
-                break;
-            case 'F':
-                dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Float;");
-                dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
-                        i}, new Method("Ljava/lang/Float;", "floatValue", new String[]{}, "F"));
-                dcv.visitStmt1R(Op.MOVE_RESULT, i);
-                break;
-            case 'D':
-                dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Double;");
-                dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
-                        i}, new Method("Ljava/lang/Double;", "doubleValue", new String[]{}, "D"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_WIDE, i);
-                break;
-            case 'J':
-                dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Long;");
-                dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
-                        i}, new Method("Ljava/lang/Long;", "longValue", new String[]{}, "J"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_WIDE, i);
-                break;
+        case '[':
+        case 'L':
+            dcv.visitTypeStmt(Op.CHECK_CAST, i, i, argType);
+            break;
+        case 'Z':
+            dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Boolean;");
+            dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
+                    i}, new Method("Ljava/lang/Boolean;", "booleanValue", new String[]{}, "Z"));
+            dcv.visitStmt1R(Op.MOVE_RESULT, i);
+            break;
+        case 'B':
+            dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Byte;");
+            dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
+                    i}, new Method("Ljava/lang/Byte;", "byteValue", new String[]{}, "B"));
+            dcv.visitStmt1R(Op.MOVE_RESULT, i);
+            break;
+        case 'S':
+            dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Short;");
+            dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
+                    i}, new Method("Ljava/lang/Short;", "shortValue", new String[]{}, "S"));
+            dcv.visitStmt1R(Op.MOVE_RESULT, i);
+            break;
+        case 'C':
+            dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Character;");
+            dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
+                    i}, new Method("Ljava/lang/Character;", "charValue", new String[]{}, "C"));
+            dcv.visitStmt1R(Op.MOVE_RESULT, i);
+            break;
+        case 'I':
+            dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Integer;");
+            dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
+                    i}, new Method("Ljava/lang/Integer;", "intValue", new String[]{}, "I"));
+            dcv.visitStmt1R(Op.MOVE_RESULT, i);
+            break;
+        case 'F':
+            dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Float;");
+            dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
+                    i}, new Method("Ljava/lang/Float;", "floatValue", new String[]{}, "F"));
+            dcv.visitStmt1R(Op.MOVE_RESULT, i);
+            break;
+        case 'D':
+            dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Double;");
+            dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
+                    i}, new Method("Ljava/lang/Double;", "doubleValue", new String[]{}, "D"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_WIDE, i);
+            break;
+        case 'J':
+            dcv.visitTypeStmt(Op.CHECK_CAST, i, i, "Ljava/lang/Long;");
+            dcv.visitMethodStmt(Op.INVOKE_VIRTUAL_RANGE, new int[]{
+                    i}, new Method("Ljava/lang/Long;", "longValue", new String[]{}, "J"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_WIDE, i);
+            break;
         }
     }
 
@@ -540,7 +533,7 @@ public class DexWeaver extends BaseWeaver {
 
     private Method build(MtdInfo mapTo) {
         Type[] ts = Type.getArgumentTypes(mapTo.desc);
-        String ss[] = new String[ts.length];
+        String[] ss = new String[ts.length];
         for (int i = 0; i < ss.length; i++) {
             ss[i] = ts[i].getDescriptor();
         }
@@ -549,53 +542,53 @@ public class DexWeaver extends BaseWeaver {
 
     private void box(char type, int from, int to, DexCodeVisitor dcv) {
         switch (type) {
-            case 'L':
-            case '[':
-                dcv.visitStmt2R(Op.MOVE_OBJECT, from, to);
-                break;
-            case 'Z':
-                dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
-                        from}, new Method("Ljava/lang/Boolean;", "valueOf", new String[]{"Z"}, "Ljava/lang/Boolean;"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
-                break;
-            case 'B':
-                dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
-                        from}, new Method("Ljava/lang/Byte;", "valueOf", new String[]{"B"}, "Ljava/lang/Byte;"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
-                break;
-            case 'S':
-                dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
-                        from}, new Method("Ljava/lang/Short;", "valueOf", new String[]{"S"}, "Ljava/lang/Short;"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
-                break;
-            case 'C':
-                dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
-                        from}, new Method("Ljava/lang/Character;", "valueOf", new String[]{
-                        "C"}, "Ljava/lang/Character;"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
-                break;
-            case 'I':
-                dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
-                        from}, new Method("Ljava/lang/Integer;", "valueOf", new String[]{"I"}, "Ljava/lang/Integer;"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
-                break;
-            case 'F':
-                dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
-                        from}, new Method("Ljava/lang/Float;", "valueOf", new String[]{"F"}, "Ljava/lang/Float;"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
-                break;
-            case 'D':
-                dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
-                        from, from + 1}, new Method("Ljava/lang/Double;", "valueOf", new String[]{
-                        "D"}, "Ljava/lang/Double;"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
-                break;
-            case 'J':
-                dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
-                        from, from + 1}, new Method("Ljava/lang/Long;", "valueOf", new String[]{
-                        "J"}, "Ljava/lang/Long;"));
-                dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
-                break;
+        case 'L':
+        case '[':
+            dcv.visitStmt2R(Op.MOVE_OBJECT, from, to);
+            break;
+        case 'Z':
+            dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
+                    from}, new Method("Ljava/lang/Boolean;", "valueOf", new String[]{"Z"}, "Ljava/lang/Boolean;"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
+            break;
+        case 'B':
+            dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
+                    from}, new Method("Ljava/lang/Byte;", "valueOf", new String[]{"B"}, "Ljava/lang/Byte;"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
+            break;
+        case 'S':
+            dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
+                    from}, new Method("Ljava/lang/Short;", "valueOf", new String[]{"S"}, "Ljava/lang/Short;"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
+            break;
+        case 'C':
+            dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
+                    from}, new Method("Ljava/lang/Character;", "valueOf", new String[]{
+                    "C"}, "Ljava/lang/Character;"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
+            break;
+        case 'I':
+            dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
+                    from}, new Method("Ljava/lang/Integer;", "valueOf", new String[]{"I"}, "Ljava/lang/Integer;"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
+            break;
+        case 'F':
+            dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
+                    from}, new Method("Ljava/lang/Float;", "valueOf", new String[]{"F"}, "Ljava/lang/Float;"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
+            break;
+        case 'D':
+            dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
+                    from, from + 1}, new Method("Ljava/lang/Double;", "valueOf", new String[]{
+                    "D"}, "Ljava/lang/Double;"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
+            break;
+        case 'J':
+            dcv.visitMethodStmt(Op.INVOKE_STATIC_RANGE, new int[]{
+                    from, from + 1}, new Method("Ljava/lang/Long;", "valueOf", new String[]{
+                    "J"}, "Ljava/lang/Long;"));
+            dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
+            break;
         }
     }
 

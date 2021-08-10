@@ -1,17 +1,53 @@
 package com.googlecode.d2j.dex;
 
-import java.util.*;
-
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.DexType;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
+import com.googlecode.d2j.Visibility;
 import com.googlecode.d2j.converter.Dex2IRConverter;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.InnerClassNode;
-
-import com.googlecode.d2j.*;
 import com.googlecode.d2j.converter.IR2JConverter;
-import com.googlecode.d2j.node.*;
+import com.googlecode.d2j.node.DexAnnotationNode;
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexFieldNode;
+import com.googlecode.d2j.node.DexFileNode;
+import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.ts.*;
+import com.googlecode.dex2jar.ir.ts.AggTransformer;
+import com.googlecode.dex2jar.ir.ts.CleanLabel;
+import com.googlecode.dex2jar.ir.ts.DeadCodeTransformer;
+import com.googlecode.dex2jar.ir.ts.EndRemover;
+import com.googlecode.dex2jar.ir.ts.ExceptionHandlerTrim;
+import com.googlecode.dex2jar.ir.ts.Ir2JRegAssignTransformer;
+import com.googlecode.dex2jar.ir.ts.MultiArrayTransformer;
+import com.googlecode.dex2jar.ir.ts.NewTransformer;
+import com.googlecode.dex2jar.ir.ts.NpeTransformer;
+import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
+import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
+import com.googlecode.dex2jar.ir.ts.TypeTransformer;
+import com.googlecode.dex2jar.ir.ts.UnSSATransformer;
+import com.googlecode.dex2jar.ir.ts.VoidInvokeTransformer;
+import com.googlecode.dex2jar.ir.ts.ZeroTransformer;
 import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.InnerClassNode;
 
 public class Dex2Asm {
 
@@ -238,7 +274,7 @@ public class Dex2Asm {
                             }
                         }
                     }
-                        break;
+                    break;
                     case DexConstants.ANNOTATION_SIGNATURE_TYPE: {
                         Object[] strs = (Object[]) findAnnotationAttribute(ann, "value");
                         if (strs != null) {
@@ -249,7 +285,7 @@ public class Dex2Asm {
                             signature = sb.toString();
                         }
                     }
-                        break;
+                    break;
                     }
                 }
             }
@@ -284,7 +320,7 @@ public class Dex2Asm {
                             enclosingClass.addInner(clz);
 
                         }
-                            break;
+                        break;
                         case DexConstants.ANNOTATION_ENCLOSING_METHOD_TYPE: {
                             Method m = (Method) findAnnotationAttribute(ann, "value");
                             Clz enclosingClass = get(classes, m.getOwner());
@@ -292,7 +328,7 @@ public class Dex2Asm {
                             clz.enclosingMethod = m;
                             enclosingClass.addInner(clz);
                         }
-                            break;
+                        break;
                         case DexConstants.ANNOTATION_INNER_CLASS_TYPE: {
                             for (DexAnnotationNode.Item it : ann.items) {
                                 if ("accessFlags".equals(it.name)) {
@@ -302,7 +338,7 @@ public class Dex2Asm {
                                 }
                             }
                         }
-                            break;
+                        break;
                         case DexConstants.ANNOTATION_MEMBER_CLASSES_TYPE: {
                             Object[] ts = (Object[]) findAnnotationAttribute(ann, "value");
                             for (Object v : ts) {
@@ -312,7 +348,7 @@ public class Dex2Asm {
                                 inner.enclosingClass = clz;
                             }
                         }
-                            break;
+                        break;
                         }
                     }
                 }
@@ -328,8 +364,9 @@ public class Dex2Asm {
     public void convertClass(DexClassNode classNode, ClassVisitorFactory cvf) {
         convertClass(DexConstants.DEX_035, classNode, cvf);
     }
+
     public void convertClass(int dexVersion, DexClassNode classNode, ClassVisitorFactory cvf) {
-        convertClass(dexVersion, classNode, cvf, new HashMap<String, Clz>());
+        convertClass(dexVersion, classNode, cvf, new HashMap<>());
     }
 
     private static boolean isJavaIdentifier(String str) {
@@ -350,10 +387,14 @@ public class Dex2Asm {
     public void convertClass(DexClassNode classNode, ClassVisitorFactory cvf, Map<String, Clz> classes) {
         convertClass(DexConstants.DEX_035, classNode, cvf, classes);
     }
-    public void convertClass(DexFileNode dfn, DexClassNode classNode, ClassVisitorFactory cvf, Map<String, Clz> classes) {
+
+    public void convertClass(DexFileNode dfn, DexClassNode classNode, ClassVisitorFactory cvf,
+                             Map<String, Clz> classes) {
         convertClass(dfn.dexVersion, classNode, cvf, classes);
     }
-    public void convertClass(int dexVersion, DexClassNode classNode, ClassVisitorFactory cvf, Map<String, Clz> classes) {
+
+    public void convertClass(int dexVersion, DexClassNode classNode, ClassVisitorFactory cvf,
+                             Map<String, Clz> classes) {
         ClassVisitor cv = cvf.create(toInternalName(classNode.className));
         if (cv == null) {
             return;
@@ -376,7 +417,7 @@ public class Dex2Asm {
                             signature = sb.toString();
                         }
                     }
-                        break;
+                    break;
                     }
                 }
             }
@@ -419,7 +460,7 @@ public class Dex2Asm {
             }
             searchEnclosing(clzInfo, innerClassNodes);
         }
-        Collections.sort(innerClassNodes, INNER_CLASS_NODE_COMPARATOR);
+        innerClassNodes.sort(INNER_CLASS_NODE_COMPARATOR);
         for (InnerClassNode icn : innerClassNodes) {
             if (icn.innerName != null && !isJavaIdentifier(icn.innerName)) {
                 System.err.println("WARN: ignored invalid inner class name " + ", treat as anonymous inner class.");
@@ -509,27 +550,34 @@ public class Dex2Asm {
             switch (mh.getType()) {
             case MethodHandle.INSTANCE_GET:
             case MethodHandle.STATIC_GET:
-                h = new Handle(Opcodes.H_GETFIELD, toInternalName(mh.getField().getOwner()), mh.getField().getName(), mh.getField().getType(), false);
-                    break;
+                h = new Handle(Opcodes.H_GETFIELD, toInternalName(mh.getField().getOwner()), mh.getField().getName(),
+                        mh.getField().getType(), false);
+                break;
             case MethodHandle.INSTANCE_PUT:
             case MethodHandle.STATIC_PUT:
-                h = new Handle(Opcodes.H_PUTFIELD, toInternalName(mh.getField().getOwner()), mh.getField().getName(), mh.getField().getType(), false);
-                    break;
+                h = new Handle(Opcodes.H_PUTFIELD, toInternalName(mh.getField().getOwner()), mh.getField().getName(),
+                        mh.getField().getType(), false);
+                break;
             case MethodHandle.INVOKE_INSTANCE:
-                    h = new Handle(Opcodes.H_INVOKEVIRTUAL, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), false);
-                    break;
-                case MethodHandle.INVOKE_STATIC:
-                    h = new Handle(Opcodes.H_INVOKESTATIC, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), false);
-                    break;
-                case MethodHandle.INVOKE_CONSTRUCTOR:
-                    h = new Handle(Opcodes.H_NEWINVOKESPECIAL, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), false);
-                    break;
-                case MethodHandle.INVOKE_DIRECT:
-                    h = new Handle(Opcodes.H_INVOKESPECIAL, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), false);
-                    break;
-                case MethodHandle.INVOKE_INTERFACE:
-                    h = new Handle(Opcodes.H_INVOKEINTERFACE, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), true);
-                    break;
+                h = new Handle(Opcodes.H_INVOKEVIRTUAL, toInternalName(mh.getMethod().getOwner()),
+                        mh.getMethod().getName(), mh.getMethod().getDesc(), false);
+                break;
+            case MethodHandle.INVOKE_STATIC:
+                h = new Handle(Opcodes.H_INVOKESTATIC, toInternalName(mh.getMethod().getOwner()),
+                        mh.getMethod().getName(), mh.getMethod().getDesc(), false);
+                break;
+            case MethodHandle.INVOKE_CONSTRUCTOR:
+                h = new Handle(Opcodes.H_NEWINVOKESPECIAL, toInternalName(mh.getMethod().getOwner()),
+                        mh.getMethod().getName(), mh.getMethod().getDesc(), false);
+                break;
+            case MethodHandle.INVOKE_DIRECT:
+                h = new Handle(Opcodes.H_INVOKESPECIAL, toInternalName(mh.getMethod().getOwner()),
+                        mh.getMethod().getName(), mh.getMethod().getDesc(), false);
+                break;
+            case MethodHandle.INVOKE_INTERFACE:
+                h = new Handle(Opcodes.H_INVOKEINTERFACE, toInternalName(mh.getMethod().getOwner()),
+                        mh.getMethod().getName(), mh.getMethod().getDesc(), true);
+                break;
             }
             ele = h;
         } else if (ele instanceof Proto) {
@@ -645,7 +693,7 @@ public class Dex2Asm {
 
     /**
      * For structure
-     * 
+     *
      * <pre>
      * class A {
      *     class B {
@@ -654,17 +702,16 @@ public class Dex2Asm {
      *     }
      * }
      * </pre>
-     * 
+     * <p>
      * this method will add
-     * 
+     *
      * <pre>
      * InnerClass  Outter
      * A$B$WeAreHere A$B
      * A$B           A
      * </pre>
-     * 
+     * <p>
      * to WeAreHere.class
-     * 
      */
     private static void searchEnclosing(Clz clz, List<InnerClassNode> innerClassNodes) {
         Set<Clz> visitedClz = new HashSet<>();
@@ -692,28 +739,26 @@ public class Dex2Asm {
 
     /**
      * For structure
-     * 
+     *
      * <pre>
      * class WeAreHere {
      *     class A {
      *         class B {
-     * 
+     *
      *         }
      *     }
      * }
      * </pre>
-     * 
+     * <p>
      * this method will add
-     * 
+     *
      * <pre>
      * InnerClass      Outter
      * WeAreHere$A$B   WeAreHere$A
      * WeAreHere$A     WeAreHere
      * </pre>
-     * 
+     * <p>
      * to WeAreHere.class
-     * 
-     * @param clz
      */
     private static void searchInnerClass(Clz clz, List<InnerClassNode> innerClassNodes, String className) {
         Set<Clz> visited = new HashSet<>();
@@ -741,11 +786,7 @@ public class Dex2Asm {
         }
     }
 
-    private static final Comparator<InnerClassNode> INNER_CLASS_NODE_COMPARATOR = new Comparator<InnerClassNode>() {
-        @Override
-        public int compare(InnerClassNode o1, InnerClassNode o2) {
-            return o1.name.compareTo(o2.name);
-        }
-    };
+    private static final Comparator<InnerClassNode> INNER_CLASS_NODE_COMPARATOR =
+            Comparator.comparing(o -> o.name);
 
 }

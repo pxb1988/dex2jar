@@ -1,13 +1,11 @@
 package pxb.java.nio.file;
 
-
-import pxb.java.nio.file.attribute.FileAttribute;
-import pxb.java.nio.file.spi.FileSystemProvider;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import pxb.java.nio.file.attribute.FileAttribute;
+import pxb.java.nio.file.spi.FileSystemProvider;
 
 public class Files {
     public static Path write(Path path, byte[] bytes, OpenOption... options)
@@ -38,7 +36,7 @@ public class Files {
         return path._newInputStream();
     }
 
-    public static boolean deleteIfExists(Path path) throws IOException {
+    public static boolean deleteIfExists(Path path) {
         return path._deleteIfExists();
     }
 

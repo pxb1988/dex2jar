@@ -1,13 +1,13 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,6 @@ import com.googlecode.d2j.reader.DexFileReader;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.smali.Smali;
 import com.googlecode.dex2jar.ir.ET;
-import org.objectweb.asm.MethodVisitor;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -34,17 +32,24 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TimeZone;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import org.objectweb.asm.MethodVisitor;
 
 public class BaksmaliBaseDexExceptionHandler extends BaseDexExceptionHandler {
-    public static final String REPORT_MESSAGE = "Please report this file to one of following link if possible (any one).\n" + //
-            "    https://sourceforge.net/p/dex2jar/tickets/\n" + //
-            "    https://bitbucket.org/pxb1988/dex2jar/issues\n" + //
-            "    https://github.com/pxb1988/dex2jar/issues\n" + //
-            "    dex2jar@googlegroups.com";
+    public static final String REPORT_MESSAGE = "Please report this file to one of following link if possible (any "
+            + "one).\n" + //
+            "    https://github.com/ThexXTURBOXx/dex2jar/issues\n" + //
+            "    nico.mexis@kabelmail.de";
 
     private Map<DexMethodNode, Exception> exceptionMap = new HashMap<>();
     private List<Exception> fileExceptions = new ArrayList<>();

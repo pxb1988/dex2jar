@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Modified UTF-8 as described in the dex file format spec.
- * 
+ *
  * <p>
  * Derived from libcore's MUTF-8 encoder at java.nio.charset.ModifiedUtf8.
  */

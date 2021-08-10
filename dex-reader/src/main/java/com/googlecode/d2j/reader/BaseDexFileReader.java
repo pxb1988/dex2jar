@@ -1,7 +1,6 @@
 package com.googlecode.d2j.reader;
 
 import com.googlecode.d2j.visitors.DexFileVisitor;
-
 import java.util.List;
 
 public interface BaseDexFileReader {

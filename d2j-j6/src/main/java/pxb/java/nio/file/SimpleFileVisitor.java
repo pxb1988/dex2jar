@@ -1,19 +1,16 @@
 package pxb.java.nio.file;
 
-import pxb.java.nio.file.attribute.BasicFileAttributes;
-
 import java.io.IOException;
+import pxb.java.nio.file.attribute.BasicFileAttributes;
 
 public class SimpleFileVisitor<T> implements FileVisitor<T> {
     @Override
-    public FileVisitResult preVisitDirectory(T dir, BasicFileAttributes attrs)
-            throws IOException {
+    public FileVisitResult preVisitDirectory(T dir, BasicFileAttributes attrs) {
         return FileVisitResult.CONTINUE;
     }
 
     @Override
-    public FileVisitResult visitFile(T file, BasicFileAttributes attrs)
-            throws IOException {
+    public FileVisitResult visitFile(T file, BasicFileAttributes attrs) {
         return FileVisitResult.CONTINUE;
     }
 

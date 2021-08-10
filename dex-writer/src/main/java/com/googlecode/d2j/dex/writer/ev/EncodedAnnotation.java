@@ -21,7 +21,6 @@ import com.googlecode.d2j.dex.writer.io.DataOut;
 import com.googlecode.d2j.dex.writer.item.BaseItem;
 import com.googlecode.d2j.dex.writer.item.StringIdItem;
 import com.googlecode.d2j.dex.writer.item.TypeIdItem;
-
 import java.util.ArrayList;
 import java.util.List;
 

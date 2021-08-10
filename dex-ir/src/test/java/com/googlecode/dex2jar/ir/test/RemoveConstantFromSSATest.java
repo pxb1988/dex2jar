@@ -1,19 +1,24 @@
 package com.googlecode.dex2jar.ir.test;
 
-import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.ts.AggTransformer;
 import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNewIntArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNull;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.expr.Exprs.niGt;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 
 public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstantFromSSA> {
     @Test

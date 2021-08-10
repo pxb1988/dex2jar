@@ -1,13 +1,13 @@
 /*
  * dex2jar - Tools to work with android .dex and java .class files
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@
 package com.googlecode.dex2jar.tools;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -34,7 +33,8 @@ public class Jar2Dex extends BaseCmd {
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
-    @Opt(opt = "o", longOpt = "output", description = "output .dex file, default is $current_dir/[jar-name]-jar2dex.dex", argName = "out-dex-file")
+    @Opt(opt = "o", longOpt = "output", description = "output .dex file, default is $current_dir/[jar-name]-jar2dex"
+            + ".dex", argName = "out-dex-file")
     private Path output;
 
     @Override
@@ -74,12 +74,9 @@ public class Jar2Dex extends BaseCmd {
                 System.out.println("zipping " + jar + " -> " + realJar);
                 try (FileSystem fs = createZip(realJar)) {
                     final Path outRoot = fs.getPath("/");
-                    walkJarOrDir(jar, new FileVisitorX() {
-                        @Override
-                        public void visitFile(Path file, String relative) throws IOException {
-                            if (file.getFileName().toString().endsWith(".class")) {
-                                Files.copy(file, outRoot.resolve(relative));
-                            }
+                    walkJarOrDir(jar, (file, relative) -> {
+                        if (file.getFileName().toString().endsWith(".class")) {
+                            Files.copy(file, outRoot.resolve(relative));
                         }
                     });
                 }
@@ -94,9 +91,9 @@ public class Jar2Dex extends BaseCmd {
 
             List<String> ps = new ArrayList<>(Arrays.asList("--dex", "--no-strict",
                     "--output=" + output.toAbsolutePath(), realJar
-                    .toAbsolutePath().toString()));
+                            .toAbsolutePath().toString()));
             System.out.println("call com.android.dx.command.Main.main" + ps);
-            m.invoke(null, new Object[] { ps.toArray(new String[0]) });
+            m.invoke(null, new Object[]{ps.toArray(new String[0])});
         } finally {
             if (tmp != null) {
                 Files.deleteIfExists(tmp);

@@ -17,20 +17,14 @@
 package com.googlecode.d2j.dex.writer.item;
 
 import com.googlecode.d2j.dex.writer.io.DataOut;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class AnnotationSetItem extends BaseItem {
     public List<AnnotationItem> annotations = new ArrayList<>(3);
-    private static final Comparator<AnnotationItem> cmp = new Comparator<AnnotationItem>() {
-        @Override
-        public int compare(AnnotationItem o1, AnnotationItem o2) {
-            return o1.annotation.type.compareTo(o2.annotation.type);
-        }
-    };
+    private static final Comparator<AnnotationItem> cmp = Comparator.comparing(o -> o.annotation.type);
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -54,7 +48,7 @@ public class AnnotationSetItem extends BaseItem {
 
     @Override
     public void write(DataOut out) {
-        Collections.sort(annotations, cmp);
+        annotations.sort(cmp);
         out.uint("size", annotations.size());
         for (AnnotationItem item : annotations) {
             out.uint("annotation_off", item.offset);

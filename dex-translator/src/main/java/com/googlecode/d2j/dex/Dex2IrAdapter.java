@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2009-2012 Panxiaobo
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,37 @@
  * limitations under the License.
  */
 package com.googlecode.d2j.dex;
+
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.DexType;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.node.DexCodeNode;
+import com.googlecode.d2j.node.TryCatchNode;
+import com.googlecode.d2j.node.insn.DexLabelStmtNode;
+import com.googlecode.d2j.node.insn.DexStmtNode;
+import com.googlecode.d2j.node.insn.FilledNewArrayStmtNode;
+import com.googlecode.d2j.node.insn.MethodStmtNode;
+import com.googlecode.d2j.reader.Op;
+import com.googlecode.d2j.visitors.DexCodeVisitor;
+import com.googlecode.d2j.visitors.DexDebugVisitor;
+import com.googlecode.dex2jar.ir.IrMethod;
+import com.googlecode.dex2jar.ir.Trap;
+import com.googlecode.dex2jar.ir.TypeClass;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.Value;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.objectweb.asm.Opcodes;
 
 import static com.googlecode.dex2jar.ir.expr.Exprs.nAdd;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nAnd;
@@ -53,36 +84,19 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nSub;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nType;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nUshr;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nXor;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
-
-import java.util.*;
-
-import com.googlecode.d2j.node.DexCodeNode;
-import com.googlecode.d2j.node.TryCatchNode;
-import com.googlecode.d2j.node.insn.DexLabelStmtNode;
-import com.googlecode.d2j.node.insn.FilledNewArrayStmtNode;
-import com.googlecode.d2j.node.insn.DexStmtNode;
-import com.googlecode.d2j.node.insn.MethodStmtNode;
-import com.googlecode.d2j.visitors.DexDebugVisitor;
-import com.googlecode.dex2jar.ir.TypeClass;
-import org.objectweb.asm.Opcodes;
-
-import com.googlecode.d2j.DexLabel;
-import com.googlecode.d2j.DexConstants;
-import com.googlecode.d2j.DexType;
-import com.googlecode.d2j.Field;
-import com.googlecode.d2j.Method;
-import com.googlecode.d2j.reader.Op;
-import com.googlecode.d2j.visitors.DexCodeVisitor;
-import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.expr.Exprs;
-import com.googlecode.dex2jar.ir.expr.Local;
-import com.googlecode.dex2jar.ir.expr.Value;
-import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.stmt.Stmts;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nFillArrayData;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nLock;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nLookupSwitch;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nTableSwitch;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nThrow;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nUnLock;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
@@ -102,8 +116,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
     private Local tmpLocal;
 
     /**
-     * @param isStatic
-     * @param method
+     *
      */
     public Dex2IrAdapter(boolean isStatic, Method method) {
         super();
@@ -113,7 +126,6 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
         irMethod.owner = method.getOwner();
         irMethod.name = method.getName();
         irMethod.isStatic = isStatic;
-        this.irMethod = irMethod;
         this.list = irMethod.stmts;
         this.irMethod = irMethod;
         this.method = method;
@@ -453,7 +465,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.googlecode.dex2jar.visitors.DexCodeVisitor#visitEnd()
      */
     @Override
@@ -587,7 +599,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
         Value[] vs;
         if (args.length > 0) {
             int i = 0;
-            List<Local> ps = new ArrayList<Local>(args.length);
+            List<Local> ps = new ArrayList<>(args.length);
             if (op == Op.INVOKE_STATIC || op == Op.INVOKE_STATIC_RANGE) {
                 ;
             } else {
@@ -602,12 +614,12 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
                     i++;
                 }
             }
-            vs = ps.toArray(new Value[ps.size()]);
+            vs = ps.toArray(new Value[0]);
         } else {
             vs = new Value[0];
         }
 
-        Value invoke = null;
+        Value invoke;
         switch (op) {
         case INVOKE_VIRTUAL_RANGE:
         case INVOKE_VIRTUAL:
@@ -666,8 +678,8 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
                 x(nAssign(va, tmpLocal));
             } else { // wrong position, replace with throw new RuntimeExceptoin("...");
                 System.err.println("WARN: find wrong position of " + op + " in method " + method);
-                x(nThrow(nInvokeNew(new Value[] { nString("d2j: wrong position of " + op) },
-                        new String[] { "Ljava/lang/String;" }, "Ljava/lang/RuntimeException;")));
+                x(nThrow(nInvokeNew(new Value[]{nString("d2j: wrong position of " + op)},
+                        new String[]{"Ljava/lang/String;"}, "Ljava/lang/RuntimeException;")));
             }
 
             break;
@@ -683,7 +695,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
     public void visitStmt2R(Op op, int a, int b) {
         Local va = locals[a];
         Local vb = locals[b];
-        Value to = null;
+        Value to;
         switch (op) {
         case MOVE:
         case MOVE_16:
@@ -874,7 +886,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
             // ignore
             break;
         case BAD_OP:
-            x(nThrow(nInvokeNew(new Value[] { nString("bad dex opcode") }, new String[] { "Ljava/lang/String;" },
+            x(nThrow(nInvokeNew(new Value[]{nString("bad dex opcode")}, new String[]{"Ljava/lang/String;"},
                     "Ljava/lang/VerifyError;")));
             break;
         default:
@@ -895,7 +907,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
 
     @Override
     public void visitTryCatch(DexLabel start, DexLabel end, DexLabel[] handlers, String[] types) {
-        LabelStmt xlabelStmts[] = new LabelStmt[types.length];
+        LabelStmt[] xlabelStmts = new LabelStmt[types.length];
         for (int i = 0; i < types.length; i++) {
             xlabelStmts[i] = toLabelStmt(handlers[i]);
         }

@@ -17,7 +17,11 @@
 package com.googlecode.d2j.dex.writer.ev;
 
 import com.googlecode.d2j.dex.writer.io.DataOut;
-import com.googlecode.d2j.dex.writer.item.*;
+import com.googlecode.d2j.dex.writer.item.BaseItem;
+import com.googlecode.d2j.dex.writer.item.FieldIdItem;
+import com.googlecode.d2j.dex.writer.item.MethodIdItem;
+import com.googlecode.d2j.dex.writer.item.StringIdItem;
+import com.googlecode.d2j.dex.writer.item.TypeIdItem;
 
 public class EncodedValue {
 
@@ -126,52 +130,52 @@ public class EncodedValue {
 
     public static EncodedValue defaultValueForType(String typeString) {
         switch (typeString.charAt(0)) {
-            case '[':
-            case 'L':
-                return new EncodedValue(VALUE_NULL, null);
-            case 'B':
-                return new EncodedValue(VALUE_BYTE, (byte) 0);
-            case 'Z':
-                return new EncodedValue(VALUE_BOOLEAN, false);
-            case 'S':
-                return new EncodedValue(VALUE_SHORT, (short) 0);
-            case 'C':
-                return new EncodedValue(VALUE_CHAR, (char) 0);
-            case 'I':
-                return new EncodedValue(VALUE_INT, (int) 0);
-            case 'F':
-                return new EncodedValue(VALUE_FLOAT, (float) 0);
-            case 'D':
-                return new EncodedValue(VALUE_DOUBLE, (double) 0);
-            case 'J':
-                return new EncodedValue(VALUE_LONG, (long) 0);
-            default:
-                throw new RuntimeException();
+        case '[':
+        case 'L':
+            return new EncodedValue(VALUE_NULL, null);
+        case 'B':
+            return new EncodedValue(VALUE_BYTE, (byte) 0);
+        case 'Z':
+            return new EncodedValue(VALUE_BOOLEAN, false);
+        case 'S':
+            return new EncodedValue(VALUE_SHORT, (short) 0);
+        case 'C':
+            return new EncodedValue(VALUE_CHAR, (char) 0);
+        case 'I':
+            return new EncodedValue(VALUE_INT, 0);
+        case 'F':
+            return new EncodedValue(VALUE_FLOAT, (float) 0);
+        case 'D':
+            return new EncodedValue(VALUE_DOUBLE, (double) 0);
+        case 'J':
+            return new EncodedValue(VALUE_LONG, (long) 0);
+        default:
+            throw new RuntimeException();
         }
     }
 
     static byte[] encodeLong(int length, long value) {
         byte[] data = new byte[length];
         switch (length) {
-            case 8:
-                data[7] = (byte) (value >> 56);
-            case 7:
-                data[6] = (byte) (value >> 48);
-            case 6:
-                data[5] = (byte) (value >> 40);
-            case 5:
-                data[4] = (byte) (value >> 32);
-            case 4:
-                data[3] = (byte) (value >> 24);
-            case 3:
-                data[2] = (byte) (value >> 16);
-            case 2:
-                data[1] = (byte) (value >> 8);
-            case 1:
-                data[0] = (byte) (value >> 0);
-                break;
-            default:
-                throw new RuntimeException();
+        case 8:
+            data[7] = (byte) (value >> 56);
+        case 7:
+            data[6] = (byte) (value >> 48);
+        case 6:
+            data[5] = (byte) (value >> 40);
+        case 5:
+            data[4] = (byte) (value >> 32);
+        case 4:
+            data[3] = (byte) (value >> 24);
+        case 3:
+            data[2] = (byte) (value >> 16);
+        case 2:
+            data[1] = (byte) (value >> 8);
+        case 1:
+            data[0] = (byte) (value >> 0);
+            break;
+        default:
+            throw new RuntimeException();
 
         }
         return data;
@@ -180,17 +184,17 @@ public class EncodedValue {
     static byte[] encodeSint(int length, int value) {
         byte[] data = new byte[length];
         switch (length) {
-            case 4:
-                data[3] = (byte) (value >> 24);
-            case 3:
-                data[2] = (byte) (value >> 16);
-            case 2:
-                data[1] = (byte) (value >> 8);
-            case 1:
-                data[0] = (byte) (value >> 0);
-                break;
-            default:
-                throw new RuntimeException();
+        case 4:
+            data[3] = (byte) (value >> 24);
+        case 3:
+            data[2] = (byte) (value >> 16);
+        case 2:
+            data[1] = (byte) (value >> 8);
+        case 1:
+            data[0] = (byte) (value >> 0);
+            break;
+        default:
+            throw new RuntimeException();
         }
         return data;
     }
@@ -220,77 +224,77 @@ public class EncodedValue {
             return true;
         }
         switch (valueType) {
-            case VALUE_CHAR:
-                Character c = (Character) this.value;
-                return c.charValue() == 0;
-            case VALUE_BYTE:
-            case VALUE_INT:
-            case VALUE_SHORT:
-                return ((Number) this.value).intValue() == 0;
-            case VALUE_LONG:
-                return ((Number) this.value).longValue() == 0;
-            case VALUE_FLOAT:
-                return ((Number) this.value).floatValue() == 0.0f;
-            case VALUE_DOUBLE:
-                return ((Number) this.value).doubleValue() == 0.0;
-            case VALUE_BOOLEAN:
-                Boolean z = (Boolean) this.value;
-                return Boolean.FALSE.equals(z);
+        case VALUE_CHAR:
+            Character c = (Character) this.value;
+            return c.charValue() == 0;
+        case VALUE_BYTE:
+        case VALUE_INT:
+        case VALUE_SHORT:
+            return ((Number) this.value).intValue() == 0;
+        case VALUE_LONG:
+            return ((Number) this.value).longValue() == 0;
+        case VALUE_FLOAT:
+            return ((Number) this.value).floatValue() == 0.0f;
+        case VALUE_DOUBLE:
+            return ((Number) this.value).doubleValue() == 0.0;
+        case VALUE_BOOLEAN:
+            Boolean z = (Boolean) this.value;
+            return Boolean.FALSE.equals(z);
         }
         return false;
     }
 
     protected int doPlace(int offset) {
         switch (valueType) {
-            case VALUE_NULL:
-            case VALUE_BOOLEAN:
-                return offset;
-            case VALUE_ARRAY: {
-                EncodedArray ea = (EncodedArray) value;
-                return ea.place(offset);
-            }
-            case VALUE_ANNOTATION: {
-                EncodedAnnotation ea = (EncodedAnnotation) value;
-                return ea.place(offset);
-            }
-            case VALUE_STRING:
-            case VALUE_TYPE:
-            case VALUE_FIELD:
-            case VALUE_METHOD:
-            case VALUE_ENUM:
-            default:
-                return offset + getValueArg() + 1;
+        case VALUE_NULL:
+        case VALUE_BOOLEAN:
+            return offset;
+        case VALUE_ARRAY: {
+            EncodedArray ea = (EncodedArray) value;
+            return ea.place(offset);
+        }
+        case VALUE_ANNOTATION: {
+            EncodedAnnotation ea = (EncodedAnnotation) value;
+            return ea.place(offset);
+        }
+        case VALUE_STRING:
+        case VALUE_TYPE:
+        case VALUE_FIELD:
+        case VALUE_METHOD:
+        case VALUE_ENUM:
+        default:
+            return offset + getValueArg() + 1;
         }
     }
 
     protected int getValueArg() {
         switch (valueType) {
-            case VALUE_NULL:
-            case VALUE_ANNOTATION:
-            case VALUE_ARRAY:
-                return 0;
-            case VALUE_BOOLEAN:
-                return Boolean.TRUE.equals(value) ? 1 : 0;
-            case VALUE_BYTE:
-                return 0;
-            case VALUE_SHORT:
-            case VALUE_INT:
-                return lengthOfSint(((Number) value).intValue()) - 1;
-            case VALUE_CHAR:
-                return lengthOfUint(((Character) value).charValue()) - 1;
-            case VALUE_LONG:
-                return lengthOfSint(((Number) value).longValue()) - 1;
-            case VALUE_DOUBLE:
-                return lengthOfDouble(((Number) value).doubleValue()) - 1;
-            case VALUE_FLOAT:
-                return lengthOfFloat(((Number) value).floatValue()) - 1;
-            case VALUE_STRING:
-            case VALUE_TYPE:
-            case VALUE_FIELD:
-            case VALUE_METHOD:
-            case VALUE_ENUM:
-                BaseItem bi = (BaseItem) value;
-                return lengthOfUint(bi.index) - 1;
+        case VALUE_NULL:
+        case VALUE_ANNOTATION:
+        case VALUE_ARRAY:
+            return 0;
+        case VALUE_BOOLEAN:
+            return Boolean.TRUE.equals(value) ? 1 : 0;
+        case VALUE_BYTE:
+            return 0;
+        case VALUE_SHORT:
+        case VALUE_INT:
+            return lengthOfSint(((Number) value).intValue()) - 1;
+        case VALUE_CHAR:
+            return lengthOfUint(((Character) value).charValue()) - 1;
+        case VALUE_LONG:
+            return lengthOfSint(((Number) value).longValue()) - 1;
+        case VALUE_DOUBLE:
+            return lengthOfDouble(((Number) value).doubleValue()) - 1;
+        case VALUE_FLOAT:
+            return lengthOfFloat(((Number) value).floatValue()) - 1;
+        case VALUE_STRING:
+        case VALUE_TYPE:
+        case VALUE_FIELD:
+        case VALUE_METHOD:
+        case VALUE_ENUM:
+            BaseItem bi = (BaseItem) value;
+            return lengthOfUint(bi.index) - 1;
         }
         return 0;
     }
@@ -304,51 +308,53 @@ public class EncodedValue {
         int valueArg = getValueArg();
         out.ubyte("(value_arg << 5 | value_type", valueArg << 5 | valueType);
         switch (valueType) {
-            case VALUE_NULL:
-            case VALUE_BOOLEAN:
-                // nop
-                break;
-            case VALUE_SHORT:
-                out.bytes("value_short", encodeSint(valueArg + 1, (Short) value));
-                break;
-            case VALUE_CHAR:
-                out.bytes("value_char", encodeSint(valueArg + 1, (Character) value));
-                break;
-            case VALUE_INT:
-                out.bytes("value_int", encodeSint(valueArg + 1, (Integer) value));
-                break;
-            case VALUE_LONG:
-                out.bytes("value_long", encodeLong(valueArg + 1, (Long) value));
-                break;
-            case VALUE_DOUBLE:
-                out.bytes("value_double", writeRightZeroExtendedValue(valueArg+1,Double.doubleToLongBits( ((Number) value).doubleValue())));
-                break;
-            case VALUE_FLOAT:
-                out.bytes("value_float", writeRightZeroExtendedValue(valueArg+1,((long)Float.floatToIntBits((((Number) value).floatValue())))<<32));
-                break;
-            case VALUE_STRING:
-            case VALUE_TYPE:
-            case VALUE_FIELD:
-            case VALUE_METHOD:
-            case VALUE_ENUM:
-                out.bytes("value_xidx", encodeLong(valueArg + 1, ((BaseItem) value).index));
-                break;
-            case VALUE_ARRAY: {
-                EncodedArray ea = (EncodedArray) value;
-                ea.write(out);
-            }
+        case VALUE_NULL:
+        case VALUE_BOOLEAN:
+            // nop
             break;
-            case VALUE_ANNOTATION: {
-                EncodedAnnotation ea = (EncodedAnnotation) value;
-                ea.write(out);
-            }
+        case VALUE_SHORT:
+            out.bytes("value_short", encodeSint(valueArg + 1, (Short) value));
             break;
-            case VALUE_BYTE: {
-                out.ubyte("value_byte", (Byte) value);
-                break;
-            }
-            default:
-                throw new RuntimeException();
+        case VALUE_CHAR:
+            out.bytes("value_char", encodeSint(valueArg + 1, (Character) value));
+            break;
+        case VALUE_INT:
+            out.bytes("value_int", encodeSint(valueArg + 1, (Integer) value));
+            break;
+        case VALUE_LONG:
+            out.bytes("value_long", encodeLong(valueArg + 1, (Long) value));
+            break;
+        case VALUE_DOUBLE:
+            out.bytes("value_double", writeRightZeroExtendedValue(valueArg + 1,
+                    Double.doubleToLongBits(((Number) value).doubleValue())));
+            break;
+        case VALUE_FLOAT:
+            out.bytes("value_float", writeRightZeroExtendedValue(valueArg + 1,
+                    ((long) Float.floatToIntBits((((Number) value).floatValue()))) << 32));
+            break;
+        case VALUE_STRING:
+        case VALUE_TYPE:
+        case VALUE_FIELD:
+        case VALUE_METHOD:
+        case VALUE_ENUM:
+            out.bytes("value_xidx", encodeLong(valueArg + 1, ((BaseItem) value).index));
+            break;
+        case VALUE_ARRAY: {
+            EncodedArray ea = (EncodedArray) value;
+            ea.write(out);
+        }
+        break;
+        case VALUE_ANNOTATION: {
+            EncodedAnnotation ea = (EncodedAnnotation) value;
+            ea.write(out);
+        }
+        break;
+        case VALUE_BYTE: {
+            out.ubyte("value_byte", (Byte) value);
+            break;
+        }
+        default:
+            throw new RuntimeException();
 
         }
     }

@@ -16,18 +16,35 @@
  */
 package com.googlecode.d2j.smali;
 
-import java.io.BufferedWriter;
-import java.util.*;
-
-import com.googlecode.d2j.*;
-import com.googlecode.d2j.node.*;
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.DexType;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
+import com.googlecode.d2j.node.DexAnnotationNode;
 import com.googlecode.d2j.node.DexAnnotationNode.Item;
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexCodeNode;
+import com.googlecode.d2j.node.DexDebugNode;
+import com.googlecode.d2j.node.DexFieldNode;
+import com.googlecode.d2j.node.DexMethodNode;
+import com.googlecode.d2j.node.TryCatchNode;
 import com.googlecode.d2j.node.insn.DexLabelStmtNode;
 import com.googlecode.d2j.node.insn.DexStmtNode;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.util.Out;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
+import java.io.BufferedWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class BaksmaliDumper implements DexConstants {
     private static final int ACCESS_FIELD = 1 << 31;
@@ -122,9 +139,11 @@ public class BaksmaliDumper implements DexConstants {
     static String escapeMethod(Method method) {
         return BaksmaliDumper.escapeType(method.getOwner()) + "->" + BaksmaliDumper.escapeId(method.getName()) + BaksmaliDumper.escapeMethodDesc(method);
     }
+
     static String escapeMethodDesc(Method m) {
         return escapeMethodDesc(m.getProto());
     }
+
     static String escapeMethodDesc(Proto m) {
         StringBuilder escapeBuff = new StringBuilder();
         escapeBuff.append("(");
@@ -217,10 +236,10 @@ public class BaksmaliDumper implements DexConstants {
         if (obj instanceof DexType) {
             return escapeType(((DexType) obj).desc);
         }
-        if(obj instanceof Proto) {
+        if (obj instanceof Proto) {
             return escapeMethodDesc((Proto) obj);
         }
-        if(obj instanceof MethodHandle) {
+        if (obj instanceof MethodHandle) {
             return escapeMethodHandle((MethodHandle) obj);
         }
         if (obj instanceof Field) {

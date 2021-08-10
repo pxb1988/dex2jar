@@ -8,8 +8,8 @@ import java.util.Set;
 public class ClassInfo {
 
     final public String name;
-    public List<MemberInfo> members = new ArrayList<MemberInfo>(5);
-    public Set<String> parent = new HashSet<String>();
+    public List<MemberInfo> members = new ArrayList<>(5);
+    public Set<String> parent = new HashSet<>();
 
     public ClassInfo(String name) {
         this.name = name;

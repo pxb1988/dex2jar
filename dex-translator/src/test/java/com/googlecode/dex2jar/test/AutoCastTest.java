@@ -10,35 +10,38 @@ import com.googlecode.d2j.visitors.DexMethodVisitor;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static com.googlecode.d2j.reader.Op.*;
+import static com.googlecode.d2j.reader.Op.ADD_INT;
+import static com.googlecode.d2j.reader.Op.CONST;
+import static com.googlecode.d2j.reader.Op.INVOKE_SUPER;
+import static com.googlecode.d2j.reader.Op.RETURN_VOID;
+import static com.googlecode.d2j.reader.Op.SGET_BOOLEAN;
+import static com.googlecode.d2j.reader.Op.SPUT_SHORT;
 
 public class AutoCastTest implements DexConstants {
 
     /**
      * generate code, it works fine on JVM, but fails on Dalvik VM
-     * 
+     *
      * <pre>
      * class a {
      *     private static short theField;
-     * 
+     *
      *     public a() {
      *         theField = 0xffFFffFF + theField;// the 0xffFFffFF is not casted
      *     }
      * }
      * </pre>
-     * 
-     * @param cv
      */
     public static void strict(DexClassVisitor cv) {
         Field f = new Field("La;", "theField", "S");
-        DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC, new Method("La;", "<init>", new String[] {}, "V"));
+        DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC, new Method("La;", "<init>", new String[]{}, "V"));
         if (mv != null) {
             DexCodeVisitor code = mv.visitCode();
             if (code != null) {
                 code.visitRegister(3);
 
-                code.visitMethodStmt(INVOKE_SUPER, new int[] { 2 }, new Method("Ljava/lang/Object;", "<init>",
-                        new String[] {}, "V"));
+                code.visitMethodStmt(INVOKE_SUPER, new int[]{2}, new Method("Ljava/lang/Object;", "<init>",
+                        new String[]{}, "V"));
                 code.visitFieldStmt(SGET_BOOLEAN, 0, -1, f);
                 code.visitConstStmt(CONST, 1, 0xffFFffFF);
                 code.visitStmt3R(ADD_INT, 0, 0, 1);
