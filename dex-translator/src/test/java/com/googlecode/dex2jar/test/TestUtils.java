@@ -305,7 +305,7 @@ public abstract class TestUtils {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    throw new DexException(ex, "fail convert code %s", methodNode.method);
+                    throw new DexException(ex, "Failed to convert code for %s", methodNode.method);
                 }
             }
         };
