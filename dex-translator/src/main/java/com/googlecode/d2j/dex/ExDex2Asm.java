@@ -39,7 +39,8 @@ public class ExDex2Asm extends Dex2Asm {
             super.convertCode(methodNode, mn);
         } catch (Exception ex) {
             if (exceptionHandler == null) {
-                throw new DexException(ex, "Failed to convert code for %s", methodNode.method);
+                new DexException(ex, "Failed to convert code for %s", methodNode.method)
+                        .printStackTrace();
             } else {
                 mn.instructions.clear();
                 mn.tryCatchBlocks.clear();
@@ -55,7 +56,8 @@ public class ExDex2Asm extends Dex2Asm {
                 mn.instructions.clear();
                 mn.tryCatchBlocks.clear();
                 if (exceptionHandler == null) {
-                    throw new DexException(ex, "Failed to convert code for %s", methodNode.method);
+                    new DexException(ex, "Failed to convert code for %s", methodNode.method)
+                            .printStackTrace();
                 } else {
                     exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, ex);
                 }
