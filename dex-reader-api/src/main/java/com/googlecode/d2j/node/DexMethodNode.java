@@ -103,6 +103,10 @@ public class DexMethodNode extends DexMethodVisitor {
             parameterAnns = new List[method.getParameterTypes().length];
         }
 
+        if (index >= parameterAnns.length) {
+            return null;
+        }
+
         return (name, visibility) -> {
             List<DexAnnotationNode> pas = parameterAnns[index];
             if (pas == null) {

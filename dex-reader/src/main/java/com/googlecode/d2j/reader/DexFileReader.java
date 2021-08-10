@@ -1123,7 +1123,7 @@ public class DexFileReader implements BaseDexFileReader {
                     read_annotation_set_item(param_annotation_offset, dpav);
                 }
             } catch (Exception e) {
-                throw new DexException(e, "while accept parameter annotation in parameter:[%d]", j);
+                throw new DexException(e, "While accepting parameter annotation in parameter: [%d]", j);
             }
         }
     }

@@ -54,7 +54,11 @@ public class ExDex2Asm extends Dex2Asm {
             } catch (Exception ex) {
                 mn.instructions.clear();
                 mn.tryCatchBlocks.clear();
-                exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, ex);
+                if (exceptionHandler == null) {
+                    throw new DexException(ex, "Failed to convert code for %s", methodNode.method);
+                } else {
+                    exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, ex);
+                }
                 AsmBridge.replaceMethodWriter(mw, mn);
             }
         }

@@ -142,7 +142,6 @@ public class DexAnnotationNode extends DexAnnotationVisitor {
     @Override
     public DexAnnotationVisitor visitArray(final String name) {
         return new AV() {
-
             @Override
             public void visitEnd() {
                 items.add(new Item(name, objs.toArray()));
