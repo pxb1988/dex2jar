@@ -8,6 +8,7 @@ on:
       - v*
   pull_request:
     branches: [ 2.x ]
+  workflow_dispatch:
 
 jobs:
   build:
