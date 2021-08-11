@@ -31,6 +31,8 @@ public class Jar2Dex extends BaseCmd {
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
+    @Opt(opt = "s", longOpt = "sdk", description = "set minSdkVersion")
+    private int minSdkVersion = 13;
     @Opt(opt = "o", longOpt = "output", description = "output .dex file, default is $current_dir/[jar-name]-jar2dex"
             + ".dex", argName = "out-dex-file")
     private Path output;
@@ -44,7 +46,7 @@ public class Jar2Dex extends BaseCmd {
 
         Path jar = new File(remainingArgs[0]).toPath();
         if (!Files.exists(jar)) {
-            System.err.println(jar + " is not exists");
+            System.err.println(jar + " doesn't exist");
             usage();
             return;
         }
@@ -89,6 +91,7 @@ public class Jar2Dex extends BaseCmd {
 
             String[] ps = new String[]{"--dex", "--no-strict",
                     "--output=" + output.toAbsolutePath(),
+                    "--min-sdk-version=" + minSdkVersion,
                     realJar.toAbsolutePath().toString()};
             System.out.println("call com.android.dx.command.Main.main" + Arrays.toString(ps));
             m.invoke(null, (Object) ps);
