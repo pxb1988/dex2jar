@@ -1,5 +1,5 @@
 dex2jar - Tools to work with android .dex and java .class files
-Copyright (c) 2009-2014 Panxiaobo
+Copyright (c) 2009-2021 Panxiaobo
 
 contributors
   - Bob Pan <pxb1988#gmail.com>
