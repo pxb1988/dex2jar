@@ -1141,6 +1141,7 @@ public class DexFileReader implements BaseDexFileReader {
         public BadOpException(String fmt, Object... args) {
             super(String.format(fmt, args));
         }
+
     }
 
     private void findLabels(byte[] insns, BitSet nextBit, BitSet badOps, Map<Integer, DexLabel> labelsMap,

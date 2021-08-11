@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import org.objectweb.asm.tree.MethodNode;
 
 public class AsmBridge {
+
     public static MethodVisitor searchMethodWriter(MethodVisitor methodVisitor) {
         while (methodVisitor != null && !(methodVisitor instanceof MethodWriter)) {
             methodVisitor = methodVisitor.mv;
@@ -98,4 +99,5 @@ public class AsmBridge {
             exc.printStackTrace();
         }
     }
+
 }
