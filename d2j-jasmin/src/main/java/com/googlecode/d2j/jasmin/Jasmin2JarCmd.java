@@ -17,6 +17,7 @@
 package com.googlecode.d2j.jasmin;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
+import com.googlecode.dex2jar.tools.Constants;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -41,8 +42,6 @@ import org.objectweb.asm.tree.ClassNode;
 @BaseCmd.Syntax(cmd = "d2j-jasmin2jar", syntax = "[options] <jar>", desc = "Assemble .j files to .class file",
         onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Jasmin")
 public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
-    private static final int[] versions = {0, V1_1, V1_2, V1_3, V1_4, V1_5, V1_6, V1_7, V1_8, V9, V10, V11, V12, V13,
-            V14, V15, V16, V17, V18};
     @Opt(opt = "g", longOpt = "autogenerate-linenumbers", hasArg = false, description = "autogenerate-linenumbers")
     boolean autogenLines = false;
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
@@ -142,7 +141,7 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
             ClassWriter cw = new ClassWriter(noComputeMax ? 0 : ClassWriter.COMPUTE_MAXS);
             ClassNode cn = parser.parse();
             if (cn.version == 0) {
-                cn.version = versions[classVersion];
+                cn.version = Constants.JAVA_VERSIONS[classVersion];
             }
             if (dump) {
                 new JasminDumper(new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8), true)).dump(cn);
