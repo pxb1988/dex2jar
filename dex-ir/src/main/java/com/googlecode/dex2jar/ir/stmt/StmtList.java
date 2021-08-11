@@ -182,8 +182,6 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         return new StmtListIterator(this, first);
     }
 
-    ;
-
     public void remove(Stmt stmt) {
         if (stmt.list == this) {
             size--;

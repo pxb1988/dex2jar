@@ -26,7 +26,7 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
             throw new HelpException("<core.xxxx> is required.");
         }
         Path core = new File(remainingArgs[0]).toPath();
-        try (SeekableByteChannel channel = FileChannel.open(core, StandardOpenOption.READ);) {
+        try (SeekableByteChannel channel = FileChannel.open(core, StandardOpenOption.READ)) {
             List<Long> possibleOdexs = findPossibleOdexLocation(channel);
             extractDex(channel, possibleOdexs, core.getFileName().toString());
         }

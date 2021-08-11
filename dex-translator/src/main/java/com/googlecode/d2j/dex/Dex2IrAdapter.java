@@ -601,7 +601,6 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
             int i = 0;
             List<Local> ps = new ArrayList<>(args.length);
             if (op == Op.INVOKE_STATIC || op == Op.INVOKE_STATIC_RANGE) {
-                ;
             } else {
                 ps.add(locals[args[i]]);
                 i++;

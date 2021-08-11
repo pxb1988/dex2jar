@@ -41,4 +41,4 @@ public enum InstructionFormat {
     InstructionFormat(int size) {
         this.size = size;
     }
-};
+}

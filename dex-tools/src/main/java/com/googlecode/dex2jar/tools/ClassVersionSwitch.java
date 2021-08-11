@@ -41,7 +41,7 @@ public class ClassVersionSwitch {
         File n = new File(args[2]);
         byte[] buff = new byte[1024 * 50];
         final int jVersion = jVersions[version];
-        try (ZipFile zip = new ZipFile(old); ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(n));) {
+        try (ZipFile zip = new ZipFile(old); ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(n))) {
 
             for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements(); ) {
                 ZipEntry zipEntry = e.nextElement();

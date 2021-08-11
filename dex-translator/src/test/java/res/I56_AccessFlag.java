@@ -33,31 +33,20 @@ public class I56_AccessFlag {
     public static class B1 {
     }
 
-    ;
-
     public static class B11 {
         public static class XXX1 {
         }
 
-        ;
     }
-
-    ;
 
     private static class B2 {
     }
 
-    ;
-
     protected static class B3 {
     }
 
-    ;
-
     /* package */static class B0 {
     }
-
-    ;
 
     final static class B4 {
     }
