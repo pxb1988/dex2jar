@@ -6,6 +6,9 @@ import java.util.LinkedList;
 import java.util.Set;
 
 public class UniqueQueue<T> extends LinkedList<T> {
+
+    private static final long serialVersionUID = 7578371020752763662L;
+
     Set<T> set = new HashSet<>();
 
     public UniqueQueue() {

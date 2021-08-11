@@ -18,7 +18,7 @@ package com.googlecode.d2j.dex.writer;
 
 public class DexWriteException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 8501861997187282533L;
 
     public DexWriteException() {
         super();
