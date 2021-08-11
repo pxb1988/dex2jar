@@ -13,7 +13,8 @@ This is [Nico Mexis'](https://github.com/ThexXTURBOXx) fork of the dex2jar proje
 * Fixed many `NullPointerException`s and other crashes
 * Fixed grammar of error messages
 * Update libraries (especially ASM to `9.2`)
-* Library fat-jar can be used for other projects (Automatically produced by [GitHub Actions](https://github.com/ThexXTURBOXx/dex2jar/actions))
+* Library fat-jar can be used for other projects (Automatically produced
+  by [GitHub Actions](https://github.com/ThexXTURBOXx/dex2jar/actions))
 * Smali now outputs `.param` instead of the outdated `.parameter` syntax
 * Reformatted and cleaned up most of the code
 
@@ -28,7 +29,8 @@ Tools to work with android .dex and java .class files
 
 1. dex-reader/writer:
    Read/write the Dalvik Executable (.dex) file. It features
-   a [lightweight API similar with ASM](https://sourceforge.net/p/dex2jar/wiki/Faq/#want-to-read-dex-file-using-dex2jar).
+   a [lightweight API similar with ASM](https://sourceforge.net/p/dex2jar/wiki/Faq/#want-to-read-dex-file-using-dex2jar)
+   .
 2. d2j-dex2jar:
    Convert .dex file to .class files (zipped as jar)
 3. smali/baksmali:

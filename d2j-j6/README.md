@@ -69,5 +69,3 @@ this the following VM have been tested (only the cmd d2j-dex2jar)
 
 * Oracle jdk 1.6.0_45, on 64bit linux
 * Dalvik VM on android 4.4.2 armv7a with '-Xmx512m' to increase memory
-
-
