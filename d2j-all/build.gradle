@@ -44,6 +44,7 @@ dependencies {
     implementation(project(":dex-writer")) {
         transitive = false
     }
+    implementation fileTree(dir: '../libs', include: '*.jar')
 }
 
 tasks.packageSources.enabled = false // Don't build sources jar

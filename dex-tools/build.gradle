@@ -12,6 +12,7 @@ dependencies {
     implementation project(':dex-reader-api')
     implementation project(':dex-reader')
     implementation project(':d2j-base-cmd')
+    implementation fileTree(dir: '../libs', include: '*.jar')
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.2'
     implementation group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
     implementation group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
