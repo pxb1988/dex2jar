@@ -106,6 +106,8 @@ public abstract class BaseCmd {
     @SuppressWarnings("serial")
     protected static class HelpException extends RuntimeException {
 
+        private static final long serialVersionUID = 5538069795297477488L;
+
         public HelpException() {
             super();
         }

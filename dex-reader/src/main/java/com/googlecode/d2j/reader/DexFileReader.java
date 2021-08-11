@@ -1109,9 +1109,12 @@ public class DexFileReader implements BaseDexFileReader {
         return class_defs_size;
     }
 
-    static class BadOpException extends RuntimeException{
-        public BadOpException(String fmt,Object ...args){
-            super(String.format(fmt,args));
+    static class BadOpException extends RuntimeException {
+
+        private static final long serialVersionUID = 5354839427958139635L;
+
+        public BadOpException(String fmt, Object... args) {
+            super(String.format(fmt, args));
         }
     }
 

@@ -33,6 +33,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
  */
 public class NpeTransformer extends StatedTransformer {
     private static class MustThrowException extends RuntimeException {
+        private static final long serialVersionUID = 7501197864919305696L;
     }
 
     private static final MustThrowException NPE = new MustThrowException();

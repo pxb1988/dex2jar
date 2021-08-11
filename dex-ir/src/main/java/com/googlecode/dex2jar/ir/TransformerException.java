@@ -5,7 +5,7 @@ public class TransformerException extends RuntimeException {
     /**
      * 
      */
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -5074963043184589213L;
 
     public TransformerException() {
         super();

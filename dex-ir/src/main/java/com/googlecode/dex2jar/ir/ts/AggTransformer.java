@@ -150,7 +150,7 @@ public class AggTransformer extends StatedTransformer {
     }
 
     static class MergeResult extends Throwable {
-
+        private static final long serialVersionUID = -1563502983848655360L;
     }
 
     static class ReplaceX implements Cfg.TravelCallBack {
