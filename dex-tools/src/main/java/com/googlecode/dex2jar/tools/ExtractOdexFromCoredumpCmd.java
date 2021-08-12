@@ -16,6 +16,7 @@ import java.util.List;
 @BaseCmd.Syntax(cmd = "extract-odex-from-coredump", syntax = "<core.xxxx>", desc = "Extract odex from dalvik memory "
         + "core dump")
 public class ExtractOdexFromCoredumpCmd extends BaseCmd {
+
     public static void main(String... args) {
         new ExtractOdexFromCoredumpCmd().doMain(args);
     }
@@ -32,7 +33,8 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
         }
     }
 
-    private static void extractDex(SeekableByteChannel channel, List<Long> possibleOdexs, String namePrefix) throws IOException {
+    private static void extractDex(SeekableByteChannel channel, List<Long> possibleOdexs,
+                                   String namePrefix) throws IOException {
         int dexIndex = 0;
         ByteBuffer odexHead = ByteBuffer.allocate(0x28).order(ByteOrder.LITTLE_ENDIAN);
         ByteBuffer copyBuff = ByteBuffer.allocate(512 * 1024).order(ByteOrder.LITTLE_ENDIAN);
@@ -61,8 +63,8 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
                         int dexMagic = head.getInt(dexOffset);
                         int dexVersion = head.getInt(dexOffset + 4);
                         if (dexMagic != 0x0a786564 || !(dexVersion == 0x00363330 || dexVersion == 0x00353330)) {
-                            System.err.printf(">>> dex magic is not dex.036 or dex.035: 0x%08x 0x%08x%n"
-                                    , dexMagic, dexVersion);
+                            System.err.printf(">>> dex magic is not dex.036 or dex.035: 0x%08x 0x%08x%n",
+                                    dexMagic, dexVersion);
                         } else {
                             int fileSize = head.getInt(dexOffset + 32);
                             if (fileSize != dexLength) {
@@ -81,8 +83,8 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
                                             StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
 
                                         odexHead.rewind();
-                                        odexHead.putInt(0x0a796564);// dey
-                                        odexHead.putInt(0x00363330);// 036
+                                        odexHead.putInt(0x0a796564); // dey
+                                        odexHead.putInt(0x00363330); // 036
                                         odexHead.putInt(0x28);
                                         odexHead.putInt(fileSize);
                                         int nDepsOffset = 0x28 + fileSize;
@@ -163,7 +165,7 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
             int s = count / 4;
             for (int i = 0; i < s; i++) {
                 int u4 = intBuffer.get(i);
-                if (u4 == 0x0a796564) {// dey
+                if (u4 == 0x0a796564) { // dey
                     if (i + 1 < s) {
                         int v4 = intBuffer.get(i + 1);
                         if (v4 == 0x00363330 || v4 == 0x00353330) {
@@ -181,4 +183,5 @@ public class ExtractOdexFromCoredumpCmd extends BaseCmd {
         }
         return possibleOdexs;
     }
+
 }

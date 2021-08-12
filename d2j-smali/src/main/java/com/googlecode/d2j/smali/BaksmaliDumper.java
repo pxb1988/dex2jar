@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2014 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.smali;
 
 import com.googlecode.d2j.DexConstants;
@@ -47,17 +31,21 @@ import java.util.Map;
 import java.util.Set;
 
 public class BaksmaliDumper implements DexConstants {
+
     private static final int ACCESS_FIELD = 1 << 31;
-    private final static String[] accessWords = new String[]{"public", "private", "protected", "static", "final",
+
+    private static final String[] ACCESS_WORDS = new String[]{"public", "private", "protected", "static", "final",
             "synchronized", "bridge", "varargs", "native", "abstract", "strictfp", "synthetic", "constructor",
             "interface", "enum", "annotation", "volatile", "transient"};
 
     static {
-        Arrays.sort(accessWords);
+        Arrays.sort(ACCESS_WORDS);
     }
 
     private final StringBuilder buff = new StringBuilder();
+
     private boolean useParameterRegisters = true;
+
     private boolean useLocals = false;
 
     public BaksmaliDumper() {
@@ -69,7 +57,7 @@ public class BaksmaliDumper implements DexConstants {
     }
 
     private static boolean isAccessWords(String name) {
-        return Arrays.binarySearch(accessWords, name) >= 0;
+        return Arrays.binarySearch(ACCESS_WORDS, name) >= 0;
     }
 
     static void escape0(final StringBuilder buf, char c) {
@@ -137,7 +125,9 @@ public class BaksmaliDumper implements DexConstants {
     }
 
     static String escapeMethod(Method method) {
-        return BaksmaliDumper.escapeType(method.getOwner()) + "->" + BaksmaliDumper.escapeId(method.getName()) + BaksmaliDumper.escapeMethodDesc(method);
+        return BaksmaliDumper.escapeType(method.getOwner())
+                + "->" + BaksmaliDumper.escapeId(method.getName())
+                + BaksmaliDumper.escapeMethodDesc(method);
     }
 
     static String escapeMethodDesc(Method m) {
@@ -517,8 +507,9 @@ public class BaksmaliDumper implements DexConstants {
     }
 
     private static boolean isWideType(String type) {
-        if (type == null || type.isEmpty())
+        if (type == null || type.isEmpty()) {
             return false;
+        }
         char c = type.charAt(0);
         return c == 'J' || c == 'D';
     }
@@ -534,7 +525,7 @@ public class BaksmaliDumper implements DexConstants {
             }
 
             @Override
-            public void visitPackedSwitchStmt(Op op, int aA, int first_case, DexLabel[] labels) {
+            public void visitPackedSwitchStmt(Op op, int aA, int firstCase, DexLabel[] labels) {
                 usedLabel.addAll(Arrays.asList(labels));
             }
 
@@ -606,4 +597,5 @@ public class BaksmaliDumper implements DexConstants {
 
         }
     }
+
 }

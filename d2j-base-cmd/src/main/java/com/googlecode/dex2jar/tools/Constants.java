@@ -2,7 +2,11 @@ package com.googlecode.dex2jar.tools;
 
 import org.objectweb.asm.Opcodes;
 
-public class Constants {
+public final class Constants {
+
+    private Constants() {
+        throw new UnsupportedOperationException();
+    }
 
     public static final int[] JAVA_VERSIONS = new int[]{
             0,

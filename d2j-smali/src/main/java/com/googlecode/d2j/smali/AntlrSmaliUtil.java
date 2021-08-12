@@ -38,7 +38,12 @@ import static com.googlecode.d2j.smali.Utils.unEscapeId;
 import static com.googlecode.d2j.smali.Utils.unescapeChar;
 import static com.googlecode.d2j.smali.Utils.unescapeStr;
 
-public class AntlrSmaliUtil {
+public final class AntlrSmaliUtil {
+
+    private AntlrSmaliUtil() {
+        throw new UnsupportedOperationException();
+    }
+
     public static void acceptFile(SmaliParser.SFileContext ctx, DexFileVisitor dexFileVisitor) {
         DexClassVisitor dexClassVisitor;
         String className = Utils.unEscapeId(ctx.className.getText());
@@ -87,7 +92,7 @@ public class AntlrSmaliUtil {
         Token methodObj = ctx.methodObj;
         if (methodObj.getType() == SmaliLexer.METHOD_FULL) {
             method = Utils.parseMethodAndUnescape(methodObj.getText());
-        } else {// PART
+        } else { // PART
             method = Utils.parseMethodAndUnescape(className, methodObj.getText());
         }
         int access = collectAccess(ctx.sAccList());
@@ -108,9 +113,13 @@ public class AntlrSmaliUtil {
     }
 
     private static class M {
+
         int locals;
+
         String[] paramNames;
+
         int[] map;
+
         public int total;
 
         void setNameByIdx(int index, String name) {
@@ -156,6 +165,7 @@ public class AntlrSmaliUtil {
                 }
             }
         }
+
     }
 
     private static void acceptCode(SmaliParser.SMethodContext ctx, final M m, DexMethodVisitor dexMethodVisitor) {
@@ -328,8 +338,9 @@ public class AntlrSmaliUtil {
                     scv.visitTypeStmt(op, r, 0, unEscapeId(cst.getText()));
                     break;
                 case CONST_WIDE:
-                    scv.visitConstStmt(op, r, cst.getType() == SmaliLexer.INT ? ((long) parseInt(cst.getText())) :
-                            parseLong(cst.getText()));
+                    scv.visitConstStmt(op, r, cst.getType() == SmaliLexer.INT
+                            ? ((long) parseInt(cst.getText()))
+                            : parseLong(cst.getText()));
                     break;
                 case CONST_WIDE_16: {
                     long v;
@@ -700,12 +711,11 @@ public class AntlrSmaliUtil {
             return parseMethodAndUnescape(value.getText());
         case SmaliLexer.OBJECT_TYPE:
             return new DexType(unEscapeId(value.getText()));
-        case SmaliLexer.NULL:
-            return null;
         case SmaliLexer.FIELD_FULL:
             return parseFieldAndUnescape(value.getText());
+        default:
+            return null;
         }
-        return null;
     }
 
     private static void acceptAnnotations(List<SmaliParser.SAnnotationContext> sAnnotationContexts,
@@ -770,15 +780,18 @@ public class AntlrSmaliUtil {
             Object value = parseBaseValue(baseValueContext);
             dexAnnotationVisitor.visit(name, value);
             break;
+        default:
+            break;
         }
     }
 
 
-    static private int collectAccess(SmaliParser.SAccListContext ctx) {
+    private static int collectAccess(SmaliParser.SAccListContext ctx) {
         int access = 0;
         for (TerminalNode acc : ctx.ACC()) {
             access |= Utils.getAcc(acc.getSymbol().getText());
         }
         return access;
     }
+
 }

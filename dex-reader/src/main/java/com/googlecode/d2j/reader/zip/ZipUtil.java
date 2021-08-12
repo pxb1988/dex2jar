@@ -29,7 +29,12 @@ import java.nio.file.Path;
 /**
  * @author bob
  */
-public class ZipUtil {
+public final class ZipUtil {
+
+    private ZipUtil() {
+        throw new UnsupportedOperationException();
+    }
+
     public static byte[] toByteArray(InputStream is) throws IOException {
         AccessBufByteArrayOutputStream out = new AccessBufByteArrayOutputStream();
         byte[] buff = new byte[1024];
@@ -65,9 +70,9 @@ public class ZipUtil {
         if (data.length < 3) {
             throw new IOException("File too small to be a dex/zip");
         }
-        if ("dex".equals(new String(data, 0, 3, StandardCharsets.ISO_8859_1))) {// dex
+        if ("dex".equals(new String(data, 0, 3, StandardCharsets.ISO_8859_1))) { // dex
             return data;
-        } else if ("PK".equals(new String(data, 0, 2, StandardCharsets.ISO_8859_1))) {// ZIP
+        } else if ("PK".equals(new String(data, 0, 2, StandardCharsets.ISO_8859_1))) { // ZIP
             try (ZipFile zipFile = new ZipFile(data)) {
                 ZipEntry classes = zipFile.findFirstEntry("classes.dex");
                 if (classes != null) {
@@ -77,6 +82,7 @@ public class ZipUtil {
                 }
             }
         }
-        throw new IOException("the src file not a .dex or zip file");
+        throw new IOException("The src file not a .dex or zip file");
     }
+
 }

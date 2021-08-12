@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex;
 
 import com.googlecode.d2j.DexConstants;
@@ -105,11 +90,17 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
 public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstants {
 
     protected IrMethod irMethod;
+
     private Method method;
+
     private boolean isStatic;
+
     private StmtList list;
+
     private Local[] locals;
+
     Map<DexLabel, LabelStmt> labelStmtMap = new HashMap<>();
+
     /**
      * 函数调用的返回值保存的寄存器
      */
@@ -171,7 +162,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
         }
         int nextReg = total - countParameterRegisters(method, isStatic);
         int nextReg0 = nextReg;
-        if (!isStatic) {// is not static
+        if (!isStatic) { // is not static
             x(Stmts.nIdentity(locals[nextReg], Exprs.nThisRef(method.getOwner())));
             nextReg++;
         }
@@ -600,8 +591,7 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
         if (args.length > 0) {
             int i = 0;
             List<Local> ps = new ArrayList<>(args.length);
-            if (op == Op.INVOKE_STATIC || op == Op.INVOKE_STATIC_RANGE) {
-            } else {
+            if (op != Op.INVOKE_STATIC && op != Op.INVOKE_STATIC_RANGE) {
                 ps.add(locals[args[i]]);
                 i++;
             }
@@ -894,13 +884,13 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
     }
 
     @Override
-    public void visitPackedSwitchStmt(Op op, int aA, int first_case, DexLabel[] labels) {
+    public void visitPackedSwitchStmt(Op op, int aA, int firstCase, DexLabel[] labels) {
         LabelStmt[] lss = new LabelStmt[labels.length];
         for (int i = 0; i < labels.length; i++) {
             lss[i] = toLabelStmt(labels[i]);
         }
         LabelStmt d = new LabelStmt();
-        x(nTableSwitch(locals[aA], first_case, lss, d));
+        x(nTableSwitch(locals[aA], firstCase, lss, d));
         x(d);
     }
 
@@ -946,4 +936,5 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
         visitEnd();
         return irMethod;
     }
+
 }

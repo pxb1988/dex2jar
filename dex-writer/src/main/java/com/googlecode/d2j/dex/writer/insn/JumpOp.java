@@ -5,8 +5,11 @@ import com.googlecode.d2j.reader.Op;
 import java.nio.ByteBuffer;
 
 public class JumpOp extends OpInsn {
+
     final int a;
+
     final int b;
+
     final Label label;
 
     public JumpOp(Op op, int a, int b, Label label) {
@@ -61,9 +64,8 @@ public class JumpOp extends OpInsn {
 
     public boolean fit() {
         int offset = label.offset - this.offset;
-        if ((op == Op.GOTO && (offset > Byte.MAX_VALUE || offset < Byte.MIN_VALUE)) ||
-                (op == Op.GOTO_16 && (offset > Short.MAX_VALUE || offset < Short.MIN_VALUE))
-        ) {
+        if ((op == Op.GOTO && (offset > Byte.MAX_VALUE || offset < Byte.MIN_VALUE))
+                || (op == Op.GOTO_16 && (offset > Short.MAX_VALUE || offset < Short.MIN_VALUE))) {
             if ((offset > Short.MAX_VALUE || offset < Short.MIN_VALUE)) {
                 op = Op.GOTO_32;
             } else {
@@ -73,4 +75,5 @@ public class JumpOp extends OpInsn {
         }
         return true;
     }
+
 }

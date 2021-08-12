@@ -9,10 +9,13 @@ import java.nio.file.Path;
 @BaseCmd.Syntax(cmd = "d2j-jar-weaver", syntax = "[options] jar", desc = "replace invoke in jar", onlineHelp = "https"
         + "://sourceforge.net/p/dex2jar/wiki/JarWeaver")
 public class JarWeaverCmd extends BaseCmd {
+
     @Opt(opt = "o", longOpt = "output", description = "output .jar file", argName = "out-jar-file", required = true)
     private Path output;
+
     @Opt(opt = "c", longOpt = "config", description = "config file", argName = "config", required = true)
     private Path config;
+
     @Opt(opt = "s", longOpt = "stub-jar", description = "stub jar", argName = "stub")
     private Path stub;
 

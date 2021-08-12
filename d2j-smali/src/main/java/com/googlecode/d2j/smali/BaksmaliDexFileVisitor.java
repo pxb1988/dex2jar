@@ -12,9 +12,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class BaksmaliDexFileVisitor extends DexFileVisitor {
+
     private final Path dir;
+
     private final BaksmaliDumper bs;
+
     private final Set<String> hashes;
+
     private int i;
 
     public BaksmaliDexFileVisitor(Path dir, BaksmaliDumper bs) {
@@ -37,8 +41,8 @@ public class BaksmaliDexFileVisitor extends DexFileVisitor {
     }
 
     @Override
-    public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
-        return new DexClassNode(access_flags, className, superClass, interfaceNames) {
+    public DexClassVisitor visit(int accessFlags, String className, String superClass, String[] interfaceNames) {
+        return new DexClassNode(accessFlags, className, superClass, interfaceNames) {
 
             @Override
             public void visitEnd() {
@@ -67,4 +71,5 @@ public class BaksmaliDexFileVisitor extends DexFileVisitor {
             }
         };
     }
+
 }

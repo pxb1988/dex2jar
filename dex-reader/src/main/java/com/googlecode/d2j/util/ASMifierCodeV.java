@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.util;
 
 import com.googlecode.d2j.DexConstants;
@@ -32,7 +17,9 @@ import java.util.Map;
  * @version $Rev$
  */
 public class ASMifierCodeV extends DexCodeVisitor implements DexConstants {
+
     Out m;
+
     Map<DexLabel, String> labelMap = new HashMap<>();
 
     public ASMifierCodeV(Out m) {
@@ -160,8 +147,8 @@ public class ASMifierCodeV extends DexCodeVisitor implements DexConstants {
     }
 
     @Override
-    public void visitPackedSwitchStmt(Op op, int ra, int first_case, DexLabel[] labels) {
-        m.s("code.visitSparseSwitchStmt(%s,%s,%s,%s);", op(op), ra, first_case, v(labels));
+    public void visitPackedSwitchStmt(Op op, int ra, int firstCase, DexLabel[] labels) {
+        m.s("code.visitSparseSwitchStmt(%s,%s,%s,%s);", op(op), ra, firstCase, v(labels));
     }
 
     @Override
@@ -231,4 +218,5 @@ public class ASMifierCodeV extends DexCodeVisitor implements DexConstants {
             }
         };
     }
+
 }

@@ -14,4 +14,5 @@ public interface BaseDexFileReader {
     void accept(DexFileVisitor dv, int config);
 
     void accept(DexFileVisitor dv, int classIdx, int config);
+
 }

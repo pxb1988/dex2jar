@@ -5,6 +5,7 @@ import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 
 public class LambadaNameSafeClassAdapter extends ClassRemapper {
+
     public String getClassName() {
         return remapper.mapType(className);
     }
@@ -20,4 +21,5 @@ public class LambadaNameSafeClassAdapter extends ClassRemapper {
             }
         });
     }
+
 }

@@ -6,15 +6,16 @@ import com.googlecode.d2j.visitors.DexCodeVisitor;
 
 public class PackedSwitchStmtNode extends BaseSwitchStmtNode {
 
-    public final int first_case;
+    public final int firstCase;
 
-    public PackedSwitchStmtNode(Op op, int a, int first_case, DexLabel[] labels) {
+    public PackedSwitchStmtNode(Op op, int a, int firstCase, DexLabel[] labels) {
         super(op, a, labels);
-        this.first_case = first_case;
+        this.firstCase = firstCase;
     }
 
     @Override
     public void accept(DexCodeVisitor cv) {
-        cv.visitPackedSwitchStmt(op, a, first_case, labels);
+        cv.visitPackedSwitchStmt(op, a, firstCase, labels);
     }
+
 }

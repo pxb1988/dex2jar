@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir;
 
 import com.googlecode.dex2jar.ir.expr.Local;
@@ -28,8 +13,11 @@ import java.util.List;
 public class IrMethod {
 
     public boolean isStatic;
+
     public String[] args;
+
     public List<Local> locals = new ArrayList<>();
+
     public String name;
 
     public String owner;
@@ -39,7 +27,9 @@ public class IrMethod {
     public StmtList stmts = new StmtList();
 
     public List<Trap> traps = new ArrayList<>();
+
     public List<LocalVar> vars = new ArrayList<>();
+
     public List<LabelStmt> phiLabels;
 
     public IrMethod clone() {
@@ -102,4 +92,5 @@ public class IrMethod {
         sb.append("}");
         return sb.toString();
     }
+
 }

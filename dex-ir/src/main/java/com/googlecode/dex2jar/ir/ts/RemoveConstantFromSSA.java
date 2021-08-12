@@ -52,7 +52,7 @@ import java.util.Set;
  */
 public class RemoveConstantFromSSA extends StatedTransformer {
 
-    public static final Comparator<Local> LOCAL_COMPARATOR = Comparator.comparingInt(local -> local._ls_index);
+    public static final Comparator<Local> LOCAL_COMPARATOR = Comparator.comparingInt(local -> local.lsIndex);
 
     @Override
     public boolean transformReportChanged(IrMethod method) {
@@ -84,10 +84,12 @@ public class RemoveConstantFromSSA extends StatedTransformer {
             while (loopAgain) {
                 loopAgain = false;
                 usedInPhi.clear();
-                for (Iterator<LabelStmt> it = phiLabels.iterator(); it.hasNext(); ) {
+                Iterator<LabelStmt> it = phiLabels.iterator();
+                while (it.hasNext()) {
                     LabelStmt labelStmt = it.next();
                     if (labelStmt.phis != null) {
-                        for (Iterator<AssignStmt> it2 = labelStmt.phis.iterator(); it2.hasNext(); ) {
+                        Iterator<AssignStmt> it2 = labelStmt.phis.iterator();
+                        while (it2.hasNext()) {
                             AssignStmt phi = it2.next();
                             Value[] vs = phi.getOp2().getOps();
                             Object sameCst = null;
@@ -129,7 +131,8 @@ public class RemoveConstantFromSSA extends StatedTransformer {
             }
         }
 
-        for (Iterator<AssignStmt> it = assignStmtList.iterator(); it.hasNext(); ) {
+        Iterator<AssignStmt> it = assignStmtList.iterator();
+        while (it.hasNext()) {
             AssignStmt as = it.next();
             if (!usedInPhi.contains(as.getOp1())) {
                 it.remove();
@@ -155,4 +158,5 @@ public class RemoveConstantFromSSA extends StatedTransformer {
         }, false);
         return changed;
     }
+
 }

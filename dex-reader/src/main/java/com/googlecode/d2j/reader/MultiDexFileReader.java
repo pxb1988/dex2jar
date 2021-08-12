@@ -17,8 +17,10 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class MultiDexFileReader implements BaseDexFileReader {
-    final private List<DexFileReader> readers = new ArrayList<>();
-    final private List<Item> items = new ArrayList<>();
+
+    private final List<DexFileReader> readers = new ArrayList<>();
+
+    private final List<Item> items = new ArrayList<>();
 
     public MultiDexFileReader(Collection<DexFileReader> readers) {
         this.readers.addAll(readers);
@@ -38,9 +40,9 @@ public class MultiDexFileReader implements BaseDexFileReader {
         if (data.length < 3) {
             throw new IOException("File too small to be a dex/zip");
         }
-        if ("dex".equals(new String(data, 0, 3, StandardCharsets.ISO_8859_1))) {// dex
+        if ("dex".equals(new String(data, 0, 3, StandardCharsets.ISO_8859_1))) { // dex
             return new DexFileReader(data);
-        } else if ("PK".equals(new String(data, 0, 2, StandardCharsets.ISO_8859_1))) {// ZIP
+        } else if ("PK".equals(new String(data, 0, 2, StandardCharsets.ISO_8859_1))) { // ZIP
             TreeMap<String, DexFileReader> dexFileReaders = new TreeMap<>();
             try (ZipFile zipFile = new ZipFile(data)) {
                 for (ZipEntry e : zipFile.entries()) {
@@ -60,7 +62,7 @@ public class MultiDexFileReader implements BaseDexFileReader {
                 return new MultiDexFileReader(dexFileReaders.values());
             }
         }
-        throw new IOException("the src file not a .dex or zip file");
+        throw new IOException("The src file is not a .dex or zip file");
     }
 
     void init() {
@@ -117,14 +119,19 @@ public class MultiDexFileReader implements BaseDexFileReader {
     }
 
     static class Item {
+
         int idx;
+
         DexFileReader reader;
+
         String className;
 
-        public Item(int i, DexFileReader reader, String className) {
+        Item(int i, DexFileReader reader, String className) {
             idx = i;
             this.reader = reader;
             this.className = className;
         }
+
     }
+
 }

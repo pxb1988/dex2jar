@@ -1,28 +1,12 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex.writer.item;
 
 import com.googlecode.d2j.dex.writer.io.DataOut;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class MapListItem extends BaseItem {
-    final public List<SectionItem<?>> items = new ArrayList<>();
+
+    public final List<SectionItem<?>> items = new ArrayList<>();
 
     public int getSize() {
         return 4 + items.size() * 12;
@@ -38,12 +22,7 @@ public class MapListItem extends BaseItem {
     }
 
     public void cleanZeroSizeEntry() {
-        for (Iterator<SectionItem<?>> it = items.iterator(); it.hasNext(); ) {
-            SectionItem<?> i = it.next();
-            if (i == null || i.items.size() < 1) {
-                it.remove();
-            }
-        }
+        items.removeIf(i -> i == null || i.items.size() < 1);
     }
 
     public void write(DataOut out) {
@@ -60,4 +39,5 @@ public class MapListItem extends BaseItem {
     public int place(int offset) {
         return offset + 4 + items.size() * 12;
     }
+
 }

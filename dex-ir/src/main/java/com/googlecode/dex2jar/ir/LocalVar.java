@@ -5,8 +5,16 @@ import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 
 public class LocalVar {
 
-    public LabelStmt start, end;
-    public String name, type, signature;
+    public LabelStmt start;
+
+    public LabelStmt end;
+
+    public String name;
+
+    public String type;
+
+    public String signature;
+
     public Local reg;
 
     public LocalVar(String name, String type, String signature, LabelStmt start, LabelStmt end, Local reg) {
@@ -27,4 +35,5 @@ public class LocalVar {
         return String.format(".var %s ~ %s %s -> %s //%s", start.getDisplayName(), end.getDisplayName(), reg, name,
                 type);
     }
+
 }

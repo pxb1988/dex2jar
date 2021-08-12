@@ -24,7 +24,7 @@ import java.util.ArrayList;
  */
 public class EndRemover implements Transformer {
 
-    private static final LabelAndLocalMapper keepLocal = new LabelAndLocalMapper() {
+    private static final LabelAndLocalMapper KEEP_LOCAL = new LabelAndLocalMapper() {
         @Override
         public Local map(Local local) {
             return local;
@@ -33,10 +33,11 @@ public class EndRemover implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-        for (Trap trap : new ArrayList<>(irMethod.traps)) {// copy the list and we can remove one from original list
+        for (Trap trap : new ArrayList<>(irMethod.traps)) { // copy the list and we can remove one from original list
             LabelStmt start = null;
             boolean removeTrap = true;
-            for (Stmt p = trap.start.getNext(); p != null && p != trap.end; ) {
+            Stmt p = trap.start.getNext();
+            while (p != null && p != trap.end) {
                 boolean notThrow = Cfg.notThrow(p);
                 if (!notThrow) {
                     start = null;
@@ -79,7 +80,7 @@ public class EndRemover implements Transformer {
                 LabelStmt target = ((GotoStmt) p).target;
                 Stmt next = target.getNext();
                 if (next != null && (next.st == ST.RETURN || next.st == ST.RETURN_VOID)) {
-                    Stmt nnext = next.clone(keepLocal);
+                    Stmt nnext = next.clone(KEEP_LOCAL);
                     stmts.insertAfter(p, nnext);
                     stmts.remove(p);
                     p = nnext;
@@ -103,6 +104,6 @@ public class EndRemover implements Transformer {
             last = stmts.getLast();
         }
         stmts.move(start, end, last);
-
     }
+
 }

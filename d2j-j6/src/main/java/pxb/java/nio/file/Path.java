@@ -36,4 +36,5 @@ public interface Path {
     Path relativize(Path other);
 
     InputStream _newInputStream() throws IOException;
+
 }

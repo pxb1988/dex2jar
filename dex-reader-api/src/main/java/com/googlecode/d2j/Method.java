@@ -1,19 +1,6 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j;
+
+import java.util.Objects;
 
 /**
  * represent a method_id_item in dex file format
@@ -22,18 +9,21 @@ package com.googlecode.d2j;
  * @version $Rev$
  */
 public class Method {
+
     /**
      * name of the method.
      */
-    private String name;
+    private final String name;
+
     /**
-     * owner class of the method, in TypeDescriptor format.
+     * owner of the method, in TypeDescriptor format.
      */
-    private String owner;
+    private final String owner;
+
     /**
      * parameter types of the method, in TypeDescriptor format.
      */
-    private Proto proto;
+    private final Proto proto;
 
     public Proto getProto() {
         return proto;
@@ -82,13 +72,21 @@ public class Method {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Method method = (Method) o;
 
-        if (name != null ? !name.equals(method.name) : method.name != null) return false;
-        if (owner != null ? !owner.equals(method.owner) : method.owner != null) return false;
+        if (!Objects.equals(name, method.name)) {
+            return false;
+        }
+        if (!Objects.equals(owner, method.owner)) {
+            return false;
+        }
         return proto.equals(method.proto);
     }
 
@@ -109,4 +107,5 @@ public class Method {
     public String toString() {
         return this.getOwner() + "." + this.getName() + this.getDesc();
     }
+
 }

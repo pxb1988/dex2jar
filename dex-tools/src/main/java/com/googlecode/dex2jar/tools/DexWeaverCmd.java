@@ -20,10 +20,13 @@ import java.util.Map;
 @BaseCmd.Syntax(cmd = "d2j-dex-weaver", syntax = "[options] dex", desc = "replace invoke in dex", onlineHelp = "https"
         + "://sourceforge.net/p/dex2jar/wiki/DexWeaver")
 public class DexWeaverCmd extends BaseCmd {
+
     @Opt(opt = "o", longOpt = "output", description = "output .dex file", argName = "out-dex-file")
     private Path output;
+
     @Opt(opt = "c", longOpt = "config", description = "config file", argName = "config")
     private Path config;
+
     @Opt(opt = "s", longOpt = "stub-dex", description = "stub dex", argName = "stub")
     private Path stub;
 
@@ -56,9 +59,9 @@ public class DexWeaverCmd extends BaseCmd {
         DexFileWriter out = new DexFileWriter();
         DexFileVisitor fv = new DexFileVisitor(out) {
             @Override
-            public DexClassVisitor visit(int access_flags, String className, String superClass,
+            public DexClassVisitor visit(int accessFlags, String className, String superClass,
                                          String[] interfaceNames) {
-                DexClassVisitor dcv = super.visit(access_flags, className, superClass, interfaceNames);
+                DexClassVisitor dcv = super.visit(accessFlags, className, superClass, interfaceNames);
                 if (dcv != null) {
                     return new DexClassVisitor(dcv) {
                         @Override

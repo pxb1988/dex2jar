@@ -1,19 +1,3 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.util.zip;
 
 import java.io.File;
@@ -40,10 +24,11 @@ import java.util.zip.ZipException;
  * Allow Nul byte in ZipEntry name
  */
 public class ZipFile implements AutoCloseable, ZipConstants {
+
     /**
      * General Purpose Bit Flags, Bit 0. If set, indicates that the file is encrypted.
      */
-    static final int GPBF_ENCRYPTED_FLAG = 1 << 0;
+    static final int GPBF_ENCRYPTED_FLAG = 1;
 
     /**
      * General Purpose Bit Flags, Bit 3. If this bit is set, the fields crc-32, compressed size and uncompressed size
@@ -69,7 +54,9 @@ public class ZipFile implements AutoCloseable, ZipConstants {
     private List<ZipEntry> entries;
 
     private String comment;
+
     final ByteBuffer raf;
+
     RandomAccessFile file;
 
     public ZipFile(ByteBuffer in) throws IOException {
@@ -251,12 +238,12 @@ public class ZipFile implements AutoCloseable, ZipConstants {
         entries = new ArrayList<>(numEntries);
         for (int i = 0; i < numEntries; ++i) {
             ZipEntry newEntry = new ZipEntry(buf, skipCommentsAndExtra);
-            if (newEntry.localHeaderRelOffset >= centralDirOffset) {
+            if (newEntry.localHeaderRelOffset < centralDirOffset) {
+                entries.add(newEntry);
+            } /*else {
                 // Ignore the entry
                 // throw new ZipException("Local file header offset is after central directory");
-            } else {
-                entries.add(newEntry);
-            }
+            }*/
         }
     }
 
@@ -273,10 +260,12 @@ public class ZipFile implements AutoCloseable, ZipConstants {
     }
 
     static class ZipInflaterInputStream extends InflaterInputStream {
+
         private final ZipEntry entry;
+
         private long bytesRead = 0;
 
-        public ZipInflaterInputStream(InputStream is, Inflater inf, int bsize, ZipEntry entry) {
+        ZipInflaterInputStream(InputStream is, Inflater inf, int bsize, ZipEntry entry) {
             super(is, inf, bsize);
             this.entry = entry;
         }
@@ -303,12 +292,14 @@ public class ZipFile implements AutoCloseable, ZipConstants {
         public int available() throws IOException {
             return super.available() == 0 ? 0 : (int) (entry.getSize() - bytesRead);
         }
+
     }
 
     private static class ByteBufferBackedInputStream extends InputStream {
+
         private final ByteBuffer buf;
 
-        public ByteBufferBackedInputStream(ByteBuffer buf) {
+        ByteBufferBackedInputStream(ByteBuffer buf) {
             this.buf = buf;
         }
 
@@ -329,5 +320,7 @@ public class ZipFile implements AutoCloseable, ZipConstants {
             buf.get(b, off, len);
             return len;
         }
+
     }
+
 }

@@ -32,6 +32,10 @@ import java.io.Writer;
  */
 public final class Utf8Utils {
 
+    private Utf8Utils() {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Converts a string into its Java-style UTF-8 form. Java-style UTF-8 differs from normal UTF-8 in the handling of
      * character '\0' and surrogate pairs.
@@ -85,7 +89,8 @@ public final class Utf8Utils {
         char[] chars = tempBuffer;
         int outAt = 0;
 
-        for (int at = start; length > 0; /* at */) {
+        int at = start;
+        while (length > 0) {
             int v0 = bytes[at] & 0xFF;
             char out;
             switch (v0 >> 4) {
@@ -197,6 +202,8 @@ public final class Utf8Utils {
             case '\t':
                 writer.write("\\t");
                 return;
+            default:
+                break;
             }
         }
 
@@ -229,6 +236,8 @@ public final class Utf8Utils {
                 case '\t':
                     writer.write("\\t");
                     continue;
+                default:
+                    break;
                 }
             }
 
@@ -264,6 +273,8 @@ public final class Utf8Utils {
                 case '\t':
                     sb.append("\\t");
                     continue;
+                default:
+                    break;
                 }
             }
 
@@ -276,4 +287,5 @@ public final class Utf8Utils {
 
         return sb.toString();
     }
+
 }

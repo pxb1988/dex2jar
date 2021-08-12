@@ -15,6 +15,7 @@ import java.util.Queue;
 import java.util.Set;
 
 public class AggTransformer extends StatedTransformer {
+
     @Override
     public boolean transformReportChanged(IrMethod method) {
         boolean changed = false;
@@ -108,12 +109,15 @@ public class AggTransformer extends StatedTransformer {
             default:
             }
             break;
+        default:
+            break;
         }
         throw FAIL;
     }
 
-    private static MergeResult FAIL = new MergeResult();
-    private static MergeResult SUCCESS = new MergeResult();
+    private static final MergeResult FAIL = new MergeResult();
+
+    private static final MergeResult SUCCESS = new MergeResult();
 
     /**
      * dfs searching, if local is appear before first location-insensitive value, throws SUCCESS, or throws FAIL
@@ -138,12 +142,15 @@ public class AggTransformer extends StatedTransformer {
             for (Value v : op.getOps()) {
                 localCanExecFirst(local, v);
             }
+        default:
+            break;
         }
 
         boolean shouldExclude = false;
         if (op.vt == Value.VT.INVOKE_STATIC) {
             InvokeExpr ie = (InvokeExpr) op;
-            if (ie.getName().equals("valueOf") && ie.getOwner().startsWith("Ljava/lang/") && ie.getArgs().length == 1 && ie.getArgs()[0].length() == 1) {
+            if (ie.getName().equals("valueOf") && ie.getOwner().startsWith("Ljava/lang/")
+                    && ie.getArgs().length == 1 && ie.getArgs()[0].length() == 1) {
                 shouldExclude = true;
             }
         }
@@ -154,11 +161,15 @@ public class AggTransformer extends StatedTransformer {
     }
 
     static class MergeResult extends Throwable {
+
         private static final long serialVersionUID = -1563502983848655360L;
+
     }
 
     static class ReplaceX implements Cfg.TravelCallBack {
+
         Local local;
+
         Value replaceWith;
 
         @Override
@@ -173,6 +184,7 @@ public class AggTransformer extends StatedTransformer {
             }
             return v;
         }
+
     }
 
     /**
@@ -194,14 +206,15 @@ public class AggTransformer extends StatedTransformer {
         final int[] readCounts = Cfg.countLocalReads(method);
         Set<Local> useInPhi = collectLocalUsedInPhi(method);
         final Map<Local, Value> toReplace = new HashMap<>();
-        for (Iterator<Stmt> it = method.stmts.iterator(); it.hasNext(); ) {
+        Iterator<Stmt> it = method.stmts.iterator();
+        while (it.hasNext()) {
             Stmt p = it.next();
             if (p.st == Stmt.ST.ASSIGN && p.getOp1().vt == Value.VT.LOCAL) {
                 Local local = (Local) p.getOp1();
                 if (useInPhi.contains(local)) {
                     continue;
                 }
-                if (readCounts[local._ls_index] < 2) {
+                if (readCounts[local.lsIndex] < 2) {
                     Value op2 = p.getOp2();
                     if (isLocationInsensitive(op2)) {
                         method.locals.remove(local);
@@ -318,11 +331,13 @@ public class AggTransformer extends StatedTransformer {
         case E1:
             return isLocationInsensitive(op.vt) && isLocationInsensitive(op.getOp());
         case E2:
-            return isLocationInsensitive(op.vt) && isLocationInsensitive(op.getOp1()) && isLocationInsensitive(op.getOp2());
+            return isLocationInsensitive(op.vt) && isLocationInsensitive(op.getOp1())
+                    && isLocationInsensitive(op.getOp2());
         case En:
             if (op.vt == Value.VT.INVOKE_STATIC) {
                 InvokeExpr ie = (InvokeExpr) op;
-                if (ie.getName().equals("valueOf") && ie.getOwner().startsWith("Ljava/lang/") && ie.getArgs().length == 1 && ie.getArgs()[0].length() == 1) {
+                if (ie.getName().equals("valueOf") && ie.getOwner().startsWith("Ljava/lang/")
+                        && ie.getArgs().length == 1 && ie.getArgs()[0].length() == 1) {
                     for (Value v : op.getOps()) {
                         if (!isLocationInsensitive(v)) {
                             return false;
@@ -341,7 +356,9 @@ public class AggTransformer extends StatedTransformer {
                 return true;
             }
             return false;
+        default:
+            return false;
         }
-        return false;
     }
+
 }

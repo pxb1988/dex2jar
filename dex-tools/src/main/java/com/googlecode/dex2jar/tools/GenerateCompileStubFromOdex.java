@@ -20,8 +20,10 @@ import org.objectweb.asm.Opcodes;
 @BaseCmd.Syntax(cmd = "d2j-generate-stub-from-odex", syntax = "[options] <odex0> [odex1 ... odexN]", desc =
         "Genenerate no-code jar from odex")
 public class GenerateCompileStubFromOdex extends BaseCmd {
-    private static final int MAGIC_ODEX = 0x0A796564 & 0x00FFFFFF;// hex for 'dey ', ignore the 0A
-    private static final int MAGIC_DEX = 0x0A786564 & 0x00FFFFFF;// hex for 'dex ', ignore the 0A
+
+    private static final int MAGIC_ODEX = 0x0A796564 & 0x00FFFFFF; // hex for 'dey ', ignore the 0A
+
+    private static final int MAGIC_DEX = 0x0A786564 & 0x00FFFFFF; // hex for 'dex ', ignore the 0A
 
     public static void main(String... args) {
         new GenerateCompileStubFromOdex().doMain(args);
@@ -29,6 +31,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
 
     @Opt(opt = "o", longOpt = "output", description = "output .jar file, default is stub.jar", argName = "out-jar-file")
     private Path output;
+
     @Opt(opt = "npri", longOpt = "no-private", description = "", hasArg = false)
     private boolean noPrivate;
 
@@ -122,4 +125,5 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
             }
         });
     }
+
 }

@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts.an;
 
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -29,10 +14,13 @@ import java.util.List;
 
 @SuppressWarnings({"unchecked"})
 public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisitor<T[]>, TravelCallBack {
+
     protected static final boolean DEBUG = false;
 
     public List<T> aValues = new ArrayList<>();
-    private boolean reindexLocal;
+
+    private final boolean reindexLocal;
+
     private T[] currentFrame;
 
     protected int localSize;
@@ -52,8 +40,8 @@ public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisito
             // override the localSize value to the max local index+1
             int maxReg = -1;
             for (Local local : method.locals) {
-                if (local._ls_index > maxReg) {
-                    maxReg = local._ls_index;
+                if (local.lsIndex > maxReg) {
+                    maxReg = local.lsIndex;
                 }
             }
             this.localSize = maxReg + 1;
@@ -112,7 +100,7 @@ public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisito
         if (reindexLocal) {
             int index = 0;
             for (Local local : method.locals) {
-                local._ls_index = index;
+                local.lsIndex = index;
                 index++;
             }
         }
@@ -151,7 +139,7 @@ public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisito
         currentFrame = tmpFrame;
         T aValue = onAssignLocal(local, as.op2);
         aValues.add(aValue);
-        currentFrame[local._ls_index] = aValue;
+        currentFrame[local.lsIndex] = aValue;
         return local;
     }
 
@@ -161,7 +149,7 @@ public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisito
 
     @Override
     public Local onUse(Local local) {
-        T aValue = currentFrame[local._ls_index];
+        T aValue = currentFrame[local.lsIndex];
         onUseLocal(aValue, local);
         return local;
     }
@@ -184,8 +172,9 @@ public abstract class BaseAnalyze<T extends AnalyzeValue> implements FrameVisito
                 }
                 sb.append(" | ");
             }
-            sb.append(stmt.toString()).append('\n');
+            sb.append(stmt).append('\n');
         }
         return sb.toString();
     }
+
 }

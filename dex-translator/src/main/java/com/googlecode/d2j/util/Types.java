@@ -4,7 +4,8 @@ import com.googlecode.d2j.DexException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Types {
+public final class Types {
+
     /**
      * @param desc a asm method desc, ex: (II)V
      * @return a array of argument types, ex: [I,I]
@@ -92,7 +93,8 @@ public class Types {
         int rawLength = signature.length();
         ArrayList<String> pieces = new ArrayList<>(20);
 
-        for (int at = 0; at < rawLength; /* at */) {
+        int at = 0;
+        while (at < rawLength) {
             char c = signature.charAt(at);
             int endAt = at + 1;
             if (c == 'L') {
@@ -122,6 +124,10 @@ public class Types {
             at = endAt;
         }
         return pieces.toArray(new Object[0]);
+    }
+
+    private Types() {
+        throw new UnsupportedOperationException();
     }
 
 }

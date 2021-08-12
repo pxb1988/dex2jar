@@ -92,11 +92,17 @@ import java.util.Set;
  * </pre>
  */
 public class FillArrayTransformer extends StatedTransformer {
-    private static class ArrayObject {
+
+    private static final class ArrayObject {
+
         int size;
+
         String type;
+
         AssignStmt init;
+
         List<Stmt> putItem = new ArrayList<>();
+
         List<Stmt> used = new ArrayList<>();
 
         private ArrayObject(int size, String type, AssignStmt init) {
@@ -104,6 +110,7 @@ public class FillArrayTransformer extends StatedTransformer {
             this.type = type;
             this.init = init;
         }
+
     }
 
     public static void main(String... args) {
@@ -156,8 +163,7 @@ public class FillArrayTransformer extends StatedTransformer {
             final Local local0 = e.getKey();
             final ArrayObject ao = e.getValue();
             final Value[] t = new Value[ao.size];
-            for (Iterator<Stmt> it = ao.putItem.iterator(); it.hasNext(); ) {
-                Stmt p = it.next();
+            for (Stmt p : ao.putItem) {
                 if (p.st == Stmt.ST.FILL_ARRAY_DATA) {
                     Local local = (Local) p.getOp1();
                     if (local == local0) {
@@ -228,9 +234,7 @@ public class FillArrayTransformer extends StatedTransformer {
                         Cfg.travelMod(filledArrayExprs.get(i), tcb);
                     }
                 }
-            } else if (ao.used.size() == 0) {
-                // the array is never used, ignore
-            } else {
+            } else if (ao.used.size() != 0) {
                 throw new RuntimeException("array is used multiple times");
             }
         }
@@ -240,10 +244,10 @@ public class FillArrayTransformer extends StatedTransformer {
     private void makeSureArrayUsedAfterAllElementAssigned(IrMethod method, final Map<Local, ArrayObject> arraySizes) {
 
         for (Local local : method.locals) {
-            local._ls_index = -1;
+            local.lsIndex = -1;
         }
-        final int MAX = 50;
-        if (arraySizes.size() < MAX) {
+        final int max = 50;
+        if (arraySizes.size() < max) {
             makeSureArrayUsedAfterAllElementAssigned0(method, arraySizes);
         } else {
 
@@ -251,11 +255,11 @@ public class FillArrayTransformer extends StatedTransformer {
             // it
             Map<Local, ArrayObject> keptInAll = new HashMap<>();
             Map<Local, ArrayObject> keptInPart = new HashMap<>();
-            List<Local> arrays = new ArrayList<>(MAX);
+            List<Local> arrays = new ArrayList<>(max);
 
             Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator();
             while (it.hasNext()) {
-                for (int i = 0; i < MAX && it.hasNext(); i++) {
+                for (int i = 0; i < max && it.hasNext(); i++) {
                     Map.Entry<Local, ArrayObject> e = it.next();
                     keptInPart.put(e.getKey(), e.getValue());
                     it.remove();
@@ -263,7 +267,7 @@ public class FillArrayTransformer extends StatedTransformer {
                 }
                 makeSureArrayUsedAfterAllElementAssigned0(method, keptInPart);
                 for (Local local : arrays) {
-                    local._ls_index = -1;
+                    local.lsIndex = -1;
                 }
                 arrays.clear();
                 keptInAll.putAll(keptInPart);
@@ -279,7 +283,7 @@ public class FillArrayTransformer extends StatedTransformer {
     private void makeSureArrayUsedAfterAllElementAssigned0(IrMethod method, final Map<Local, ArrayObject> arraySizes) {
         int i = 0;
         for (Local local : arraySizes.keySet()) {
-            local._ls_index = i++;
+            local.lsIndex = i++;
         }
 
         final int size = i;
@@ -332,8 +336,8 @@ public class FillArrayTransformer extends StatedTransformer {
                 if (stmt.st == Stmt.ST.FILL_ARRAY_DATA) {
                     if (stmt.getOp1().vt == Value.VT.LOCAL) {
                         Local local = (Local) stmt.getOp1();
-                        if (local._ls_index >= 0) {
-                            ArrayObjectValue av = tmp[local._ls_index];
+                        if (local.lsIndex >= 0) {
+                            ArrayObjectValue av = tmp[local.lsIndex];
                             Constant cst = (Constant) stmt.getOp2();
                             int endPos = Array.getLength(cst.value);
                             av.pos.set(0, endPos);
@@ -346,9 +350,9 @@ public class FillArrayTransformer extends StatedTransformer {
                     ArrayExpr ae = (ArrayExpr) stmt.getOp1();
                     if (ae.getOp1().vt == Value.VT.LOCAL) {
                         Local local = (Local) ae.getOp1();
-                        if (local._ls_index >= 0) {
+                        if (local.lsIndex >= 0) {
                             int index = ((Number) ((Constant) ae.getOp2()).value).intValue();
-                            ArrayObjectValue av = tmp[local._ls_index];
+                            ArrayObjectValue av = tmp[local.lsIndex];
                             av.pos.set(index);
                         } else {
                             use(ae);
@@ -360,17 +364,15 @@ public class FillArrayTransformer extends StatedTransformer {
                     Local local = (Local) stmt.getOp1();
                     use(stmt.getOp2());
 
-                    if (local._ls_index >= 0) {
+                    if (local.lsIndex >= 0) {
                         ArrayObjectValue aov = new ArrayObjectValue(local);
                         aov.array = arraySizes.get(local);
                         aov.pos = new BitSet();
                         values.add(aov);
-                        tmp[local._ls_index] = aov;
+                        tmp[local.lsIndex] = aov;
                     }
                 } else {
                     switch (stmt.et) {
-                    case E0:
-                        break;
                     case E1:
                         use(stmt.getOp());
                         break;
@@ -380,6 +382,8 @@ public class FillArrayTransformer extends StatedTransformer {
                         break;
                     case En:
                         throw new RuntimeException();
+                    default:
+                        break;
                     }
                 }
                 return tmp;
@@ -390,8 +394,8 @@ public class FillArrayTransformer extends StatedTransformer {
                 case E0:
                     if (v.vt == Value.VT.LOCAL) {
                         Local local = (Local) v;
-                        if (local._ls_index >= 0) {
-                            ArrayObjectValue aov = tmp[local._ls_index];
+                        if (local.lsIndex >= 0) {
+                            ArrayObjectValue aov = tmp[local.lsIndex];
                             aov.array.used.add(currentStmt);
                             aov.used = true;
                         }
@@ -408,6 +412,8 @@ public class FillArrayTransformer extends StatedTransformer {
                     for (Value op : v.getOps()) {
                         use(op);
                     }
+                    break;
+                default:
                     break;
                 }
             }
@@ -433,13 +439,14 @@ public class FillArrayTransformer extends StatedTransformer {
             }
         }
         // check for un full init array
-        for (Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator(); it.hasNext(); ) {
+        Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator();
+        while (it.hasNext()) {
             Map.Entry<Local, ArrayObject> e = it.next();
             Local local = e.getKey();
             ArrayObject arrayObject = e.getValue();
             for (Stmt use : arrayObject.used) {
                 ArrayObjectValue[] frame = (ArrayObjectValue[]) use.frame;
-                ArrayObjectValue aov = frame[local._ls_index];
+                ArrayObjectValue aov = frame[local.lsIndex];
                 BitSet pos = aov.pos;
                 if (pos.nextClearBit(0) < arrayObject.size || pos.nextSetBit(arrayObject.size) >= 0) {
                     it.remove();
@@ -491,7 +498,8 @@ public class FillArrayTransformer extends StatedTransformer {
 
     private void makeSureAllElementAreAssigned(Map<Local, ArrayObject> arraySizes) {
         BitSet pos = new BitSet();
-        for (Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator(); it.hasNext(); ) {
+        Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator();
+        while (it.hasNext()) {
             Map.Entry<Local, ArrayObject> e = it.next();
             ArrayObject arrayObject = e.getValue();
             boolean needRemove = false;
@@ -499,9 +507,9 @@ public class FillArrayTransformer extends StatedTransformer {
                 if (p.st == Stmt.ST.FILL_ARRAY_DATA) {
                     int endPos = Array.getLength(((Constant) p.getOp2()).value);
                     int next = pos.nextSetBit(0);
-                    if (next < 0 || next >= endPos) {// not set in range
+                    if (next < 0 || next >= endPos) { // not set in range
                         pos.set(0, endPos);
-                    } else {// setted in range
+                    } else { // setted in range
                         needRemove = true;
                         break;
                     }
@@ -596,15 +604,23 @@ public class FillArrayTransformer extends StatedTransformer {
     }
 
     static class ArrayObjectValue {
+
         BitSet pos;
+
         Local local;
+
         ArrayObject array;
+
         ArrayObjectValue parent;
+
         Set<ArrayObjectValue> otherParent;
+
         boolean used;
 
-        public ArrayObjectValue(Local local) {
+        ArrayObjectValue(Local local) {
             this.local = local;
         }
+
     }
+
 }

@@ -43,14 +43,17 @@ import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 
 public abstract class AbstractJarSign {
+
     /**
      * Write to another stream and also feed it to the Signature object.
      */
     private static class SignatureOutputStream extends FilterOutputStream {
+
         private int mCount;
+
         private final Signature mSignature;
 
-        public SignatureOutputStream(OutputStream out, Signature sig) {
+        SignatureOutputStream(OutputStream out, Signature sig) {
             super(out);
             mSignature = sig;
             mCount = 0;
@@ -92,12 +95,16 @@ public abstract class AbstractJarSign {
             out.write(b);
             mCount++;
         }
+
     }
 
     // Files matching this pattern are not copied to the output.
-    private static final Pattern stripPattern = Pattern.compile("^META-INF/(.*)[.](SF|RSA|DSA)$");
+    private static final Pattern STRIP_PATTERN = Pattern.compile("^META-INF/(.*)[.](SF|RSA|DSA)$");
+
     private static final byte[] EOL = "\r\n".getBytes(StandardCharsets.UTF_8);
+
     private static final byte[] COL = ": ".getBytes(StandardCharsets.UTF_8);
+
     private static final byte[] NAMES = "Name: ".getBytes(StandardCharsets.UTF_8);
 
     /**
@@ -134,9 +141,9 @@ public abstract class AbstractJarSign {
         }
     }
 
-    final protected String digestAlg;
+    protected final String digestAlg;
 
-    final protected PrivateKey privateKey;
+    protected final PrivateKey privateKey;
 
     public AbstractJarSign(PrivateKey privateKey) {
         this(privateKey, "SHA1", "SHA1withRSA");
@@ -150,7 +157,7 @@ public abstract class AbstractJarSign {
         this.signAlg = signAlg;
     }
 
-    final protected String signAlg;
+    protected final String signAlg;
 
     /**
      * Add the SHA1 of every file to the manifest, creating it if necessary.
@@ -176,7 +183,8 @@ public abstract class AbstractJarSign {
 
         TreeMap<String, JarEntry> byName = new TreeMap<>();
 
-        for (Enumeration<JarEntry> e = jar.entries(); e.hasMoreElements(); ) {
+        Enumeration<JarEntry> e = jar.entries();
+        while (e.hasMoreElements()) {
             JarEntry entry = e.nextElement();
             byName.put(entry.getName(), entry);
         }
@@ -184,7 +192,7 @@ public abstract class AbstractJarSign {
         String digName = digestAlg + "-Digest";
         for (JarEntry entry : byName.values()) {
             String name = entry.getName();
-            if (!entry.isDirectory() && !name.equals(JarFile.MANIFEST_NAME) && !stripPattern.matcher(name).matches()) {
+            if (!entry.isDirectory() && !name.equals(JarFile.MANIFEST_NAME) && !STRIP_PATTERN.matcher(name).matches()) {
                 InputStream data = jar.getInputStream(entry);
                 while ((num = data.read(buffer)) > 0) {
                     md.update(buffer, 0, num);
@@ -220,7 +228,8 @@ public abstract class AbstractJarSign {
 
             inputJar = new JarFile(in, false); // Don't verify.
 
-            OutputStream outputStream = outputFile = new FileOutputStream(out);
+            outputFile = new FileOutputStream(out);
+            OutputStream outputStream = outputFile;
             outputJar = new JarOutputStream(outputStream);
             outputJar.setLevel(9);
 
@@ -296,12 +305,10 @@ public abstract class AbstractJarSign {
 
             @Override
             public void write(byte[] b) {
-
             }
 
             @Override
             public void write(byte[] b, int off, int len) {
-
             }
 
             @Override
@@ -353,4 +360,5 @@ public abstract class AbstractJarSign {
             out.write(EOL);
         }
     }
+
 }

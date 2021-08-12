@@ -7,7 +7,12 @@ import java.io.OutputStream;
 import pxb.java.nio.file.attribute.FileAttribute;
 import pxb.java.nio.file.spi.FileSystemProvider;
 
-public class Files {
+public final class Files {
+
+    private Files() {
+        throw new UnsupportedOperationException();
+    }
+
     public static Path write(Path path, byte[] bytes, OpenOption... options)
             throws IOException {
         path._write(bytes);
@@ -66,4 +71,5 @@ public class Files {
         os.close();
         return target;
     }
+
 }

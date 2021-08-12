@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex;
 
 import com.googlecode.d2j.converter.IR2JConverter;
@@ -40,35 +24,14 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
-public class Dex2jar {
-    public static Dex2jar from(byte[] in) throws IOException {
-        return from(new DexFileReader(ZipUtil.readDex(in)));
-    }
-
-    public static Dex2jar from(ByteBuffer in) {
-        return from(new DexFileReader(in));
-    }
-
-    public static Dex2jar from(BaseDexFileReader reader) {
-        return new Dex2jar(reader);
-    }
-
-    public static Dex2jar from(File in) throws IOException {
-        return from(Files.readAllBytes(in.toPath()));
-    }
-
-    public static Dex2jar from(InputStream in) throws IOException {
-        return from(new DexFileReader(in));
-    }
-
-    public static Dex2jar from(String in) throws IOException {
-        return from(new File(in));
-    }
+public final class Dex2jar {
 
     private DexExceptionHandler exceptionHandler;
 
-    final private BaseDexFileReader reader;
+    private final BaseDexFileReader reader;
+
     private int readerConfig;
+
     private int v3Config;
 
     private Dex2jar(BaseDexFileReader reader) {
@@ -130,24 +93,24 @@ public class Dex2jar {
 
             @Override
             public void optimize(IrMethod irMethod) {
-                T_cleanLabel.transform(irMethod);
-                if (0 != (v3Config & V3.TOPOLOGICAL_SORT)) {
+                T_CLEAN_LABEL.transform(irMethod);
+                /*if (0 != (v3Config & V3.TOPOLOGICAL_SORT)) {
                     // T_topologicalSort.transform(irMethod);
+                }*/
+                T_DEAD_CODE.transform(irMethod);
+                T_REMOVE_LOCAL.transform(irMethod);
+                T_REMOVE_CONST.transform(irMethod);
+                T_ZERO.transform(irMethod);
+                if (T_NPE.transformReportChanged(irMethod)) {
+                    T_DEAD_CODE.transform(irMethod);
+                    T_REMOVE_LOCAL.transform(irMethod);
+                    T_REMOVE_CONST.transform(irMethod);
                 }
-                T_deadCode.transform(irMethod);
-                T_removeLocal.transform(irMethod);
-                T_removeConst.transform(irMethod);
-                T_zero.transform(irMethod);
-                if (T_npe.transformReportChanged(irMethod)) {
-                    T_deadCode.transform(irMethod);
-                    T_removeLocal.transform(irMethod);
-                    T_removeConst.transform(irMethod);
-                }
-                T_new.transform(irMethod);
-                T_fillArray.transform(irMethod);
-                T_agg.transform(irMethod);
-                T_multiArray.transform(irMethod);
-                T_voidInvoke.transform(irMethod);
+                T_NEW.transform(irMethod);
+                T_FILL_ARRAY.transform(irMethod);
+                T_AGG.transform(irMethod);
+                T_MULTI_ARRAY.transform(irMethod);
+                T_VOID_INVOKE.transform(irMethod);
                 if (0 != (v3Config & V3.PRINT_IR)) {
                     int i = 0;
                     for (Stmt p : irMethod.stmts) {
@@ -158,10 +121,10 @@ public class Dex2jar {
                     }
                     System.out.println(irMethod);
                 }
-                T_type.transform(irMethod);
-                T_unssa.transform(irMethod);
-                T_ir2jRegAssign.transform(irMethod);
-                T_trimEx.transform(irMethod);
+                T_TYPE.transform(irMethod);
+                T_UNSSA.transform(irMethod);
+                T_IR_2_J_REG_ASSIGN.transform(irMethod);
+                T_TRIM_EX.transform(irMethod);
             }
 
             @Override
@@ -303,4 +266,29 @@ public class Dex2jar {
         }
         return this;
     }
+
+    public static Dex2jar from(byte[] in) throws IOException {
+        return from(new DexFileReader(ZipUtil.readDex(in)));
+    }
+
+    public static Dex2jar from(ByteBuffer in) {
+        return from(new DexFileReader(in));
+    }
+
+    public static Dex2jar from(BaseDexFileReader reader) {
+        return new Dex2jar(reader);
+    }
+
+    public static Dex2jar from(File in) throws IOException {
+        return from(Files.readAllBytes(in.toPath()));
+    }
+
+    public static Dex2jar from(InputStream in) throws IOException {
+        return from(new DexFileReader(in));
+    }
+
+    public static Dex2jar from(String in) throws IOException {
+        return from(new File(in));
+    }
+
 }

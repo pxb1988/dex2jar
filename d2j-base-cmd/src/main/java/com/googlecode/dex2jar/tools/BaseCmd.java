@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.tools;
 
 import java.io.File;
@@ -43,6 +27,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public abstract class BaseCmd {
+
     public static String getBaseName(String fn) {
         int x = fn.lastIndexOf('.');
         return x >= 0 ? fn.substring(0, x) : fn;
@@ -53,9 +38,11 @@ public abstract class BaseCmd {
     }
 
     public interface FileVisitorX {
+
         // change the relative from Path to String
         // java.nio.file.ProviderMismatchException on jdk8
         void visitFile(Path file, String relative) throws IOException;
+
     }
 
     public static void walkFileTreeX(final Path base, final FileVisitorX fv) throws IOException {
@@ -129,6 +116,7 @@ public abstract class BaseCmd {
     @Retention(value = RetentionPolicy.RUNTIME)
     @Target(value = {ElementType.FIELD})
     public @interface Opt {
+
         String argName() default "";
 
         String description() default "";
@@ -140,15 +128,23 @@ public abstract class BaseCmd {
         String opt() default "";
 
         boolean required() default false;
+
     }
 
-    static protected class Option implements Comparable<Option> {
+    protected static class Option implements Comparable<Option> {
+
         public String argName = "arg";
+
         public String description;
+
         public Field field;
+
         public boolean hasArg = true;
+
         public String longOpt;
+
         public String opt;
+
         public boolean required = false;
 
         @Override
@@ -212,7 +208,9 @@ public abstract class BaseCmd {
     private String cmdLineSyntax;
 
     private String cmdName;
+
     private String desc;
+
     private String onlineHelp;
 
     protected Map<String, Option> optMap = new HashMap<>();
@@ -221,6 +219,7 @@ public abstract class BaseCmd {
     private boolean printHelp = false;
 
     protected String[] remainingArgs;
+
     protected String[] originalArgs;
 
     public BaseCmd() {
@@ -447,7 +446,7 @@ public abstract class BaseCmd {
             if (needArgOpt != null) {
                 needArgOpt.field.set(this, convert(s, needArgOpt.field.getType()));
                 needArgOpt = null;
-            } else if (s.startsWith("-")) {// it's a short or long option
+            } else if (s.startsWith("-")) { // it's a short or long option
                 Option opt = optMap.get(s);
                 requiredOpts.remove(opt);
                 if (opt == null) {
@@ -529,13 +528,13 @@ public abstract class BaseCmd {
                 sb.append(" <").append(option.argName).append(">");
             }
             String desc = option.description;
-            if (desc == null || desc.length() == 0) {// no description
+            if (desc == null || desc.length() == 0) { // no description
                 out.println(sb);
             } else {
                 for (int i = palength - sb.length(); i > 0; i--) {
                     sb.append(' ');
                 }
-                if (sb.length() > maxPaLength) {// to huge part A
+                if (sb.length() > maxPaLength) { // to huge part A
                     out.println(sb);
                     sb.setLength(0);
                     for (int i = 0; i < palength; i++) {
@@ -544,7 +543,7 @@ public abstract class BaseCmd {
                 }
                 int nextStart = 0;
                 while (nextStart < desc.length()) {
-                    if (desc.length() - nextStart < pblength) {// can put in one line
+                    if (desc.length() - nextStart < pblength) { // can put in one line
                         sb.append(desc.substring(nextStart));
                         out.println(sb);
                         nextStart = desc.length();
@@ -581,4 +580,5 @@ public abstract class BaseCmd {
         }
         out.flush();
     }
+
 }

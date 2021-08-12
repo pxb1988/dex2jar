@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2015 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
@@ -47,8 +31,10 @@ import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
+// CHECKSTYLE:OFF
+
 /**
- * 1. Replace class A to another class B, include superclass, new for
+ * 1. Replace class A by another class B, include superclass, new for
  * <p/>
  * <pre>
  *     class Test1 extends A ...
@@ -119,8 +105,13 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
  *     }
  * </pre>
  */
+
+// CHECKSTYLE:ON
+
 public class InvocationWeaver extends BaseWeaver implements Opcodes {
+
     private static final Type OBJECT_TYPE = Type.getType(Object.class);
+
     private final Remapper remapper = new Remapper() {
 
         @Override
@@ -133,7 +124,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
         }
     };
 
-    static private void box(Type arg, MethodVisitor mv) {
+    private static void box(Type arg, MethodVisitor mv) {
         switch (arg.getSort()) {
         case Type.OBJECT:
         case Type.ARRAY:
@@ -165,10 +156,12 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
         case Type.VOID:
             mv.visitInsn(ACONST_NULL);
             break;
+        default:
+            break;
         }
     }
 
-    static private void unBox(Type orgRet, Type nRet, MethodVisitor mv) {
+    private static void unBox(Type orgRet, Type nRet, MethodVisitor mv) {
         if (orgRet.equals(nRet)) {
             return;
         }
@@ -214,6 +207,8 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
         case Type.BOOLEAN:
             mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
             mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+            break;
+        default:
             break;
         }
     }
@@ -397,7 +392,8 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                             MethodVisitor rmv = wrap(superMethodVisitor(newAccess, t1.name, desc, null, null));
                             if (rmv != null) {
                                 rmv.visitCode();
-                                int n, i;
+                                int n;
+                                int i;
                                 n = tryCatchBlocks == null ? 0 : tryCatchBlocks.size();
 
                                 for (i = 0; i < n; ++i) {
@@ -429,7 +425,8 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             }
 
             class ReplaceMethodVisitor extends MethodVisitor {
-                public ReplaceMethodVisitor(MethodVisitor mv) {
+
+                ReplaceMethodVisitor(MethodVisitor mv) {
                     super(Constants.ASM_VERSION, mv);
                 }
 
@@ -485,6 +482,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                         super.visitMethodInsn(opcode, owner, name, desc, isInterface);
                     }
                 }
+
             }
 
         };
@@ -516,12 +514,12 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                             baos.flush();
                             Files.write(targetPath, baos.toByteArray());
                         }
-                    } else if (relative.endsWith(".DSA") || relative.endsWith(".RSA") || relative.endsWith(".SF")
-                            || relative.endsWith(".ECDSA")) {
-                        // ignored
-                    } else {
+                    } else if (!relative.endsWith(".DSA") && !relative.endsWith(".RSA")
+                            && !relative.endsWith(".SF") && !relative.endsWith(".ECDSA")) {
                         Files.copy(file, targetPath);
-                    }
+                    } /* else {
+                        // ignored
+                    }*/
                 } else {
                     Files.copy(file, targetPath);
                 }
@@ -643,7 +641,9 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
     }
 
     interface CB {
+
         String getKey(MtdInfo mtd);
+
     }
 
     private void genSwitchMethod(ClassVisitor cw, String typeName, String methodName, CB callback) {

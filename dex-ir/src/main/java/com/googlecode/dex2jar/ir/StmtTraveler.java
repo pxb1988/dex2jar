@@ -6,12 +6,14 @@ import com.googlecode.dex2jar.ir.stmt.StmtList;
 import java.util.Iterator;
 
 public class StmtTraveler {
+
     public void travel(IrMethod method) {
         travel(method.stmts);
     }
 
     public void travel(StmtList stmts) {
-        for (Iterator<Stmt> it = stmts.iterator(); it.hasNext(); ) {
+        Iterator<Stmt> it = stmts.iterator();
+        while (it.hasNext()) {
             Stmt stmt = it.next();
             Stmt n = travel(stmt);
             if (n != stmt) {
@@ -23,8 +25,6 @@ public class StmtTraveler {
 
     public Stmt travel(Stmt stmt) {
         switch (stmt.et) {
-        case E0:
-            break;
         case E1:
             stmt.setOp(travel(stmt.getOp()));
             break;
@@ -38,14 +38,14 @@ public class StmtTraveler {
                 ops[i] = travel(ops[i]);
             }
             break;
+        default:
+            break;
         }
         return stmt;
     }
 
     public Value travel(Value op) {
         switch (op.et) {
-        case E0:
-            break;
         case E1:
             op.setOp(travel(op.getOp()));
             break;
@@ -59,8 +59,11 @@ public class StmtTraveler {
                 ops[i] = travel(ops[i]);
             }
             break;
+        default:
+            break;
         }
 
         return op;
     }
+
 }

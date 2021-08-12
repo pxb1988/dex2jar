@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.ET;
@@ -61,7 +45,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmt.ST.VOID_INVOKE;
  */
 public class NewTransformer implements Transformer {
 
-    static Vx IGNORED = new Vx(null, true);
+    static final Vx IGNORED = new Vx(null, true);
 
     @Override
     public void transform(IrMethod method) {
@@ -105,7 +89,8 @@ public class NewTransformer implements Transformer {
     }
 
     void replaceAST(IrMethod method) {
-        for (Iterator<Stmt> it = method.stmts.iterator(); it.hasNext(); ) {
+        Iterator<Stmt> it = method.stmts.iterator();
+        while (it.hasNext()) {
             Stmt p = it.next();
 
             InvokeExpr ie = findInvokeExpr(p, null);
@@ -132,7 +117,7 @@ public class NewTransformer implements Transformer {
 
         Local[] locals = new Local[size];
         for (Local local : method.locals) {
-            locals[local._ls_index] = local;
+            locals[local.lsIndex] = local;
         }
 
         // find all locals to delete
@@ -146,7 +131,8 @@ public class NewTransformer implements Transformer {
             }
         }
         // delete the locals
-        for (Iterator<Stmt> it = method.stmts.iterator(); it.hasNext(); ) {
+        Iterator<Stmt> it = method.stmts.iterator();
+        while (it.hasNext()) {
             Stmt p = it.next();
             if (p.st == ASSIGN && p.getOp1().vt == LOCAL) {
                 if (toDelete.contains((Local) p.getOp1())) {
@@ -179,8 +165,8 @@ public class NewTransformer implements Transformer {
         Cfg.dfs(method.stmts, new Cfg.FrameVisitor<Vx[]>() {
 
             boolean keepFrame = false;
-            Vx[] tmp = new Vx[size];
-            StmtTraveler stmtTraveler = new StmtTraveler() {
+            final Vx[] tmp = new Vx[size];
+            final StmtTraveler stmtTraveler = new StmtTraveler() {
                 Stmt current;
 
                 @Override
@@ -192,14 +178,14 @@ public class NewTransformer implements Transformer {
                             Local op1 = (Local) stmt.getOp1();
                             if (stmt.getOp2().vt == LOCAL) {
                                 Local op2 = (Local) stmt.getOp2();
-                                tmp[op1._ls_index] = tmp[op2._ls_index];
+                                tmp[op1.lsIndex] = tmp[op2.lsIndex];
                                 return stmt;
                             } else if (stmt.getOp2().vt == NEW) {
-                                tmp[op1._ls_index] = new Vx(init.get(op1), false);
+                                tmp[op1.lsIndex] = new Vx(init.get(op1), false);
                                 return stmt;
                             } else {
                                 travel(stmt.getOp2());
-                                tmp[op1._ls_index] = IGNORED;
+                                tmp[op1.lsIndex] = IGNORED;
                                 return stmt;
                             }
                         }
@@ -209,7 +195,7 @@ public class NewTransformer implements Transformer {
                         if (labelStmt.phis != null) {
                             for (AssignStmt phi : labelStmt.phis) {
                                 Local local = (Local) phi.getOp1();
-                                tmp[local._ls_index] = IGNORED;
+                                tmp[local.lsIndex] = IGNORED;
                             }
                         }
                         return stmt;
@@ -226,7 +212,7 @@ public class NewTransformer implements Transformer {
                                 Value thiz = op.getOps()[0];
                                 if (thiz.vt == LOCAL) {
                                     Local local = (Local) thiz;
-                                    Vx vx = tmp[local._ls_index];
+                                    Vx vx = tmp[local.lsIndex];
                                     TObject object = vx.obj;
                                     if (object != null) {
                                         if (object.invokeStmt != null) {
@@ -291,7 +277,7 @@ public class NewTransformer implements Transformer {
                         for (AssignStmt phi : phis) {
                             for (Value value : phi.getOp2().getOps()) {
                                 Local local = (Local) value;
-                                int i = local._ls_index;
+                                int i = local.lsIndex;
                                 Vx s = srcFrame[i];
                                 Vx d = distFrame[i];
                                 if (d != null) {
@@ -326,7 +312,7 @@ public class NewTransformer implements Transformer {
                 keepFrame = false;
                 System.arraycopy(frame, 0, tmp, 0, size);
                 stmtTraveler.travel(stmt);
-                if (stmt._cfg_froms.size() > 1) {
+                if (stmt.cfgFroms.size() > 1) {
                     keepFrame = true;
                 }
 
@@ -337,19 +323,20 @@ public class NewTransformer implements Transformer {
             }
 
             void use(Local local) {
-                Vx vx = tmp[local._ls_index];
+                Vx vx = tmp[local.lsIndex];
                 if (!vx.init) {
                     TObject object = vx.obj;
                     if (object != null) {
                         object.useBeforeInit = true;
                     }
 
-                    tmp[local._ls_index] = IGNORED;
+                    tmp[local.lsIndex] = IGNORED;
                 }
 
             }
         });
-        for (Iterator<Map.Entry<Local, TObject>> iterator = init.entrySet().iterator(); iterator.hasNext(); ) {
+        Iterator<Map.Entry<Local, TObject>> iterator = init.entrySet().iterator();
+        while (iterator.hasNext()) {
             Map.Entry<Local, TObject> e = iterator.next();
             boolean keep = true;
             TObject obj = e.getValue();
@@ -377,27 +364,33 @@ public class NewTransformer implements Transformer {
     }
 
     static class TObject {
+
         public Stmt invokeStmt;
+
         Local local;
+
         boolean useBeforeInit;
-        private AssignStmt init;
+
+        private final AssignStmt init;
 
         TObject(Local local, AssignStmt init) {
             this.local = local;
             this.init = init;
         }
+
     }
 
     static class Vx {
+
         boolean init;
+
         TObject obj;
 
-
-        public Vx(TObject obj, boolean init) {
+        Vx(TObject obj, boolean init) {
             this.obj = obj;
             this.init = init;
         }
-    }
 
+    }
 
 }

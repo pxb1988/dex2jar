@@ -22,6 +22,7 @@ import com.googlecode.d2j.Visibility;
  * @author bob
  */
 public class DexFieldVisitor implements DexAnnotationAble {
+
     protected DexFieldVisitor visitor;
 
     public DexFieldVisitor(DexFieldVisitor visitor) {
@@ -45,4 +46,5 @@ public class DexFieldVisitor implements DexAnnotationAble {
         }
         return visitor.visitAnnotation(name, visibility);
     }
+
 }

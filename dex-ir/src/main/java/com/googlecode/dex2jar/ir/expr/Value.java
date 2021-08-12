@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.expr;
 
 import com.googlecode.dex2jar.ir.ET;
@@ -25,6 +10,7 @@ import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
  * @version $Rev$
  */
 public abstract class Value implements Cloneable {
+
     public void setOp(Value op) {
     }
 
@@ -42,7 +28,7 @@ public abstract class Value implements Cloneable {
      *
      * @see ET#E0
      */
-    public static abstract class E0Expr extends Value {
+    public abstract static class E0Expr extends Value {
 
         public E0Expr(VT vt) {
             super(vt, ET.E0);
@@ -55,7 +41,7 @@ public abstract class Value implements Cloneable {
      *
      * @see ET#E1
      */
-    public static abstract class E1Expr extends Value {
+    public abstract static class E1Expr extends Value {
 
         public Value op;
 
@@ -80,6 +66,7 @@ public abstract class Value implements Cloneable {
         protected void releaseMemory() {
             op = null;
         }
+
     }
 
     /**
@@ -87,9 +74,10 @@ public abstract class Value implements Cloneable {
      *
      * @see ET#E2
      */
-    public static abstract class E2Expr extends Value {
+    public abstract static class E2Expr extends Value {
 
         public Value op1;
+
         public Value op2;
 
         public void setOp1(Value op1) {
@@ -118,8 +106,10 @@ public abstract class Value implements Cloneable {
 
         @Override
         protected void releaseMemory() {
-            op1 = op2 = null;
+            op1 = null;
+            op2 = null;
         }
+
     }
 
     /**
@@ -127,7 +117,7 @@ public abstract class Value implements Cloneable {
      *
      * @see ET#En
      */
-    public static abstract class EnExpr extends Value {
+    public abstract static class EnExpr extends Value {
 
         public Value[] ops;
 
@@ -165,15 +155,17 @@ public abstract class Value implements Cloneable {
         protected void releaseMemory() {
             ops = null;
         }
+
     }
 
     public static final int CAN_THROW = 1 << 3;
+
     public static final int MAY_THROW = 1 << 4;
 
     /**
      * Value Type
      */
-    public static enum VT {
+    public enum VT {
 
         ADD("+", MAY_THROW), AND("&", MAY_THROW), ARRAY(MAY_THROW), CAST(MAY_THROW), CHECK_CAST(CAN_THROW),
         CONSTANT(0), DCMPG(
@@ -192,7 +184,9 @@ public abstract class Value implements Cloneable {
                 0), PHI(0), REM("%", MAY_THROW), SHL("<<", MAY_THROW), SHR(">>", MAY_THROW), STATIC_FIELD(CAN_THROW),
         SUB(
                 "-", MAY_THROW), THIS_REF(MAY_THROW), USHR(">>>", MAY_THROW), XOR("^", MAY_THROW);
+
         private String name;
+
         private int flags;
 
         VT(int flags) {
@@ -216,21 +210,24 @@ public abstract class Value implements Cloneable {
         public boolean mayThrow() {
             return MAY_THROW == flags;
         }
+
     }
 
     /**
      * The number of argument
      */
-    final public ET et;
+    public final ET et;
 
     private Value next;
 
     public String valueType;
+
     public Object tag;
+
     /**
      * Value Type
      */
-    final public VT vt;
+    public final VT vt;
 
     /**
      * @param vt Value Type
@@ -282,4 +279,5 @@ public abstract class Value implements Cloneable {
         }
         return a;
     }
+
 }

@@ -5,6 +5,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 
 public class StmtSearcher {
+
     public void travel(StmtList stmts) {
         for (Stmt stmt : stmts) {
             travel(stmt);
@@ -13,8 +14,6 @@ public class StmtSearcher {
 
     public void travel(Stmt stmt) {
         switch (stmt.et) {
-        case E0:
-            break;
         case E1:
             travel(stmt.getOp());
             break;
@@ -28,13 +27,13 @@ public class StmtSearcher {
                 travel(op);
             }
             break;
+        default:
+            break;
         }
     }
 
     public void travel(Value op) {
         switch (op.et) {
-        case E0:
-            break;
         case E1:
             travel(op.getOp());
             break;
@@ -48,6 +47,9 @@ public class StmtSearcher {
                 travel(op1);
             }
             break;
+        default:
+            break;
         }
     }
+
 }

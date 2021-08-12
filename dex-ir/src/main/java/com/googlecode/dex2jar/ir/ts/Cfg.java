@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.ET;
@@ -40,7 +25,11 @@ import java.util.TreeSet;
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
-public class Cfg {
+public final class Cfg {
+
+    private Cfg() {
+        throw new UnsupportedOperationException();
+    }
 
     public static int[] countLocalReads(IrMethod method) {
         int size = reIndexLocal(method);
@@ -53,7 +42,7 @@ public class Cfg {
 
             @Override
             public Value onUse(Local v) {
-                readCounts[v._ls_index]++;
+                readCounts[v.lsIndex]++;
                 return v;
             }
         }, true);
@@ -75,11 +64,13 @@ public class Cfg {
     }
 
     public interface FrameVisitor<T> {
+
         T merge(T srcFrame, T distFrame, Stmt src, Stmt dist);
 
         T initFirstFrame(Stmt first);
 
         T exec(T frame, Stmt stmt);
+
     }
 
 
@@ -129,10 +120,10 @@ public class Cfg {
         for (Stmt st : jm.stmts) {
             st.frame = null;
             st.exceptionHandlers = null;
-            if (st._cfg_froms == null) {
-                st._cfg_froms = new TreeSet<>(jm.stmts);
+            if (st.cfgFroms == null) {
+                st.cfgFroms = new TreeSet<>(jm.stmts);
             } else {
-                st._cfg_froms.clear();
+                st.cfgFroms.clear();
             }
         }
 
@@ -174,7 +165,9 @@ public class Cfg {
     }
 
     public interface DfsVisitor {
+
         void onVisit(Stmt p);
+
     }
 
     public static void dfsVisit(IrMethod method, DfsVisitor visitor) {
@@ -229,14 +222,14 @@ public class Cfg {
         Stack<Stmt> stack = new Stack<>();
         Stmt first = stmts.getFirst();
         Stmt nop = null;
-        if (first.st == ST.LABEL && first._cfg_froms.size() > 0) {
+        if (first.st == ST.LABEL && first.cfgFroms.size() > 0) {
             nop = Stmts.nNop();
             // for
             // L0:
             // ...
             // GOTO L0:
             // make sure the first Label has one more super
-            first._cfg_froms.add(nop);
+            first.cfgFroms.add(nop);
         }
         stack.add(first);
         first.frame = sv.initFirstFrame(first);
@@ -283,23 +276,27 @@ public class Cfg {
         }
 
         if (nop != null) {
-            first._cfg_froms.remove(nop);
+            first.cfgFroms.remove(nop);
         }
     }
 
     private static void link(Stmt from, Stmt to) {
-        if (to == null) {// last stmt is a LabelStmt
+        if (to == null) { // last stmt is a LabelStmt
             return;
         }
-        to._cfg_froms.add(from);
+        to.cfgFroms.add(from);
     }
 
     public interface OnUseCallBack {
+
         Value onUse(Local v);
+
     }
 
     public interface OnAssignCallBack {
+
         Value onAssign(Local v, AssignStmt as);
+
     }
 
     public interface TravelCallBack extends OnUseCallBack, OnAssignCallBack {
@@ -326,6 +323,8 @@ public class Cfg {
                 ops[i] = travelMod(ops[i], callback);
             }
             break;
+        default:
+            break;
         }
         return value;
     }
@@ -349,6 +348,8 @@ public class Cfg {
             for (Value op : ops) {
                 travel(op, callback);
             }
+            break;
+        default:
             break;
         }
     }
@@ -379,6 +380,8 @@ public class Cfg {
                 }
             }
             break;
+        default:
+            break;
         }
     }
 
@@ -408,6 +411,8 @@ public class Cfg {
                 }
             }
             break;
+        default:
+            break;
         }
     }
 
@@ -429,7 +434,7 @@ public class Cfg {
     public static int reIndexLocal(IrMethod method) {
         int i = 0;
         for (Local local : method.locals) {
-            local._ls_index = i++;
+            local.lsIndex = i++;
         }
         return i;
     }
@@ -451,4 +456,5 @@ public class Cfg {
             tos.addAll(stmt.exceptionHandlers);
         }
     }
+
 }

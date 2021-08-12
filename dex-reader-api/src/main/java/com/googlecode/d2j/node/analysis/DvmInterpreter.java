@@ -54,4 +54,5 @@ public abstract class DvmInterpreter<V> {
      * RETURN*
      */
     public abstract void returnOperation(DexStmtNode insn, V value);
+
 }

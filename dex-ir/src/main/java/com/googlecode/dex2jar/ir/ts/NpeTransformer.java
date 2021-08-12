@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2014 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -32,12 +16,17 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
  * Replace MUST be 'divide by zero' stmt to 'throw new ArithmeticException("divide by zero")'
  */
 public class NpeTransformer extends StatedTransformer {
+
     private static class MustThrowException extends RuntimeException {
+
         private static final long serialVersionUID = 7501197864919305696L;
+
     }
 
     private static final MustThrowException NPE = new MustThrowException();
+
     private static final MustThrowException DIVE = new MustThrowException();
+
     private static final MustThrowException NEGATIVE_ARRAY_SIZE = new MustThrowException();
 
     @Override
@@ -119,7 +108,8 @@ public class NpeTransformer extends StatedTransformer {
             }
 
         };
-        for (Stmt p = method.stmts.getFirst(); p != null; ) {
+        Stmt p = method.stmts.getFirst();
+        while (p != null) {
             try {
                 st.travel(p);
                 p = p.getNext();
@@ -251,6 +241,9 @@ public class NpeTransformer extends StatedTransformer {
                 }
                 break;
             case En:
+                break;
+            default:
+                break;
             }
         } catch (MustThrowException e) {
             if (e == NPE) {
@@ -272,7 +265,7 @@ public class NpeTransformer extends StatedTransformer {
     static boolean isNull(Value v) {
         if (v.vt == Value.VT.CONSTANT) {
             Constant cst = (Constant) v;
-            if (Constant.Null.equals(cst.value)) {
+            if (Constant.NULL.equals(cst.value)) {
                 return true;
             } else if (cst.value instanceof Number) {
                 return ((Number) cst.value).intValue() == 0;
@@ -280,4 +273,5 @@ public class NpeTransformer extends StatedTransformer {
         }
         return false;
     }
+
 }

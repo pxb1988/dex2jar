@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2015 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.d2j.DexConstants;
@@ -39,8 +23,11 @@ import org.objectweb.asm.Type;
  * 3. Replace Methods Implementations
  */
 public class DexWeaver extends BaseWeaver {
+
     interface CB {
+
         String getKey(Method mtd);
+
     }
 
     public String buildInvocationClz(DexFileVisitor dfv) {
@@ -189,9 +176,9 @@ public class DexWeaver extends BaseWeaver {
     public DexFileVisitor wrap(DexFileVisitor dcv) {
         return dcv == null ? null : new DexFileVisitor(dcv) {
             @Override
-            public DexClassVisitor visit(int access_flags, String className, String superClass,
+            public DexClassVisitor visit(int accessFlags, String className, String superClass,
                                          String[] interfaceNames) {
-                return wrap(className, super.visit(access_flags, className, superClass, interfaceNames));
+                return wrap(className, super.visit(accessFlags, className, superClass, interfaceNames));
             }
         };
     }
@@ -226,8 +213,9 @@ public class DexWeaver extends BaseWeaver {
                             }
                             generateMtdACode(opcode, t, mapTo, dmv, src);
 
-                            int newAccess =
-                                    (access & ~(DexConstants.ACC_PRIVATE | DexConstants.ACC_PROTECTED)) | DexConstants.ACC_PUBLIC; // make sure public
+                            int newAccess = (access
+                                    & ~(DexConstants.ACC_PRIVATE | DexConstants.ACC_PROTECTED))
+                                    | DexConstants.ACC_PUBLIC; // make sure public
                             code.accept(wrap(superVisitDexMethod(newAccess, t), dcv));
                         }
                     };
@@ -387,7 +375,7 @@ public class DexWeaver extends BaseWeaver {
                 }
                 dcv.visitRegister(totalRegs);
                 int[] args = new int[countArgs(t) + (isStatic ? 0 : 1)];
-                int args_index = 0;
+                int argsIndex = 0;
                 int i = 1;
                 if (!isStatic) {
                     if (i != argStart) {
@@ -396,7 +384,7 @@ public class DexWeaver extends BaseWeaver {
                     if (!isSuper) {
                         dcv.visitTypeStmt(Op.CHECK_CAST, i, -1, t.getOwner());
                     }
-                    args[args_index++] = i;
+                    args[argsIndex++] = i;
                     i++;
                     argStart++;
                 }
@@ -407,9 +395,9 @@ public class DexWeaver extends BaseWeaver {
                     dcv.visitConstStmt(Op.CONST, 0, i1);
                     dcv.visitStmt3R(Op.AGET_OBJECT, i, argStart, 0);
                     unbox(argType, i, dcv);
-                    args[args_index++] = i;
+                    args[argsIndex++] = i;
                     if (argType.charAt(0) == 'J' || argType.charAt(0) == 'D') {
-                        args[args_index++] = i + 1;
+                        args[argsIndex++] = i + 1;
                         i += 2;
                     } else {
                         i += 1;
@@ -524,6 +512,8 @@ public class DexWeaver extends BaseWeaver {
                     i}, new Method("Ljava/lang/Long;", "longValue", new String[]{}, "J"));
             dcv.visitStmt1R(Op.MOVE_RESULT_WIDE, i);
             break;
+        default:
+            break;
         }
     }
 
@@ -589,6 +579,8 @@ public class DexWeaver extends BaseWeaver {
                     "J"}, "Ljava/lang/Long;"));
             dcv.visitStmt1R(Op.MOVE_RESULT_OBJECT, to);
             break;
+        default:
+            break;
         }
     }
 
@@ -608,6 +600,5 @@ public class DexWeaver extends BaseWeaver {
         }
         return i;
     }
-
 
 }

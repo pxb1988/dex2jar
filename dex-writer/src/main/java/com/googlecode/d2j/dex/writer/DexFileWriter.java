@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex.writer;
 
 import com.googlecode.d2j.dex.writer.io.ByteBufferOut;
@@ -53,12 +37,16 @@ import java.util.List;
 import java.util.zip.Adler32;
 
 public class DexFileWriter extends DexFileVisitor {
+
     private static final boolean DEBUG = false;
+
     MapListItem mapItem;
+
     HeadItem headItem;
+
     public ConstPool cp = new ConstPool();
 
-    static private DataOut wrapDumpOut(final DataOut out0) {
+    private static DataOut wrapDumpOut(final DataOut out0) {
         return (DataOut) Proxy.newProxyInstance(
                 DexFileWriter.class.getClassLoader(),
                 new Class[]{DataOut.class}, new InvocationHandler() {
@@ -76,7 +64,7 @@ public class DexFileWriter extends DexFileVisitor {
                                 sb.append("  ");
                             }
                             sb.append(String.format("%05d ", out0.offset()));
-                            sb.append(method.getName() + " [");
+                            sb.append(method.getName()).append(" [");
                             for (Object arg : args) {
                                 if (arg instanceof byte[]) {
                                     byte[] data = (byte[]) arg;
@@ -196,19 +184,18 @@ public class DexFileWriter extends DexFileVisitor {
         List<SectionItem<?>> dataSectionItems = new ArrayList<>();
         {
             dataSectionItems.add(mapSection); // data section
-            dataSectionItems.add(typeListSection);// data section
-            dataSectionItems.add(annotationSetRefListItemSection);// data
+            dataSectionItems.add(typeListSection); // data section
+            dataSectionItems.add(annotationSetRefListItemSection); // data
             // section
-            dataSectionItems.add(annotationSetSection);// data section
+            dataSectionItems.add(annotationSetSection); // data section
             // make codeItem Before classDataItem
-            dataSectionItems.add(codeItemSection);// data section
-            dataSectionItems.add(classDataItemSection);// data section
-            dataSectionItems.add(stringDataItemSection);// data section
-            dataSectionItems.add(debugInfoSection);// data section
-            dataSectionItems.add(annotationItemSection);// data section
-            dataSectionItems.add(encodedArrayItemSection);// data section
-            dataSectionItems.add(annotationsDirectoryItemSection);// data
-            // section
+            dataSectionItems.add(codeItemSection); // data section
+            dataSectionItems.add(classDataItemSection); // data section
+            dataSectionItems.add(stringDataItemSection); // data section
+            dataSectionItems.add(debugInfoSection); // data section
+            dataSectionItems.add(annotationItemSection); // data section
+            dataSectionItems.add(encodedArrayItemSection); // data section
+            dataSectionItems.add(annotationsDirectoryItemSection); // data section
         }
 
         List<SectionItem<?>> items = mapItem.items;
@@ -246,7 +233,8 @@ public class DexFileWriter extends DexFileVisitor {
         write(out);
 
         if (size != buffer.position()) {
-            throw new RuntimeException("generated different file size, planned " + size + ", but is " + buffer.position());
+            throw new RuntimeException("generated different file size, planned " + size
+                    + ", but is " + buffer.position());
         }
 
         // update the CRC/ sha1 checksum in dex header
@@ -318,10 +306,11 @@ public class DexFileWriter extends DexFileVisitor {
     }
 
     @Override
-    public DexClassVisitor visit(int accessFlag, String name,
+    public DexClassVisitor visit(int accessFlags, String name,
                                  String superClass, String[] itfClass) {
-        ClassDefItem defItem = cp.putClassDefItem(accessFlag, name, superClass,
+        ClassDefItem defItem = cp.putClassDefItem(accessFlags, name, superClass,
                 itfClass);
         return new ClassWriter(defItem, cp);
     }
+
 }

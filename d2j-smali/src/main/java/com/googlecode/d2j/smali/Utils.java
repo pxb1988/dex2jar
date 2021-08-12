@@ -12,7 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Utils implements DexConstants {
+public final class Utils implements DexConstants {
+
+    private Utils() {
+        throw new UnsupportedOperationException();
+    }
 
     public static void doAccept(DexAnnotationVisitor dexAnnotationVisitor, String k, Object value) {
         if (value instanceof ArrayList) {
@@ -76,8 +80,9 @@ public class Utils implements DexConstants {
             return ACC_CONSTRUCTOR;
         case "declared-synchronized":
             return ACC_DECLARED_SYNCHRONIZED;
+        default:
+            return 0;
         }
-        return 0;
     }
 
     public static List<String> listDesc(String desc) {
@@ -138,15 +143,15 @@ public class Utils implements DexConstants {
         return listDesc(s).toArray(new String[0]);
     }
 
-    static public Byte parseByte(String str) {
+    public static Byte parseByte(String str) {
         return (byte) parseInt(str.substring(0, str.length() - 1));
     }
 
-    static public Short parseShort(String str) {
+    public static Short parseShort(String str) {
         return (short) parseInt(str.substring(0, str.length() - 1));
     }
 
-    static public Long parseLong(String str) {
+    public static Long parseLong(String str) {
         int sof = 0;
         int end = str.length() - 1;
         int x = 1;
@@ -163,10 +168,10 @@ public class Utils implements DexConstants {
                 return 0L;
             }
             char c = str.charAt(sof);
-            if (c == 'x' || c == 'X') {// hex
+            if (c == 'x' || c == 'X') { // hex
                 sof++;
                 v = new BigInteger(str.substring(sof, end), 16);
-            } else {// oct
+            } else { // oct
                 v = new BigInteger(str.substring(sof, end), 8);
             }
         } else {
@@ -179,7 +184,7 @@ public class Utils implements DexConstants {
         }
     }
 
-    static public float parseFloat(String str) {
+    public static float parseFloat(String str) {
         str = str.toLowerCase();
         int s = 0;
         float x = 1f;
@@ -203,7 +208,7 @@ public class Utils implements DexConstants {
         return x * Float.parseFloat(str);
     }
 
-    static public double parseDouble(String str) {
+    public static double parseDouble(String str) {
         str = str.toLowerCase();
         int s = 0;
         double x = 1;
@@ -227,7 +232,7 @@ public class Utils implements DexConstants {
         return x * Double.parseDouble(str);
     }
 
-    static public int parseInt(String str, int start, int end) {
+    public static int parseInt(String str, int start, int end) {
         int sof = start;
         int x = 1;
         if (str.charAt(sof) == '+') {
@@ -243,10 +248,10 @@ public class Utils implements DexConstants {
                 return 0;
             }
             char c = str.charAt(sof);
-            if (c == 'x' || c == 'X') {// hex
+            if (c == 'x' || c == 'X') { // hex
                 sof++;
                 v = Long.parseLong(str.substring(sof, end), 16);
-            } else {// oct
+            } else { // oct
                 v = Long.parseLong(str.substring(sof, end), 8);
             }
         } else {
@@ -255,7 +260,7 @@ public class Utils implements DexConstants {
         return (int) (v * x);
     }
 
-    static public int parseInt(String str) {
+    public static int parseInt(String str) {
         return parseInt(str, 0, str.length());
     }
 
@@ -291,7 +296,7 @@ public class Utils implements DexConstants {
         }
     }
 
-    static public Op getOp(String name) {
+    public static Op getOp(String name) {
         return ops.get(name);
     }
 
@@ -304,7 +309,8 @@ public class Utils implements DexConstants {
     }
 
     public static int findString(String str, int start, int end, char dEnd) {
-        for (int i = start; i < end; ) {
+        int i = start;
+        while (i < end) {
             char c = str.charAt(i);
             if (c == '\\') {
                 char d = str.charAt(i + 1);
@@ -352,7 +358,8 @@ public class Utils implements DexConstants {
     public static String unEscape0(String str, int start, int end) {
 
         StringBuilder sb = new StringBuilder();
-        for (int i = start; i < end; ) {
+        int i = start;
+        while (i < end) {
             char c = str.charAt(i);
             if (c == '\\') {
                 char d = str.charAt(i + 1);
@@ -421,7 +428,9 @@ public class Utils implements DexConstants {
     }
 
     public static class Ann {
+
         public String name;
+
         public List<Map.Entry<String, Object>> elements = new ArrayList<>();
 
         public void put(String name, Object value) {
@@ -519,4 +528,5 @@ public class Utils implements DexConstants {
         }
         return parseFieldAndUnescape(unEscapeId(full.substring(0, x)), full.substring(x + 2));
     }
+
 }

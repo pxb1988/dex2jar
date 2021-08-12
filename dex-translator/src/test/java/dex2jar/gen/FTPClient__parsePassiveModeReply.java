@@ -61,7 +61,7 @@ public class FTPClient__parsePassiveModeReply implements Opcodes {
                 DexLabel L2 = new DexLabel();
                 code.visitTryCatch(L0, L1, new DexLabel[]{L2}, new String[]{"Ljava/lang/NumberFormatException;"});
 
-                code.visitConstStmt(CONST, 7, Integer.valueOf(46)); // int: 0x0000002e float:0.000000
+                code.visitConstStmt(CONST, 7, 46); // int: 0x0000002e float:0.000000
                 code.visitConstStmt(CONST_STRING, 8, "Could not parse passive host information.\nServer Reply: ");
 
                 code.visitFieldStmt(SGET_OBJECT, 5, -1, new Field("Lorg/apache/commons/net/ftp/FTPClient;",
@@ -111,7 +111,7 @@ public class FTPClient__parsePassiveModeReply implements Opcodes {
                 code.visitTypeStmt(NEW_INSTANCE, 5, -1, "Ljava/lang/StringBuilder;");
                 code.visitMethodStmt(INVOKE_DIRECT, new int[]{5}, new Method("Ljava/lang/StringBuilder;",
                         "<init>", new String[]{}, "V"));
-                code.visitConstStmt(CONST, 6, Integer.valueOf(0)); // int: 0x00000000 float:0.000000
+                code.visitConstStmt(CONST, 6, 0); // int: 0x00000000 float:0.000000
                 code.visitStmt3R(AGET_OBJECT, 6, 4, 6);
                 code.visitMethodStmt(INVOKE_VIRTUAL, new int[]{5, 6}, new Method("Ljava/lang/StringBuilder;",
                         "append", new String[]{"Ljava/lang/String;"}, "Ljava/lang/StringBuilder;"));
@@ -119,7 +119,7 @@ public class FTPClient__parsePassiveModeReply implements Opcodes {
                 code.visitMethodStmt(INVOKE_VIRTUAL, new int[]{5, 7}, new Method("Ljava/lang/StringBuilder;",
                         "append", new String[]{"C"}, "Ljava/lang/StringBuilder;"));
                 code.visitStmt1R(MOVE_RESULT_OBJECT, 5);
-                code.visitConstStmt(CONST, 6, Integer.valueOf(1)); // int: 0x00000001 float:0.000000
+                code.visitConstStmt(CONST, 6, 1); // int: 0x00000001 float:0.000000
                 code.visitStmt3R(AGET_OBJECT, 6, 4, 6);
                 code.visitMethodStmt(INVOKE_VIRTUAL, new int[]{5, 6}, new Method("Ljava/lang/StringBuilder;",
                         "append", new String[]{"Ljava/lang/String;"}, "Ljava/lang/StringBuilder;"));
@@ -127,7 +127,7 @@ public class FTPClient__parsePassiveModeReply implements Opcodes {
                 code.visitMethodStmt(INVOKE_VIRTUAL, new int[]{5, 7}, new Method("Ljava/lang/StringBuilder;",
                         "append", new String[]{"C"}, "Ljava/lang/StringBuilder;"));
                 code.visitStmt1R(MOVE_RESULT_OBJECT, 5);
-                code.visitConstStmt(CONST, 6, Integer.valueOf(2)); // int: 0x00000002 float:0.000000
+                code.visitConstStmt(CONST, 6, 2); // int: 0x00000002 float:0.000000
                 code.visitStmt3R(AGET_OBJECT, 6, 4, 6);
                 code.visitMethodStmt(INVOKE_VIRTUAL, new int[]{5, 6}, new Method("Ljava/lang/StringBuilder;",
                         "append", new String[]{"Ljava/lang/String;"}, "Ljava/lang/StringBuilder;"));
@@ -135,7 +135,7 @@ public class FTPClient__parsePassiveModeReply implements Opcodes {
                 code.visitMethodStmt(INVOKE_VIRTUAL, new int[]{5, 7}, new Method("Ljava/lang/StringBuilder;",
                         "append", new String[]{"C"}, "Ljava/lang/StringBuilder;"));
                 code.visitStmt1R(MOVE_RESULT_OBJECT, 5);
-                code.visitConstStmt(CONST, 6, Integer.valueOf(3)); // int: 0x00000003 float:0.000000
+                code.visitConstStmt(CONST, 6, 3); // int: 0x00000003 float:0.000000
                 code.visitStmt3R(AGET_OBJECT, 6, 4, 6);
                 code.visitMethodStmt(INVOKE_VIRTUAL, new int[]{5, 6}, new Method("Ljava/lang/StringBuilder;",
                         "append", new String[]{"Ljava/lang/String;"}, "Ljava/lang/StringBuilder;"));
@@ -145,14 +145,14 @@ public class FTPClient__parsePassiveModeReply implements Opcodes {
                 code.visitStmt1R(MOVE_RESULT, 5);
                 code.visitFieldStmt(IPUT, 5, 9, new Field("Lorg/apache/commons/net/ftp/FTPClient;", "__passiveHost",
                         "Ljava/lang/String;"));
-                code.visitConstStmt(CONST, 5, Integer.valueOf(4)); // int: 0x00000004 float:0.000000
+                code.visitConstStmt(CONST, 5, 4); // int: 0x00000004 float:0.000000
                 code.visitLabel(L0);
                 code.visitStmt3R(AGET_OBJECT, 5, 4, 5);
                 code.visitMethodStmt(INVOKE_STATIC, new int[]{5}, new Method("Ljava/lang/Integer;", "parseInt",
                         new String[]{"Ljava/lang/String;"}, "I"));
                 code.visitStmt1R(MOVE_RESULT, 2);
 
-                code.visitConstStmt(CONST, 5, Integer.valueOf(5)); // int: 0x00000005 float:0.000000
+                code.visitConstStmt(CONST, 5, 5); // int: 0x00000005 float:0.000000
                 code.visitStmt3R(AGET_OBJECT, 5, 4, 5);
                 code.visitMethodStmt(INVOKE_STATIC, new int[]{5}, new Method("Ljava/lang/Integer;", "parseInt",
                         new String[]{"Ljava/lang/String;"}, "I"));

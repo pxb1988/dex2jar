@@ -1,5 +1,7 @@
 package com.googlecode.d2j.signapk;
 
+// CHECKSTYLE:OFF
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
@@ -10,9 +12,11 @@ import sun.security.pkcs.PKCS7;
 import sun.security.pkcs.SignerInfo;
 import sun.security.x509.AlgorithmId;
 import sun.security.x509.X500Name;
+// CHECKSTYLE:ON
 
 public class SunJarSignImpl extends AbstractJarSign {
-    final protected X509Certificate cert;
+
+    protected final X509Certificate cert;
 
     public SunJarSignImpl(X509Certificate cert, PrivateKey privateKey) {
         super(privateKey);
@@ -36,4 +40,5 @@ public class SunJarSignImpl extends AbstractJarSign {
             throw new RuntimeException(e);
         }
     }
+
 }

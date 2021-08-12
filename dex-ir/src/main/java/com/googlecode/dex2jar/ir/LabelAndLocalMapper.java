@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LabelAndLocalMapper {
+
     Map<LabelStmt, LabelStmt> labels = new HashMap<>();
+
     Map<Local, Local> locals = new HashMap<>();
 
     public LabelStmt map(LabelStmt label) {
@@ -27,4 +29,5 @@ public class LabelAndLocalMapper {
         }
         return nTarget;
     }
+
 }

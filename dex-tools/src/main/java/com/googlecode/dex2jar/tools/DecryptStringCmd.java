@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.tools;
 
 import com.googlecode.d2j.converter.IR2JConverter;
@@ -72,51 +56,66 @@ import org.objectweb.asm.tree.MethodNode;
 @Syntax(cmd = "d2j-decrypt-string", syntax = "[options] <jar>", desc = "Decrypt in class file", onlineHelp = "https"
         + "://sourceforge.net/p/dex2jar/wiki/DecryptStrings\nhttps://bitbucket.org/pxb1988/dex2jar/wiki/DecryptStrings")
 public class DecryptStringCmd extends BaseCmd {
+
     public static void main(String... args) {
         new DecryptStringCmd().doMain(args);
     }
 
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
+
     @Opt(opt = "o", longOpt = "output", description = "output of .jar files, default is "
             + "$current_dir/[jar-name]-decrypted.jar", argName = "out")
     private Path output;
+
     @Opt(opt = "m", longOpt = "methods", description = "a file contain a list of methods, each line like: La/b;"
             + "->decrypt(III)Ljava/lang/String;", argName = "cfg")
     private Path method;
+
     @Opt(opt = "mo", longOpt = "decrypt-method-owner", description = "the owner of the method which can decrypt the "
             + "stings, example: java.lang.String", argName = "owner")
     private String methodOwner;
+
     @Opt(opt = "mn", longOpt = "decrypt-method-name", description = "the owner of the method which can decrypt the "
             + "stings, the method's signature must be static (parameter-type)Ljava/lang/String;. Please use -pt,"
             + "--parameter-type to set the argument decrypt.", argName = "name")
     private String methodName;
+
     @Opt(opt = "cp", longOpt = "classpath", description = "add extra lib to classpath", argName = "cp")
     private String classpath;
+
     //extended parameter option: e.g. '-t int,byte,string' to specify a routine such as decryptionRoutine(int a, byte
     // b, String c)
     @Opt(opt = "t", longOpt = "arg-types", description = "comma-separated list of types:boolean,byte,short,char,int,"
             + "long,float,double,string. Default is string", argName = "type")
     private String parameterJTypes;
+
     @Opt(opt = "pd", longOpt = "parameters-descriptor", description = "the descriptor for the method which can "
             + "decrypt the stings, example1: Ljava/lang/String; example2: III, default is Ljava/lang/String;",
             argName = "type")
     private String parametersDescriptor;
+
     @Opt(opt = "d", longOpt = "delete", hasArg = false, description = "delete the method which can decrypt the stings")
     private boolean deleteMethod = false;
+
     @Opt(opt = "da", longOpt = "deep-analyze", hasArg = false, description = "use dex2jar IR to static analyze and "
             + "find more values like byte[]")
     private boolean deepAnalyze = false;
+
     @Opt(opt = "v", longOpt = "verbose", hasArg = false, description = "show more on output")
     private boolean verbose = false;
 
     static class MethodConfig {
+
         Method jmethod;
+
         /**
          * in java/lang/String format
          */
         String owner;
+
         String name;
+
         String desc;
 
         @Override
@@ -131,29 +130,35 @@ public class DecryptStringCmd extends BaseCmd {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             MethodConfig other = (MethodConfig) obj;
             if (desc == null) {
-                if (other.desc != null)
+                if (other.desc != null) {
                     return false;
-            } else if (!desc.equals(other.desc))
+                }
+            } else if (!desc.equals(other.desc)) {
                 return false;
+            }
             if (name == null) {
-                if (other.name != null)
+                if (other.name != null) {
                     return false;
-            } else if (!name.equals(other.name))
+                }
+            } else if (!name.equals(other.name)) {
                 return false;
+            }
             if (owner == null) {
-                if (other.owner != null)
-                    return false;
-            } else if (!owner.equals(other.owner))
-                return false;
-            return true;
+                return other.owner == null;
+            } else {
+                return owner.equals(other.owner);
+            }
         }
     }
 
@@ -271,7 +276,8 @@ public class DecryptStringCmd extends BaseCmd {
     private boolean decryptByIr(ClassNode cn, Map<MethodConfig, MethodConfig> map) {
         MethodConfig key = this.key;
         boolean changed = false;
-        for (Iterator<MethodNode> it = cn.methods.iterator(); it.hasNext(); ) {
+        Iterator<MethodNode> it = cn.methods.iterator();
+        while (it.hasNext()) {
             MethodNode m = it.next();
             if (m.instructions == null) {
                 continue;
@@ -287,11 +293,11 @@ public class DecryptStringCmd extends BaseCmd {
             }
 
 
-            if (false && verbose) {
+            /*if (verbose) {
                 System.out.println();
                 System.out.println("===============");
                 System.out.println("on method " + cn.name + ";->" + m.name + m.desc);
-            }
+            }*/
 
             boolean find = false;
             // search for the decrypt method
@@ -348,7 +354,8 @@ public class DecryptStringCmd extends BaseCmd {
     private boolean decryptByStack(ClassNode cn, Map<MethodConfig, MethodConfig> map) {
         MethodConfig key = this.key;
         boolean changed = false;
-        for (Iterator<MethodNode> it = cn.methods.iterator(); it.hasNext(); ) {
+        Iterator<MethodNode> it = cn.methods.iterator();
+        while (it.hasNext()) {
             MethodNode m = it.next();
             if (m.instructions == null) {
                 continue;
@@ -363,11 +370,11 @@ public class DecryptStringCmd extends BaseCmd {
                 continue;
             }
 
-            if (false && verbose) {
+            /*if (verbose) {
                 System.out.println();
                 System.out.println("===============");
                 System.out.println("on method " + cn.name + ";->" + m.name + m.desc);
-            }
+            }*/
 
             AbstractInsnNode p = m.instructions.getFirst();
             while (p != null) {
@@ -418,36 +425,49 @@ public class DecryptStringCmd extends BaseCmd {
         return changed;
     }
 
-    protected final CleanLabel T_cleanLabel = new CleanLabel();
-    protected final Ir2JRegAssignTransformer T_ir2jRegAssign = new Ir2JRegAssignTransformer();
-    protected final NewTransformer T_new = new NewTransformer();
-    protected final RemoveConstantFromSSA T_removeConst = new RemoveConstantFromSSA();
-    protected final RemoveLocalFromSSA T_removeLocal = new RemoveLocalFromSSA();
-    protected final ExceptionHandlerTrim T_trimEx = new ExceptionHandlerTrim();
-    protected final TypeTransformer T_type = new TypeTransformer();
-    protected final DeadCodeTransformer T_deadCode = new DeadCodeTransformer();
-    protected final FillArrayTransformer T_fillArray = new FillArrayTransformer();
-    protected final AggTransformer T_agg = new AggTransformer();
-    protected final UnSSATransformer T_unssa = new UnSSATransformer();
-    protected final ZeroTransformer T_zero = new ZeroTransformer();
-    protected final VoidInvokeTransformer T_voidInvoke = new VoidInvokeTransformer();
-    protected final NpeTransformer T_npe = new NpeTransformer();
+    protected final CleanLabel tCleanLabel = new CleanLabel();
+
+    protected final Ir2JRegAssignTransformer tIr2JRegAssign = new Ir2JRegAssignTransformer();
+
+    protected final NewTransformer tNew = new NewTransformer();
+
+    protected final RemoveConstantFromSSA tRemoveConst = new RemoveConstantFromSSA();
+
+    protected final RemoveLocalFromSSA tRemoveLocal = new RemoveLocalFromSSA();
+
+    protected final ExceptionHandlerTrim tTrimEx = new ExceptionHandlerTrim();
+
+    protected final TypeTransformer tType = new TypeTransformer();
+
+    protected final DeadCodeTransformer tDeadCode = new DeadCodeTransformer();
+
+    protected final FillArrayTransformer tFillArray = new FillArrayTransformer();
+
+    protected final AggTransformer tAgg = new AggTransformer();
+
+    protected final UnSSATransformer tUnssa = new UnSSATransformer();
+
+    protected final ZeroTransformer tZero = new ZeroTransformer();
+
+    protected final VoidInvokeTransformer tVoidInvoke = new VoidInvokeTransformer();
+
+    protected final NpeTransformer tNpe = new NpeTransformer();
 
     public void optAndDecrypt(IrMethod irMethod, final Map<MethodConfig, MethodConfig> map) {
-        T_deadCode.transform(irMethod);
-        T_cleanLabel.transform(irMethod);
-        T_removeLocal.transform(irMethod);
-        T_removeConst.transform(irMethod);
-        T_zero.transform(irMethod);
-        if (T_npe.transformReportChanged(irMethod)) {
-            T_deadCode.transform(irMethod);
-            T_removeLocal.transform(irMethod);
-            T_removeConst.transform(irMethod);
+        tDeadCode.transform(irMethod);
+        tCleanLabel.transform(irMethod);
+        tRemoveLocal.transform(irMethod);
+        tRemoveConst.transform(irMethod);
+        tZero.transform(irMethod);
+        if (tNpe.transformReportChanged(irMethod)) {
+            tDeadCode.transform(irMethod);
+            tRemoveLocal.transform(irMethod);
+            tRemoveConst.transform(irMethod);
         }
-        T_new.transform(irMethod);
-        T_fillArray.transform(irMethod);
-        T_agg.transform(irMethod);
-        T_voidInvoke.transform(irMethod);
+        tNew.transform(irMethod);
+        tFillArray.transform(irMethod);
+        tAgg.transform(irMethod);
+        tVoidInvoke.transform(irMethod);
 
         new StmtTraveler() {
             @Override
@@ -490,10 +510,10 @@ public class DecryptStringCmd extends BaseCmd {
             }
         }.travel(irMethod.stmts);
 
-        T_type.transform(irMethod);
-        T_unssa.transform(irMethod);
-        T_trimEx.transform(irMethod);
-        T_ir2jRegAssign.transform(irMethod);
+        tType.transform(irMethod);
+        tUnssa.transform(irMethod);
+        tTrimEx.transform(irMethod);
+        tIr2JRegAssign.transform(irMethod);
     }
 
     public static String v(Object[] vs) {
@@ -516,7 +536,7 @@ public class DecryptStringCmd extends BaseCmd {
 
     private Object convertIr2Jobj(Value value, String type) {
         if (value instanceof Constant) {
-            if (Constant.Null.equals(((Constant) value).value)) {
+            if (Constant.NULL.equals(((Constant) value).value)) {
                 return null;
             }
         }
@@ -573,7 +593,7 @@ public class DecryptStringCmd extends BaseCmd {
                 for (int i = 0; i < b.length; i++) {
                     Object obj = ((Constant) value.getOps()[i]).value;
                     if (obj instanceof Boolean) {
-                        b[i] = ((Boolean) obj).booleanValue();
+                        b[i] = (Boolean) obj;
                     } else {
                         b[i] = ((Number) obj).intValue() != 0;
                     }
@@ -639,7 +659,7 @@ public class DecryptStringCmd extends BaseCmd {
                 char[] b = new char[value.getOps().length];
                 for (int i = 0; i < b.length; i++) {
                     Object obj = ((Constant) value.getOps()[i]).value;
-                    b[i] = obj instanceof Character ? ((Character) obj).charValue() : (char) ((Number) obj).intValue();
+                    b[i] = obj instanceof Character ? (Character) obj : (char) ((Number) obj).intValue();
                 }
                 return b;
             }
@@ -702,8 +722,9 @@ public class DecryptStringCmd extends BaseCmd {
                 float[] b = new float[value.getOps().length];
                 for (int i = 0; i < b.length; i++) {
                     Object obj = ((Constant) value.getOps()[i]).value;
-                    b[i] = obj instanceof Float ? ((Float) obj).floatValue() :
-                            Float.intBitsToFloat(((Number) obj).intValue());
+                    b[i] = obj instanceof Float
+                            ? (Float) obj
+                            : Float.intBitsToFloat(((Number) obj).intValue());
                 }
                 return b;
             }
@@ -724,8 +745,9 @@ public class DecryptStringCmd extends BaseCmd {
                 double[] b = new double[value.getOps().length];
                 for (int i = 0; i < b.length; i++) {
                     Object obj = ((Constant) value.getOps()[i]).value;
-                    b[i] = obj instanceof Double ? ((Double) obj).doubleValue() :
-                            Double.longBitsToDouble(((Number) obj).longValue());
+                    b[i] = obj instanceof Double
+                            ? (Double) obj
+                            : Double.longBitsToDouble(((Number) obj).longValue());
                 }
                 return b;
             }
@@ -742,7 +764,7 @@ public class DecryptStringCmd extends BaseCmd {
                     Object obj = ((Constant) value.getOps()[i]).value;
                     if (obj instanceof String) {
                         b[i] = (String) obj;
-                    } else if (Constant.Null.equals(obj)) {
+                    } else if (Constant.NULL.equals(obj)) {
                         b[i] = null;
                     } else {
                         throw new RuntimeException();
@@ -751,6 +773,8 @@ public class DecryptStringCmd extends BaseCmd {
                 return b;
             }
             throw new RuntimeException();
+        default:
+            break;
         }
         throw new RuntimeException();
     }
@@ -765,7 +789,8 @@ public class DecryptStringCmd extends BaseCmd {
     }
 
     private void cleanDebug(MethodNode mn) {
-        for (AbstractInsnNode p = mn.instructions.getFirst(); p != null; ) {
+        AbstractInsnNode p = mn.instructions.getFirst();
+        while (p != null) {
             if (p.getType() == AbstractInsnNode.LINE) {
                 AbstractInsnNode q = p.getNext();
                 mn.instructions.remove(p);
@@ -832,7 +857,7 @@ public class DecryptStringCmd extends BaseCmd {
         final Map<MethodConfig, MethodConfig> map = new HashMap<>();
         List<String> list = new ArrayList<>();
         if (classpath != null) {
-            list.addAll(Arrays.asList(classpath.split(";|:")));
+            list.addAll(Arrays.asList(classpath.split("[;:]")));
         }
         list.add(jar.toAbsolutePath().toString());
         URL[] urls = new URL[list.size()];
@@ -859,7 +884,8 @@ public class DecryptStringCmd extends BaseCmd {
                 config.jmethod = jmethod;
                 map.put(config, config);
             } else {
-                throw new NoSuchMethodException("can't find method " + config.name + config.desc + " on class " + config.owner + " or its parent");
+                throw new NoSuchMethodException("Can't find method " + config.name + config.desc
+                        + " on " + config.owner + " or its parent");
             }
         }
         return map;
@@ -885,11 +911,11 @@ public class DecryptStringCmd extends BaseCmd {
             } else if (this.parameterJTypes != null) {
 
                 //parameterJTypes is a comma-separated list of the decryption method's parameters
-                String[] type_list = parameterJTypes.split(",|;|:");
+                String[] typeList = parameterJTypes.split("[,;:]");
                 //switch for all the supported types. String is default
                 StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < type_list.length; i++) {
-                    switch (type_list[i]) {
+                for (String s : typeList) {
+                    switch (s) {
                     case "boolean":
                         sb.append("Z");
                         break;
@@ -919,7 +945,7 @@ public class DecryptStringCmd extends BaseCmd {
                         break;
 
                     default:
-                        throw new RuntimeException("not support type " + type_list[i] + " on -t/--arg-types");
+                        throw new RuntimeException("not support type " + s + " on -t/--arg-types");
                     }
                 }
                 methodConfigs.add(this.build("L" + methodOwner.replace('.', '/') + ";->" + methodName + "("
@@ -933,14 +959,12 @@ public class DecryptStringCmd extends BaseCmd {
     }
 
     /**
-     * fix for issue 216, travel all the parent of class and use getDeclaredMethod to find methods
+     * fix for issue 216, travel all the parent of classes and use getDeclaredMethod
+     * to find methods
      */
     private Method findAnyMethodMatch(Class<?> clz, String name, Class<?>[] classes) {
         try {
-            Method m = clz.getDeclaredMethod(name, classes);
-            if (m != null) {
-                return m;
-            }
+            return clz.getDeclaredMethod(name, classes);
         } catch (NoSuchMethodException ignored) {
             // https://github.com/pxb1988/dex2jar/issues/51
             // mute exception stack
@@ -953,7 +977,7 @@ public class DecryptStringCmd extends BaseCmd {
             }
         }
         Class<?>[] itfs = clz.getInterfaces();
-        if (itfs != null && itfs.length > 0) {
+        if (itfs.length > 0) {
             for (Class<?> itf : itfs) {
                 Method m = findAnyMethodMatch(itf, name, classes);
                 if (m != null) {
@@ -1005,6 +1029,8 @@ public class DecryptStringCmd extends BaseCmd {
             return (double) (q.getOpcode() - Opcodes.DCONST_0);
         case Opcodes.ACONST_NULL:
             return null;
+        default:
+            break;
         }
 
         throw new RuntimeException();
@@ -1042,7 +1068,10 @@ public class DecryptStringCmd extends BaseCmd {
             return Class.forName(t.getDescriptor());
         case Type.VOID:
             return void.class;
+        default:
+            break;
         }
         throw new RuntimeException();
     }
+
 }

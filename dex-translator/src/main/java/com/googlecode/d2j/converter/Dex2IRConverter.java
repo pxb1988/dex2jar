@@ -101,16 +101,27 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nUnLock;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
 
 public class Dex2IRConverter {
+
     Map<DexLabel, DexLabelStmtNode> labelMap = new HashMap<>();
+
     List<DexStmtNode> insnList;
+
     int[] parentCount;
+
     IrMethod target;
+
     DexCodeNode dexCodeNode;
+
     List<Stmt> preEmit = new ArrayList<>();
+
     List<Stmt> currentEmit;
+
     Map<DexLabel, LabelStmt> map = new HashMap<>();
+
     private Dex2IrFrame[] frames;
+
     private ArrayList<Stmt>[] emitStmts;
+
     boolean initAllToZero = true;
 
     static int sizeofType(String s) {
@@ -123,9 +134,11 @@ public class Dex2IRConverter {
     }
 
     static class Dex2IrFrame extends DvmFrame<DvmValue> {
-        public Dex2IrFrame(int totalRegister) {
+
+        Dex2IrFrame(int totalRegister) {
             super(totalRegister);
         }
+
     }
 
     static int methodArgCount(String[] args) {
@@ -151,7 +164,7 @@ public class Dex2IRConverter {
         insnList = dexCodeNode.stmts;
         for (int i = 0; i < insnList.size(); i++) {
             DexStmtNode stmtNode = insnList.get(i);
-            stmtNode.__index = i;
+            stmtNode.index = i;
             if (stmtNode instanceof DexLabelStmtNode) {
                 DexLabelStmtNode dexLabelStmtNode = (DexLabelStmtNode) stmtNode;
                 labelMap.put(dexLabelStmtNode.label, dexLabelStmtNode);
@@ -331,11 +344,11 @@ public class Dex2IRConverter {
                             n = new DexLabel();
                             needChange.put(index, n);
                             DexLabelStmtNode dexStmtNode = new DexLabelStmtNode(n);
-                            dexStmtNode.__index = insnList.size();
+                            dexStmtNode.index = insnList.size();
                             insnList.add(dexStmtNode);
                             labelMap.put(n, dexStmtNode);
                             JumpStmtNode jumpStmtNode = new JumpStmtNode(Op.GOTO, 0, 0, h);
-                            jumpStmtNode.__index = insnList.size();
+                            jumpStmtNode.index = insnList.size();
                             insnList.add(jumpStmtNode);
                         }
                         handler[i] = n;
@@ -359,7 +372,8 @@ public class Dex2IRConverter {
                         hasEx = true;
                         BitSet x = exBranch[p];
                         if (x == null) {
-                            x = exBranch[p] = new BitSet(insnList.size());
+                            exBranch[p] = new BitSet(insnList.size());
+                            x = exBranch[p];
                         }
                         for (DexLabel h : tcb.handler) {
                             int hIndex = indexOf(h);
@@ -399,7 +413,8 @@ public class Dex2IRConverter {
     Local getLocal(DvmValue value) {
         Local local = value.local;
         if (local == null) {
-            local = value.local = newLocal();
+            value.local = newLocal();
+            local = value.local;
         }
         return local;
     }
@@ -426,7 +441,8 @@ public class Dex2IRConverter {
     private void setCurrentEmit(int index) {
         currentEmit = emitStmts[index];
         if (currentEmit == null) {
-            currentEmit = emitStmts[index] = new ArrayList<>(1);
+            emitStmts[index] = new ArrayList<>(1);
+            currentEmit = emitStmts[index];
         }
     }
 
@@ -446,7 +462,7 @@ public class Dex2IRConverter {
 
         while (!stack.isEmpty()) {
             DexStmtNode p = stack.pop();
-            int index = p.__index;
+            int index = p.index;
             if (!access.get(index)) {
                 access.set(index);
             } else {
@@ -539,9 +555,7 @@ public class Dex2IRConverter {
     private void relate(DvmValue parent, DvmValue child) {
         if (child.parent == null) {
             child.parent = parent;
-        } else if (child.parent == parent) {
-            //
-        } else {
+        } else if (child.parent != parent) {
             if (child.otherParent == null) {
                 child.otherParent = new HashSet<>(5);
             }
@@ -552,7 +566,8 @@ public class Dex2IRConverter {
     void merge(Dex2IrFrame src, int dst) {
         Dex2IrFrame distFrame = frames[dst];
         if (distFrame == null) {
-            distFrame = frames[dst] = new Dex2IrFrame(dexCodeNode.totalRegister);
+            frames[dst] = new Dex2IrFrame(dexCodeNode.totalRegister);
+            distFrame = frames[dst];
         }
         if (parentCount[dst] > 1) {
             for (int i = 0; i < src.getTotalRegisters(); i++) {
@@ -584,7 +599,7 @@ public class Dex2IRConverter {
     private Dex2IrFrame initFirstFrame(DexCodeNode methodNode, IrMethod target) {
         Dex2IrFrame first = new Dex2IrFrame(methodNode.totalRegister);
         int x = methodNode.totalRegister - methodArgCount(target.args);
-        if (!target.isStatic) {// not static
+        if (!target.isStatic) { // not static
             Local thiz = newLocal();
             emit(Stmts.nIdentity(thiz, Exprs.nThisRef(target.owner)));
             first.setReg(x - 1, new DvmValue(thiz));
@@ -767,7 +782,7 @@ public class Dex2IRConverter {
                     }
                     LabelStmt d = new LabelStmt();
                     if (insn.op == Op.PACKED_SWITCH) {
-                        emit(nTableSwitch(local, ((PackedSwitchStmtNode) insn).first_case, lss, d));
+                        emit(nTableSwitch(local, ((PackedSwitchStmtNode) insn).firstCase, lss, d));
                     } else {
                         emit(nLookupSwitch(local, ((SparseSwitchStmtNode) insn).cases, lss, d));
                     }
@@ -836,20 +851,26 @@ public class Dex2IRConverter {
                 case AND_INT_LIT16:
                 case AND_INT_LIT8:
                     return b(nAnd(local, nInt(((Stmt2R1NNode) insn).content),
-                            ((Stmt2R1NNode) insn).content < 0 || ((Stmt2R1NNode) insn).content > 1 ? "I" :
-                                    TypeClass.ZI.name));
+                            ((Stmt2R1NNode) insn).content < 0
+                                    || ((Stmt2R1NNode) insn).content > 1
+                                    ? "I"
+                                    : TypeClass.ZI.name));
 
                 case OR_INT_LIT16:
                 case OR_INT_LIT8:
                     return b(nOr(local, nInt(((Stmt2R1NNode) insn).content),
-                            ((Stmt2R1NNode) insn).content < 0 || ((Stmt2R1NNode) insn).content > 1 ? "I" :
-                                    TypeClass.ZI.name));
+                            ((Stmt2R1NNode) insn).content < 0
+                                    || ((Stmt2R1NNode) insn).content > 1
+                                    ? "I"
+                                    : TypeClass.ZI.name));
 
                 case XOR_INT_LIT16:
                 case XOR_INT_LIT8:
                     return b(nXor(local, nInt(((Stmt2R1NNode) insn).content),
-                            ((Stmt2R1NNode) insn).content < 0 || ((Stmt2R1NNode) insn).content > 1 ? "I" :
-                                    TypeClass.ZI.name));
+                            ((Stmt2R1NNode) insn).content < 0
+                                    || ((Stmt2R1NNode) insn).content > 1
+                                    ? "I"
+                                    : TypeClass.ZI.name));
 
                 case SHL_INT_LIT8:
                     return b(nShl(local, nInt(((Stmt2R1NNode) insn).content), "I"));
@@ -862,6 +883,8 @@ public class Dex2IRConverter {
                 case FILL_ARRAY_DATA:
                     emit(nFillArrayData(local, nArrayValue(((FillArrayDataStmtNode) insn).array)));
                     return null;
+                default:
+                    break;
                 }
                 throw new RuntimeException();
             }
@@ -1139,7 +1162,8 @@ public class Dex2IRConverter {
 
                 case USHR_LONG_2ADDR:
                     return b(nUshr(local1, local2, "J"));
-
+                default:
+                    break;
                 }
                 throw new RuntimeException();
             }
@@ -1174,6 +1198,8 @@ public class Dex2IRConverter {
                     break;
                 case APUT_WIDE:
                     emit(nAssign(nArray(localArray, localIndex, TypeClass.JD.name), localValue));
+                    break;
+                default:
                     break;
                 }
                 return null;
@@ -1336,8 +1362,8 @@ public class Dex2IRConverter {
         for (DexStmtNode p : insnList) {
             Op op = p.op;
             if (op == null) {
-                if (p.__index < parentCount.length - 1) { // not the last label
-                    parentCount[p.__index + 1]++;
+                if (p.index < parentCount.length - 1) { // not the last label
+                    parentCount[p.index + 1]++;
                 }
             } else {
                 if (op.canBranch()) {
@@ -1350,7 +1376,7 @@ public class Dex2IRConverter {
                     }
                 }
                 if (op.canContinue()) {
-                    parentCount[p.__index + 1]++;
+                    parentCount[p.index + 1]++;
                 }
             }
         }
@@ -1358,21 +1384,24 @@ public class Dex2IRConverter {
 
     int indexOf(DexLabel label) {
         DexLabelStmtNode dexLabelStmtNode = labelMap.get(label);
-        return dexLabelStmtNode.__index;
+        return dexLabelStmtNode.index;
     }
 
     static class DvmValue {
+
         public DvmValue parent;
+
         public Set<DvmValue> otherParent;
+
         Local local;
 
-        public DvmValue(Local thiz) {
+        DvmValue(Local thiz) {
             this.local = thiz;
         }
 
-        public DvmValue() {
-
+        DvmValue() {
         }
+
     }
 
 

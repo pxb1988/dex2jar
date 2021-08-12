@@ -13,7 +13,11 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
-public class ClassVersionSwitch {
+public final class ClassVersionSwitch {
+
+    private ClassVersionSwitch() {
+        throw new UnsupportedOperationException();
+    }
 
     public static void main(String... args) throws IOException {
         if (args.length < 3) {
@@ -30,7 +34,8 @@ public class ClassVersionSwitch {
         final int jVersion = Constants.JAVA_VERSIONS[version];
         try (ZipFile zip = new ZipFile(old); ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(n))) {
 
-            for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements(); ) {
+            Enumeration<? extends ZipEntry> e = zip.entries();
+            while (e.hasMoreElements()) {
                 ZipEntry zipEntry = e.nextElement();
                 zos.putNextEntry(new ZipEntry(zipEntry.getName()));
                 if (!zipEntry.isDirectory()) {
@@ -59,4 +64,5 @@ public class ClassVersionSwitch {
             }
         }
     }
+
 }

@@ -24,6 +24,7 @@ import com.googlecode.dex2jar.ir.expr.Value;
  * </pre>
  */
 public class MultiArrayTransformer extends StatedTransformer {
+
     @Override
     public boolean transformReportChanged(IrMethod method) {
         final boolean[] changed = {false};
@@ -109,7 +110,7 @@ public class MultiArrayTransformer extends StatedTransformer {
                                                 return Exprs.nNewArray(elementType, dt);
                                             }
                                         }
-                                    } else {// [I
+                                    } else { // [I
                                         if (dt.vt == Value.VT.FILLED_ARRAY) {
                                             FilledArrayExpr filledArrayExpr = (FilledArrayExpr) dt;
                                             int d = filledArrayExpr.getOps().length;
@@ -135,4 +136,5 @@ public class MultiArrayTransformer extends StatedTransformer {
 
         return changed[0];
     }
+
 }

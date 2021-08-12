@@ -40,24 +40,38 @@ import static org.objectweb.asm.Opcodes.NEW;
 import static org.objectweb.asm.Opcodes.PUTSTATIC;
 
 public class InitOut {
-    private static final Set<String> keywords = new HashSet<>(Arrays.asList("abstract", "continue", "for", "new",
+
+    private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList("abstract", "continue", "for", "new",
             "switch", "assert", "default", "goto", "package", "synchronized", "boolean", "do", "if", "private", "this",
             "break", "double", "implements", "protected", "throw", "byte", "else", "import", "public", "throws",
             "case", "enum", "instanceof", "return", "transient", "catch", "extends", "int", "short", "try", "char",
             "final", "interface", "static", "void", "class", "finally", "long", "strictfp", "volatile", "const",
             "float", "native", "super", "while"));
+
     private int clzIndex = 0;
-    private Set<String> clzMap = new TreeSet<>();
-    private Set<String> clzSet = new TreeSet<>();
+
+    private final Set<String> clzMap = new TreeSet<>();
+
+    private final Set<String> clzSet = new TreeSet<>();
+
     private Path from;
+
     private int maxLength = 40;
-    private Set<String> memberMap = new TreeSet<>();
+
+    private final Set<String> memberMap = new TreeSet<>();
+
     private int minLength = 2;
+
     private int pkgIndex = 0;
-    private Set<String> pkgMap = new TreeSet<>();
-    private Set<String> pkgSet = new TreeSet<>();
+
+    private final Set<String> pkgMap = new TreeSet<>();
+
+    private final Set<String> pkgSet = new TreeSet<>();
+
     private boolean initEnumNames = false;
+
     private boolean initSourceNames = false;
+
     private boolean initAssertionNames = false;
 
     public InitOut initEnumNames() {
@@ -165,7 +179,7 @@ public class InitOut {
             private static final String ENUM_VALUES_FIELD_NAME = "ENUM$VALUES";
             ClassInfo clz;
             boolean isEnum = false;
-            Map<String, String> enumFieldMap = new HashMap<>();
+            final Map<String, String> enumFieldMap = new HashMap<>();
 
             @Override
             public void visitSource(String source, String debug) {
@@ -327,7 +341,7 @@ public class InitOut {
     }
 
     private boolean shouldRename(String s) {
-        return s.length() > maxLength || s.length() < minLength || keywords.contains(s);
+        return s.length() > maxLength || s.length() < minLength || KEYWORDS.contains(s);
     }
 
     public void to(Path config) throws IOException {
@@ -384,14 +398,17 @@ public class InitOut {
 
     }
 
-    static private class ClassInfo {
+    private static class ClassInfo {
 
-        final public String name;
+        public final String name;
+
         public List<MemberInfo> fields = new ArrayList<>(5);
+
         public List<MemberInfo> methods = new ArrayList<>(5);
+
         public String suggestName;
 
-        public ClassInfo(String name) {
+        ClassInfo(String name) {
             this.name = name;
         }
 
@@ -410,22 +427,29 @@ public class InitOut {
         public String toString() {
             return name;
         }
+
     }
 
     private static class MemberInfo {
+
         public int access;
+
         public String desc;
+
         public String name;
+
         public String suggestName;
 
-        public MemberInfo(int access, String name, String desc) {
+        MemberInfo(int access, String name, String desc) {
             this.name = name;
             this.access = access;
             this.desc = desc;
         }
+
     }
 
     private static class MemberInfoComparator implements Comparator<MemberInfo> {
+
         @Override
         public int compare(MemberInfo memberInfo, MemberInfo memberInfo2) {
             int x = memberInfo.name.compareTo(memberInfo2.name);
@@ -434,5 +458,7 @@ public class InitOut {
             }
             return memberInfo.desc.compareTo(memberInfo2.desc);
         }
+
     }
+
 }

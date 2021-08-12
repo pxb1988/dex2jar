@@ -1,5 +1,7 @@
 package com.googlecode.d2j.converter;
 
+// CHECKSTYLE:OFF
+
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Exprs;
@@ -45,15 +47,26 @@ import org.objectweb.asm.tree.analysis.Value;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class J2IRConverter {
+// CHECKSTYLE:ON
+
+public final class J2IRConverter {
+
     Map<Label, LabelStmt> map = new HashMap<>();
+
     InsnList insnList;
+
     int[] parentCount;
+
     JvmFrame[] frames;
+
     MethodNode methodNode;
+
     IrMethod target;
+
     List<Stmt>[] emitStmts;
+
     List<Stmt> preEmit = new ArrayList<>();
+
     List<Stmt> currentEmit;
 
     private J2IRConverter() {
@@ -120,7 +133,8 @@ public class J2IRConverter {
 
                     BitSet x = exBranch[insnList.indexOf(p)];
                     if (x == null) {
-                        x = exBranch[insnList.indexOf(p)] = new BitSet(insnList.size());
+                        exBranch[insnList.indexOf(p)] = new BitSet(insnList.size());
+                        x = exBranch[insnList.indexOf(p)];
                     }
                     x.set(handlerIdx);
                     parentCount[handlerIdx]++;
@@ -252,7 +266,8 @@ public class J2IRConverter {
         }
     }
 
-    private void dfs(BitSet[] exBranch, BitSet handlers, BitSet access, Interpreter<JvmValue> interpreter) throws AnalyzerException {
+    private void dfs(BitSet[] exBranch, BitSet handlers, BitSet access,
+                     Interpreter<JvmValue> interpreter) throws AnalyzerException {
         currentEmit = preEmit;
         JvmFrame first = initFirstFrame(methodNode, target);
         if (parentCount[0] > 1) {
@@ -323,12 +338,12 @@ public class J2IRConverter {
                     merge(tmp, insnList.indexOf(lsin.dflt));
                 }
             }
-            if ((op >= Opcodes.GOTO && op <= Opcodes.RETURN) || op == Opcodes.ATHROW) {
-                // can't continue
-            } else {
+            if ((op < Opcodes.GOTO || op > Opcodes.RETURN) && op != Opcodes.ATHROW) {
                 stack.push(p.getNext());
                 merge(tmp, index + 1);
-            }
+            } /*else {
+                // can't continue
+            }*/
 
             // cleanup frame it is useless
             if (parentCount[index] <= 1) {
@@ -341,7 +356,8 @@ public class J2IRConverter {
     private void setCurrentEmit(int index) {
         currentEmit = emitStmts[index];
         if (currentEmit == null) {
-            currentEmit = emitStmts[index] = new ArrayList<>(1);
+            emitStmts[index] = new ArrayList<>(1);
+            currentEmit = emitStmts[index];
         }
     }
 
@@ -769,6 +785,8 @@ public class J2IRConverter {
                     emit(Stmts.nAssign(Exprs.nArray(local1, local2, "S"),
                             local3));
                     break;
+                default:
+                    break;
                 }
 
                 return null;
@@ -813,6 +831,8 @@ public class J2IRConverter {
                         break;
                     case INVOKEDYNAMIC:
                         throw new UnsupportedOperationException("Not supported yet.");
+                    default:
+                        break;
                     }
                     if ("V".equals(ret)) {
                         emit(Stmts.nVoidInvoke(v));
@@ -841,6 +861,8 @@ public class J2IRConverter {
                 case RETURN:
                     emit(Stmts.nReturnVoid());
                     break;
+                default:
+                    break;
                 }
 
             }
@@ -850,7 +872,8 @@ public class J2IRConverter {
     Local getLocal(JvmValue value) {
         Local local = value.local;
         if (local == null) {
-            local = value.local = newLocal();
+            value.local = newLocal();
+            local = value.local;
         }
         return local;
     }
@@ -878,21 +901,22 @@ public class J2IRConverter {
                     parentCount[insnList.indexOf(lsin.dflt)]++;
                 }
             }
-            if ((op >= Opcodes.GOTO && op <= Opcodes.RETURN) || op == Opcodes.ATHROW) {
-                // can't continue
-            } else {
+            if ((op < Opcodes.GOTO || op > Opcodes.RETURN) && op != Opcodes.ATHROW) {
                 AbstractInsnNode next = p.getNext();
                 if (next != null) {
                     parentCount[insnList.indexOf(p.getNext())]++;
                 }
-            }
+            } /*else {
+                // can't continue
+            }*/
         }
     }
 
     private void mergeEx(JvmFrame src, int dst) {
         JvmFrame distFrame = frames[dst];
         if (distFrame == null) {
-            distFrame = frames[dst] = new JvmFrame(methodNode.maxLocals, methodNode.maxStack);
+            frames[dst] = new JvmFrame(methodNode.maxLocals, methodNode.maxStack);
+            distFrame = frames[dst];
         }
         for (int i = 0; i < src.getLocals(); i++) {
             JvmValue p = src.getLocal(i);
@@ -910,7 +934,8 @@ public class J2IRConverter {
     private void merge(JvmFrame src, int dst) {
         JvmFrame distFrame = frames[dst];
         if (distFrame == null) {
-            distFrame = frames[dst] = new JvmFrame(methodNode.maxLocals, methodNode.maxStack);
+            frames[dst] = new JvmFrame(methodNode.maxLocals, methodNode.maxStack);
+            distFrame = frames[dst];
         }
         if (parentCount[dst] > 1) {
             for (int i = 0; i < src.getLocals(); i++) {
@@ -946,9 +971,7 @@ public class J2IRConverter {
     private void relate(JvmValue parent, JvmValue child) {
         if (child.parent == null) {
             child.parent = parent;
-        } else if (child.parent == parent) {
-            //
-        } else {
+        } else if (child.parent != parent) {
             if (child.otherParent == null) {
                 child.otherParent = new HashSet<>(5);
             }
@@ -959,7 +982,7 @@ public class J2IRConverter {
     private JvmFrame initFirstFrame(MethodNode methodNode, IrMethod target) {
         JvmFrame first = new JvmFrame(methodNode.maxLocals, methodNode.maxStack);
         int x = 0;
-        if (!target.isStatic) {// not static
+        if (!target.isStatic) { // not static
             Local thiz = newLocal();
             emit(Stmts.nIdentity(thiz, Exprs.nThisRef(target.owner)));
             first.setLocal(x++, new JvmValue(1, thiz));
@@ -992,13 +1015,15 @@ public class J2IRConverter {
 
     static class JvmFrame extends Frame<JvmValue> {
 
-        public JvmFrame(int nLocals, int nStack) {
+        JvmFrame(int nLocals, int nStack) {
             super(nLocals, nStack);
         }
 
         @Override
         public void execute(AbstractInsnNode insn, Interpreter<JvmValue> interpreter) throws AnalyzerException {
-            if (insn.getType() == AbstractInsnNode.FRAME || insn.getType() == AbstractInsnNode.LINE || insn.getType() == AbstractInsnNode.LABEL) {
+            if (insn.getType() == AbstractInsnNode.FRAME
+                    || insn.getType() == AbstractInsnNode.LINE
+                    || insn.getType() == AbstractInsnNode.LABEL) {
                 return;
             }
             if (insn.getOpcode() == Opcodes.RETURN) {
@@ -1014,9 +1039,13 @@ public class J2IRConverter {
     }
 
     public static class JvmValue implements Value {
+
         private final int size;
+
         public JvmValue parent;
+
         public Set<JvmValue> otherParent;
+
         Local local;
 
         public JvmValue(int size, Local local) {
@@ -1032,6 +1061,7 @@ public class J2IRConverter {
         public int getSize() {
             return size;
         }
+
     }
 
 }

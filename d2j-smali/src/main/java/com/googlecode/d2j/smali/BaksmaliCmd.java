@@ -9,17 +9,22 @@ import java.nio.file.Path;
 @Syntax(cmd = "d2j-baksmali", syntax = "[options] <dex>", desc = "disassembles and/or dumps a dex file", onlineHelp =
         "https://sourceforge.net/p/dex2jar/wiki/Smali")
 public class BaksmaliCmd extends BaseCmd {
+
     @Opt(opt = "b", longOpt = "no-debug-info", hasArg = false, description = "[not impl] don't write out debug info ("
             + ".local, .param, .line, etc.)")
     private boolean noDebug;
+
     @Opt(opt = "p", longOpt = "no-parameter-registers", hasArg = false, description = "use the v<n> syntax instead of"
             + " the p<n> syntax for registers mapped to method parameters")
     private boolean noParameterRegisters;
+
     @Opt(opt = "l", longOpt = "use-locals", hasArg = false, description = "output the .locals directive with the "
             + "number of non-parameter registers, rather than the .register")
     private boolean useLocals;
+
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
+
     @Opt(opt = "o", longOpt = "output", description = "output dir of .smali files, default is "
             + "$current_dir/[jar-name]-out/", argName = "out")
     private Path output;
@@ -63,4 +68,5 @@ public class BaksmaliCmd extends BaseCmd {
         System.err.println("baksmali " + dex + " -> " + output);
         b.to(output);
     }
+
 }

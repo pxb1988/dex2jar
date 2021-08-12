@@ -12,7 +12,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
 
-public class WebApp {
+public final class WebApp {
+
+    private WebApp() {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      *
@@ -86,4 +90,5 @@ public class WebApp {
             }
         });
     }
+
 }

@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DvmFrame<V> {
+
     public V[] values;
+
     public V tmp;
 
     @SuppressWarnings("unchecked")
@@ -43,7 +45,7 @@ public class DvmFrame<V> {
     }
 
     public void execute(DexStmtNode insn, DvmInterpreter<V> interpreter) {
-        if (insn.op == null) {// label or others
+        if (insn.op == null) { // label or others
             return;
         }
         switch (insn.op) {

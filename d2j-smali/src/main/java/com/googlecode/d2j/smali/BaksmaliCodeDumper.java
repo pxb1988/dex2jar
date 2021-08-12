@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2014 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.smali;
 
 import com.googlecode.d2j.DexLabel;
@@ -33,18 +17,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/*package*/class BaksmaliCodeDumper extends DexCodeVisitor {
+/*package*/ class BaksmaliCodeDumper extends DexCodeVisitor {
+
     private boolean useParameterRegisters;
+
     private boolean useLocals;
+
     private int nextLabelNumber;
+
     private Out out;
+
     final int startParamR;
+
     final Set<DexLabel> usedLabel;
+
     final Map<DexLabel, List<DexDebugNode.DexDebugOpNode>> debugLabelMap;
 
-    public BaksmaliCodeDumper(Out out, boolean useParameterRegisters, boolean useLocals, int nextLabelNumber,
-                              int startParamR, Set<DexLabel> usedLabel, Map<DexLabel,
-            List<DexDebugNode.DexDebugOpNode>> debugLabelMap) {
+    BaksmaliCodeDumper(Out out, boolean useParameterRegisters, boolean useLocals,
+                       int nextLabelNumber, int startParamR, Set<DexLabel> usedLabel,
+                       Map<DexLabel, List<DexDebugNode.DexDebugOpNode>> debugLabelMap) {
         super();
         this.out = out;
         this.useParameterRegisters = useParameterRegisters;
@@ -56,27 +47,31 @@ import java.util.Set;
     }
 
     static class PackedSwitchStmt {
-        int first_case;
+
+        int firstCase;
 
         DexLabel[] labels;
 
-        public PackedSwitchStmt(int first_case, DexLabel[] labels) {
+        PackedSwitchStmt(int firstCase, DexLabel[] labels) {
             super();
-            this.first_case = first_case;
+            this.firstCase = firstCase;
             this.labels = labels;
         }
+
     }
 
     static class SparseSwitchStmt {
+
         int[] cases;
 
         DexLabel[] labels;
 
-        public SparseSwitchStmt(int[] cases, DexLabel[] labels) {
+        SparseSwitchStmt(int[] cases, DexLabel[] labels) {
             super();
             this.cases = cases;
             this.labels = labels;
         }
+
     }
 
     List<Map.Entry<DexLabel, Object>> appendLast = new ArrayList<>();
@@ -97,7 +92,6 @@ import java.util.Set;
         appendLast.add(new AbstractMap.SimpleEntry<>(dx, array));
     }
 
-    @SuppressWarnings("incomplete-switch")
     @Override
     public void visitConstStmt(Op op, int ra, Object value) {
         switch (op) {
@@ -121,6 +115,8 @@ import java.util.Set;
             value = v >> 16;
             break;
         }
+        default:
+            break;
         }
         out.s("%s %s, %s", op.displayName, reg(ra), BaksmaliDumper.escapeValue(value));
         super.visitConstStmt(op, ra, value);
@@ -142,7 +138,7 @@ import java.util.Set;
                 out.s(".end sparse-switch");
             } else if (v instanceof PackedSwitchStmt) {
                 PackedSwitchStmt ps = (PackedSwitchStmt) v;
-                out.s(".packed-switch %d", ps.first_case);
+                out.s(".packed-switch %d", ps.firstCase);
                 out.push();
                 for (DexLabel label : ps.labels) {
                     out.s(xLabel(label));
@@ -239,7 +235,7 @@ import java.util.Set;
 
     @Override
     public void visitFieldStmt(Op op, int a, int b, Field field) {
-        if (op.format == InstructionFormat.kFmt22c) {// iget,iput
+        if (op.format == InstructionFormat.kFmt22c) { // iget,iput
             out.s("%s %s, %s, %s", op.displayName, reg(a), reg(b), BaksmaliDumper.escapeField(field));
         } else {
             out.s("%s %s, %s", op.displayName, reg(a), BaksmaliDumper.escapeField(field));
@@ -334,7 +330,7 @@ import java.util.Set;
     }
 
     @Override
-    final public DexDebugVisitor visitDebug() {
+    public final DexDebugVisitor visitDebug() {
         return null;
     }
 
@@ -393,7 +389,8 @@ import java.util.Set;
     @Override
     public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{ ").append(BaksmaliDumper.escapeValue(bsm)).append(", ").append(BaksmaliDumper.escapeValue(name)).append(", ").append(BaksmaliDumper.escapeMethodDesc(proto));
+        sb.append("{ ").append(BaksmaliDumper.escapeValue(bsm)).append(", ")
+                .append(BaksmaliDumper.escapeValue(name)).append(", ").append(BaksmaliDumper.escapeMethodDesc(proto));
         for (Object o : bsmArgs) {
             sb.append(", ").append(BaksmaliDumper.escapeValue(o));
         }
@@ -423,12 +420,12 @@ import java.util.Set;
     }
 
     @Override
-    public void visitPackedSwitchStmt(Op op, int ra, int first_case, DexLabel[] labels) {
+    public void visitPackedSwitchStmt(Op op, int ra, int firstCase, DexLabel[] labels) {
         DexLabel dx = new DexLabel();
         dx.displayName = "L" + nextLabelNumber++;
         usedLabel.add(dx);
         out.s(op.displayName + " " + reg(ra) + ", " + xLabel(dx));
-        appendLast.add(new AbstractMap.SimpleEntry<>(dx, new PackedSwitchStmt(first_case, labels)));
+        appendLast.add(new AbstractMap.SimpleEntry<>(dx, new PackedSwitchStmt(firstCase, labels)));
     }
 
     @Override
@@ -504,4 +501,5 @@ import java.util.Set;
     String xLabel(DexLabel d) {
         return ":" + d.displayName;
     }
+
 }

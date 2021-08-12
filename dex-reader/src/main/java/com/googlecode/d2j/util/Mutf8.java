@@ -26,7 +26,9 @@ import java.nio.ByteBuffer;
  * Derived from libcore's MUTF-8 encoder at java.nio.charset.ModifiedUtf8.
  */
 public final class Mutf8 {
+
     private Mutf8() {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -112,4 +114,5 @@ public final class Mutf8 {
         encode(result, 0, s);
         return result;
     }
+
 }

@@ -25,6 +25,7 @@ import pxb.java.nio.file.FileVisitor;
 import pxb.java.nio.file.Path;
 
 public abstract class FileSystemProvider {
+
     public static void copy(InputStream is, OutputStream os) throws IOException {
         byte[] xml = new byte[10 * 1024];
         for (int c = is.read(xml); c > 0; c = is.read(xml)) {
@@ -52,8 +53,9 @@ public abstract class FileSystemProvider {
         fos.close();
     }
 
-    public static FileSystemProvider ZIP = new ZipFSP();
-    public static FileSystemProvider DEF = new DirFSP();
+    public static final FileSystemProvider ZIP = new ZipFSP();
+
+    public static final FileSystemProvider DEF = new DirFSP();
 
     public static List<FileSystemProvider> installedProviders() {
         return Arrays.asList(ZIP, DEF);
@@ -65,13 +67,16 @@ public abstract class FileSystemProvider {
 
 
     static class CreatZipFS extends FileSystem {
+
         ZipOutputStream zos;
 
         class CreateZipPath implements Path {
+
             String path;
+
             String displayName;
 
-            public CreateZipPath(String s, String displayName) {
+            CreateZipPath(String s, String displayName) {
                 this.path = s;
                 this.displayName = displayName;
             }
@@ -178,6 +183,7 @@ public abstract class FileSystemProvider {
             public InputStream _newInputStream() {
                 throw new RuntimeException();
             }
+
         }
 
         private boolean createDir0(String path) throws IOException {
@@ -202,7 +208,7 @@ public abstract class FileSystemProvider {
             return files.contains(path);
         }
 
-        public CreatZipFS(ZipOutputStream zipFile) {
+        CreatZipFS(ZipOutputStream zipFile) {
             this.zos = zipFile;
         }
 
@@ -215,18 +221,22 @@ public abstract class FileSystemProvider {
         public Path getPath(String first, String... more) {
             return new CreateZipPath(first, null);
         }
+
     }
 
     static class ReadZipPath implements Path {
+
         ZipFile zipFile;
+
         String path;
+
         String displayName;
 
-        public ReadZipPath(ZipFile zipFile, String path) {
+        ReadZipPath(ZipFile zipFile, String path) {
             this(zipFile, path, null);
         }
 
-        public ReadZipPath(ZipFile zipFile, String path, String substring) {
+        ReadZipPath(ZipFile zipFile, String path, String substring) {
             this.zipFile = zipFile;
             this.path = path;
             this.displayName = substring;
@@ -315,7 +325,8 @@ public abstract class FileSystemProvider {
 
         @Override
         public void _walkFileTree(FileVisitor<? super Path> visitor) throws IOException {
-            for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements(); ) {
+            Enumeration<? extends ZipEntry> e = zipFile.entries();
+            while (e.hasMoreElements()) {
                 ZipEntry zipEntry = e.nextElement();
                 ReadZipPath readZipPath = new ReadZipPath(zipFile, zipEntry.getName());
                 if (zipEntry.isDirectory()) {
@@ -339,12 +350,14 @@ public abstract class FileSystemProvider {
             ZipEntry e = zipFile.getEntry(path);
             return e != null ? zipFile.getInputStream(e) : null;
         }
+
     }
 
     static class ReadZipFS extends FileSystem {
+
         ZipFile zipFile;
 
-        public ReadZipFS(ZipFile zipFile) {
+        ReadZipFS(ZipFile zipFile) {
             this.zipFile = zipFile;
         }
 
@@ -357,6 +370,7 @@ public abstract class FileSystemProvider {
         public Path getPath(String first, String... more) {
             return new ReadZipPath(zipFile, first);
         }
+
     }
 
     static class ZipFSP extends FileSystemProvider {
@@ -374,10 +388,13 @@ public abstract class FileSystemProvider {
                 return new ReadZipFS(new ZipFile(((DefPath) path).file));
             }
         }
+
     }
 
     public static class DefPath implements Path {
+
         File file;
+
         String displayName;
 
         public DefPath(File file) {
@@ -497,4 +514,5 @@ public abstract class FileSystemProvider {
             throw new RuntimeException();
         }
     }
+
 }

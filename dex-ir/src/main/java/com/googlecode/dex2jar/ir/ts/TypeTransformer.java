@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2014 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.d2j.DexType;
@@ -57,7 +41,7 @@ import java.util.Set;
  */
 public class TypeTransformer implements Transformer {
 
-    private static final String[] possibleIntTypes = new String[]{"B", "S", "C", "I"};
+    private static final String[] POSSIBLE_INT_TYPES = new String[]{"B", "S", "C", "I"};
 
     @Override
     public void transform(IrMethod irMethod) {
@@ -78,7 +62,7 @@ public class TypeTransformer implements Transformer {
                 case '[':
                 case 'L':
                     if (Integer.valueOf(0).equals(cst.value)) {
-                        cst.value = Constant.Null;
+                        cst.value = Constant.NULL;
                     }
                     if (type.equals("[F") && cst.value instanceof int[]) {
                         int[] x = (int[]) cst.value;
@@ -189,25 +173,32 @@ public class TypeTransformer implements Transformer {
     public static class TypeRef {
 
         public final Value value;
+
         /**
          * same use, have same
          */
         public Set<TypeRef> sameValues = null;
+
         /**
          * reference to values
          */
         public Set<TypeRef> gArrayValues = null;
+
         public Set<TypeRef> sArrayValues = null;
+
         /**
          * reference to root
          */
         public Set<TypeRef> arrayRoots = null;
 
         public Set<TypeRef> parents = null;
+
         public Set<TypeRef> children = null;
 
         public TypeClass clz = TypeClass.UNKNOWN;
+
         public String provideDesc = null;
+
         public Set<String> uses;
 
         private TypeRef next;
@@ -307,7 +298,7 @@ public class TypeTransformer implements Transformer {
                 return "J";
             }
             if (thiz.uses != null) {
-                for (String t : possibleIntTypes) {
+                for (String t : POSSIBLE_INT_TYPES) {
                     if (thiz.uses.contains(t)) {
                         return t;
                     }
@@ -370,10 +361,12 @@ public class TypeTransformer implements Transformer {
     }
 
     private static class TypeAnalyze {
+
         protected IrMethod method;
+
         private final List<TypeRef> refs = new ArrayList<>();
 
-        public TypeAnalyze(IrMethod method) {
+        TypeAnalyze(IrMethod method) {
             super();
             this.method = method;
         }
@@ -509,8 +502,8 @@ public class TypeTransformer implements Transformer {
                     }
                     if (ta == TypeClass.INT) {
                         String chooseType = "I";
-                        for (int i = possibleIntTypes.length - 1; i >= 0; i--) {
-                            String t = possibleIntTypes[i];
+                        for (int i = POSSIBLE_INT_TYPES.length - 1; i >= 0; i--) {
+                            String t = POSSIBLE_INT_TYPES[i];
                             if (a.equals(t) || b.equals(t)) {
                                 chooseType = t;
                                 break;
@@ -543,7 +536,8 @@ public class TypeTransformer implements Transformer {
             String provideDesc = ref.provideDesc;
             if (provideDesc == null && ref.parents != null && ref.parents.size() > 1) {
                 if (isAllParentSetted(ref)) {
-                    ref.provideDesc = provideDesc = mergeParentType(ref.parents);
+                    provideDesc = mergeParentType(ref.parents);
+                    ref.provideDesc = provideDesc;
                 }
             }
             if (ref.parents != null) {
@@ -620,15 +614,16 @@ public class TypeTransformer implements Transformer {
                 return b;
             } else if (ta.fixed) {
                 // special allow merge of Z and I
-                if ((ta == TypeClass.INT && tb == TypeClass.BOOLEAN) || (tb == TypeClass.INT && ta == TypeClass.BOOLEAN)) {
+                if ((ta == TypeClass.INT && tb == TypeClass.BOOLEAN)
+                        || (tb == TypeClass.INT && ta == TypeClass.BOOLEAN)) {
                     return "I";
                 }
                 if (ta != tb) {
                     throw new RuntimeException();
                 }
                 if (ta == TypeClass.INT) {
-                    for (int i = possibleIntTypes.length - 1; i >= 0; i--) {
-                        String t = possibleIntTypes[i];
+                    for (int i = POSSIBLE_INT_TYPES.length - 1; i >= 0; i--) {
+                        String t = POSSIBLE_INT_TYPES[i];
                         if (a.equals(t) || b.equals(t)) {
                             return t;
                         }
@@ -712,9 +707,9 @@ public class TypeTransformer implements Transformer {
                 break;
             case STATIC_FIELD:
                 StaticFieldExpr fe = (StaticFieldExpr) op;
-                if (getValue) {// getfield
+                if (getValue) { // getfield
                     provideAs(fe, fe.type);
-                } else {// putfield
+                } else { // putfield
                     useAs(fe, fe.type);
                 }
                 break;
@@ -767,9 +762,9 @@ public class TypeTransformer implements Transformer {
                 break;
             case FIELD:
                 FieldExpr fe = (FieldExpr) e1;
-                if (getValue) {// getfield
+                if (getValue) { // getfield
                     provideAs(fe, fe.type);
-                } else {// putfield
+                } else { // putfield
                     useAs(fe, fe.type);
                 }
                 if (v != null) {
@@ -991,7 +986,6 @@ public class TypeTransformer implements Transformer {
         }
 
         private void exExpr(Value op, boolean getValue) {
-
             switch (op.et) {
             case E0:
                 e0expr((E0Expr) op, getValue);
@@ -1004,6 +998,8 @@ public class TypeTransformer implements Transformer {
                 break;
             case En:
                 enexpr((EnExpr) op);
+                break;
+            default:
                 break;
             }
         }
@@ -1130,6 +1126,8 @@ public class TypeTransformer implements Transformer {
                     // no stmt yet
                     // enstmt((EnStmt) p, refs, relationRefs);
                     break;
+                default:
+                    break;
                 }
             }
         }
@@ -1148,5 +1146,7 @@ public class TypeTransformer implements Transformer {
             typeRef.addUses(type);
             typeRef.updateTypeClass(TypeClass.clzOf(type));
         }
+
     }
+
 }

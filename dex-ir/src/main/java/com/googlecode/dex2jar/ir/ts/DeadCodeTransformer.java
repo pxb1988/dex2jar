@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -30,12 +15,14 @@ import java.util.List;
 import java.util.Set;
 
 public class DeadCodeTransformer implements Transformer {
+
     @Override
     public void transform(IrMethod method) {
         Cfg.createCFG(method);
         Cfg.dfsVisit(method, null);
         if (method.traps != null) {
-            for (Iterator<Trap> it = method.traps.iterator(); it.hasNext(); ) {
+            Iterator<Trap> it = method.traps.iterator();
+            while (it.hasNext()) {
                 Trap t = it.next();
                 boolean allNotThrow = true;
                 for (Stmt p = t.start; p != t.end; p = p.getNext()) {
@@ -78,20 +65,24 @@ public class DeadCodeTransformer implements Transformer {
             }
         }
         Set<Local> definedLocals = new HashSet<>();
-        for (Iterator<Stmt> it = method.stmts.iterator(); it.hasNext(); ) {
-            Stmt p = it.next();
-            if (!p.visited) {
-                it.remove();
-                continue;
-            }
-            if (p.st == Stmt.ST.ASSIGN || p.st == Stmt.ST.IDENTITY) {
-                if (p.getOp1().vt == Value.VT.LOCAL) {
-                    definedLocals.add((Local) p.getOp1());
+        {
+            Iterator<Stmt> it = method.stmts.iterator();
+            while (it.hasNext()) {
+                Stmt p = it.next();
+                if (!p.visited) {
+                    it.remove();
+                    continue;
+                }
+                if (p.st == Stmt.ST.ASSIGN || p.st == Stmt.ST.IDENTITY) {
+                    if (p.getOp1().vt == Value.VT.LOCAL) {
+                        definedLocals.add((Local) p.getOp1());
+                    }
                 }
             }
         }
         if (method.phiLabels != null) {
-            for (Iterator<LabelStmt> it = method.phiLabels.iterator(); it.hasNext(); ) {
+            Iterator<LabelStmt> it = method.phiLabels.iterator();
+            while (it.hasNext()) {
                 LabelStmt labelStmt = it.next();
                 if (!labelStmt.visited) {
                     it.remove();
@@ -109,8 +100,7 @@ public class DeadCodeTransformer implements Transformer {
         method.locals.addAll(definedLocals);
         Set<Value> tmp = new HashSet<>();
         if (method.phiLabels != null) {
-            for (Iterator<LabelStmt> it = method.phiLabels.iterator(); it.hasNext(); ) {
-                LabelStmt labelStmt = it.next();
+            for (LabelStmt labelStmt : method.phiLabels) {
                 if (labelStmt.phis != null) {
                     for (AssignStmt phi : labelStmt.phis) {
                         PhiExpr phiExpr = (PhiExpr) phi.getOp2();
@@ -135,4 +125,5 @@ public class DeadCodeTransformer implements Transformer {
             }
         }
     }
+
 }

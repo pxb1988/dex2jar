@@ -5,7 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Thro {
+public final class Thro {
+
+    private Thro() {
+        throw new UnsupportedOperationException();
+    }
 
     static Map<Throwable, List<Throwable>> aa = new HashMap<>();
 
@@ -25,4 +29,5 @@ public class Thro {
         }
         return list.toArray(new Throwable[0]);
     }
+
 }

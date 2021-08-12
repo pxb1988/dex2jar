@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2015 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.tools.jar;
 
 import java.io.BufferedReader;
@@ -33,18 +17,29 @@ import org.objectweb.asm.Type;
 
 
 public class BaseWeaver {
+
     protected String invocationInterfaceDesc = "Lcom/googlecode/d2j/tools/jar/MethodInvocation;";
+
     protected String invocationTypePrefix = "d2j/gen/MI_";
 
     protected static final String DEFAULT_RET_TYPE = "L888;";
+
     protected static final String DEFAULT_DESC = "(L;)" + DEFAULT_RET_TYPE;
+
     protected List<Callback> callbacks = new ArrayList<>();
+
     protected int currentInvocationIdx = 0;
+
     protected int seqIndex = 1;
+
     protected MtdInfo key = new MtdInfo();
+
     protected Set<String> ignores = new HashSet<>();
+
     protected Map<String, String> clzDescMap = new HashMap<>();
+
     protected Map<MtdInfo, MtdInfo> mtdMap = new HashMap<>();
+
     protected Map<MtdInfo, MtdInfo> defMap = new HashMap<>();
 
     protected String buildMethodAName(String oldName) {
@@ -176,6 +171,8 @@ public class BaseWeaver {
         case 'p':
             invocationTypePrefix = ln.substring(2);
             break;
+        default:
+            break;
         }
     }
 
@@ -221,33 +218,47 @@ public class BaseWeaver {
     }
 
     public static class Callback {
+
         int idx;
+
         Object callback;
+
         Object target;
+
         boolean isSpecial;
+
         boolean isStatic;
+
     }
 
     public static class MtdInfo {
+
         public String desc;
+
         public String name;
+
         public String owner;
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
+            if (this == o) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
+            }
 
             MtdInfo mtdInfo = (MtdInfo) o;
 
-            if (!desc.equals(mtdInfo.desc))
+            if (!desc.equals(mtdInfo.desc)) {
                 return false;
-            if (!name.equals(mtdInfo.name))
+            }
+            if (!name.equals(mtdInfo.name)) {
                 return false;
-            if (!owner.equals(mtdInfo.owner))
+            }
+            if (!owner.equals(mtdInfo.owner)) {
                 return false;
+            }
 
             return true;
         }
@@ -259,6 +270,7 @@ public class BaseWeaver {
             result = 31 * result + owner.hashCode();
             return result;
         }
+
     }
 
 }

@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex.writer.item;
 
 import com.googlecode.d2j.dex.writer.io.DataOut;
@@ -21,15 +5,25 @@ import com.googlecode.d2j.dex.writer.io.DataOut;
 public class HeadItem extends BaseItem {
 
     public static final int V035 = 0x00353330;
+
     public static final int V036 = 0x00363330;
+
     public int version = V035;
+
     public SectionItem<MapListItem> mapSection;
+
     public SectionItem<StringIdItem> stringIdSection;
+
     public SectionItem<TypeIdItem> typeIdSection;
+
     public SectionItem<ProtoIdItem> protoIdSection;
+
     public SectionItem<FieldIdItem> fieldIdSection;
+
     public SectionItem<MethodIdItem> methodIdSection;
+
     public SectionItem<ClassDefItem> classDefSection;
+
     public int fileSize = -1;
 
     public void write(DataOut out) {
@@ -60,7 +54,7 @@ public class HeadItem extends BaseItem {
         out.uint("class_defs_off", classDefSection.items.size() == 0 ? 0 : classDefSection.offset);
 
         out.uint("data_size", fileSize - mapSection.offset);   // every thing after map is data section
-        out.uint("data_off", mapSection.offset);// map is the first in data section
+        out.uint("data_off", mapSection.offset); // map is the first in data section
 
     }
 
@@ -68,4 +62,5 @@ public class HeadItem extends BaseItem {
     public int place(int offset) {
         return offset + 0x70;
     }
+
 }

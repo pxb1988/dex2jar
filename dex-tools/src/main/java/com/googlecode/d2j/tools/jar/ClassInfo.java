@@ -7,8 +7,10 @@ import java.util.Set;
 
 public class ClassInfo {
 
-    final public String name;
+    public final String name;
+
     public List<MemberInfo> members = new ArrayList<>(5);
+
     public Set<String> parent = new HashSet<>();
 
     public ClassInfo(String name) {
@@ -28,8 +30,13 @@ public class ClassInfo {
     }
 
     public static class MemberInfo {
+
         public int access;
+
         public String desc;
+
         public String name;
+
     }
+
 }

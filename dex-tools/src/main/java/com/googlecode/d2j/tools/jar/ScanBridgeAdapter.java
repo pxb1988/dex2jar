@@ -14,7 +14,7 @@ import static com.googlecode.d2j.util.AccUtils.isSynthetic;
 
 public class ScanBridgeAdapter extends ClassVisitor implements Opcodes {
 
-    private Map<String, MemberInfo> bridge = new HashMap<>();
+    private final Map<String, MemberInfo> bridge = new HashMap<>();
 
     public ScanBridgeAdapter(ClassVisitor cv) {
         super(Constants.ASM_VERSION, cv);

@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex.writer.ev;
 
 import com.googlecode.d2j.dex.writer.io.DataOut;
@@ -22,26 +6,44 @@ import com.googlecode.d2j.dex.writer.item.FieldIdItem;
 import com.googlecode.d2j.dex.writer.item.MethodIdItem;
 import com.googlecode.d2j.dex.writer.item.StringIdItem;
 import com.googlecode.d2j.dex.writer.item.TypeIdItem;
+import java.util.Objects;
 
 public class EncodedValue {
 
-    public final static int VALUE_ANNOTATION = 0x1d;
-    public final static int VALUE_ARRAY = 0x1c;
-    public final static int VALUE_BOOLEAN = 0x1f;
-    public final static int VALUE_BYTE = 0x00;
-    public final static int VALUE_CHAR = 0x03;
-    public final static int VALUE_DOUBLE = 0x11;
-    public final static int VALUE_ENUM = 0x1b;
-    public final static int VALUE_FIELD = 0x19;
-    public final static int VALUE_FLOAT = 0x10;
-    public final static int VALUE_INT = 0x04;
-    public final static int VALUE_LONG = 0x06;
-    public final static int VALUE_METHOD = 0x1a;
-    public final static int VALUE_NULL = 0x1e;
-    public final static int VALUE_SHORT = 0x02;
-    public final static int VALUE_STRING = 0x17;
-    public final static int VALUE_TYPE = 0x18;
+    public static final int VALUE_ANNOTATION = 0x1d;
+
+    public static final int VALUE_ARRAY = 0x1c;
+
+    public static final int VALUE_BOOLEAN = 0x1f;
+
+    public static final int VALUE_BYTE = 0x00;
+
+    public static final int VALUE_CHAR = 0x03;
+
+    public static final int VALUE_DOUBLE = 0x11;
+
+    public static final int VALUE_ENUM = 0x1b;
+
+    public static final int VALUE_FIELD = 0x19;
+
+    public static final int VALUE_FLOAT = 0x10;
+
+    public static final int VALUE_INT = 0x04;
+
+    public static final int VALUE_LONG = 0x06;
+
+    public static final int VALUE_METHOD = 0x1a;
+
+    public static final int VALUE_NULL = 0x1e;
+
+    public static final int VALUE_SHORT = 0x02;
+
+    public static final int VALUE_STRING = 0x17;
+
+    public static final int VALUE_TYPE = 0x18;
+
     public final int valueType;
+
     public Object value;
 
     public EncodedValue(int valueType, Object value) {
@@ -75,7 +77,7 @@ public class EncodedValue {
         return (nbBits + 0x07) >> 3;
     }
 
-    public final static int lengthOfUint(int val) {
+    public static int lengthOfUint(int val) {
         int size = 1;
         if (val != 0) {
             val = val >>> 8;
@@ -172,7 +174,7 @@ public class EncodedValue {
         case 2:
             data[1] = (byte) (value >> 8);
         case 1:
-            data[0] = (byte) (value >> 0);
+            data[0] = (byte) (value);
             break;
         default:
             throw new RuntimeException();
@@ -191,7 +193,7 @@ public class EncodedValue {
         case 2:
             data[1] = (byte) (value >> 8);
         case 1:
-            data[0] = (byte) (value >> 0);
+            data[0] = (byte) (value);
             break;
         default:
             throw new RuntimeException();
@@ -201,15 +203,19 @@ public class EncodedValue {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         EncodedValue that = (EncodedValue) o;
 
-        if (valueType != that.valueType) return false;
-        if (value != null ? !value.equals(that.value) : that.value != null) return false;
-
-        return true;
+        if (valueType != that.valueType) {
+            return false;
+        }
+        return Objects.equals(value, that.value);
     }
 
     @Override
@@ -226,7 +232,7 @@ public class EncodedValue {
         switch (valueType) {
         case VALUE_CHAR:
             Character c = (Character) this.value;
-            return c.charValue() == 0;
+            return c == 0;
         case VALUE_BYTE:
         case VALUE_INT:
         case VALUE_SHORT:
@@ -240,6 +246,8 @@ public class EncodedValue {
         case VALUE_BOOLEAN:
             Boolean z = (Boolean) this.value;
             return Boolean.FALSE.equals(z);
+        default:
+            break;
         }
         return false;
     }
@@ -272,16 +280,15 @@ public class EncodedValue {
         case VALUE_NULL:
         case VALUE_ANNOTATION:
         case VALUE_ARRAY:
+        case VALUE_BYTE:
             return 0;
         case VALUE_BOOLEAN:
             return Boolean.TRUE.equals(value) ? 1 : 0;
-        case VALUE_BYTE:
-            return 0;
         case VALUE_SHORT:
         case VALUE_INT:
             return lengthOfSint(((Number) value).intValue()) - 1;
         case VALUE_CHAR:
-            return lengthOfUint(((Character) value).charValue()) - 1;
+            return lengthOfUint((Character) value) - 1;
         case VALUE_LONG:
             return lengthOfSint(((Number) value).longValue()) - 1;
         case VALUE_DOUBLE:
@@ -295,11 +302,13 @@ public class EncodedValue {
         case VALUE_ENUM:
             BaseItem bi = (BaseItem) value;
             return lengthOfUint(bi.index) - 1;
+        default:
+            break;
         }
         return 0;
     }
 
-    final public int place(int offset) {
+    public final int place(int offset) {
         offset += 1;
         return doPlace(offset);
     }
@@ -360,7 +369,7 @@ public class EncodedValue {
     }
 
     private byte[] writeRightZeroExtendedValue(int requiredBytes, long value) {
-        value >>= 64 - (requiredBytes * 8);
+        value >>= 64 - (requiredBytes * 8L);
         byte[] s = new byte[requiredBytes];
         for (int i = 0; i < requiredBytes; i++) {
             s[i] = ((byte) value);
