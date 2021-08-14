@@ -20,6 +20,7 @@ public class DexFileNode extends DexFileVisitor {
 
     @Override
     public DexClassVisitor visit(int accessFlags, String className, String superClass, String[] interfaceNames) {
+        if (className.startsWith("Landroidx/") || className.startsWith("Lcom/google/android/material/")) return null;
         DexClassNode cn = new DexClassNode(accessFlags, className, superClass, interfaceNames);
         clzs.add(cn);
         return cn;

@@ -160,6 +160,7 @@ public class Dex2Asm {
             access |= Opcodes.ACC_PUBLIC;
         }
         access &= ~DexConstants.ACC_DECLARED_SYNCHRONIZED; // clean ACC_DECLARED_SYNCHRONIZED
+        access &= ~Opcodes.ACC_SYNTHETIC; // clean ACC_SYNTHETIC
         return access;
     }
 
@@ -170,6 +171,7 @@ public class Dex2Asm {
         } else if (0 != (access & Opcodes.ACC_PROTECTED)) { // clear public if it is protected
             access &= ~(Opcodes.ACC_PUBLIC);
         }
+        access &= ~Opcodes.ACC_SYNTHETIC; // clean ACC_SYNTHETIC
         return access;
     }
 
@@ -321,8 +323,8 @@ public class Dex2Asm {
             }
         }
         int access = methodNode.access;
-        // clear ACC_DECLARED_SYNCHRONIZED and ACC_CONSTRUCTOR from method flags
-        final int cleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | DexConstants.ACC_CONSTRUCTOR));
+        // clear ACC_DECLARED_SYNCHRONIZED, ACC_CONSTRUCTOR and ACC_SYNTHETIC from method flags
+        final int cleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | DexConstants.ACC_CONSTRUCTOR | Opcodes.ACC_SYNTHETIC));
         access &= cleanFlag;
         return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(), signature, xthrows);
     }
@@ -468,7 +470,13 @@ public class Dex2Asm {
         int access = classNode.access;
         boolean isInnerClass = false;
         if (clzInfo != null) {
-            isInnerClass = clzInfo.enclosingClass != null || clzInfo.enclosingMethod != null;
+            if (clzInfo.enclosingClass != null || clzInfo.enclosingMethod != null) {
+                if (classNode.anns.stream().noneMatch(x -> x.type.equals("Ldalvik/annotation/EnclosingMethod;"))) {
+                    isInnerClass = true;
+                } else if (clzInfo.enclosingClass != null) {
+                    clzInfo.enclosingClass.inners.remove(clzInfo);
+                }
+            }
         }
         access = clearClassAccess(isInnerClass, access);
 
@@ -498,7 +506,7 @@ public class Dex2Asm {
         for (InnerClassNode icn : innerClassNodes) {
             if (icn.innerName != null && !isJavaIdentifier(icn.innerName)) {
                 System.err.println("WARN: Ignored invalid inner-class name, "
-                        + "treat as anonymous inner class.");
+                        + "treat as anonymous inner class. (" + icn.innerName + ")");
                 icn.innerName = null;
                 icn.outerName = null;
             }
@@ -558,7 +566,7 @@ public class Dex2Asm {
             }
         }
         Object value = convertConstantValue(fieldNode.cst);
-        final int fieldCleanFlag = ~DexConstants.ACC_DECLARED_SYNCHRONIZED;
+        final int fieldCleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC));
         FieldVisitor fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
                 fieldNode.field.getType(), signature == null || !signature.contains(";") ? null : signature, value);
         if (fv == null) {
