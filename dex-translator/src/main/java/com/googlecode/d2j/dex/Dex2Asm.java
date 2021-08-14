@@ -835,7 +835,7 @@ public class Dex2Asm {
                         innerClassNodes.add(new InnerClassNode(toInternalName(inner.name), null, null,
                                 clearInnerAccess(inner.access)));
                     } else { // non-anonymous Innerclass
-                        innerClassNodes.add(new InnerClassNode(toInternalName(inner.name), toInternalName(className),
+                        innerClassNodes.add(new InnerClassNode(toInternalName(inner.name), toInternalName(clz.name),
                                 inner.innerName, clearInnerAccess(inner.access)));
                     }
                     stack.push(inner);
