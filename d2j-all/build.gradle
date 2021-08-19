@@ -17,9 +17,6 @@ dependencies {
     implementation(project(":d2j-base-cmd")) {
         transitive = false
     }
-    implementation(project(":d2j-j6")) {
-        transitive = false
-    }
     implementation(project(":d2j-jasmin")) {
         transitive = false
     }
