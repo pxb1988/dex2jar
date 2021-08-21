@@ -12,6 +12,7 @@ import sun.security.pkcs.PKCS7;
 import sun.security.pkcs.SignerInfo;
 import sun.security.x509.AlgorithmId;
 import sun.security.x509.X500Name;
+
 // CHECKSTYLE:ON
 
 public class SunJarSignImpl extends AbstractJarSign {

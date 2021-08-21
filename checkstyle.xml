@@ -78,7 +78,7 @@
 
     <module name="RegexpMultiline">
         <property name="id" value="RegexpMultilineEmptyRowAfterClassDef"/>
-        <property name="format" value="^([^\r\n]* )*(class|interface|@interface|enum) [^{]*\{[\r]?\n[^\r\n}]"/>
+        <property name="format" value="^([^\r\n*]* )*(class|interface|@interface|enum) [^{]*\{[\r]?\n[^\r\n}]"/>
         <property name="message" value="Leave empty row after class/interface/@interface/enum definition!"/>
         <property name="severity" value="error"/>
         <property name="fileExtensions" value="groovy,java"/>

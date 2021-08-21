@@ -79,7 +79,9 @@ public class DexClassNode extends DexClassVisitor {
 
     @Override
     public DexAnnotationVisitor visitAnnotation(String name, Visibility visibility) {
-        if (name.equals("Lkotlin/Metadata;")) return null; // clean kotlin metadata
+        if (name.equals("Lkotlin/Metadata;")) {
+            return null; // clean kotlin metadata
+        }
         if (anns == null) {
             anns = new ArrayList<>(5);
         }

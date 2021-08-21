@@ -23,8 +23,6 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.util.Printer;
 
-// CHECKSTYLE:OFF
-
 /**
  * <b>get from asm example</b>
  * <p>
@@ -74,9 +72,6 @@ import org.objectweb.asm.util.Printer;
  *
  * @author Eric Bruneton
  */
-
-// CHECKSTYLE:ON
-
 public class JasminDumper implements Opcodes {
 
     private static final Set<String> ACCESS_KWS = new HashSet<>(Arrays

@@ -324,7 +324,8 @@ public class Dex2Asm {
         }
         int access = methodNode.access;
         // clear ACC_DECLARED_SYNCHRONIZED, ACC_CONSTRUCTOR and ACC_SYNTHETIC from method flags
-        final int cleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | DexConstants.ACC_CONSTRUCTOR | Opcodes.ACC_SYNTHETIC));
+        final int cleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | DexConstants.ACC_CONSTRUCTOR
+                | Opcodes.ACC_SYNTHETIC));
         access &= cleanFlag;
         return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(), signature, xthrows);
     }
@@ -738,8 +739,6 @@ public class Dex2Asm {
         T_IR_2_J_REG_ASSIGN.transform(irMethod);
     }
 
-    // CHECKSTYLE:OFF
-
     /**
      * For structure
      *
@@ -762,9 +761,6 @@ public class Dex2Asm {
      * <p>
      * to WeAreHere.class
      */
-
-    // CHECKSTYLE:ON
-
     private static void searchEnclosing(Clz clz, List<InnerClassNode> innerClassNodes) {
         Set<Clz> visitedClz = new HashSet<>();
         for (Clz p = clz; p != null; p = p.enclosingClass) {
@@ -789,8 +785,6 @@ public class Dex2Asm {
         }
     }
 
-    // CHECKSTYLE:OFF
-
     /**
      * For structure
      *
@@ -814,9 +808,6 @@ public class Dex2Asm {
      * <p>
      * to WeAreHere.class
      */
-
-    // CHECKSTYLE:ON
-
     private static void searchInnerClass(Clz clz, List<InnerClassNode> innerClassNodes,
                                          String className) {
         Set<Clz> visited = new HashSet<>();

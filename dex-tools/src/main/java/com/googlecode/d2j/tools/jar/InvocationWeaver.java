@@ -31,8 +31,6 @@ import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
-// CHECKSTYLE:OFF
-
 /**
  * 1. Replace class A by another class B, include superclass, new for
  * <p/>
@@ -105,9 +103,6 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
  *     }
  * </pre>
  */
-
-// CHECKSTYLE:ON
-
 public class InvocationWeaver extends BaseWeaver implements Opcodes {
 
     private static final Type OBJECT_TYPE = Type.getType(Object.class);
