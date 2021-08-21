@@ -1,0 +1,16 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+description = 'Module for including external libraries'
+group 'com.googlecode.d2j'
+version '2.1-SNAPSHOT'
+
+dependencies {
+    implementation fileTree(dir: '../libs', include: '*.jar')
+}
+
+tasks.jar.enabled = false // Don't build normal jar
+tasks.assemble.dependsOn tasks.shadowJar // Build uber-jar on build task
+
+shadowJar {
+    archiveClassifier.set(null)
+}

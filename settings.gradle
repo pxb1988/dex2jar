@@ -1,2 +1,2 @@
 rootProject.name = 'dex2jar'
-include ':dex-reader-api', ':dex-reader', ':dex-writer', ':dex-translator', ':dex-ir', ':dex-tools', ':d2j-smali', ':d2j-base-cmd', ':d2j-jasmin'
+include ':d2j-external', ':dex-reader-api', ':dex-reader', ':dex-writer', ':dex-translator', ':dex-ir', ':dex-tools', ':d2j-smali', ':d2j-base-cmd', ':d2j-jasmin'

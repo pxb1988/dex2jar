@@ -25,11 +25,19 @@ subprojects {
 
     [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
 
+    // Cache list of tasks
+    project.getAllTasks(true)
+
     publishing {
         publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
+            if (tasks.findByName("shadowJar") == null)
+                mavenJava(MavenPublication) {
+                    from(components.java)
+                }
+            else
+                mavenJava(MavenPublication) {
+                    artifact(tasks.findByName("shadowJar"))
+                }
         }
     }
 }
@@ -41,6 +49,7 @@ dependencies {
     implementation(project(":d2j-base-cmd")) {
         transitive = false
     }
+    implementation(project(":d2j-external")) // Transitive please
     implementation(project(":d2j-jasmin")) {
         transitive = false
     }
@@ -65,7 +74,6 @@ dependencies {
     implementation(project(":dex-writer")) {
         transitive = false
     }
-    implementation fileTree(dir: 'libs', include: '*.jar')
 }
 
 tasks.jar.enabled = false // Don't build normal jar
