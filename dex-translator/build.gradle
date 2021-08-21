@@ -1,15 +1,19 @@
+plugins {
+    id('java-library')
+}
+
 description = 'Dex Translator'
 
 dependencies {
-    implementation project(':dex-reader-api')
-    implementation project(':dex-reader')
-    implementation project(':dex-ir')
-    implementation project(':d2j-base-cmd')
-    implementation group: 'org.ow2.asm', name: 'asm', version: '9.2'
-    implementation group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
-    implementation group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
-    implementation group: 'org.ow2.asm', name: 'asm-commons', version: '9.2'
-    implementation fileTree(dir: '../libs', include: '*.jar')
+    api project(':dex-reader-api')
+    api project(':dex-reader')
+    api project(':dex-ir')
+    api project(':d2j-base-cmd')
+    api group: 'org.ow2.asm', name: 'asm', version: '9.2'
+    api group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
+    api group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
+    api group: 'org.ow2.asm', name: 'asm-commons', version: '9.2'
+    api fileTree(dir: '../libs', include: '*.jar')
     testImplementation project(':d2j-smali')
     testImplementation project(':d2j-jasmin')
 }

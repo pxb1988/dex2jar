@@ -1,7 +1,8 @@
-description = 'Dex Tools'
-apply plugin: 'application'
+plugins {
+    id "application"
+}
 
-mainClassName = "com.googlecode.dex2jar.tools.BaseCmd"
+description = 'Dex Tools'
 
 dependencies {
     implementation project(':dex-translator')

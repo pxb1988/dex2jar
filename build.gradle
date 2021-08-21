@@ -1,95 +1,80 @@
-allprojects {
-    apply plugin: 'maven-publish'
-    apply plugin: 'idea'
-    apply plugin: 'eclipse'
-    group = 'com.googlecode.d2j'
-    version = '2.1-SNAPSHOT'
+plugins {
+    id "application"
+    id "com.github.johnrengelman.shadow" version "7.0.0"
 }
 
-defaultTasks('clean', 'distZip')
+allprojects {
+    group = 'com.googlecode.d2j'
+    version = '2.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
 
 subprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
 
-    task packageSources(type: Jar) {
-        if (!getTasksByName('generateGrammarSource', false).empty) {
-            dependsOn(generateGrammarSource)
-        }
-        archiveClassifier.set('sources')
-        from sourceSets.main.allSource
-    }
-    artifacts.archives packageSources
-    repositories {
-        mavenCentral()
-    }
-
-// == support provided scope
-    configurations {
-        provided
-    }
-    sourceSets {
-        main { compileClasspath += configurations.provided }
-        test {
-            compileClasspath += configurations.provided
-        }
-    }
-// == end
-
-    [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
-    compileJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-    compileTestJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    sourceCompatibility = targetCompatibility = 1.8
 
     dependencies {
-        testImplementation group: 'junit', name: 'junit', version: '4.13.2'
         implementation fileTree(dir: 'libs', include: '*.jar')
+        testImplementation group: 'junit', name: 'junit', version: '4.13.2'
     }
 
-    jar {
-        manifest {
-            attributes("Implementation-Title": project.name,
-                    "Implementation-Version": project.version,
-                    "Build-Time": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                    "Revision": "${getRevision()}",
-                    "Build-Number": System.env.BUILD_NUMBER ? System.env.BUILD_NUMBER : "-1",
-            )
-        }
-        from(project.parent.projectDir) {
-            include 'NOTICE.txt'
-            include 'LICENSE.txt'
-            into('META-INF')
+    [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
         }
     }
 }
 
-static def getRevision() {
-    if (System.env.BUILD_REVISION) {
-        return System.env.BUILD_REVISION
-    }
-    if (System.env.GIT_REVISION) {
-        return System.env.GIT_REVISION
-    }
-    if (System.env.MERCURIAL_REVISION) {
-        System.env.MERCURIAL_REVISION
-    }
+mainClassName = "com.googlecode.dex2jar.tools.Dex2jarCmd"
+archivesBaseName = "dex2jar"
 
-    def ver = null
-    try {
-        ver = 'git rev-parse --short HEAD'.execute().text.trim()
-    } catch (ignored) {
-        // ignore
+dependencies {
+    implementation(project(":d2j-base-cmd")) {
+        transitive = false
     }
-    if (!ver) {
-        try {
-            ver = 'hg id -i -b -t'.execute().text.split(' ')[0]
-        } catch (ignored) {
-            // ignore
-        }
+    implementation(project(":d2j-jasmin")) {
+        transitive = false
     }
-    if (!ver) {
-        ver = "HEAD"
+    implementation(project(":d2j-smali")) {
+        transitive = false
     }
-    return ver
+    implementation(project(":dex-ir")) {
+        transitive = false
+    }
+    implementation(project(":dex-reader")) {
+        transitive = false
+    }
+    implementation(project(":dex-reader-api")) {
+        transitive = false
+    }
+    implementation(project(":dex-tools")) {
+        transitive = false
+    }
+    implementation(project(":dex-translator")) {
+        transitive = false
+    }
+    implementation(project(":dex-writer")) {
+        transitive = false
+    }
+    implementation fileTree(dir: 'libs', include: '*.jar')
 }
+
+tasks.jar.enabled = false // Don't build normal jar
+
+shadowJar {
+    archiveClassifier.set(null)
+}
+
+// Get rid of Gradle warnings
+tasks.distTar.dependsOn tasks.shadowJar
+tasks.distZip.dependsOn tasks.shadowJar
+tasks.startScripts.dependsOn tasks.shadowJar
