@@ -5,6 +5,7 @@ import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.BaseDexFileReader;
 import com.googlecode.d2j.reader.DexFileReader;
+import com.googlecode.d2j.reader.MultiDexFileReader;
 import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
@@ -268,11 +269,11 @@ public final class Dex2jar {
     }
 
     public static Dex2jar from(byte[] in) throws IOException {
-        return from(new DexFileReader(ZipUtil.readDex(in)));
+        return from(MultiDexFileReader.open(in));
     }
 
-    public static Dex2jar from(ByteBuffer in) {
-        return from(new DexFileReader(in));
+    public static Dex2jar from(ByteBuffer in) throws IOException {
+        return from(MultiDexFileReader.open(in.array()));
     }
 
     public static Dex2jar from(BaseDexFileReader reader) {
@@ -284,7 +285,7 @@ public final class Dex2jar {
     }
 
     public static Dex2jar from(InputStream in) throws IOException {
-        return from(new DexFileReader(in));
+        return from(MultiDexFileReader.open(in));
     }
 
     public static Dex2jar from(String in) throws IOException {

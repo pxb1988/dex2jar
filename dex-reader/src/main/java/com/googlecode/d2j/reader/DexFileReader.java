@@ -350,7 +350,7 @@ public class DexFileReader implements BaseDexFileReader {
     }
 
     /**
-     * Reads a string index. String indicies are offset by 1, and a 0 value in the stream (-1 as returned by this
+     * Reads a string index. String indices are offset by 1, and a 0 value in the stream (-1 as returned by this
      * method) means "null"
      *
      * @return index into file's string ids table, -1 means null

@@ -36,6 +36,10 @@ public class MultiDexFileReader implements BaseDexFileReader {
         return out.getBuf();
     }
 
+    public static BaseDexFileReader open(InputStream in) throws IOException {
+        return open(toByteArray(in));
+    }
+
     public static BaseDexFileReader open(byte[] data) throws IOException {
         if (data.length < 3) {
             throw new IOException("File too small to be a dex/zip");
@@ -62,7 +66,7 @@ public class MultiDexFileReader implements BaseDexFileReader {
                 return new MultiDexFileReader(dexFileReaders.values());
             }
         }
-        throw new IOException("The src file is not a .dex or zip file");
+        throw new IOException("The source file is not a .dex or .zip file");
     }
 
     void init() {
