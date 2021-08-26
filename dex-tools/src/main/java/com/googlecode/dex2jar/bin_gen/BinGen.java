@@ -25,7 +25,7 @@ public final class BinGen {
     /**
      *
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String... args) throws IOException {
         if (args.length < 2) {
             System.err.println("bin-gen cfg-dir out-dir");
             return;

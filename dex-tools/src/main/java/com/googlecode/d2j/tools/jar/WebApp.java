@@ -21,7 +21,7 @@ public final class WebApp {
     /**
      *
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String... args) throws IOException {
         if (args.length < 2) {
             System.out.println("webapp pathToWebApp config [ignoreJarConfig]");
             return;

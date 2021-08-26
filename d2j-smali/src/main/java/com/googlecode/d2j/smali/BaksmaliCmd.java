@@ -29,7 +29,7 @@ public class BaksmaliCmd extends BaseCmd {
             + "$current_dir/[jar-name]-out/", argName = "out")
     private Path output;
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new BaksmaliCmd().doMain(args);
     }
 

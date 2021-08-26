@@ -55,7 +55,7 @@ public class JarWeaverCmd extends BaseCmd {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new JarWeaverCmd().doMain(args);
     }
 

@@ -31,7 +31,7 @@ public class SmaliCmd extends BaseCmd {
     @Opt(opt = "-", hasArg = false, description = "read smali from stdin")
     private boolean readSmaliFromStdin;
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new SmaliCmd().doMain(args);
     }
 
