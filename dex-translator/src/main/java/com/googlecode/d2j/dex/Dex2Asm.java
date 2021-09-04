@@ -327,7 +327,16 @@ public class Dex2Asm {
         final int cleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | DexConstants.ACC_CONSTRUCTOR
                 | Opcodes.ACC_SYNTHETIC));
         access &= cleanFlag;
-        return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(), signature, xthrows);
+        try {
+            return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(), signature, xthrows);
+        } catch (StringIndexOutOfBoundsException | IllegalArgumentException e) {
+            System.err.println("Applying workaround to method "
+                    + methodNode.method.getOwner() + "#" + methodNode.method.getName()
+                    + " with original signature " + signature
+                    + " by changing its types to java.lang.Object.");
+            return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(),
+                    "(Ljava/lang/Object;)Ljava/lang/Object;", xthrows);
+        }
     }
 
     protected static Map<String, Clz> collectClzInfo(DexFileNode fileNode) {
@@ -568,8 +577,18 @@ public class Dex2Asm {
         }
         Object value = convertConstantValue(fieldNode.cst);
         final int fieldCleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC));
-        FieldVisitor fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
-                fieldNode.field.getType(), signature == null || !signature.contains(";") ? null : signature, value);
+        FieldVisitor fv;
+        try {
+            fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
+                    fieldNode.field.getType(), signature, value);
+        } catch (StringIndexOutOfBoundsException | IllegalArgumentException e) {
+            System.err.println("Applying workaround to field "
+                    + classNode.className + "#" + fieldNode.field.getName()
+                    + " with original signature " + signature
+                    + " by changing its type to java.lang.Object.");
+            fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
+                    fieldNode.field.getType(), "Ljava/lang/Object;", value);
+        }
         if (fv == null) {
             return;
         }
