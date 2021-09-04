@@ -637,7 +637,7 @@ public class TypeTransformer implements Transformer {
                         return mergeObjectType(a, b);
                     } else {
                         String elementTypeA = a.substring(as);
-                        String elementTypeB = a.substring(bs);
+                        String elementTypeB = b.substring(bs);
                         if (as < bs) {
                             return buildArray(elementTypeB.charAt(0) == 'L' ? bs : bs - 1, "L");
                         } else if (as > bs) {
