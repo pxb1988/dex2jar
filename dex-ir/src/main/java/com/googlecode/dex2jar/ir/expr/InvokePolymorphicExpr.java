@@ -5,11 +5,9 @@ import com.googlecode.d2j.Proto;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.Util;
 
-public class InvokePolymorphicExpr extends AbstractInvokeExpr {
+public class InvokePolymorphicExpr extends InvokeExpr {
 
     public Proto proto;
-
-    public Method method;
 
     @Override
     protected void releaseMemory() {
@@ -24,9 +22,8 @@ public class InvokePolymorphicExpr extends AbstractInvokeExpr {
     }
 
     public InvokePolymorphicExpr(VT type, Value[] args, Proto proto, Method method) {
-        super(type, args);
+        super(type, args, method);
         this.proto = proto;
-        this.method = method;
     }
 
     @Override
