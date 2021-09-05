@@ -11,7 +11,6 @@ public class InvokePolymorphicExpr extends InvokeExpr {
 
     @Override
     protected void releaseMemory() {
-        method = null;
         proto = null;
         super.releaseMemory();
     }
@@ -27,12 +26,12 @@ public class InvokePolymorphicExpr extends InvokeExpr {
     }
 
     @Override
-    public Value clone() {
+    public InvokePolymorphicExpr clone() {
         return new InvokePolymorphicExpr(vt, cloneOps(), proto, method);
     }
 
     @Override
-    public Value clone(LabelAndLocalMapper mapper) {
+    public InvokePolymorphicExpr clone(LabelAndLocalMapper mapper) {
         return new InvokePolymorphicExpr(vt, cloneOps(mapper), proto, method);
     }
 
