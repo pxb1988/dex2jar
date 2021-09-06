@@ -99,6 +99,9 @@ public final class Util {
     }
 
     public static String toShortClassName(String desc) {
+        if (desc == null || desc.isEmpty()) {
+            return "";
+        }
         switch (desc.charAt(0)) {
         case 'Z':
             return "boolean";
