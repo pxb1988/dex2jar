@@ -364,7 +364,7 @@ public class UnSSATransformer implements Transformer {
                 // https://github.com/pxb1988/dex2jar/issues/477
                 // the exception handler is dead and stmt.frame is null
                 LabelStmt label = (LabelStmt) stmt;
-                if (label.phis != null) {
+                if (label.phis != null && stmt.frame != null) {
                     for (AssignStmt phiAssignStmt : (List<AssignStmt>) label.phis) {
                         Local phiLocal = (Local) phiAssignStmt.getOp1();
                         RegAssign a = (RegAssign) phiLocal.tag;
