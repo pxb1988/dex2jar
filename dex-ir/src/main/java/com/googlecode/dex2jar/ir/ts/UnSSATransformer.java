@@ -342,13 +342,15 @@ public class UnSSATransformer implements Transformer {
                         Local phiLocal = (Local) phiAssignStmt.getOp1();
                         RegAssign a = (RegAssign) phiLocal.tag;
                         LiveV[] frame = (LiveV[]) stmt.frame;
-                        for (LiveV v : frame) {
-                            if (v != null && v.used) {
-                                RegAssign b = (RegAssign) v.local.tag;
-                                a.excludes.add(b);
-                                b.excludes.add(a);
+						if (frame != null) {
+                            for (LiveV v : frame) {
+                                if (v != null && v.used) {
+                                    RegAssign b = (RegAssign) v.local.tag;
+                                    a.excludes.add(b);
+                                    b.excludes.add(a);
+                                }
                             }
-                        }
+						}
                     }
                 }
             }
