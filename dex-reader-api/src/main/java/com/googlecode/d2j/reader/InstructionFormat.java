@@ -68,7 +68,7 @@ public enum InstructionFormat {
 
     // kFmt3rmi(3), // [opt] inline invoke/range
 
-    public int size;
+    public final int size;
 
     InstructionFormat(int size) {
         this.size = size;

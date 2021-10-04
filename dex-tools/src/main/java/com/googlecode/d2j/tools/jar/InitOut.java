@@ -3,6 +3,7 @@ package com.googlecode.d2j.tools.jar;
 import com.googlecode.dex2jar.tools.BaseCmd;
 import com.googlecode.dex2jar.tools.Constants;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -448,7 +449,7 @@ public class InitOut {
 
     }
 
-    private static class MemberInfoComparator implements Comparator<MemberInfo> {
+    private static class MemberInfoComparator implements Comparator<MemberInfo>, Serializable {
 
         @Override
         public int compare(MemberInfo memberInfo, MemberInfo memberInfo2) {

@@ -27,7 +27,7 @@ public class StdApkCmd extends BaseCmd {
             return;
         }
 
-        System.err.printf("fix %s -> %s\n", remainingArgs[0], output);
+        System.err.printf("fix %s -> %s%n", remainingArgs[0], output);
 
         byte[] buffer = new byte[1000];
         try (ZipOutputStream zos = new AutoSTOREDZipOutputStream(Files.newOutputStream(output))) {

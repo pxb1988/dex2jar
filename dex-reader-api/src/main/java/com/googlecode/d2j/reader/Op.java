@@ -291,19 +291,19 @@ public enum Op implements CFG {
             K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW | K_INSTR_INVOKE, true), //
     BAD_OP(-1, "bad-opcode", null, kIndexNone, 0, false); //
 
-    public int opcode;
+    public final int opcode;
 
-    public InstructionFormat format;
+    public final InstructionFormat format;
 
     /* package */ InstructionIndexType indexType;
 
     /* package */ int flags;
 
-    public String displayName;
+    public final String displayName;
 
     public static final Op[] OPS = new Op[256];
 
-    public boolean changeFrame;
+    public final boolean changeFrame;
 
     static {
         for (Op op : Op.values()) {
@@ -340,6 +340,7 @@ public enum Op implements CFG {
         this.format = fmt;
         this.indexType = indexType;
         this.flags = flags;
+        this.changeFrame = changeFrame;
     }
 
     public String toString() {

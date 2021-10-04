@@ -17,8 +17,8 @@ public enum TypeClass {
     IF("i"), //
     JD("w"); //
 
-    public String name;
-    public boolean fixed;
+    public final String name;
+    public final boolean fixed;
 
     TypeClass(String use, boolean fixed) {
         this.name = use;
