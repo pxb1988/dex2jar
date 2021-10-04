@@ -7,7 +7,7 @@ public enum Visibility {
 
     BUILD(0), RUNTIME(1), SYSTEM(2);
 
-    public int value;
+    public final int value;
 
     // int VISIBILITY_BUILD = 0;
     // int VISIBILITY_RUNTIME = 1;

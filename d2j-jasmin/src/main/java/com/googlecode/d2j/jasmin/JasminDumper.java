@@ -870,19 +870,19 @@ public class JasminDumper implements Opcodes {
     }
 
     protected void printFrameType(final Object type) {
-        if (type == Opcodes.TOP) {
+        if (Opcodes.TOP.equals(type)) {
             pw.print("Top");
-        } else if (type == Opcodes.INTEGER) {
+        } else if (Opcodes.INTEGER.equals(type)) {
             pw.print("Integer");
-        } else if (type == Opcodes.FLOAT) {
+        } else if (Opcodes.FLOAT.equals(type)) {
             pw.print("Float");
-        } else if (type == Opcodes.LONG) {
+        } else if (Opcodes.LONG.equals(type)) {
             pw.print("Long");
-        } else if (type == Opcodes.DOUBLE) {
+        } else if (Opcodes.DOUBLE.equals(type)) {
             pw.print("Double");
-        } else if (type == Opcodes.NULL) {
+        } else if (Opcodes.NULL.equals(type)) {
             pw.print("Null");
-        } else if (type == Opcodes.UNINITIALIZED_THIS) {
+        } else if (Opcodes.UNINITIALIZED_THIS.equals(type)) {
             pw.print("UninitializedThis");
         } else if (type instanceof Label) {
             pw.print("Uninitialized ");

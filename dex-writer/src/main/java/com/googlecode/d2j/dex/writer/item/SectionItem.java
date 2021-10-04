@@ -32,7 +32,7 @@ public class SectionItem<T extends BaseItem> extends BaseItem {
         for (Field f : SectionItem.class.getFields()) {
             if (f.getType().equals(int.class)) {
                 if (0 != (f.getModifiers() & Modifier.STATIC)) {
-                    System.out.printf("%s(0x%04x,0,0),//\n", f.getName(), f.get(null));
+                    System.out.printf("%s(0x%04x,0,0),//%n", f.getName(), f.get(null));
                 }
             }
         }
@@ -109,9 +109,9 @@ public class SectionItem<T extends BaseItem> extends BaseItem {
         TYPE_ENCODED_ARRAY_ITEM(0x2005, 1, 0), //
         TYPE_ANNOTATIONS_DIRECTORY_ITEM(0x2006, 4, 0); //
 
-        public int code;
+        public final int code;
 
-        public int alignment;
+        public final int alignment;
 
         SectionType(int typeCode, int alignment, int size) {
             this.code = typeCode;
