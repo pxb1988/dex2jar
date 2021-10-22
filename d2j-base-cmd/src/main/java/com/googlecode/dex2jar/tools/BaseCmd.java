@@ -177,11 +177,11 @@ public abstract class BaseCmd {
         public String getOptAndLongOpt() {
             StringBuilder sb = new StringBuilder();
             boolean havePrev = false;
-            if (opt != null && opt.length() > 0) {
+            if (opt != null && !opt.isEmpty()) {
                 sb.append("-").append(opt);
                 havePrev = true;
             }
-            if (longOpt != null && longOpt.length() > 0) {
+            if (longOpt != null && !longOpt.isEmpty()) {
                 if (havePrev) {
                     sb.append(",");
                 }
@@ -297,7 +297,7 @@ public abstract class BaseCmd {
             doCommandLine();
         } catch (HelpException e) {
             String msg = e.getMessage();
-            if (msg != null && msg.length() > 0) {
+            if (msg != null && !msg.isEmpty()) {
                 System.err.println("ERROR: " + msg);
             }
             usage();
@@ -388,7 +388,7 @@ public abstract class BaseCmd {
     }
 
     private static String fromCamel(String name) {
-        if (name.length() == 0) {
+        if (name.isEmpty()) {
             return "";
         }
         StringBuilder sb = new StringBuilder();
@@ -528,7 +528,7 @@ public abstract class BaseCmd {
                 sb.append(" <").append(option.argName).append(">");
             }
             String desc = option.description;
-            if (desc == null || desc.length() == 0) { // no description
+            if (desc == null || desc.isEmpty()) { // no description
                 out.println(sb);
             } else {
                 for (int i = palength - sb.length(); i > 0; i--) {
