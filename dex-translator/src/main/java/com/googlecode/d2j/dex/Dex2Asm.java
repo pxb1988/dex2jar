@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
 import org.objectweb.asm.AnnotationVisitor;
@@ -78,30 +79,20 @@ public class Dex2Asm {
         }
 
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
+        public boolean equals(Object o) {
+            if (this == o) {
                 return true;
             }
-            if (obj == null) {
+            if (!(o instanceof Clz)) {
                 return false;
             }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            Clz other = (Clz) obj;
-            if (name == null) {
-                return other.name == null;
-            } else {
-                return name.equals(other.name);
-            }
+            Clz clz = (Clz) o;
+            return Objects.equals(name, clz.name);
         }
 
         @Override
         public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((name == null) ? 0 : name.hashCode());
-            return result;
+            return Objects.hash(name);
         }
 
         public String toString() {
@@ -478,16 +469,7 @@ public class Dex2Asm {
 
         Clz clzInfo = classes.get(classNode.className);
         int access = classNode.access;
-        boolean isInnerClass = false;
-        if (clzInfo != null) {
-            if (clzInfo.enclosingClass != null || clzInfo.enclosingMethod != null) {
-                if (classNode.anns.stream().noneMatch(x -> x.type.equals("Ldalvik/annotation/EnclosingMethod;"))) {
-                    isInnerClass = true;
-                } else if (clzInfo.enclosingClass != null) {
-                    clzInfo.enclosingClass.inners.remove(clzInfo);
-                }
-            }
-        }
+        boolean isInnerClass = clzInfo != null && (clzInfo.enclosingClass != null || clzInfo.enclosingMethod != null);
         access = clearClassAccess(isInnerClass, access);
 
         int version = dexVersion >= DexConstants.DEX_037 ? Opcodes.V1_8 : Opcodes.V1_6;
@@ -496,7 +478,7 @@ public class Dex2Asm {
 
         List<InnerClassNode> innerClassNodes = new ArrayList<>(5);
         if (clzInfo != null) {
-            searchInnerClass(clzInfo, innerClassNodes, classNode.className);
+            searchInnerClass(clzInfo, innerClassNodes);
         }
         if (isInnerClass) {
             // build Outer Clz
@@ -790,7 +772,7 @@ public class Dex2Asm {
             if (enclosingClass == null) {
                 break;
             }
-            if (enclosingClass == clz) {
+            if (enclosingClass.equals(clz)) {
                 // enclosing itself, that is impossible
                 break;
             }
@@ -820,26 +802,20 @@ public class Dex2Asm {
      * this method will add
      *
      * <pre>
-     * InnerClass      Outter
+     * InnerClass      Outer
      * WeAreHere$A$B   WeAreHere$A
      * WeAreHere$A     WeAreHere
      * </pre>
      * <p>
      * to WeAreHere.class
      */
-    private static void searchInnerClass(Clz clz, List<InnerClassNode> innerClassNodes,
-                                         String className) {
+    private static void searchInnerClass(Clz clz, List<InnerClassNode> innerClassNodes) {
         Set<Clz> visited = new HashSet<>();
         Stack<Clz> stack = new Stack<>();
         stack.push(clz);
         while (!stack.empty()) {
             clz = stack.pop();
-            if (visited.contains(clz)) {
-                continue;
-            } else {
-                visited.add(clz);
-            }
-            if (clz.inners != null) {
+            if (visited.add(clz) && clz.inners != null) {
                 for (Clz inner : clz.inners) {
                     if (inner.innerName == null) { // anonymous Innerclass
                         innerClassNodes.add(new InnerClassNode(toInternalName(inner.name), null, null,
