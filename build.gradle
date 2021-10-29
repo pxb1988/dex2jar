@@ -11,8 +11,8 @@ defaultTasks('clean','distZip')
 subprojects {
   apply plugin: 'java'
   apply plugin: 'maven'
-  sourceCompatibility = 1.7
-  targetCompatibility = 1.7
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
 
   task packageSources(type: Jar) {
     classifier = 'sources'
