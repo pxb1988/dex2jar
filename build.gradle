@@ -3,7 +3,7 @@ allprojects  {
   apply plugin: 'idea'
   apply plugin: 'eclipse'
   group = 'com.googlecode.d2j'
-  version = '2.1'
+  version = '2.2-SNAPSHOT'
 }
 
 defaultTasks('clean','distZip')
