@@ -33,9 +33,7 @@ Tools to work with android .dex and java .class files
 And the output file will be `apk_to_decompile-dex2jar.jar`.
 
 ## Need help ?
-send email to dex2jar@googlegroups.com 
-
-or post on issue trackers list above.
+post on issue trackers list above.
 
 ## License
 [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
