@@ -270,15 +270,15 @@ public class Dex2IRConverter {
     private void initExceptionHandlers(DexCodeNode dexCodeNode, BitSet[] exBranch, BitSet handlers) {
         if (dexCodeNode.tryStmts != null) {
             for (TryCatchNode tcb : dexCodeNode.tryStmts) {
-                target.traps.add(new Trap(getLabel(tcb.start), getLabel(tcb.end), getLabels(tcb.handler),
-                        tcb.type));
                 for (DexLabel h : tcb.handler) {
                     handlers.set(indexOf(h));
                 }
+                boolean hasEx = false;
                 int endIndex = indexOf(tcb.end);
                 for (int p = indexOf(tcb.start) + 1; p < endIndex; p++) {
                     DexStmtNode stmt = insnList.get(p);
                     if (stmt.op != null && stmt.op.canThrow()) {
+                        hasEx = true;
                         BitSet x = exBranch[p];
                         if (x == null) {
                             x = exBranch[p] = new BitSet(insnList.size());
@@ -289,6 +289,10 @@ public class Dex2IRConverter {
                             parentCount[hIndex]++;
                         }
                     }
+                }
+                if (hasEx) {
+                    target.traps.add(new Trap(getLabel(tcb.start), getLabel(tcb.end), getLabels(tcb.handler),
+                            tcb.type));
                 }
             }
         }

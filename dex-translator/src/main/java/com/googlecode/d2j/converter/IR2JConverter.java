@@ -912,6 +912,15 @@ public class IR2JConverter implements Opcodes {
         case NEG:
             asm.visitInsn(getOpcode(e1, INEG));
             break;
+        case NOT: // fix issue#207 missing ~ bitwise complement operator
+            if (e1.getOp().valueType.equals("I")) {
+                asm.visitLdcInsn(-1);
+                asm.visitInsn(getOpcode(e1, IXOR));
+            } else if (e1.getOp().valueType.equals("J")) {
+                asm.visitLdcInsn(-1L);
+                asm.visitInsn(getOpcode(e1, IXOR));
+            }
+            break;
         }
     }
 
