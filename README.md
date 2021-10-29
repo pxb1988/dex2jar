@@ -5,8 +5,8 @@
 | _ | Mirror | Wiki | Downloads | Issues |
 |--:|:-----|:----:|:---------:|:------:|
 | gh | https://github.com/pxb1988/dex2jar | [Wiki](https://github.com/pxb1988/dex2jar/wiki) | [Releases](https://github.com/pxb1988/dex2jar/releases) | [Issues](https://github.com/pxb1988/dex2jar/issues) |
-| sf | https://sourceforge.net/p/dex2jar | [Wiki](https://sourceforge.net/p/dex2jar/wiki) | [old](https://sourceforge.net/projects/dex2jar/files/) | [old](https://sourceforge.net/p/dex2jar/tickets/) |
-| bb | https://bitbucket.org/pxb1988/dex2jar | [Wiki](https://bitbucket.org/pxb1988/dex2jar/wiki) | [old](https://bitbucket.org/pxb1988/dex2jar/downloads) | [old](https://bitbucket.org/pxb1988/dex2jar/issues) |
+| sf | https://sourceforge.net/p/dex2jar | [old](https://sourceforge.net/p/dex2jar/wiki) | [old](https://sourceforge.net/projects/dex2jar/files/) | [old](https://sourceforge.net/p/dex2jar/tickets/) |
+| bb | https://bitbucket.org/pxb1988/dex2jar | [old](https://bitbucket.org/pxb1988/dex2jar/wiki) | [old](https://bitbucket.org/pxb1988/dex2jar/downloads) | [old](https://bitbucket.org/pxb1988/dex2jar/issues) |
 | gc | https://code.google.com/p/dex2jar | [old](http://code.google.com/p/dex2jar/w/list) | [old](http://code.google.com/p/dex2jar/downloads/list) | [old](http://code.google.com/p/dex2jar/issues/list)|
 
 Tools to work with android .dex and java .class files
