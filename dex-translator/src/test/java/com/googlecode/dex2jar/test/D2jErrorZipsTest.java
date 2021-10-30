@@ -52,14 +52,17 @@ public class D2jErrorZipsTest {
     private static String parseSmaliContent(Path m) throws IOException {
         List<String> lines = Files.readAllLines(m, StandardCharsets.UTF_8);
         StringBuilder sb = new StringBuilder();
-        sb.append(".class LTT;\n");
-        sb.append(".super Ljava/lang/Object;\n");
+
         boolean found = false;
         for (String ln : lines) {
             if (!found) {
                 if (ln.startsWith(".method")) {
+                    // append here to keep the line number
+                    sb.append(".class LTT;.super Ljava/lang/Object;");
                     sb.append(ln).append("\n");
                     found = true;
+                } else {
+                    sb.append("\n");
                 }
             } else {
                 sb.append(ln).append("\n");
@@ -138,16 +141,11 @@ public class D2jErrorZipsTest {
         private void processEachEntry(Class<?> testClass, List<Runner> runners, String zipFileName, Path zipEntry)
                 throws IOException, InitializationError {
             String smaliContent = parseSmaliContent(zipEntry);
-            final DexFileNode fileNode = new DexFileNode();
-            try {
-                Smali.smaliFile(zipEntry.toString(), smaliContent, fileNode);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            runners.add(new ParentRunner<DexClassNode>(testClass) {
+
+            runners.add(new ParentRunner<String>(testClass) {
                 @Override
-                protected List<DexClassNode> getChildren() {
-                    return fileNode.clzs;
+                protected List<String> getChildren() {
+                    return Arrays.asList(smaliContent);
                 }
 
                 @Override
@@ -156,20 +154,18 @@ public class D2jErrorZipsTest {
                 }
 
                 @Override
-                protected Description describeChild(DexClassNode child) {
+                protected Description describeChild(String child) {
                     return Description.createTestDescription(testClass, "[" + zipFileName + ":" + zipEntry + "]");
                 }
 
                 @Override
-                protected void runChild(final DexClassNode child, RunNotifier notifier) {
+                protected void runChild(final String child, RunNotifier notifier) {
                     runLeaf(new Statement() {
                         @Override
                         public void evaluate() throws Throwable {
-//                            BaksmaliDumper d = new BaksmaliDumper();
-//                            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(System.err, "UTF-8"));
-//                            d.baksmaliMethod(child.methods.get(0), out);
-//                            out.flush();
-                            TestUtils.translateAndCheck(fileNode, child);
+                            final DexFileNode fileNode = new DexFileNode();
+                            Smali.smaliFile(zipEntry.toString(), child, fileNode);
+                            TestUtils.translateAndCheck(fileNode, fileNode.clzs.get(0));
                         }
                     }, describeChild(child), notifier);
                 }
