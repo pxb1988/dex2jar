@@ -16,8 +16,7 @@
 package com.googlecode.dex2jar.test;
 
 import com.googlecode.d2j.node.DexClassNode;
-import com.googlecode.d2j.node.DexFileNode;
-import com.googlecode.d2j.smali.BaksmaliDumper;
+import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.smali.Smali;
 import org.junit.Assert;
 import org.junit.runner.Description;
@@ -28,10 +27,8 @@ import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -48,6 +45,33 @@ import java.util.stream.Collectors;
  */
 @RunWith(D2jErrorZipsTest.S.class)
 public class D2jErrorZipsTest {
+    private static String parseSmaliContentFromSummary(Path zipEntry) throws IOException {
+        List<String> lines = Files.readAllLines(zipEntry, StandardCharsets.UTF_8);
+        StringBuilder sb = new StringBuilder();
+        boolean hasMethod = false;
+        boolean inMethodContent = false;
+        for (String ln : lines) {
+            if (!inMethodContent) {
+                if (ln.startsWith(".method")) {
+                    // append here to keep the line number
+                    sb.append(".class LTT;.super Ljava/lang/Object;");
+                    sb.append(ln);
+                    inMethodContent = true;
+                    hasMethod = true;
+                }
+            } else {
+                sb.append(ln);
+                if (ln.startsWith(".end method")) {
+                    inMethodContent = false;
+                }
+            }
+            sb.append("\n");
+        }
+        if (!hasMethod) {
+            return null;
+        }
+        return sb.toString();
+    }
 
     private static String parseSmaliContent(Path m) throws IOException {
         List<String> lines = Files.readAllLines(m, StandardCharsets.UTF_8);
@@ -124,7 +148,7 @@ public class D2jErrorZipsTest {
                             .filter(Files::isRegularFile)
                             .filter(px -> {
                                 String fn = px.getFileName().toString();
-                                return fn.startsWith("m-") && fn.endsWith(".txt");
+                                return fn.startsWith("m-") && fn.endsWith(".txt") || fn.equals("summary.txt");
                             })
                             .collect(Collectors.toList());
 
@@ -140,12 +164,23 @@ public class D2jErrorZipsTest {
 
         private void processEachEntry(Class<?> testClass, List<Runner> runners, String zipFileName, Path zipEntry)
                 throws IOException, InitializationError {
-            String smaliContent = parseSmaliContent(zipEntry);
 
+            String smaliContent = null;
+            if (zipEntry.getFileName().toString().equals("summary.txt")) {
+                smaliContent = parseSmaliContentFromSummary(zipEntry);
+            } else {
+                smaliContent = parseSmaliContent(zipEntry);
+            }
+            if (smaliContent == null) {
+                return;
+            }
+
+
+            String finalSmaliContent = smaliContent;
             runners.add(new ParentRunner<String>(testClass) {
                 @Override
                 protected List<String> getChildren() {
-                    return Arrays.asList(smaliContent);
+                    return Arrays.asList(finalSmaliContent);
                 }
 
                 @Override
@@ -163,14 +198,22 @@ public class D2jErrorZipsTest {
                     runLeaf(new Statement() {
                         @Override
                         public void evaluate() throws Throwable {
-                            final DexFileNode fileNode = new DexFileNode();
-                            Smali.smaliFile(zipEntry.toString(), child, fileNode);
-                            TestUtils.translateAndCheck(fileNode, fileNode.clzs.get(0));
+                            DexClassNode classNode = Smali.smaliFile2Node(zipEntry.toString(), child);
+                            if (classNode.methods.size() > 1) { // split into methods
+                                for (DexMethodNode m : classNode.methods) {
+                                    DexClassNode sub = new DexClassNode(0, "Lx;", "Ly;", new String[0]);
+                                    sub.methods.add(m);
+                                    TestUtils.translateAndCheck(null, sub);
+                                }
+                            } else {
+                                TestUtils.translateAndCheck(null, classNode);
+                            }
                         }
                     }, describeChild(child), notifier);
                 }
             });
         }
+
 
         @Override
         protected List<Runner> getChildren() {
