@@ -474,7 +474,7 @@ public class IR2JConverter implements Opcodes {
 
     private void constLargeArray(MethodVisitor asm, byte[] data, String elementType) {
         String cst = hexEncode(data);
-        if(cst.length() > 65535) { // asm have the limit
+        if (cst.length() > 65535) { // asm have the limit
             asm.visitTypeInsn(Opcodes.NEW, "java/lang/StringBuilder");
             asm.visitInsn(Opcodes.DUP);
             asm.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false);
@@ -497,8 +497,8 @@ public class IR2JConverter implements Opcodes {
             asm.visitLdcInsn(cst);
         }
 
-            asm.visitMethodInsn(Opcodes.INVOKESTATIC, toInternal(this.clzCtx.classDescriptor) ,
-                    this.clzCtx.buildHexDecodeMethodName(elementType), "(Ljava/lang/String;)[" + elementType, false);
+        asm.visitMethodInsn(Opcodes.INVOKESTATIC, toInternal(this.clzCtx.classDescriptor),
+                this.clzCtx.buildHexDecodeMethodName(elementType), "(Ljava/lang/String;)[" + elementType, false);
     }
 
     private static boolean isLocalWithIndex(Value v, int i) {
