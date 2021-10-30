@@ -646,7 +646,14 @@ public class Dex2Asm {
         T_multiArray.transform(irMethod);
         T_voidInvoke.transform(irMethod);
         T_type.transform(irMethod);
-        T_unssa.transform(irMethod);
+        {
+            // https://github.com/pxb1988/dex2jar/issues/477
+            // dead code found in unssa, clean up
+            T_deadCode.transform(irMethod);
+            T_removeLocal.transform(irMethod);
+            T_removeConst.transform(irMethod);
+            T_unssa.transform(irMethod);
+        }
         T_trimEx.transform(irMethod);
         T_ir2jRegAssign.transform(irMethod);
     }
