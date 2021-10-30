@@ -21,7 +21,8 @@ import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
 /**
- * Represent a void-return Invoke
+ * Represent a void-expr: the expr result is ignored.
+ * possible op type: AbstractInvokeExpr, FieldExpr, or others
  * 
  * @see ST#VOID_INVOKE
  * 
