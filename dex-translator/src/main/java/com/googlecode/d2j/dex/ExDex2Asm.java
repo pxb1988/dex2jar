@@ -32,12 +32,12 @@ public class ExDex2Asm extends Dex2Asm {
     }
 
     @Override
-    public void convertCode(DexMethodNode methodNode, MethodVisitor mv) {
+    public void convertCode(DexMethodNode methodNode, MethodVisitor mv, ClzCtx clzCtx) {
         MethodVisitor mw = AsmBridge.searchMethodWriter(mv);
         MethodNode mn = new MethodNode(Opcodes.ASM5, methodNode.access, methodNode.method.getName(),
                 methodNode.method.getDesc(), null, null);
         try {
-            super.convertCode(methodNode, mn);
+            super.convertCode(methodNode, mn, clzCtx);
         } catch (Exception ex) {
             if (exceptionHandler == null) {
                 throw new DexException(ex, "fail convert code for %s", methodNode.method);

@@ -124,12 +124,12 @@ public class Dex2jar {
         };
 
         new ExDex2Asm(exceptionHandler) {
-            public void convertCode(DexMethodNode methodNode, MethodVisitor mv) {
+            public void convertCode(DexMethodNode methodNode, MethodVisitor mv, ClzCtx clzCtx) {
                 if ((readerConfig & DexFileReader.SKIP_CODE) != 0 && methodNode.method.getName().equals("<clinit>")) {
                     // also skip clinit
                     return;
                 }
-                super.convertCode(methodNode, mv);
+                super.convertCode(methodNode, mv, clzCtx);
             }
 
             @Override
@@ -169,8 +169,13 @@ public class Dex2jar {
             }
 
             @Override
-            public void ir2j(IrMethod irMethod, MethodVisitor mv) {
-                new IR2JConverter(0 != (V3.OPTIMIZE_SYNCHRONIZED & v3Config)).convert(irMethod, mv);
+            public void ir2j(IrMethod irMethod, MethodVisitor mv, ClzCtx clzCtx) {
+                new IR2JConverter()
+                        .optimizeSynchronized(0 != (V3.OPTIMIZE_SYNCHRONIZED & v3Config))
+                        .clzCtx(clzCtx)
+                        .ir(irMethod)
+                        .asm(mv)
+                        .convert();
             }
         }.convertDex(fileNode, cvf);
 
