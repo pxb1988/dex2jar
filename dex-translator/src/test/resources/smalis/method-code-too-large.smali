@@ -1,5 +1,6 @@
 
-.class Lcode.Large;
+.class Lcode/Large;
+.super Lcode/LargeS;
 
 .method private static constructor <clinit>()V
   .catchall { :L2 .. :L3 } :L0

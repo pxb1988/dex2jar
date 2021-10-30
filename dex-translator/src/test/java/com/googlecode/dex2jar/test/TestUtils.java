@@ -296,9 +296,9 @@ public abstract class TestUtils {
         // 1. convert to .class
         Dex2Asm dex2Asm = new Dex2Asm() {
             @Override
-            public void convertCode(DexMethodNode methodNode, MethodVisitor mv) {
+            public void convertCode(DexMethodNode methodNode, MethodVisitor mv, ClzCtx clzCtx) {
                 try {
-                    super.convertCode(methodNode, mv);
+                    super.convertCode(methodNode, mv, clzCtx);
                 } catch (Exception ex) {
                     BaksmaliDumper d = new BaksmaliDumper();
                     try {
