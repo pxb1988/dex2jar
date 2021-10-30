@@ -17,6 +17,7 @@ import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.ts.UniqueQueue;
 
 import java.util.*;
 
@@ -115,7 +116,9 @@ public class Dex2IRConverter {
         emitStmts = null;
 
 
-        Queue<DvmValue> queue = new LinkedList<>();
+        // https://github.com/pxb1988/dex2jar/issues/501
+        // too many Object put to Q, make the object unique in Q
+        Queue<DvmValue> queue = new UniqueQueue<>();
 
         for (int i1 = 0; i1 < frames.length; i1++) {
             Dex2IrFrame frame = frames[i1];
