@@ -69,6 +69,6 @@ public class Field {
      */
     @Override
     public String toString() {
-        return this.getOwner() + "." + this.getName() + " " + this.getType();
+        return this.getOwner() + "->" + this.getName() + ":" + this.getType();
     }
 }

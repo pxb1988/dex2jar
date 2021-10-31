@@ -1,19 +1,20 @@
 package com.googlecode.d2j.dex;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-
-import com.googlecode.d2j.converter.Dex2IRConverter;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.InnerClassNode;
-
 import com.googlecode.d2j.*;
+import com.googlecode.d2j.converter.Dex2IRConverter;
 import com.googlecode.d2j.converter.IR2JConverter;
 import com.googlecode.d2j.node.*;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.ts.*;
 import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
+import org.objectweb.asm.*;
+import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureWriter;
+import org.objectweb.asm.tree.InnerClassNode;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
 public class Dex2Asm {
     public static class ClzCtx {
@@ -271,20 +272,18 @@ public class Dex2Asm {
                 }
             }
         }
+        if (isSignatureNotValid(signature, false)) {
+            System.err.println("Applying workaround to method "
+                    + methodNode.method
+                    + " with original signature " + signature
+                    + " by changing its signature to null");
+            signature = null;
+        }
         int access = methodNode.access;
         // clear ACC_DECLARED_SYNCHRONIZED and ACC_CONSTRUCTOR from method flags
         final int cleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | DexConstants.ACC_CONSTRUCTOR));
         access &= cleanFlag;
-        try {
-            return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(), signature, xthrows);
-        } catch (StringIndexOutOfBoundsException | IllegalArgumentException e) {
-            System.err.println("Applying workaround to method "
-                    + methodNode.method.getOwner() + "#" + methodNode.method.getName()
-                    + " with original signature " + signature
-                    + " by changing its types to java.lang.Object.");
-            return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(),
-                    "(Ljava/lang/Object;)Ljava/lang/Object;", xthrows);
-        }
+        return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(), signature, xthrows);
     }
 
     protected static Map<String, Clz> collectClzInfo(DexFileNode fileNode) {
@@ -423,6 +422,14 @@ public class Dex2Asm {
         }
         access = clearClassAccess(isInnerClass, access);
 
+        if (isSignatureNotValid(signature, false)) {
+            System.err.println("Applying workaround to class "
+                    + classNode.className
+                    + " with original signature " + signature
+                    + " by changing its signature to null.");
+            signature = null;
+        }
+
         int version = dexVersion >= DexConstants.DEX_037 ? Opcodes.V1_8 : Opcodes.V1_6;
         cv.visit(version, access, toInternalName(classNode.className), signature,
                 classNode.superClass == null ? null : toInternalName(classNode.superClass), interfaceInterNames);
@@ -533,25 +540,48 @@ public class Dex2Asm {
         }
         Object value = convertConstantValue(fieldNode.cst);
 
-        final int fieldCleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC));
-        FieldVisitor fv;
-        try {
-            fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
-                    fieldNode.field.getType(), signature, value);
-        } catch (StringIndexOutOfBoundsException | IllegalArgumentException e) {
+        // https://github.com/pxb1988/dex2jar/issues/455
+        // try validate signature before call visitField
+        if (isSignatureNotValid(signature, true)) {
             System.err.println("Applying workaround to field "
-                    + classNode.className + "#" + fieldNode.field.getName()
+                    + fieldNode.field
                     + " with original signature " + signature
-                    + " by changing its type to java.lang.Object.");
-            fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
-                    fieldNode.field.getType(), "Ljava/lang/Object;", value);
+                    + " by changing its signature to null.");
+            signature = null;
         }
+
+
+        final int fieldCleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC));
+        FieldVisitor fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
+                    fieldNode.field.getType(), signature, value);
 
         if (fv == null) {
             return;
         }
         accept(fieldNode.anns, fv);
         fv.visitEnd();
+    }
+
+    /**
+     * @see org.objectweb.asm.commons.Remapper#mapSignature(String, boolean)
+     */
+    private static boolean isSignatureNotValid(String signature, boolean typeSignature) {
+        if (signature == null) {
+            return false;
+        }
+        try {
+            SignatureReader r = new SignatureReader(signature);
+            SignatureWriter a = new SignatureWriter();
+
+            if (typeSignature) {
+                r.acceptType(a);
+            } else {
+                r.accept(a);
+            }
+        } catch (Exception ignore) {
+            return true;
+        }
+        return false;
     }
 
     public static Object[] convertConstantValues(Object[] v) {
