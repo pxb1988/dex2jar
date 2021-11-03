@@ -162,6 +162,13 @@ public class Dex2jar {
                     }
                     System.out.println(irMethod);
                 }
+                {
+                    // https://github.com/pxb1988/dex2jar/issues/477
+                    // dead code found in unssa, clean up
+                    T_deadCode.transform(irMethod);
+                    T_removeLocal.transform(irMethod);
+                    T_removeConst.transform(irMethod);
+                }
                 T_type.transform(irMethod);
                 T_unssa.transform(irMethod);
                 T_ir2jRegAssign.transform(irMethod);
