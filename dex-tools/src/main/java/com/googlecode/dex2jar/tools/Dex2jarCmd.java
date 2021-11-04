@@ -17,12 +17,11 @@
 package com.googlecode.dex2jar.tools;
 
 import com.googlecode.d2j.dex.Dex2jar;
-import com.googlecode.d2j.reader.BaseDexFileReader;
 import com.googlecode.d2j.reader.DexFileReader;
-import com.googlecode.d2j.reader.MultiDexFileReader;
 import com.googlecode.dex2jar.ir.ET;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -105,20 +104,23 @@ public class Dex2jarCmd extends BaseCmd {
             Path file = output == null ? currentDir.resolve(baseName + "-dex2jar.jar") : output;
             System.err.println("dex2jar " + fileName + " -> " + file);
 
-            BaseDexFileReader reader = MultiDexFileReader.open(Files.readAllBytes(new File(fileName).toPath()));
-            BaksmaliBaseDexExceptionHandler handler = notHandleException ? null : new BaksmaliBaseDexExceptionHandler();
-            Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort()
+            try(FileInputStream input =  new FileInputStream(new File(fileName))){
+                DexFileReader reader = new DexFileReader(input);
+                BaksmaliBaseDexExceptionHandler handler = notHandleException ? null : new BaksmaliBaseDexExceptionHandler();
+                Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort()
                     .skipDebug(!debugInfo).optimizeSynchronized(this.optmizeSynchronized).printIR(printIR)
                     .noCode(noCode).skipExceptions(skipExceptions).to(file);
 
-            if (!notHandleException) {
                 if (handler.hasException()) {
                     Path errorFile = exceptionFile == null ? currentDir.resolve(baseName + "-error.zip")
                             : exceptionFile;
                     System.err.println("Detail Error Information in File " + errorFile);
-                    System.err.println(BaksmaliBaseDexExceptionHandler.REPORT_MESSAGE);
+                    System.err
+                            .println("Please report this file to http://code.google.com/p/dex2jar/issues/entry if possible.");
                     handler.dump(errorFile, orginalArgs);
                 }
+            }catch(Exception e) {
+                throw e;
             }
             // long endTS = System.currentTimeMillis();
             // System.err.println(String.format("%.2f", (float) (endTS - baseTS) / 1000));
