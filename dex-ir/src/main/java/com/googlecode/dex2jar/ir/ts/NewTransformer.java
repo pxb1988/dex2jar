@@ -93,7 +93,7 @@ public class NewTransformer implements Transformer {
         while (it.hasNext()) {
             Stmt p = it.next();
 
-            InvokeExpr ie = findInvokeExpr(p, null);
+            InvokeExpr ie = findInvokeExpr(p);
 
             if (ie != null) {
                 if ("<init>".equals(ie.getName()) && "V".equals(ie.getRet())) {
@@ -152,7 +152,7 @@ public class NewTransformer implements Transformer {
                     }
                 }
             }
-            InvokeExpr ie = findInvokeExpr(obj.invokeStmt, null);
+            InvokeExpr ie = findInvokeExpr(obj.invokeStmt);
             Value[] orgOps = ie.getOps();
             Value[] nOps = Arrays.copyOfRange(orgOps, 1, orgOps.length);
             InvokeExpr invokeNew = Exprs.nInvokeNew(nOps, ie.getArgs(), ie.getOwner());
@@ -352,13 +352,17 @@ public class NewTransformer implements Transformer {
         }
     }
 
-    InvokeExpr findInvokeExpr(Stmt p, InvokeExpr ie) {
+    InvokeExpr findInvokeExpr(Stmt p) {
+        InvokeExpr ie = null;
         if (p.st == ASSIGN) {
             if (p.getOp2().vt == INVOKE_SPECIAL) {
                 ie = (InvokeExpr) p.getOp2();
             }
         } else if (p.st == VOID_INVOKE) {
-            ie = (InvokeExpr) p.getOp();
+            Value op = p.getOp();
+            if (op instanceof InvokeExpr) {
+                ie = (InvokeExpr) op;
+            }
         }
         return ie;
     }

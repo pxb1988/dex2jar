@@ -92,7 +92,10 @@ public class DexMethodNode extends DexMethodVisitor {
             parameterAnns = new List[method.getParameterTypes().length];
         }
 
+        // https://github.com/pxb1988/dex2jar/issues/485
+        // skip param annotation if out of range
         if (index >= parameterAnns.length) {
+            System.err.println("WARN: parameter out-of-range in " + method);
             return null;
         }
 

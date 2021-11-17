@@ -136,7 +136,15 @@ public class BaksmaliBaseDexExceptionHandler extends BaseDexExceptionHandler {
         writer.flush();
         ex.printStackTrace(new PrintWriter(writer, true));
         writer.newLine();
-        new BaksmaliDumper().baksmaliMethod(dexMethodNode, writer);
+        try {
+            new BaksmaliDumper().baksmaliMethod(dexMethodNode, writer);
+        } catch (Exception e) {
+            // https://github.com/pxb1988/dex2jar/issues/500
+            // dump out the exception
+            PrintWriter s = new PrintWriter(writer);
+            e.printStackTrace(s);
+            s.flush();
+        }
         writer.flush();
     }
 

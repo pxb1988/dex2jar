@@ -31,6 +31,8 @@ import com.googlecode.dex2jar.ir.ts.UnSSATransformer;
 import com.googlecode.dex2jar.ir.ts.VoidInvokeTransformer;
 import com.googlecode.dex2jar.ir.ts.ZeroTransformer;
 import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -39,18 +41,39 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.InnerClassNode;
 
 public class Dex2Asm {
+
+    public static class ClzCtx {
+
+        public String classDescriptor;
+
+        public String hexDecodeMethodNamePrefix;
+
+        public String buildHexDecodeMethodName(String x) {
+            if (hexDecodeMethodNamePrefix == null) {
+                byte[] d = new byte[4];
+                new Random().nextBytes(d);
+                hexDecodeMethodNamePrefix = "$d2j$hex$" + IR2JConverter.hexEncode(d);
+            }
+            return hexDecodeMethodNamePrefix + "$decode_" + x;
+        }
+
+    }
 
     protected static class Clz {
 
@@ -98,6 +121,7 @@ public class Dex2Asm {
         public String toString() {
             return "" + name;
         }
+
     }
 
     protected static final int ACC_INTERFACE_ABSTRACT = (Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT);
@@ -313,21 +337,19 @@ public class Dex2Asm {
                 }
             }
         }
+        if (isSignatureNotValid(signature, false)) {
+            System.err.println("Applying workaround to method "
+                    + methodNode.method
+                    + " by removing its original signature "
+                    + signature + ".");
+            signature = null;
+        }
         int access = methodNode.access;
         // clear ACC_DECLARED_SYNCHRONIZED, ACC_CONSTRUCTOR and ACC_SYNTHETIC from method flags
         final int cleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | DexConstants.ACC_CONSTRUCTOR
                 | Opcodes.ACC_SYNTHETIC));
         access &= cleanFlag;
-        try {
-            return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(), signature, xthrows);
-        } catch (StringIndexOutOfBoundsException | IllegalArgumentException e) {
-            System.err.println("Applying workaround to method "
-                    + methodNode.method.getOwner() + "#" + methodNode.method.getName()
-                    + " with original signature " + signature
-                    + " by changing its types to java.lang.Object.");
-            return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(),
-                    "(Ljava/lang/Object;)Ljava/lang/Object;", xthrows);
-        }
+        return cv.visitMethod(access, methodNode.method.getName(), methodNode.method.getDesc(), signature, xthrows);
     }
 
     protected static Map<String, Clz> collectClzInfo(DexFileNode fileNode) {
@@ -472,6 +494,14 @@ public class Dex2Asm {
         boolean isInnerClass = clzInfo != null && (clzInfo.enclosingClass != null || clzInfo.enclosingMethod != null);
         access = clearClassAccess(isInnerClass, access);
 
+        if (isSignatureNotValid(signature, false)) {
+            System.err.println("Applying workaround to class"
+                    + " " + classNode.className
+                    + " by removing its original signature "
+                    + signature + ".");
+            signature = null;
+        }
+
         int version = dexVersion >= DexConstants.DEX_037 ? Opcodes.V1_8 : Opcodes.V1_6;
         cv.visit(version, access, toInternalName(classNode.className), signature,
                 classNode.superClass == null ? null : toInternalName(classNode.superClass), interfaceInterNames);
@@ -513,17 +543,45 @@ public class Dex2Asm {
             }
         }
         if (classNode.methods != null) {
+            ClzCtx clzCtx = new ClzCtx();
+            clzCtx.classDescriptor = classNode.className;
             for (DexMethodNode methodNode : classNode.methods) {
-                convertMethod(classNode, methodNode, cv);
+                convertMethod(classNode, methodNode, cv, clzCtx);
+            }
+            if (clzCtx.hexDecodeMethodNamePrefix != null) {
+                addHexDecodeMethod(cv, clzCtx.hexDecodeMethodNamePrefix);
             }
         }
         cv.visitEnd();
     }
 
-    public void convertCode(DexMethodNode methodNode, MethodVisitor mv) {
+    private void addHexDecodeMethod(ClassVisitor outCV, String hexDecodeMethodNameBase) {
+        // the .data is a class-file compiled from res.Hex
+        try (InputStream is = Dex2Asm.class.getResourceAsStream("/d2j_hex_decode_stub.data")) {
+            ClassReader cr = new ClassReader(is);
+            cr.accept(new ClassVisitor(Opcodes.ASM5) {
+                @Override
+                public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+                                                 String[] exceptions) {
+                    if (name.startsWith("decode")) {
+                        return outCV.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                                hexDecodeMethodNameBase + "$" + name,
+                                desc, signature, exceptions
+                        );
+                    } else {
+                        return super.visitMethod(access, name, desc, signature, exceptions);
+                    }
+                }
+            }, ClassReader.EXPAND_FRAMES);
+        } catch (IOException e) {
+            throw new RuntimeException("fail to add hex.decode", e);
+        }
+    }
+
+    public void convertCode(DexMethodNode methodNode, MethodVisitor mv, ClzCtx clzCtx) {
         IrMethod irMethod = dex2ir(methodNode);
         optimize(irMethod);
-        ir2j(irMethod, mv);
+        ir2j(irMethod, mv, clzCtx);
     }
 
     public void convertDex(DexFileNode fileNode, ClassVisitorFactory cvf) {
@@ -558,24 +616,48 @@ public class Dex2Asm {
             }
         }
         Object value = convertConstantValue(fieldNode.cst);
-        final int fieldCleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC));
-        FieldVisitor fv;
-        try {
-            fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
-                    fieldNode.field.getType(), signature, value);
-        } catch (StringIndexOutOfBoundsException | IllegalArgumentException e) {
+
+        // https://github.com/pxb1988/dex2jar/issues/455
+        // try validate signature before call visitField
+        if (isSignatureNotValid(signature, true)) {
             System.err.println("Applying workaround to field "
-                    + classNode.className + "#" + fieldNode.field.getName()
-                    + " with original signature " + signature
-                    + " by changing its type to java.lang.Object.");
-            fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
-                    fieldNode.field.getType(), "Ljava/lang/Object;", value);
+                    + fieldNode.field
+                    + " by removing its original signature "
+                    + signature + ".");
+            signature = null;
         }
+
+        final int fieldCleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC));
+        FieldVisitor fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
+                fieldNode.field.getType(), signature, value);
+
         if (fv == null) {
             return;
         }
         accept(fieldNode.anns, fv);
         fv.visitEnd();
+    }
+
+    /**
+     * @see org.objectweb.asm.commons.Remapper#mapSignature(String, boolean)
+     */
+    private static boolean isSignatureNotValid(String signature, boolean typeSignature) {
+        if (signature == null) {
+            return false;
+        }
+        try {
+            SignatureReader r = new SignatureReader(signature);
+            SignatureWriter a = new SignatureWriter();
+
+            if (typeSignature) {
+                r.acceptType(a);
+            } else {
+                r.accept(a);
+            }
+        } catch (Exception ignore) {
+            return true;
+        }
+        return false;
     }
 
     public static Object[] convertConstantValues(Object[] v) {
@@ -635,7 +717,7 @@ public class Dex2Asm {
         return ele;
     }
 
-    public void convertMethod(DexClassNode classNode, DexMethodNode methodNode, ClassVisitor cv) {
+    public void convertMethod(DexClassNode classNode, DexMethodNode methodNode, ClassVisitor cv, ClzCtx clzCtx) {
 
         MethodVisitor mv = collectBasicMethodInfo(methodNode, cv);
 
@@ -682,7 +764,7 @@ public class Dex2Asm {
         if ((NO_CODE_MASK & methodNode.access) == 0) { // has code
             if (methodNode.codeNode != null) {
                 mv.visitCode();
-                convertCode(methodNode, mv);
+                convertCode(methodNode, mv, clzCtx);
             }
         }
 
@@ -713,8 +795,13 @@ public class Dex2Asm {
         return clz;
     }
 
-    public void ir2j(IrMethod irMethod, MethodVisitor mv) {
-        new IR2JConverter(false).convert(irMethod, mv);
+    public void ir2j(IrMethod irMethod, MethodVisitor mv, ClzCtx clzCtx) {
+        new IR2JConverter()
+                .optimizeSynchronized(false)
+                .clzCtx(clzCtx)
+                .ir(irMethod)
+                .asm(mv)
+                .convert();
         mv.visitMaxs(-1, -1);
     }
 
@@ -734,6 +821,15 @@ public class Dex2Asm {
         T_AGG.transform(irMethod);
         T_MULTI_ARRAY.transform(irMethod);
         T_VOID_INVOKE.transform(irMethod);
+
+        {
+            // https://github.com/pxb1988/dex2jar/issues/477
+            // dead code found in unssa, clean up
+            T_DEAD_CODE.transform(irMethod);
+            T_REMOVE_LOCAL.transform(irMethod);
+            T_REMOVE_CONST.transform(irMethod);
+        }
+
         T_TYPE.transform(irMethod);
         T_UNSSA.transform(irMethod);
         T_TRIM_EX.transform(irMethod);

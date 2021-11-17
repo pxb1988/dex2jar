@@ -5,7 +5,8 @@ import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 
 /**
- * Represent a void-return Invoke
+ * Represent a void-expr: the expr result is ignored.
+ * possible op type: AbstractInvokeExpr, FieldExpr, or others
  *
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev: 8da5a5faa6bd $

@@ -6,7 +6,6 @@ import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.BaseDexFileReader;
 import com.googlecode.d2j.reader.DexFileReader;
 import com.googlecode.d2j.reader.MultiDexFileReader;
-import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
@@ -84,12 +83,12 @@ public final class Dex2jar {
         };
 
         new ExDex2Asm(exceptionHandler) {
-            public void convertCode(DexMethodNode methodNode, MethodVisitor mv) {
+            public void convertCode(DexMethodNode methodNode, MethodVisitor mv, ClzCtx clzCtx) {
                 if ((readerConfig & DexFileReader.SKIP_CODE) != 0 && methodNode.method.getName().equals("<clinit>")) {
                     // also skip clinit
                     return;
                 }
-                super.convertCode(methodNode, mv);
+                super.convertCode(methodNode, mv, clzCtx);
             }
 
             @Override
@@ -122,6 +121,13 @@ public final class Dex2jar {
                     }
                     System.out.println(irMethod);
                 }
+                {
+                    // https://github.com/pxb1988/dex2jar/issues/477
+                    // dead code found in unssa, clean up
+                    T_DEAD_CODE.transform(irMethod);
+                    T_REMOVE_LOCAL.transform(irMethod);
+                    T_REMOVE_CONST.transform(irMethod);
+                }
                 T_TYPE.transform(irMethod);
                 T_UNSSA.transform(irMethod);
                 T_IR_2_J_REG_ASSIGN.transform(irMethod);
@@ -129,8 +135,13 @@ public final class Dex2jar {
             }
 
             @Override
-            public void ir2j(IrMethod irMethod, MethodVisitor mv) {
-                new IR2JConverter(0 != (V3.OPTIMIZE_SYNCHRONIZED & v3Config)).convert(irMethod, mv);
+            public void ir2j(IrMethod irMethod, MethodVisitor mv, ClzCtx clzCtx) {
+                new IR2JConverter()
+                        .optimizeSynchronized(0 != (V3.OPTIMIZE_SYNCHRONIZED & v3Config))
+                        .clzCtx(clzCtx)
+                        .ir(irMethod)
+                        .asm(mv)
+                        .convert();
             }
         }.convertDex(fileNode, cvf);
 

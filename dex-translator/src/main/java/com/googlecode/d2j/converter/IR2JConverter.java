@@ -36,6 +36,8 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import org.objectweb.asm.Handle;
@@ -46,18 +48,41 @@ import org.objectweb.asm.Type;
 
 public class IR2JConverter implements Opcodes {
 
+    public static final int MAX_FILL_ARRAY_BYTES = 500;
+
     private boolean optimizeSynchronized = false;
+
+    Dex2Asm.ClzCtx clzCtx;
+
+    IrMethod ir;
+
+    MethodVisitor asm;
 
     public IR2JConverter() {
         super();
     }
 
-    public IR2JConverter(boolean optimizeSynchronized) {
-        super();
+    public IR2JConverter optimizeSynchronized(boolean optimizeSynchronized) {
         this.optimizeSynchronized = optimizeSynchronized;
+        return this;
     }
 
-    public void convert(IrMethod ir, MethodVisitor asm) {
+    public IR2JConverter clzCtx(Dex2Asm.ClzCtx clzCtx) {
+        this.clzCtx = clzCtx;
+        return this;
+    }
+
+    public IR2JConverter ir(IrMethod ir) {
+        this.ir = ir;
+        return this;
+    }
+
+    public IR2JConverter asm(MethodVisitor asm) {
+        this.asm = asm;
+        return this;
+    }
+
+    public void convert() {
         mapLabelStmt(ir);
         reBuildInstructions(ir, asm);
         reBuildTryCatchBlocks(ir, asm);
@@ -233,15 +258,45 @@ public class IR2JConverter implements Opcodes {
                     } else {
                         elementType = "I";
                     }
-                    int iastoreOP = getOpcode(elementType, IASTORE);
-                    accept(e2.getOp1(), asm);
-                    for (int i = 0; i < arraySize; i++) {
-                        asm.visitInsn(DUP);
-                        asm.visitLdcInsn(i);
-                        asm.visitLdcInsn(Array.get(arrayData, i));
-                        asm.visitInsn(iastoreOP);
+                    boolean genBig = false;
+                    try {
+                        if (this.clzCtx != null
+                                && "BSIJ".contains(elementType)) {
+
+                            byte[] data = toLittleEndianArray(arrayData);
+
+                            if (data != null && data.length > MAX_FILL_ARRAY_BYTES) {
+                                accept(e2.getOp1(), asm);
+                                asm.visitLdcInsn(0);
+                                constLargeArray(asm, data, elementType);
+                                asm.visitLdcInsn(0);
+                                asm.visitLdcInsn(arraySize);
+
+                                asm.visitMethodInsn(Opcodes.INVOKESTATIC,
+                                        "java/lang/System",
+                                        "arraycopy",
+                                        "(Ljava/lang/Object;ILjava/lang/Object;II)V",
+                                        false
+                                );
+                                genBig = true;
+                            }
+
+                        }
+                    } catch (Exception ignore) {
+                        // any exception, revert to normal
                     }
-                    asm.visitInsn(POP);
+
+                    if (!genBig) {
+                        int iastoreOP = getOpcode(elementType, IASTORE);
+                        accept(e2.getOp1(), asm);
+                        for (int i = 0; i < arraySize; i++) {
+                            asm.visitInsn(DUP);
+                            asm.visitLdcInsn(i);
+                            asm.visitLdcInsn(Array.get(arrayData, i));
+                            asm.visitInsn(iastoreOP);
+                        }
+                        asm.visitInsn(POP);
+                    }
                 } else {
                     FilledArrayExpr filledArrayExpr = (FilledArrayExpr) e2.getOp2();
                     int arraySize = filledArrayExpr.ops.length;
@@ -252,15 +307,47 @@ public class IR2JConverter implements Opcodes {
                     } else {
                         elementType = "I";
                     }
-                    int iastoreOP = getOpcode(elementType, IASTORE);
-                    accept(e2.getOp1(), asm);
-                    for (int i = 0; i < arraySize; i++) {
-                        asm.visitInsn(DUP);
-                        asm.visitLdcInsn(i);
-                        accept(filledArrayExpr.ops[i], asm);
-                        asm.visitInsn(iastoreOP);
+
+                    boolean genBig = false;
+                    try {
+                        if (this.clzCtx != null
+                                && "BSIJ".contains(elementType)
+                                && isConstant(filledArrayExpr.ops)) {
+                            // create a 500-len byte array, may cause 'Method code too large!'
+                            // convert it to a base64 decoding
+                            byte[] data = collectDataAsByteArray(filledArrayExpr.ops, elementType);
+                            if (data != null && data.length > MAX_FILL_ARRAY_BYTES) {
+                                accept(e2.getOp1(), asm);
+                                asm.visitLdcInsn(0);
+                                constLargeArray(asm, data, elementType);
+                                asm.visitLdcInsn(0);
+                                asm.visitLdcInsn(arraySize);
+
+                                asm.visitMethodInsn(INVOKESTATIC,
+                                        "java/lang/System",
+                                        "arraycopy",
+                                        "(Ljava/lang/Object;ILjava/lang/Object;II)V",
+                                        false
+                                );
+
+                                genBig = true;
+                            }
+                        }
+                    } catch (Exception ignore) {
+                        // any exception, revert to normal
                     }
-                    asm.visitInsn(POP);
+
+                    if (!genBig) {
+                        int iastoreOP = getOpcode(elementType, IASTORE);
+                        accept(e2.getOp1(), asm);
+                        for (int i = 0; i < arraySize; i++) {
+                            asm.visitInsn(DUP);
+                            asm.visitLdcInsn(i);
+                            accept(filledArrayExpr.ops[i], asm);
+                            asm.visitInsn(iastoreOP);
+                        }
+                        asm.visitInsn(POP);
+                    }
                 }
             }
             break;
@@ -392,6 +479,35 @@ public class IR2JConverter implements Opcodes {
             }
 
         }
+    }
+
+    private void constLargeArray(MethodVisitor asm, byte[] data, String elementType) {
+        String cst = hexEncode(data);
+        if (cst.length() > 65535) { // asm have the limit
+            asm.visitTypeInsn(Opcodes.NEW, "java/lang/StringBuilder");
+            asm.visitInsn(Opcodes.DUP);
+            asm.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false);
+
+            for (int i = 0; i < cst.length(); i += 65500) {
+                int a = Math.min(65500, cst.length() - i);
+                asm.visitLdcInsn(cst.substring(i, i + a));
+                asm.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder",
+                        "append",
+                        "(Ljava/lang/String;)Ljava/lang/StringBuilder;",
+                        false
+                );
+            }
+            asm.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder",
+                    "toString",
+                    "()Ljava/lang/String;",
+                    false
+            );
+        } else {
+            asm.visitLdcInsn(cst);
+        }
+
+        asm.visitMethodInsn(Opcodes.INVOKESTATIC, toInternal(this.clzCtx.classDescriptor),
+                this.clzCtx.buildHexDecodeMethodName(elementType), "(Ljava/lang/String;)[" + elementType, false);
     }
 
     private static boolean isLocalWithIndex(Value v, int i) {
@@ -564,7 +680,7 @@ public class IR2JConverter implements Opcodes {
         }
     }
 
-    private static void accept(Value value, MethodVisitor asm) {
+    private void accept(Value value, MethodVisitor asm) {
 
         switch (value.et) {
         case E0:
@@ -607,10 +723,17 @@ public class IR2JConverter implements Opcodes {
         }
     }
 
-    private static void reBuildEnExpression(EnExpr value, MethodVisitor asm) {
+    public static String hexEncode(byte[] data) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : data) {
+            sb.append(String.format("%02x", b & 0xFF));
+        }
+        return sb.toString();
+    }
+
+    private void reBuildEnExpression(EnExpr value, MethodVisitor asm) {
         if (value.vt == VT.FILLED_ARRAY) {
             FilledArrayExpr fae = (FilledArrayExpr) value;
-            reBuildE1Expression(Exprs.nNewArray(fae.type, Exprs.nInt(fae.ops.length)), asm);
             String tp1 = fae.valueType;
             int xastore = IASTORE;
             String elementType = null;
@@ -618,6 +741,25 @@ public class IR2JConverter implements Opcodes {
                 elementType = tp1.substring(1);
                 xastore = getOpcode(elementType, IASTORE);
             }
+
+            try {
+                if (this.clzCtx != null
+                        && elementType != null
+                        && "BSIJ".contains(elementType)
+                        && isConstant(fae.ops)) {
+
+                    byte[] data = collectDataAsByteArray(fae.ops, elementType);
+                    if (data != null && data.length > MAX_FILL_ARRAY_BYTES) {
+                        constLargeArray(asm, data, elementType);
+                        return;
+                    }
+                }
+            } catch (Exception ignore) {
+                // any exception, revert to normal
+            }
+
+            reBuildE1Expression(Exprs.nNewArray(fae.type, Exprs.nInt(fae.ops.length)), asm);
+
 
             for (int i = 0; i < fae.ops.length; i++) {
                 if (fae.ops[i] == null) {
@@ -735,6 +877,92 @@ public class IR2JConverter implements Opcodes {
         default:
             break;
         }
+    }
+
+    private static byte[] collectDataAsByteArray(Value[] ops, String t) {
+        switch (t) {
+        case "B": {
+            byte[] d = new byte[ops.length];
+            for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
+                Value op = ops[i];
+                Constant cst = (Constant) op;
+                d[i] = ((Number) cst.value).byteValue();
+            }
+            return d;
+        }
+        case "S": {
+            short[] d = new short[ops.length];
+            for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
+                Value op = ops[i];
+                Constant cst = (Constant) op;
+                d[i] = ((Number) cst.value).shortValue();
+            }
+            return toLittleEndianArray(d);
+        }
+        case "I": {
+            int[] d = new int[ops.length];
+            for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
+                Value op = ops[i];
+                Constant cst = (Constant) op;
+                d[i] = ((Number) cst.value).intValue();
+            }
+            return toLittleEndianArray(d);
+        }
+        case "J": {
+            long[] d = new long[ops.length];
+            for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
+                Value op = ops[i];
+                Constant cst = (Constant) op;
+                d[i] = ((Number) cst.value).longValue();
+            }
+            return toLittleEndianArray(d);
+        }
+        default:
+            return null;
+        }
+    }
+
+    private static byte[] toLittleEndianArray(Object d) {
+        if (d instanceof byte[]) {
+            return (byte[]) d;
+        } else if (d instanceof short[]) {
+            return toLittleEndianArray((short[]) d);
+        } else if (d instanceof int[]) {
+            return toLittleEndianArray((int[]) d);
+        } else if (d instanceof long[]) {
+            return toLittleEndianArray((long[]) d);
+        }
+        return null;
+    }
+
+    private static byte[] toLittleEndianArray(long[] d) {
+        ByteBuffer b = ByteBuffer.allocate(d.length * 8);
+        b.order(ByteOrder.LITTLE_ENDIAN);
+        b.asLongBuffer().put(d);
+        return b.array();
+    }
+
+    private static byte[] toLittleEndianArray(int[] d) {
+        ByteBuffer b = ByteBuffer.allocate(d.length * 4);
+        b.order(ByteOrder.LITTLE_ENDIAN);
+        b.asIntBuffer().put(d);
+        return b.array();
+    }
+
+    private static byte[] toLittleEndianArray(short[] d) {
+        ByteBuffer b = ByteBuffer.allocate(d.length * 2);
+        b.order(ByteOrder.LITTLE_ENDIAN);
+        b.asShortBuffer().put(d);
+        return b.array();
+    }
+
+    private static boolean isConstant(Value[] ops) {
+        for (Value op : ops) {
+            if (op.vt != VT.CONSTANT) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static void box(String provideType, String expectedType, MethodVisitor asm) {
@@ -866,7 +1094,7 @@ public class IR2JConverter implements Opcodes {
         }
     }
 
-    private static void reBuildE1Expression(E1Expr e1, MethodVisitor asm) {
+    private void reBuildE1Expression(E1Expr e1, MethodVisitor asm) {
         accept(e1.getOp(), asm);
         switch (e1.vt) {
         case STATIC_FIELD: {
@@ -953,7 +1181,7 @@ public class IR2JConverter implements Opcodes {
         }
     }
 
-    private static void reBuildE2Expression(E2Expr e2, MethodVisitor asm) {
+    private void reBuildE2Expression(E2Expr e2, MethodVisitor asm) {
         String type = e2.op2.valueType;
         accept(e2.op1, asm);
         if ((e2.vt == VT.ADD || e2.vt == VT.SUB) && e2.op2.vt == VT.CONSTANT) {
