@@ -23,31 +23,32 @@ public class CleanLabel implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-        Set<LabelStmt> uselabels = new HashSet<>();
-        addTrap(irMethod.traps, uselabels);
-        addVars(irMethod.vars, uselabels);
-        addStmt(irMethod.stmts, uselabels);
+        Set<LabelStmt> useLabels = new HashSet<>();
+        addTrap(irMethod.traps, useLabels);
+        addVars(irMethod.vars, useLabels);
+        addStmt(irMethod.stmts, useLabels);
         if (irMethod.phiLabels != null) {
-            uselabels.addAll(irMethod.phiLabels);
+            useLabels.addAll(irMethod.phiLabels);
         }
-        rmUnused(irMethod.stmts, uselabels);
+        addLineNumber(irMethod.stmts, useLabels);
+        rmUnused(irMethod.stmts, useLabels);
     }
 
-    private void addVars(List<LocalVar> vars, Set<LabelStmt> uselabels) {
+    private void addVars(List<LocalVar> vars, Set<LabelStmt> useLabels) {
         if (vars != null) {
             for (LocalVar var : vars) {
-                uselabels.add(var.start);
-                uselabels.add(var.end);
+                useLabels.add(var.start);
+                useLabels.add(var.end);
             }
         }
 
     }
 
-    private void rmUnused(StmtList stmts, Set<LabelStmt> uselabels) {
+    private void rmUnused(StmtList stmts, Set<LabelStmt> useLabels) {
         Stmt p = stmts.getFirst();
         while (p != null) {
-            if (p.st == ST.LABEL) {
-                if (!uselabels.contains(p)) {
+            if (p instanceof LabelStmt && p.st == ST.LABEL) {
+                if (!useLabels.contains(p)) {
                     Stmt q = p.getNext();
                     stmts.remove(p);
                     p = q;
@@ -76,6 +77,15 @@ public class CleanLabel implements Transformer {
                 labels.add(trap.start);
                 labels.add(trap.end);
                 Collections.addAll(labels, trap.handlers);
+            }
+        }
+    }
+
+    // fix https://github.com/pxb1988/dex2jar/issues/165
+    private void addLineNumber(StmtList stmts, Set<LabelStmt> useLabels) {
+        for (Stmt p = stmts.getFirst(); p != null; p = p.getNext()) {
+            if (p instanceof LabelStmt && ((LabelStmt) p).lineNumber != -1) {
+                useLabels.add((LabelStmt) p);
             }
         }
     }

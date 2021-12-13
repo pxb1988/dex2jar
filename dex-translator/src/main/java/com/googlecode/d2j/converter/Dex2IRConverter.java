@@ -5,6 +5,7 @@ import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.node.DexCodeNode;
+import com.googlecode.d2j.node.DexDebugNode;
 import com.googlecode.d2j.node.TryCatchNode;
 import com.googlecode.d2j.node.analysis.DvmFrame;
 import com.googlecode.d2j.node.analysis.DvmInterpreter;
@@ -188,7 +189,6 @@ public class Dex2IRConverter {
 
         dfs(exBranch, handlers, access, interpreter);
 
-
         StmtList stmts = target.stmts;
         stmts.addAll(preEmit);
         for (int i = 0; i < insnList.size(); i++) {
@@ -260,7 +260,28 @@ public class Dex2IRConverter {
             target.phiLabels = phiLabels;
         }
 
+        supplementLineNumber(dexCodeNode);
+
         return target;
+    }
+
+    // fix https://github.com/pxb1988/dex2jar/issues/165
+    private void supplementLineNumber(DexCodeNode dexCodeNode) {
+        if (dexCodeNode == null || dexCodeNode.debugNode == null || dexCodeNode.debugNode.debugNodes == null) {
+            return;
+        }
+        Map<DexLabel, Integer> lineNumber = new HashMap<>();
+        for (DexDebugNode.DexDebugOpNode debugNode : dexCodeNode.debugNode.debugNodes) {
+            if (debugNode instanceof DexDebugNode.DexDebugOpNode.LineNumber) {
+                lineNumber.put(debugNode.label, ((DexDebugNode.DexDebugOpNode.LineNumber) debugNode).line);
+            }
+        }
+        for (Map.Entry<DexLabel, LabelStmt> entry : map.entrySet()) {
+            Integer line = lineNumber.get(entry.getKey());
+            if (line != null) {
+                entry.getValue().lineNumber = line;
+            }
+        }
     }
 
     /**
