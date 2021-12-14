@@ -1,10 +1,10 @@
 apply plugin: 'antlr'
 
 dependencies {
-    implementation 'org.antlr:antlr4-runtime:4.9.2'
+    implementation 'org.antlr:antlr4-runtime:4.9.3'
     implementation project(':dex-reader')
     implementation project(':dex-reader-api')
-    antlr 'org.antlr:antlr4:4.9.2'
+    antlr 'org.antlr:antlr4:4.9.3'
     implementation project(':d2j-base-cmd')
     implementation project(':dex-writer')
     testImplementation 'org.smali:baksmali:2.5.2'
