@@ -46,4 +46,5 @@ public class I101Test {
         byte[] data = TestUtils.testDexASMifier(getClass(), "a", "Lt");
         TestUtils.defineClass("Lt", data);
     }
+
 }

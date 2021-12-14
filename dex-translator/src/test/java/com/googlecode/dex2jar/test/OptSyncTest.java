@@ -94,4 +94,5 @@ public class OptSyncTest {
         code.visitEnd();
         mv.visitEnd();
     }
+
 }

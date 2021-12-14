@@ -85,4 +85,5 @@ public class ArrayTypeTest {
         code.visitEnd();
         mv.visitEnd();
     }
+
 }

@@ -11,6 +11,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 
 public class RemoveLocalFromSSATest extends BaseTransformerTest<RemoveLocalFromSSA> {
+
     @Test
     public void t001() {
 
@@ -26,6 +27,5 @@ public class RemoveLocalFromSSATest extends BaseTransformerTest<RemoveLocalFromS
         Assert.assertEquals(sa.getOp1(), sb.getOp());
         Assert.assertEquals("1 local should left", 1, locals.size());
     }
-
 
 }

@@ -12,6 +12,7 @@ import org.junit.Test;
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  */
 public class ASMifierTest {
+
     public static String getBaseName(String fn) {
         int x = fn.lastIndexOf('.');
         return x >= 0 ? fn.substring(0, x) : fn;

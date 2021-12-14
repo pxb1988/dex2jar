@@ -21,7 +21,7 @@ import org.junit.runners.model.Statement;
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  */
-@RunWith(ResTest.R.class)
+@RunWith(ResTest.TestRunner.class)
 public class ResTest {
 
     public static class FileSet {
@@ -29,8 +29,8 @@ public class ResTest {
         List<Path> files = new ArrayList<>(3);
     }
 
-    public static class R extends ParentRunner<FileSet> {
-        public R(Class<?> testClass) throws InitializationError {
+    public static class TestRunner extends ParentRunner<FileSet> {
+        public TestRunner(Class<?> testClass) throws InitializationError {
             super(testClass);
             init(testClass);
         }

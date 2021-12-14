@@ -20,12 +20,12 @@ import org.junit.runners.model.Statement;
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  */
-@RunWith(D2jTest.S.class)
+@RunWith(D2jTest.TestRunner.class)
 public class D2jTest {
 
-    public static class S extends ParentRunner<Runner> {
+    public static class TestRunner extends ParentRunner<Runner> {
 
-        public S(Class<?> klass) throws InitializationError {
+        public TestRunner(Class<?> klass) throws InitializationError {
             super(klass);
             init(klass);
         }
@@ -95,5 +95,7 @@ public class D2jTest {
         protected void runChild(Runner child, RunNotifier notifier) {
             child.run(notifier);
         }
+
     }
+
 }

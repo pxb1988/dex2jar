@@ -28,6 +28,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
 
 public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
+
     /**
      * base test
      */
@@ -165,4 +166,5 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         // this case is ok to fail as the NPE transformer cover this
         // Assert.assertEquals("", "[[D", b.valueType);
     }
+
 }

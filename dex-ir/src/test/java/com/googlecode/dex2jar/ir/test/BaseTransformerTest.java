@@ -15,6 +15,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 
+// Ignore the unused inspection; it is indeed used
 public abstract class BaseTransformerTest<T extends Transformer> {
 
     protected void transform() {

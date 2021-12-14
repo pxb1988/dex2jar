@@ -19,6 +19,7 @@ import static com.googlecode.d2j.reader.Op.RETURN_OBJECT;
 
 @RunWith(DexTranslatorRunner.class)
 public class ZeroTest implements DexConstants {
+
     @Test
     public static void testZero(DexClassVisitor cv) {
         DexMethodVisitor mv = cv
@@ -51,4 +52,5 @@ public class ZeroTest implements DexConstants {
             mv.visitEnd();
         }
     }
+
 }

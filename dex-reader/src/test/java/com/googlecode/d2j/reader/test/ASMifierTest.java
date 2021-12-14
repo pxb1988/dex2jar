@@ -34,7 +34,8 @@ import org.junit.Test;
 /**
  * @author bob
  */
-public class AsmfierTest implements DexConstants {
+public class ASMifierTest implements DexConstants {
+
     @Test
     public void test() {
         ASMifierFileV fv = new ASMifierFileV(new File("target/asmftest").toPath(), "a.b");
@@ -54,4 +55,5 @@ public class AsmfierTest implements DexConstants {
         cv.visitEnd();
         fv.visitEnd();
     }
+
 }

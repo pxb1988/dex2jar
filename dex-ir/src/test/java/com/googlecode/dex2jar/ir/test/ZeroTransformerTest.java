@@ -15,9 +15,9 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 
 public class ZeroTransformerTest extends BaseTransformerTest<ZeroTransformer> {
+
     @Test
     public void t001() {
-
         Local a = addLocal("a");
         Local c = addLocal("c");
         Local p = addLocal("p");
@@ -34,4 +34,5 @@ public class ZeroTransformerTest extends BaseTransformerTest<ZeroTransformer> {
         Assert.assertNotEquals("a is split to 2 local", sb.getOp2().getOps()[0], sa.getOp2().getOps()[0]);
         Assert.assertEquals("c is keep same", sb.getOp2().getOps()[1], sa.getOp2().getOps()[1]);
     }
+
 }

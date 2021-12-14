@@ -9,14 +9,13 @@ import com.googlecode.d2j.tools.jar.DexWeaver;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import org.antlr.runtime.RecognitionException;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class DexWaveTest {
-    @Test
-    public void testA() throws IOException, RecognitionException {
 
+    @Test
+    public void testA() throws IOException {
         DexWeaver iw = new DexWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
         iw.withConfig("d LA;.m()V=LB;.t(Lp;)Ljava/lang/Object;");
@@ -30,8 +29,7 @@ public class DexWaveTest {
     }
 
     @Test
-    public void testB() throws IOException, RecognitionException {
-
+    public void testB() throws IOException {
         DexWeaver iw = new DexWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
         iw.withConfig("r LB;.b=LX;.t(Lp;)Ljava/lang/Object;");
@@ -42,7 +40,7 @@ public class DexWaveTest {
         test0(iw, "b");
     }
 
-    private void test0(DexWeaver iw, String prefix) throws IOException, RecognitionException {
+    private void test0(DexWeaver iw, String prefix) throws IOException {
         DexClassNode before = Smali.smaliFile2Node(prefix + "-before.smali", getClass()
                 .getResourceAsStream("/weave/smali/" + prefix + "-before.smali"));
         DexClassNode expectedAfter = Smali.smaliFile2Node(prefix + "-after.smali", getClass()
@@ -61,7 +59,6 @@ public class DexWaveTest {
         iw.buildInvocationClz(dfn);
 
         assertEqual(expectedGen, dfn.clzs.get(0));
-
     }
 
     private void assertEqual(DexClassNode expected, DexClassNode actual) throws IOException {
@@ -79,4 +76,5 @@ public class DexWaveTest {
         bufferedWriter.close();
         return stringWriter.toString();
     }
+
 }

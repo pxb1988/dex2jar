@@ -40,4 +40,5 @@ public class DexTranslatorRunner extends BlockJUnit4ClassRunner {
     protected void validateTestMethods(List<Throwable> errors) {
         // All methods are validate
     }
+
 }

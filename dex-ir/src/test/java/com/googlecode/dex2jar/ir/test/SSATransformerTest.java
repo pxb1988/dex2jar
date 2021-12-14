@@ -45,7 +45,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
 
         Assert.assertSame(st2.op1, st3.op);
         Assert.assertNotSame("st1 and st1 must be cut", st1.op1, st2.op1);
-        Assert.assertTrue(method.locals.size() == 2);
+        Assert.assertEquals(2, method.locals.size());
     }
 
     /**
@@ -195,7 +195,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         addStmt(nReturn(b));
 
         transform();
-        Assert.assertTrue("no phi should add", method.locals.size() == 1);
+        Assert.assertEquals("no phi should add", 1, method.locals.size());
     }
 
     @Test

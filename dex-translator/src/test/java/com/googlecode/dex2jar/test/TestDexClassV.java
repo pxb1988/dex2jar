@@ -10,8 +10,10 @@ import org.objectweb.asm.Opcodes;
 
 @Ignore
 public class TestDexClassV extends DexClassVisitor {
-    private int config;
-    private ClassWriter cw;
+
+    private final int config;
+
+    private final ClassWriter cw;
 
     public TestDexClassV(String clz, int config) {
         super();
@@ -28,7 +30,6 @@ public class TestDexClassV extends DexClassVisitor {
     @Override
     public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         return new DexMethodNode(accessFlags, method) {
-
             @Override
             public void visitEnd() {
                 super.visitEnd();
@@ -37,4 +38,5 @@ public class TestDexClassV extends DexClassVisitor {
             }
         };
     }
+
 }

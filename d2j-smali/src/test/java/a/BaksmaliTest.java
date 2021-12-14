@@ -12,7 +12,6 @@ import org.junit.Test;
 
 public class BaksmaliTest {
 
-
     @Test
     public void t() throws Exception {
         File dir = new File("../dex-translator/src/test/resources/dexes");
@@ -20,13 +19,13 @@ public class BaksmaliTest {
         if (fs != null) {
             for (File f : fs) {
                 if (f.getName().endsWith(".dex") || f.getName().endsWith(".apk")) {
-                    dotest(f.toPath());
+                    doTest(f.toPath());
                 }
             }
         }
     }
 
-    private void dotest(Path f) throws Exception {
+    private void doTest(Path f) throws Exception {
         Path smali0 = new File("target/" + f.getFileName() + "-smali0.zip").toPath();
         try (FileSystem fs0 = BaseCmd.createZip(smali0)) {
             Baksmali.from(f).to(fs0.getPath("/"));
@@ -38,4 +37,5 @@ public class BaksmaliTest {
             Smali.smali(fs0.getPath("/"), v);
         }
     }
+
 }

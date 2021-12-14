@@ -61,7 +61,7 @@ public class UnSSATransformerTransformerTest extends BaseTransformerTest<UnSSATr
         addStmt(nIf(niGt(nInt(100), nInt(0)), L0));
         addStmt(nReturn(phi));
         transform();
-        Assert.assertTrue("a new local should introduced to solve the problem", stmt.getPre() != L0);
+        Assert.assertNotSame("a new local should introduced to solve the problem", stmt.getPre(), L0);
     }
 
     @Test
@@ -104,7 +104,7 @@ public class UnSSATransformerTransformerTest extends BaseTransformerTest<UnSSATr
         attachPhi(L1, nAssign(phi, nPhi(a)));
         addStmt(nReturn(phi));
         transform();
-        Assert.assertTrue("p=a should inserted", j.getPre() != s1);
+        Assert.assertNotSame("p=a should inserted", j.getPre(), s1);
 
     }
 
@@ -130,7 +130,7 @@ public class UnSSATransformerTransformerTest extends BaseTransformerTest<UnSSATr
         addStmt(nReturnVoid());
         transform();
 
-        Assert.assertTrue("p=a should inserted", s1.getPre() != L1);
+        Assert.assertNotSame("p=a should inserted", s1.getPre(), L1);
 
     }
 
@@ -188,7 +188,7 @@ public class UnSSATransformerTransformerTest extends BaseTransformerTest<UnSSATr
         addStmt(Stmts.nReturn(a));
         method.traps.add(new Trap(L0, L2, new LabelStmt[]{L3}, new String[]{"Ljava/lang/Exception"}));
         transform();
-        Assert.assertTrue("the fix assign should insert after x=@ExceptionRef", L3.getNext() == ref);
+        Assert.assertSame("the fix assign should insert after x=@ExceptionRef", L3.getNext(), ref);
     }
 
 }

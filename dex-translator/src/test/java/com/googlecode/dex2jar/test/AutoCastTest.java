@@ -84,6 +84,6 @@ public class AutoCastTest implements DexConstants {
         // }
         // }
         // Assert.assertTrue("we need an I2S instruction", find);
-
     }
+
 }

@@ -8,10 +8,11 @@ import java.io.InputStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class SkipDupMethod {
+public class SkipDupMethodTest {
+
     @Test
     public void test() throws IOException {
-        InputStream is = SkipDupMethod.class.getClassLoader().getResourceAsStream("i200.dex");
+        InputStream is = SkipDupMethodTest.class.getClassLoader().getResourceAsStream("i200.dex");
         Assert.assertNotNull(is);
         DexFileReader reader = new DexFileReader(is);
         DexFileNode dfn1 = new DexFileNode();
@@ -19,6 +20,6 @@ public class SkipDupMethod {
         DexFileNode dfn2 = new DexFileNode();
         reader.accept(dfn2, 0);
         Assert.assertTrue(dfn1.clzs.get(0).methods.size() > dfn2.clzs.get(0).methods.size());
-
     }
+
 }

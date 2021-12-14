@@ -21,6 +21,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 
 public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstantFromSSA> {
+
     @Test
     public void t001() {
         Local a = addLocal("a");
@@ -54,7 +55,7 @@ public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstan
         addStmt(nReturn(a));
 
         transform();
-        Assert.assertTrue("no local should kept", locals.size() == 0);
+        Assert.assertEquals("no local should kept", 0, locals.size());
     }
 
     @Test
@@ -69,8 +70,8 @@ public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstan
         addStmt(nAssign(c, nArray(a, b, "I")));
         addStmt(nReturn(c));
         transform();
-        Assert.assertTrue("local b should removed", !locals.contains(b));
-        Assert.assertTrue(locals.size() == 2);
+        Assert.assertFalse("local b should removed", locals.contains(b));
+        Assert.assertEquals(2, locals.size());
     }
 
     @Test
@@ -114,6 +115,7 @@ public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstan
         Stmt ret = addStmt(nReturn(ax));
 
         transform();
-        Assert.assertTrue("should return '123'", ret.getOp().vt == Value.VT.CONSTANT);
+        Assert.assertSame("should return '123'", ret.getOp().vt, Value.VT.CONSTANT);
     }
+
 }

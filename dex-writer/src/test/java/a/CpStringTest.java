@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class CpStringTest {
+
     @Test
     public void test() {
         ConstPool cp = new ConstPool();

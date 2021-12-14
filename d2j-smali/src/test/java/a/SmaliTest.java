@@ -29,6 +29,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class SmaliTest {
+
     @Test
     public void test() throws IOException {
         DexFileNode dfn = new DexFileNode();
@@ -61,13 +62,13 @@ public class SmaliTest {
             for (File f : fs) {
                 if (f.getName().endsWith(".dex") || f.getName().endsWith(".apk")) {
                     System.out.println(f.getName());
-                    dotest(f);
+                    doTest(f);
                 }
             }
         }
     }
 
-    private void dotest(File dexFile) throws IOException {
+    private void doTest(File dexFile) throws IOException {
         DexBackedDexFile dex;
         try {
             dex = DexFileFactory.loadDexFile(dexFile, Opcodes.forApi(14));
@@ -134,4 +135,5 @@ public class SmaliTest {
         writer.flush();
         return bufWriter.toString();
     }
+
 }

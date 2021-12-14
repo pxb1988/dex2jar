@@ -22,12 +22,12 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 import org.objectweb.asm.tree.ClassNode;
 
-@RunWith(Jasmin2jTest.S.class)
+@RunWith(Jasmin2jTest.TestRunner.class)
 public class Jasmin2jTest {
 
-    public static class S extends ParentRunner<Path> {
+    public static class TestRunner extends ParentRunner<Path> {
 
-        public S(Class<?> klass) throws InitializationError {
+        public TestRunner(Class<?> klass) throws InitializationError {
             super(klass);
             init(klass);
         }
@@ -82,5 +82,7 @@ public class Jasmin2jTest {
                 }
             }, describeChild(child), notifier);
         }
+
     }
+
 }

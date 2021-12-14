@@ -13,6 +13,7 @@ import org.junit.Test;
  * @author bob
  */
 public class BadZipEntryFlagTest {
+
     @Test
     public void test1() throws IOException {
         ZipArchiveInputStream zis = new ZipArchiveInputStream(BadZipEntryFlagTest.class.getResourceAsStream("/bad"

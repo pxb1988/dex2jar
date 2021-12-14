@@ -18,6 +18,7 @@ import java.io.IOException;
 import org.junit.Test;
 
 public class AppWriterTest implements DexConstants {
+
     @Test(expected = DexWriteException.class)
     public void testDupClz() {
         DexFileWriter w = new DexFileWriter();
@@ -70,4 +71,5 @@ public class AppWriterTest implements DexConstants {
         dexFileReader.accept(w);
         w.toByteArray();
     }
+
 }

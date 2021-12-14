@@ -28,8 +28,8 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 1);
-        Assert.assertTrue(jm.stmts.getSize() == 2);
+        Assert.assertEquals(1, jm.locals.size());
+        Assert.assertEquals(2, jm.stmts.getSize());
         Assert.assertEquals("a String", ((Constant) retStmt.op.trim()).value);
     }
 
@@ -47,8 +47,8 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 2);
-        Assert.assertTrue(jm.stmts.getSize() == 3);
+        Assert.assertEquals(2, jm.locals.size());
+        Assert.assertEquals(3, jm.stmts.getSize());
         Assert.assertEquals("a String", ((Constant) retStmt.op.trim()).value);
     }
 
@@ -69,8 +69,8 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 3);
-        Assert.assertTrue(jm.stmts.getSize() == 4);
+        Assert.assertEquals(3, jm.locals.size());
+        Assert.assertEquals(4, jm.stmts.getSize());
         Assert.assertEquals("a String", ((Constant) retStmt.op.trim()).value);
     }
 
@@ -91,8 +91,8 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 3);
-        Assert.assertTrue(jm.stmts.getSize() == 4);
+        Assert.assertEquals(3, jm.locals.size());
+        Assert.assertEquals(4, jm.stmts.getSize());
         Assert.assertEquals(p, retStmt.op.trim());
     }
 
@@ -106,15 +106,16 @@ public class ConstTransformerTest {
         jm.locals.add(a);
         jm.locals.add(b);
         jm.locals.add(p);
-        jm.stmts.add(nAssign(a, nString(new String("a String"))));
-        jm.stmts.add(nAssign(b, nString(new String("a String"))));
+        jm.stmts.add(nAssign(a, nString("a String")));
+        jm.stmts.add(nAssign(b, nString("a String")));
         jm.stmts.add(nAssign(p, Exprs.nPhi(a, b)));
         UnopStmt retStmt = nReturn(p);
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 3);
-        Assert.assertTrue(jm.stmts.getSize() == 4);
+        Assert.assertEquals(3, jm.locals.size());
+        Assert.assertEquals(4, jm.stmts.getSize());
         Assert.assertEquals(VT.CONSTANT, retStmt.op.vt);
     }
+
 }

@@ -17,9 +17,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 public class WaveTest {
+
     @Test
     public void testA() throws IOException, RecognitionException {
-
         InvocationWeaver iw = new InvocationWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
         iw.withConfig("d LA;.m()V=LB;.t(Lp;)Ljava/lang/Object;");
@@ -29,7 +29,6 @@ public class WaveTest {
 
     @Test
     public void testB() throws IOException, RecognitionException {
-
         InvocationWeaver iw = new InvocationWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
         iw.withConfig("r Ljava/util/ArrayList;.size=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.size(Lp;)"
@@ -47,7 +46,6 @@ public class WaveTest {
 
     @Test
     public void testC() throws IOException, RecognitionException {
-
         InvocationWeaver iw = new InvocationWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
         iw.withConfig("r LT;.a()V=LB;.a(Lp;)Ljava/lang/Object;");
@@ -77,13 +75,13 @@ public class WaveTest {
         assertEqual(expectedGen, gen);
     }
 
-    private void assertEqual(ClassNode expected, ClassNode actual) throws IOException {
+    private void assertEqual(ClassNode expected, ClassNode actual) {
         String stdExpect = toStd(expected);
         String stdActual = toStd(actual);
         Assert.assertEquals(stdExpect, stdActual);
     }
 
-    public static String toStd(ClassNode expected) throws IOException {
+    public static String toStd(ClassNode expected) {
         expected.access &= ~Opcodes.ACC_SUPER;
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
         expected.accept(LdcOptimizeAdapter.wrap(cw));

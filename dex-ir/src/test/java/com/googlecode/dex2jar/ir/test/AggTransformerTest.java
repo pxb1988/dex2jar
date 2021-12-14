@@ -18,6 +18,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
 
 public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
+
     @Test
     public void t001() {
         Local a = addLocal("a");
@@ -40,13 +41,12 @@ public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
         addStmt(nAssign(c, nArray(a, b, "I")));
         addStmt(nReturn(c));
         transform();
-        Assert.assertTrue(stmts.getSize() == 1);
-        Assert.assertTrue(locals.size() == 0);
+        Assert.assertEquals(1, stmts.getSize());
+        Assert.assertEquals(0, locals.size());
     }
 
     @Test
     public void test04() {
-
         Local array = addLocal("array");
         Local index = addLocal("index");
         Local value = addLocal("value");
@@ -89,7 +89,8 @@ public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
         addStmt(nReturn(c));
         new SSATransformer().transform(method);
         transform();
-        Assert.assertTrue(stmts.getSize() == 1);
-        Assert.assertTrue(locals.size() == 0);
+        Assert.assertEquals(1, stmts.getSize());
+        Assert.assertEquals(0, locals.size());
     }
+
 }

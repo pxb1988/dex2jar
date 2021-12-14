@@ -17,6 +17,7 @@ import static com.googlecode.d2j.reader.Op.RETURN_VOID;
  */
 @RunWith(DexTranslatorRunner.class)
 public class Issue71Test implements DexConstants {
+
     @Test
     public static void i71(DexClassVisitor cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_STATIC, new Method("La;", "test", new String[]{}, "V"));
@@ -33,4 +34,5 @@ public class Issue71Test implements DexConstants {
             mv.visitEnd();
         }
     }
+
 }

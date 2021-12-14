@@ -14,9 +14,9 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nParameterRef;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nThisRef;
 
 public class StmtListTest {
+
     @Test
     public void toStringTest() {
-
         StmtList list = new StmtList();
         Local a = nLocal("this");
         Local b = nLocal("b");
@@ -33,4 +33,5 @@ public class StmtListTest {
         list.add(L1);
         list.toString();
     }
+
 }
