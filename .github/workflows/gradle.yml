@@ -21,8 +21,6 @@ jobs:
         java-version: '8'
         distribution: 'adopt'
         cache: gradle
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
     - name: Build dex-tools with Gradle
       run: ./gradlew check distZip
       
