@@ -92,17 +92,25 @@ public class BaksmaliDumper implements DexConstants {
         return escapeBuff.toString();
     }
 
-    static void escapeId0(StringBuilder sb, String id) {
-        for (int i = 0; i < id.length(); ++i) {
-            char c = id.charAt(i);
-            escape1(sb, c);
-        }
-    }
-
     static String escapeId(String id) {
         StringBuilder escapeBuff = new StringBuilder();
         escapeId0(escapeBuff, id);
         return escapeBuff.toString();
+    }
+
+    static void escapeId0(StringBuilder sb, String id) {
+        for (int i = 0; i < id.length(); ++i) {
+            char c = id.charAt(i);
+            escapeId1(sb, c);
+        }
+    }
+
+    static void escapeId1(final StringBuilder buf, char c) {
+        if (c == '\\' || c == '/' || c == '.') {
+            buf.append(String.format("\\u%04x", (int) c));
+        } else {
+            escape1(buf, c);
+        }
     }
 
     static void escape1(final StringBuilder buf, char c) {
