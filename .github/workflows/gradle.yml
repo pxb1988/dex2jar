@@ -23,28 +23,11 @@ jobs:
         cache: gradle
     - name: Build dex-tools with Gradle
       run: ./gradlew check distZip
-      
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_number }}
-        release_name: v${{ github.run_number }}
-        draft: false
-        prerelease: false
-
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dex-tools/build/distributions/dex-tools-2.1-SNAPSHOT.zip
-        asset_name: dex-tools-2.1-SNAPSHOT.zip
-        asset_content_type: application/zip
+        files: dex-tools/build/distributions/dex-tools-2.1-SNAPSHOT.zip
 
     - name: Archive dex tools
       uses: actions/upload-artifact@v2
