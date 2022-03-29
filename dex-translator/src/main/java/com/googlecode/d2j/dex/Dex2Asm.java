@@ -31,7 +31,7 @@ import com.googlecode.dex2jar.ir.ts.UnSSATransformer;
 import com.googlecode.dex2jar.ir.ts.VoidInvokeTransformer;
 import com.googlecode.dex2jar.ir.ts.ZeroTransformer;
 import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
-import java.io.IOException;
+import com.googlecode.dex2jar.tools.Constants;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -549,32 +549,44 @@ public class Dex2Asm {
                 convertMethod(classNode, methodNode, cv, clzCtx);
             }
             if (clzCtx.hexDecodeMethodNamePrefix != null) {
-                addHexDecodeMethod(cv, clzCtx.hexDecodeMethodNamePrefix);
+                addHexDecodeMethod(cv, classNode.className.replaceFirst("^L", "").replaceAll(";$", ""),
+                        clzCtx.hexDecodeMethodNamePrefix);
             }
         }
         cv.visitEnd();
     }
 
-    private void addHexDecodeMethod(ClassVisitor outCV, String hexDecodeMethodNameBase) {
+    private static final Set<String> HEX_DECODE_METHODS =
+            new HashSet<>(Arrays.asList("decode_J", "decode_I", "decode_S", "decode_B"));
+
+    private void addHexDecodeMethod(ClassVisitor outCV, String className, String hexDecodeMethodNameBase) {
         // the .data is a class-file compiled from res.Hex
-        try (InputStream is = Dex2Asm.class.getResourceAsStream("/d2j_hex_decode_stub.data")) {
+        try (InputStream is = Dex2Asm.class.getResourceAsStream("/res/Hex.class")) {
             ClassReader cr = new ClassReader(is);
-            cr.accept(new ClassVisitor(Opcodes.ASM5) {
+            cr.accept(new ClassVisitor(Constants.ASM_VERSION) {
                 @Override
                 public MethodVisitor visitMethod(int access, String name, String desc, String signature,
                                                  String[] exceptions) {
-                    if (name.startsWith("decode")) {
-                        return outCV.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-                                hexDecodeMethodNameBase + "$" + name,
-                                desc, signature, exceptions
-                        );
+                    if (HEX_DECODE_METHODS.contains(name)) {
+                        return new MethodVisitor(Constants.ASM_VERSION,
+                                outCV.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                                        hexDecodeMethodNameBase + "$" + name,
+                                        desc, signature, exceptions
+                                )) {
+                            @Override
+                            public void visitMethodInsn(int opcode, String owner, String name, String descriptor,
+                                                        boolean isInterface) {
+                                super.visitMethodInsn(opcode, owner.equals("res/Hex") ? className : owner, name,
+                                        descriptor, isInterface);
+                            }
+                        };
                     } else {
                         return super.visitMethod(access, name, desc, signature, exceptions);
                     }
                 }
             }, ClassReader.EXPAND_FRAMES);
-        } catch (IOException e) {
-            throw new RuntimeException("fail to add hex.decode", e);
+        } catch (Throwable t) {
+            throw new RuntimeException("Failed to add Hex.decode_*", t);
         }
     }
 
