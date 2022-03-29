@@ -1,20 +1,61 @@
 package com.googlecode.d2j.dex;
 
-import com.googlecode.d2j.*;
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.DexType;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
+import com.googlecode.d2j.Visibility;
 import com.googlecode.d2j.converter.Dex2IRConverter;
 import com.googlecode.d2j.converter.IR2JConverter;
-import com.googlecode.d2j.node.*;
+import com.googlecode.d2j.node.DexAnnotationNode;
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexFieldNode;
+import com.googlecode.d2j.node.DexFileNode;
+import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.ts.*;
+import com.googlecode.dex2jar.ir.ts.AggTransformer;
+import com.googlecode.dex2jar.ir.ts.CleanLabel;
+import com.googlecode.dex2jar.ir.ts.DeadCodeTransformer;
+import com.googlecode.dex2jar.ir.ts.EndRemover;
+import com.googlecode.dex2jar.ir.ts.ExceptionHandlerTrim;
+import com.googlecode.dex2jar.ir.ts.Ir2JRegAssignTransformer;
+import com.googlecode.dex2jar.ir.ts.MultiArrayTransformer;
+import com.googlecode.dex2jar.ir.ts.NewTransformer;
+import com.googlecode.dex2jar.ir.ts.NpeTransformer;
+import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
+import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
+import com.googlecode.dex2jar.ir.ts.TypeTransformer;
+import com.googlecode.dex2jar.ir.ts.UnSSATransformer;
+import com.googlecode.dex2jar.ir.ts.VoidInvokeTransformer;
+import com.googlecode.dex2jar.ir.ts.ZeroTransformer;
 import com.googlecode.dex2jar.ir.ts.array.FillArrayTransformer;
-import org.objectweb.asm.*;
+
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.InnerClassNode;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.Stack;
 
 public class Dex2Asm {
     public static class ClzCtx {
@@ -476,30 +517,43 @@ public class Dex2Asm {
                 convertMethod(classNode, methodNode, cv, clzCtx);
             }
             if (clzCtx.hexDecodeMethodNamePrefix != null) {
-                addHexDecodeMethod(cv, clzCtx.hexDecodeMethodNamePrefix);
+                addHexDecodeMethod(cv, classNode.className.replaceFirst("^L", "").replaceAll(";$", ""),
+                        clzCtx.hexDecodeMethodNamePrefix);
             }
         }
         cv.visitEnd();
     }
-    private void addHexDecodeMethod(ClassVisitor outCV, String hexDecodeMethodNameBase) {
-        // the .data is a class file compiled from res.Hex
-        try (InputStream is = Dex2Asm.class.getResourceAsStream("/d2j_hex_decode_stub.data")) {
+
+    private static final Set<String> HEX_DECODE_METHODS =
+            new HashSet<>(Arrays.asList("decode_J", "decode_I", "decode_S", "decode_B"));
+
+    private void addHexDecodeMethod(ClassVisitor outCV, String className, String hexDecodeMethodNameBase) {
+        try (InputStream is = Dex2Asm.class.getResourceAsStream("/res/Hex.class")) {
             ClassReader cr = new ClassReader(is);
-            cr.accept(new ClassVisitor(Opcodes.ASM5) {
+            cr.accept(new ClassVisitor(Opcodes.ASM9) {
                 @Override
-                public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-                    if (name.startsWith("decode")) {
-                        return outCV.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-                                hexDecodeMethodNameBase + "$" + name,
-                                desc, signature, exceptions
-                        );
+                public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+                                                 String[] exceptions) {
+                    if (HEX_DECODE_METHODS.contains(name)) {
+                        return new MethodVisitor(Opcodes.ASM9,
+                                outCV.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                                        hexDecodeMethodNameBase + "$" + name,
+                                        desc, signature, exceptions
+                                )) {
+                            @Override
+                            public void visitMethodInsn(int opcode, String owner, String name, String descriptor,
+                                                        boolean isInterface) {
+                                super.visitMethodInsn(opcode, owner.equals("res/Hex") ? className : owner, name,
+                                        descriptor, isInterface);
+                            }
+                        };
                     } else {
                         return super.visitMethod(access, name, desc, signature, exceptions);
                     }
                 }
             }, ClassReader.EXPAND_FRAMES);
-        } catch (IOException e) {
-            throw new RuntimeException("fail to add hex.decode", e);
+        } catch (Throwable t) {
+            throw new RuntimeException("Failed to add Hex.decode_*", t);
         }
     }
     public void convertCode(DexMethodNode methodNode, MethodVisitor mv, ClzCtx clzCtx) {
