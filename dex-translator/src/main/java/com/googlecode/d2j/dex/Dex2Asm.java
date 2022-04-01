@@ -556,12 +556,14 @@ public class Dex2Asm {
         cv.visitEnd();
     }
 
+    private static final String HEX_CLASS_LOCATION = "res/Hex";
+
     private static final Set<String> HEX_DECODE_METHODS =
             new HashSet<>(Arrays.asList("decode_J", "decode_I", "decode_S", "decode_B"));
 
     private void addHexDecodeMethod(ClassVisitor outCV, String className, String hexDecodeMethodNameBase) {
-        // the .data is a class-file compiled from res.Hex
-        try (InputStream is = Dex2Asm.class.getResourceAsStream("/res/Hex.class")) {
+        System.err.println(className);
+        try (InputStream is = Dex2Asm.class.getResourceAsStream("/" + HEX_CLASS_LOCATION + ".class")) {
             ClassReader cr = new ClassReader(is);
             cr.accept(new ClassVisitor(Constants.ASM_VERSION) {
                 @Override
@@ -570,14 +572,16 @@ public class Dex2Asm {
                     if (HEX_DECODE_METHODS.contains(name)) {
                         return new MethodVisitor(Constants.ASM_VERSION,
                                 outCV.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-                                        hexDecodeMethodNameBase + "$" + name,
-                                        desc, signature, exceptions
-                                )) {
+                                        hexDecodeMethodNameBase + "$" + name, desc, signature, exceptions)) {
                             @Override
                             public void visitMethodInsn(int opcode, String owner, String name, String descriptor,
                                                         boolean isInterface) {
-                                super.visitMethodInsn(opcode, owner.equals("res/Hex") ? className : owner, name,
-                                        descriptor, isInterface);
+                                if (owner.equals(HEX_CLASS_LOCATION)) {
+                                    super.visitMethodInsn(opcode, className, hexDecodeMethodNameBase + "$" + name,
+                                            descriptor, isInterface);
+                                } else {
+                                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+                                }
                             }
                         };
                     } else {
@@ -586,7 +590,7 @@ public class Dex2Asm {
                 }
             }, ClassReader.EXPAND_FRAMES);
         } catch (Throwable t) {
-            throw new RuntimeException("Failed to add Hex.decode_*", t);
+            throw new RuntimeException("Failed to add " + HEX_CLASS_LOCATION + ".decode_*", t);
         }
     }
 
