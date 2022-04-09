@@ -9,10 +9,10 @@ dependencies {
     api project(':dex-reader')
     api project(':dex-ir')
     api project(':d2j-base-cmd')
-    api group: 'org.ow2.asm', name: 'asm', version: '9.2'
-    api group: 'org.ow2.asm', name: 'asm-tree', version: '9.2'
-    api group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
-    api group: 'org.ow2.asm', name: 'asm-commons', version: '9.2'
+    api group: 'org.ow2.asm', name: 'asm', version: '9.3'
+    api group: 'org.ow2.asm', name: 'asm-tree', version: '9.3'
+    api group: 'org.ow2.asm', name: 'asm-util', version: '9.3'
+    api group: 'org.ow2.asm', name: 'asm-commons', version: '9.3'
     api fileTree(dir: '../libs', include: '*.jar')
     testImplementation project(':d2j-smali')
     testImplementation project(':d2j-jasmin')
