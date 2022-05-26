@@ -50,15 +50,15 @@ public class Hex {
             }
             int ll = 0;
             if (l >= '0' && l <= '9') {
-                ll = h - '0';
+                ll = l - '0';
             } else if (l >= 'a' && l <= 'f') {
-                ll = h - 'a' + 10;
+                ll = l - 'a' + 10;
             } else if (l >= 'A' && l <= 'F') {
-                ll = h - 'A' + 10;
+                ll = l - 'A' + 10;
             } else {
                 throw new RuntimeException();
             }
-            d[i] = (char) ((hh << 4) | ll);
+            ret[i] = (byte) ((hh << 4) | ll);
         }
         return ret;
     }
