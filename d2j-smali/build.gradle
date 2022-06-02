@@ -1,12 +1,12 @@
 apply plugin: 'antlr'
 
 dependencies {
-  compile 'org.antlr:antlr4-runtime:4.5'
-  compile project(':dex-reader')
+  api 'org.antlr:antlr4-runtime:4.5'
+  api project(':dex-reader')
   antlr 'org.antlr:antlr4:4.5'
-  compile project(':d2j-base-cmd')
-  compile project(':dex-writer')
-  testCompile 'org.smali:baksmali:2.0.6'
+  api project(':d2j-base-cmd')
+  api project(':dex-writer')
+  testImplementation 'org.smali:baksmali:2.0.6'
 }
 
 generateGrammarSource {

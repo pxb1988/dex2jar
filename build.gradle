@@ -1,5 +1,5 @@
 allprojects  {
-  apply plugin: 'maven'
+  apply plugin: 'maven-publish'
   apply plugin: 'idea'
   apply plugin: 'eclipse'
   group = 'com.googlecode.d2j'
@@ -9,8 +9,8 @@ allprojects  {
 defaultTasks('clean','distZip')
 
 subprojects {
-  apply plugin: 'java'
-  apply plugin: 'maven'
+  apply plugin: 'java-library'
+  apply plugin: 'maven-publish'
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
 
@@ -38,8 +38,8 @@ subprojects {
   [compileJava, compileTestJava]*.options.collect {options ->options.encoding = 'UTF-8'}
 
   dependencies {
-    testCompile group: 'junit', name: 'junit', version:'4.11'
-    compile fileTree(dir: 'libs', include: '*.jar')
+    testImplementation group: 'junit', name: 'junit', version:'4.11'
+    api fileTree(dir: 'libs', include: '*.jar')
   }
 
   jar {

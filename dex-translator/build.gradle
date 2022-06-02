@@ -1,11 +1,11 @@
 description = 'Dex Translator'
 
 dependencies {
-  compile project(':dex-reader')
-  compile project(':dex-ir')
-  compile project(':d2j-base-cmd')
-  compile 'org.ow2.asm:asm-debug-all:5.0.3'
-  testCompile project(':d2j-smali')
-  testCompile project(':d2j-jasmin')
+  api project(':dex-reader')
+  api project(':dex-ir')
+  api project(':d2j-base-cmd')
+  api 'org.ow2.asm:asm-debug-all:5.0.3'
+  testImplementation project(':d2j-smali')
+  testImplementation project(':d2j-jasmin')
 }
 

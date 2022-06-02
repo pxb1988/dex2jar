@@ -1,11 +1,12 @@
 apply plugin: 'antlr'
 
 dependencies {
-  compile(group: 'org.antlr', name: 'antlr-runtime', version:'3.5.2') {
+  api(group: 'org.antlr', name: 'antlr-runtime', version:'3.5.2') {
         exclude(module: 'stringtemplate')
   }
-  compile "org.ow2.asm:asm-debug-all:5.0.3"
-  compile project(':d2j-base-cmd')
+  api "org.ow2.asm:asm-debug-all:5.0.3"
+  api project(':d2j-base-cmd')
+  api "org.antlr:antlr:3.5.2"
   antlr "org.antlr:antlr:3.5.2"
 }
 
