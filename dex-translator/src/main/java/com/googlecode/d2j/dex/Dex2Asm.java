@@ -529,8 +529,17 @@ public class Dex2Asm {
     private static final Set<String> HEX_DECODE_METHODS =
             new HashSet<>(Arrays.asList("decode_J", "decode_I", "decode_S", "decode_B"));
 
+    protected InputStream getHexClassAsStream() {
+        return Dex2Asm.class.getResourceAsStream("/" + HEX_CLASS_LOCATION + ".class");
+    }
+
     private void addHexDecodeMethod(ClassVisitor outCV, String className, String hexDecodeMethodNameBase) {
-        try (InputStream is = Dex2Asm.class.getResourceAsStream("/" + HEX_CLASS_LOCATION + ".class")) {
+        InputStream hexClassStream = getHexClassAsStream();
+        if (hexClassStream == null) {
+            return;
+        }
+
+        try (InputStream is = hexClassStream) {
             ClassReader cr = new ClassReader(is);
             cr.accept(new ClassVisitor(Opcodes.ASM9) {
                 @Override
