@@ -19,7 +19,7 @@ jobs:
       uses: actions/setup-java@v2
       with:
         java-version: '8'
-        distribution: 'adopt'
+        distribution: 'temurin'
         cache: gradle
     - name: Build dex-tools with Gradle
       run: ./gradlew check distZip
