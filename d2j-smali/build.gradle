@@ -1,7 +1,7 @@
 apply plugin: 'antlr'
 
 dependencies {
-    implementation 'org.antlr:antlr4-runtime:4.9.3'
+    implementation 'org.antlr:antlr4-runtime:4.9.3' // Newer versions only for Java 11+
     implementation project(':dex-reader')
     implementation project(':dex-reader-api')
     antlr 'org.antlr:antlr4:4.9.3'
