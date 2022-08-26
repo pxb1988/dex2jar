@@ -20,8 +20,8 @@ subprojects {
 
     dependencies {
         implementation fileTree(dir: 'libs', include: '*.jar')
-        testImplementation group: 'org.junit.vintage', name: 'junit-vintage-engine', version: '5.8.2'
-        testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.8.2'
+        testImplementation group: 'org.junit.vintage', name: 'junit-vintage-engine', version: '5.9.0'
+        testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.9.0'
     }
 
     [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
