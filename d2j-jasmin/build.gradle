@@ -5,17 +5,17 @@ dependencies {
         exclude(module: 'stringtemplate')
     }
     implementation fileTree(dir: '../libs', include: '*.jar')
-    // implementation group: 'org.ow2.asm', name: 'asm', version: '9.3' // Fixed MethodCodeTooLargeException
-    implementation(group: 'org.ow2.asm', name: 'asm-analysis', version: '9.3') {
+    // implementation group: 'org.ow2.asm', name: 'asm', version: '9.4' // Fixed MethodCodeTooLargeException
+    implementation(group: 'org.ow2.asm', name: 'asm-analysis', version: '9.4') {
         exclude(module: 'asm')
     }
-    implementation(group: 'org.ow2.asm', name: 'asm-commons', version: '9.3') {
+    implementation(group: 'org.ow2.asm', name: 'asm-commons', version: '9.4') {
         exclude(module: 'asm')
     }
-    implementation(group: 'org.ow2.asm', name: 'asm-tree', version: '9.3') {
+    implementation(group: 'org.ow2.asm', name: 'asm-tree', version: '9.4') {
         exclude(module: 'asm')
     }
-    implementation(group: 'org.ow2.asm', name: 'asm-util', version: '9.3') {
+    implementation(group: 'org.ow2.asm', name: 'asm-util', version: '9.4') {
         exclude(module: 'asm')
     }
     implementation project(':d2j-base-cmd')
