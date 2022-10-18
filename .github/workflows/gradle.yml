@@ -14,23 +14,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up JDK 1.8
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         java-version: '8'
         distribution: 'temurin'
-        cache: gradle
+        cache: 'gradle'
     - name: Build dex-tools with Gradle
       run: ./gradlew check distZip
 
-    - uses: softprops/action-gh-release@v1
+    - uses: ncipollo/release-action@v1
       with:
-        tag_name: v${{ github.run_number }}
-        files: dex-tools/build/distributions/dex-tools-2.1-SNAPSHOT.zip
+        tag: v${{ github.run_number }}
+        artifacts: dex-tools/build/distributions/dex-tools-2.1-SNAPSHOT.zip
 
     - name: Archive dex tools
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success()
       with:
         name: dex-tools-2.1-SNAPSHOT
