@@ -1135,11 +1135,7 @@ public class Dex2IRConverter {
                             vs[i] = getLocal(values.get(i));
                         }
                         MethodCustomStmtNode n = (MethodCustomStmtNode) insn;
-                        Value invoke = nInvokeCustom(vs,
-                                n.callSite.getMethodName(),
-                                n.callSite.getMethodProto(),
-                                n.callSite.getBootstrapMethodHandler(),
-                                n.callSite.getExtraArguments());
+                        Value invoke = nInvokeCustom(vs, n.callSite);
                         if ("V".equals(n.getProto().getReturnType())) {
                             emit(nVoidInvoke(invoke));
                             return null;
