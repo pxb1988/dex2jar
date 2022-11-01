@@ -1,6 +1,7 @@
 package com.googlecode.d2j;
 
 import java.util.Objects;
+import org.objectweb.asm.Opcodes;
 
 public class MethodHandle {
 
@@ -82,6 +83,35 @@ public class MethodHandle {
 
     public Method getMethod() {
         return method;
+    }
+
+    public static int getTypeFromAsmOpcode(int opcode) {
+        switch (opcode) {
+        case Opcodes.H_GETFIELD:
+            return INSTANCE_GET;
+        case Opcodes.H_GETSTATIC:
+            return STATIC_GET;
+        case Opcodes.H_PUTFIELD:
+            return INSTANCE_PUT;
+        case Opcodes.H_PUTSTATIC:
+            return STATIC_PUT;
+
+        case Opcodes.H_INVOKEVIRTUAL:
+            return INVOKE_INSTANCE; // ?
+
+        case Opcodes.H_INVOKESTATIC:
+            return INVOKE_STATIC;
+
+        case Opcodes.H_INVOKESPECIAL:
+            return INVOKE_DIRECT; // ?
+
+        case Opcodes.H_NEWINVOKESPECIAL:
+            return INVOKE_CONSTRUCTOR;
+        case Opcodes.H_INVOKEINTERFACE:
+            return INVOKE_INTERFACE;
+        default:
+            throw new RuntimeException("Not supported yet.");
+        }
     }
 
 }

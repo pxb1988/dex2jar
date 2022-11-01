@@ -2,10 +2,15 @@ package com.googlecode.d2j.converter;
 
 // CHECKSTYLE:OFF
 
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.InvokeCustomExpr;
 import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
@@ -31,12 +36,14 @@ import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.TypeInsnNode;
@@ -561,7 +568,7 @@ public final class J2IRConverter {
                     case T_DOUBLE:
                         return b(1, Exprs.nNewArray("D", local));
                     case T_LONG:
-                        return b(1, Exprs.nNewArray("D", local));
+                        return b(1, Exprs.nNewArray("J", local));
                     default:
                         throw new AnalyzerException(insn, "Invalid array type");
                     }
@@ -802,14 +809,34 @@ public final class J2IRConverter {
 
             @Override
             public JvmValue naryOperation(AbstractInsnNode insn, List<? extends JvmValue> xvalues) {
-
                 com.googlecode.dex2jar.ir.expr.Value[] values =
                         new com.googlecode.dex2jar.ir.expr.Value[xvalues.size()];
                 for (int i = 0; i < xvalues.size(); i++) {
                     values[i] = getLocal(xvalues.get(i));
                 }
                 if (insn.getOpcode() == MULTIANEWARRAY) {
-                    throw new UnsupportedOperationException("Not supported yet.");
+                    MultiANewArrayInsnNode multi = (MultiANewArrayInsnNode) insn;
+                    NewMutiArrayExpr n = Exprs.nNewMutiArray(multi.desc.replaceAll("\\[+", ""), multi.dims, values);
+                    return b(Type.getType(multi.desc).getSize(), n);
+                } else if (insn.getOpcode() == INVOKEDYNAMIC) {
+                    InvokeDynamicInsnNode mi = (InvokeDynamicInsnNode) insn;
+                    Handle bsm = mi.bsm;
+                    Type[] a = Type.getArgumentTypes(bsm.getDesc());
+                    String[] params = new String[a.length];
+                    for (int i = 0; i < a.length; i += 1) {
+                        params[i] = a[i].getDescriptor();
+                    }
+                    Method method = new Method("L" + bsm.getOwner() + ";", bsm.getName(), params,
+                            Type.getReturnType(bsm.getDesc()).getDescriptor());
+                    MethodHandle mh = new MethodHandle(MethodHandle.getTypeFromAsmOpcode(bsm.getTag()), method);
+                    Type[] t = Type.getArgumentTypes(mi.desc);
+                    String[] paramDesc = new String[t.length];
+                    for (int i = 0; i < t.length; i += 1) {
+                        paramDesc[i] = t[i].getDescriptor();
+                    }
+                    InvokeCustomExpr d = Exprs.nInvokeCustom(values, mi.name, new Proto(paramDesc,
+                            Type.getReturnType(mi.desc).getDescriptor()), mh, mi.bsmArgs);
+                    return b(Type.getReturnType(mi.desc).getSize(), d);
                 } else {
                     MethodInsnNode mi = (MethodInsnNode) insn;
                     com.googlecode.dex2jar.ir.expr.Value v = null;
@@ -829,8 +856,6 @@ public final class J2IRConverter {
                     case INVOKEINTERFACE:
                         v = Exprs.nInvokeInterface(values, owner, mi.name, ps, ret);
                         break;
-                    case INVOKEDYNAMIC:
-                        throw new UnsupportedOperationException("Not supported yet.");
                     default:
                         break;
                     }

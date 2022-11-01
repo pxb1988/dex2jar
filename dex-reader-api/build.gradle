@@ -1,1 +1,6 @@
 description = 'Dex Reader API'
+
+dependencies {
+    implementation fileTree(dir: '../libs', include: '*.jar')
+    // implementation group: 'org.ow2.asm', name: 'asm', version: '9.4' // Fixed MethodCodeTooLargeException
+}
