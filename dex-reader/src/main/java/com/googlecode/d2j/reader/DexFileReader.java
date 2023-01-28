@@ -239,7 +239,7 @@ public class DexFileReader implements BaseDexFileReader {
         }
         int version = in.getInt() >> 8;
         if (version < DEX_035) {
-            System.err.println("Unknown DEX version.");
+            System.err.println("Unknown DEX version. Trying anyway...");
             //throw new DexException("not support version.");
         }
         this.dexVersion = version;
