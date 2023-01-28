@@ -164,8 +164,8 @@ public class DexFileReader implements BaseDexFileReader {
             throw new DexException("not support magic.");
         }
         int version = in.getInt() >> 8;
-        if (version < 0 || version < DEX_035) {
-            throw new DexException("not support version.");
+        if (version < DEX_035 || version > DEX_040) {
+            System.err.println("Unknown DEX version. Trying anyway...");
         }
         this.dex_version = version;
         in.order(ByteOrder.LITTLE_ENDIAN);
