@@ -20,11 +20,18 @@ import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
 public final class Dex2jar {
+
+    /**
+     * For rather deterministic output, we use a fixed seed for random number generator.
+     * This field is freely writable by any thread. Use carefully.
+     */
+    public static Random random = new Random(0);
 
     private DexExceptionHandler exceptionHandler;
 
@@ -277,6 +284,15 @@ public final class Dex2jar {
             this.readerConfig &= ~DexFileReader.SKIP_EXCEPTION;
         }
         return this;
+    }
+
+    public Dex2jar setRandom(Random random) {
+        Dex2jar.random = random;
+        return this;
+    }
+
+    public Dex2jar resetRandom() {
+        return setRandom(new Random(0));
     }
 
     public static Dex2jar from(byte[] in) throws IOException {

@@ -41,7 +41,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 import org.objectweb.asm.AnnotationVisitor;
@@ -67,7 +66,7 @@ public class Dex2Asm {
         public String buildHexDecodeMethodName(String x) {
             if (hexDecodeMethodNamePrefix == null) {
                 byte[] d = new byte[4];
-                new Random().nextBytes(d);
+                Dex2jar.random.nextBytes(d);
                 hexDecodeMethodNamePrefix = "$d2j$hex$" + IR2JConverter.hexEncode(d);
             }
             return hexDecodeMethodNamePrefix + "$decode_" + x;
