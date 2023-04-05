@@ -25,7 +25,7 @@ Tools to work with android .dex and java .class files
 1. In the root directory run: ./gradlew distZip
 2. cd dex-tools/build/distributions
 3. Unzip the file dex-tools-2.1-SNAPSHOT.zip (file size should be ~5 MB)
-4. Run d2j-dex2jar.sh from the unzipped directory
+4. Run d2j-dex2jar.sh from the unzipped directorytest
 
 ### Example usage:
 > sh d2j-dex2jar.sh -f ~/path/to/apk_to_decompile.apk
