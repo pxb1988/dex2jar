@@ -12,7 +12,7 @@ This is [Nico Mexis'](https://github.com/ThexXTURBOXx) fork of the dex2jar proje
 * Fixed `TypeTransformer` related issues
 * Fixed many `NullPointerException`s and other crashes
 * Fixed grammar of error messages
-* Update libraries (especially ASM to `9.2`)
+* Update libraries (especially ASM)
 * Library fat-jar can be used for other projects (Automatically produced
   by [GitHub Actions](https://github.com/ThexXTURBOXx/dex2jar/actions))
 * Smali now outputs `.param` instead of the outdated `.parameter` syntax
@@ -54,6 +54,10 @@ sh d2j-dex2jar.sh -f ~/path/to/apk_to_decompile.apk
 ```
 
 And the output file will be `apk_to_decompile-dex2jar.jar`.
+
+### Example Maven project:
+
+See for example the infamous [Bytecode Viewer](https://github.com/Konloch/bytecode-viewer).
 
 ## Need help ?
 
