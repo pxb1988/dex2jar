@@ -3,9 +3,9 @@ package com.googlecode.dex2jar.ir.test;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
@@ -24,8 +24,8 @@ public class RemoveLocalFromSSATest extends BaseTransformerTest<RemoveLocalFromS
         addStmt(nAssign(c, b));
         Stmt sb = addStmt(nReturn(c));
         transform();
-        Assert.assertEquals(sa.getOp1(), sb.getOp());
-        Assert.assertEquals("1 local should left", 1, locals.size());
+        assertEquals(sa.getOp1(), sb.getOp());
+        assertEquals(1, locals.size(), "1 local should left");
     }
 
 }

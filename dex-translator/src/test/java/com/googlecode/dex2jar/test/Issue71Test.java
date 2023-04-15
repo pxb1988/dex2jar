@@ -5,8 +5,8 @@ import com.googlecode.d2j.Method;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.googlecode.d2j.reader.Op.ADD_LONG;
 import static com.googlecode.d2j.reader.Op.CONST_WIDE;
@@ -15,7 +15,7 @@ import static com.googlecode.d2j.reader.Op.RETURN_VOID;
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  */
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class Issue71Test implements DexConstants {
 
     @Test
@@ -33,6 +33,7 @@ public class Issue71Test implements DexConstants {
             }
             mv.visitEnd();
         }
+        cv.visitEnd();
     }
 
 }

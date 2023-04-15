@@ -6,8 +6,8 @@ import com.googlecode.d2j.Method;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.googlecode.d2j.reader.Op.CONST_STRING;
 import static com.googlecode.d2j.reader.Op.GOTO;
@@ -24,7 +24,7 @@ import static com.googlecode.d2j.reader.Op.MOVE_RESULT_OBJECT;
 import static com.googlecode.d2j.reader.Op.NEW_INSTANCE;
 import static com.googlecode.d2j.reader.Op.RETURN_OBJECT;
 
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class EmptyTrapTest {
 
     @Test
@@ -132,6 +132,7 @@ public class EmptyTrapTest {
             }
             mv.visitEnd();
         }
+        cv.visitEnd();
     }
 
 }

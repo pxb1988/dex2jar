@@ -9,12 +9,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import org.antlr.runtime.RecognitionException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class WaveTest {
 
@@ -78,7 +79,7 @@ public class WaveTest {
     private void assertEqual(ClassNode expected, ClassNode actual) {
         String stdExpect = toStd(expected);
         String stdActual = toStd(actual);
-        Assert.assertEquals(stdExpect, stdActual);
+        assertEquals(stdExpect, stdActual);
     }
 
     public static String toStd(ClassNode expected) {

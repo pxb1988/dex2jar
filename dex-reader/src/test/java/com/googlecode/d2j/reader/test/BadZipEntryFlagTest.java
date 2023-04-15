@@ -5,7 +5,7 @@ import com.googlecode.d2j.util.zip.ZipFile;
 import java.io.IOException;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test case for issue 169

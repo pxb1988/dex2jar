@@ -7,9 +7,9 @@ import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.TypeTransformer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nConstant;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nEq;
@@ -41,7 +41,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nReturn(b));
 
         transform();
-        Assert.assertEquals("", "L", b.valueType.substring(0, 1));
+        assertEquals("L", b.valueType.substring(0, 1));
     }
 
     @Test
@@ -52,7 +52,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         AssignStmt st1 = addStmt(nAssign(b, nInt(0)));
         UnopStmt st3 = addStmt(nReturn(b));
         transform();
-        Assert.assertEquals("", b.valueType, "F");
+        assertEquals(b.valueType, "F");
     }
 
     @Test
@@ -66,7 +66,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nReturnVoid());
         transform();
         // FIXME fix type detect
-        // Assert.assertEquals("", "I", b.valueType);
+        // assertEquals("I", b.valueType);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nReturnVoid());
         transform();
         // FIXME fix type detect
-        // Assert.assertEquals("", "I", b.valueType);
+        // assertEquals("I", b.valueType);
     }
 
     // @Ignore("type b to Int is ok to this context")
@@ -95,7 +95,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(L0);
         addStmt(nReturnVoid());
         transform();
-        Assert.assertEquals("", "I", b.valueType);
+        assertEquals("I", b.valueType);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nReturnVoid());
         transform();
         // FIXME local should type to Z but I works as well
-        // Assert.assertEquals("", "Z", b.valueType);
+        // assertEquals("Z", b.valueType);
     }
 
     @Test
@@ -124,7 +124,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nAssign(c, nArray(b, nInt(3), TypeClass.IF.name)));
         addStmt(nReturnVoid());
         transform();
-        Assert.assertEquals("", b.valueType, "[F");
+        assertEquals(b.valueType, "[F");
     }
 
     @Test
@@ -138,7 +138,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
 
         addStmt(nReturnVoid());
         transform();
-        Assert.assertEquals("I", c.valueType);
+        assertEquals("I", c.valueType);
     }
 
 
@@ -151,7 +151,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nAssign(nArray(nArray(b, nInt(5), TypeClass.OBJECT.name), nInt(1), TypeClass.JD.name), nLong(0)));
         addStmt(nReturnVoid());
         transform();
-        Assert.assertEquals("", b.valueType, "[[D");
+        assertEquals(b.valueType, "[[D");
     }
 
     @Test
@@ -164,7 +164,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nReturnVoid());
         transform();
         // this case is ok to fail as the NPE transformer cover this
-        // Assert.assertEquals("", "[[D", b.valueType);
+        // assertEquals("[[D", b.valueType);
     }
 
 }

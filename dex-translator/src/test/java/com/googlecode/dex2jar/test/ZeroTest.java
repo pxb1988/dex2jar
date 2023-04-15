@@ -3,11 +3,12 @@ package com.googlecode.dex2jar.test;
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.googlecode.d2j.reader.Op.CONST;
 import static com.googlecode.d2j.reader.Op.GOTO;
@@ -17,11 +18,11 @@ import static com.googlecode.d2j.reader.Op.MOVE_RESULT;
 import static com.googlecode.d2j.reader.Op.MOVE_RESULT_OBJECT;
 import static com.googlecode.d2j.reader.Op.RETURN_OBJECT;
 
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class ZeroTest implements DexConstants {
 
     @Test
-    public static void testZero(DexClassVisitor cv) {
+    public void testZero(DexClassNode cv) {
         DexMethodVisitor mv = cv
                 .visitMethod(ACC_STATIC, new Method("La;", "b", new String[]{}, "[Ljava/lang/Object;"));
         if (mv != null) {
@@ -51,6 +52,6 @@ public class ZeroTest implements DexConstants {
             }
             mv.visitEnd();
         }
+        cv.visitEnd();
     }
-
 }

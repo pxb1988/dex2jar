@@ -3,8 +3,9 @@ package com.googlecode.dex2jar.ir.test;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.DeadCodeTransformer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DeadCodeTransformerTest extends BaseTransformerTest<DeadCodeTransformer> {
 
@@ -14,8 +15,8 @@ public class DeadCodeTransformerTest extends BaseTransformerTest<DeadCodeTransfo
         Stmt lb = addStmt(newLabel());
         addStmt(Stmts.nReturnVoid());
         transform();
-        Assert.assertSame(ret, method.stmts.getFirst());
-        Assert.assertSame(ret, method.stmts.getLast());
+        assertSame(ret, method.stmts.getFirst());
+        assertSame(ret, method.stmts.getLast());
     }
 
 }

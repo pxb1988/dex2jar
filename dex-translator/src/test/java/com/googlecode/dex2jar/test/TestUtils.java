@@ -42,8 +42,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.junit.Assert;
-import org.junit.Ignore;
+
+import org.junit.jupiter.api.Disabled;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -60,10 +60,12 @@ import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  */
-@Ignore
+@Disabled
 public abstract class TestUtils {
 
     public static void breakPoint() {
@@ -80,7 +82,7 @@ public abstract class TestUtils {
                 try (InputStream is = zipFile.getInputStream(entry)) {
                     verify(new ClassReader(ZipUtil.toByteArray(is)));
                 }
-                Assert.assertEquals(sw.toString(), 0, sw.toString().length());
+                assertEquals(0, sw.toString().length(), sw.toString());
             }
         }
     }
@@ -138,10 +140,10 @@ public abstract class TestUtils {
 
         Class<?> testClass = TestUtils.class;
         URL url = testClass.getResource("/dexes/i_jetty.dex");
-        Assert.assertNotNull(url);
+        assertNotNull(url);
 
         final String fileStr = url.getFile();
-        Assert.assertNotNull(fileStr);
+        assertNotNull(fileStr);
 
         return listPath(new File(fileStr).getParentFile(), ".apk", ".dex", ".zip");
     }

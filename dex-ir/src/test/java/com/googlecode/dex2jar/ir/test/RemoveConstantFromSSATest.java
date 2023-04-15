@@ -6,9 +6,9 @@ import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNewIntArray;
@@ -44,8 +44,8 @@ public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstan
         addStmt(nReturn(cphi));
 
         transform();
-        Assert.assertFalse("SA should remove from method", method.stmts.contains(sa));
-        Assert.assertFalse("SB should remove from method", method.stmts.contains(sb));
+        assertFalse(method.stmts.contains(sa), "SA should remove from method");
+        assertFalse(method.stmts.contains(sb), "SB should remove from method");
     }
 
     @Test
@@ -55,7 +55,7 @@ public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstan
         addStmt(nReturn(a));
 
         transform();
-        Assert.assertEquals("no local should kept", 0, locals.size());
+        assertEquals(0, locals.size(), "no local should kept");
     }
 
     @Test
@@ -70,8 +70,8 @@ public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstan
         addStmt(nAssign(c, nArray(a, b, "I")));
         addStmt(nReturn(c));
         transform();
-        Assert.assertFalse("local b should removed", locals.contains(b));
-        Assert.assertEquals(2, locals.size());
+        assertFalse(locals.contains(b), "local b should removed");
+        assertEquals(2, locals.size());
     }
 
     @Test
@@ -93,7 +93,7 @@ public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstan
         addStmt(nReturn(ax));
 
         transform();
-        Assert.assertEquals("all local should kept", 3, locals.size());
+        assertEquals(3, locals.size(), "all local should kept");
     }
 
     @Test
@@ -115,7 +115,7 @@ public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstan
         Stmt ret = addStmt(nReturn(ax));
 
         transform();
-        Assert.assertSame("should return '123'", ret.getOp().vt, Value.VT.CONSTANT);
+        assertSame(ret.getOp().vt, Value.VT.CONSTANT, "should return '123'");
     }
 
 }

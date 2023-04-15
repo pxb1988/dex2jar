@@ -7,9 +7,9 @@ import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.ConstTransformer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
@@ -28,9 +28,9 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertEquals(1, jm.locals.size());
-        Assert.assertEquals(2, jm.stmts.getSize());
-        Assert.assertEquals("a String", ((Constant) retStmt.op.trim()).value);
+        assertEquals(1, jm.locals.size());
+        assertEquals(2, jm.stmts.getSize());
+        assertEquals("a String", ((Constant) retStmt.op.trim()).value);
     }
 
     @Test
@@ -47,9 +47,9 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertEquals(2, jm.locals.size());
-        Assert.assertEquals(3, jm.stmts.getSize());
-        Assert.assertEquals("a String", ((Constant) retStmt.op.trim()).value);
+        assertEquals(2, jm.locals.size());
+        assertEquals(3, jm.stmts.getSize());
+        assertEquals("a String", ((Constant) retStmt.op.trim()).value);
     }
 
     @Test
@@ -69,9 +69,9 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertEquals(3, jm.locals.size());
-        Assert.assertEquals(4, jm.stmts.getSize());
-        Assert.assertEquals("a String", ((Constant) retStmt.op.trim()).value);
+        assertEquals(3, jm.locals.size());
+        assertEquals(4, jm.stmts.getSize());
+        assertEquals("a String", ((Constant) retStmt.op.trim()).value);
     }
 
     @Test
@@ -91,9 +91,9 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertEquals(3, jm.locals.size());
-        Assert.assertEquals(4, jm.stmts.getSize());
-        Assert.assertEquals(p, retStmt.op.trim());
+        assertEquals(3, jm.locals.size());
+        assertEquals(4, jm.stmts.getSize());
+        assertEquals(p, retStmt.op.trim());
     }
 
     @Test
@@ -113,9 +113,9 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertEquals(3, jm.locals.size());
-        Assert.assertEquals(4, jm.stmts.getSize());
-        Assert.assertEquals(VT.CONSTANT, retStmt.op.vt);
+        assertEquals(3, jm.locals.size());
+        assertEquals(4, jm.stmts.getSize());
+        assertEquals(VT.CONSTANT, retStmt.op.vt);
     }
 
 }

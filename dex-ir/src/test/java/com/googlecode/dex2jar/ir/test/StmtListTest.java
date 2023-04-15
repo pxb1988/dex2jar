@@ -4,7 +4,7 @@ import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCast;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nGt;

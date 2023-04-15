@@ -8,13 +8,13 @@ import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * test case for issue 63
  */
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class I63Test implements DexConstants {
 
     @Test
@@ -35,6 +35,7 @@ public class I63Test implements DexConstants {
             }
             mv.visitEnd();
         }
+        cv.visitEnd();
     }
 
 }

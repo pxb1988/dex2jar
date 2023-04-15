@@ -5,8 +5,8 @@ import com.googlecode.d2j.Method;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.googlecode.d2j.DexConstants.ACC_PUBLIC;
 import static com.googlecode.d2j.DexConstants.ACC_STATIC;
@@ -21,7 +21,7 @@ import static com.googlecode.d2j.reader.Op.NEW_INSTANCE;
 import static com.googlecode.d2j.reader.Op.RETURN_OBJECT;
 import static com.googlecode.d2j.reader.Op.THROW;
 
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class I121Test {
 
     @Test
@@ -67,6 +67,7 @@ public class I121Test {
         code.visitStmt1R(THROW, v1);
         code.visitEnd();
         mv.visitEnd();
+        cv.visitEnd();
     }
 
 }

@@ -18,33 +18,24 @@ package com.googlecode.dex2jar.test;
 import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.smali.Smali;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.runner.Description;
-import org.junit.runner.RunWith;
-import org.junit.runner.Runner;
-import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.ParentRunner;
-import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.Statement;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * auto create test case from d2j-error-zips/*-error.zip,
@@ -52,194 +43,145 @@ import org.junit.runners.model.Statement;
  *
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  */
-@RunWith(D2jErrorZipsTest.TestRunner.class)
 public class D2jErrorZipsTest {
+	private static FileSystemProvider zipFSP;
 
-    private static String parseSmaliContentFromSummary(Path zipEntry) throws IOException {
-        List<String> lines = Files.readAllLines(zipEntry, StandardCharsets.UTF_8);
-        StringBuilder sb = new StringBuilder();
-        boolean hasMethod = false;
-        boolean inMethodContent = false;
-        for (String ln : lines) {
-            if (!inMethodContent) {
-                if (ln.startsWith(".method")) {
-                    // append here to keep the line number
-                    sb.append(".class LTT;.super Ljava/lang/Object;");
-                    sb.append(ln);
-                    inMethodContent = true;
-                    hasMethod = true;
-                }
-            } else {
-                sb.append(ln);
-                if (ln.startsWith(".end method")) {
-                    inMethodContent = false;
-                }
-            }
-            sb.append("\n");
-        }
-        if (!hasMethod) {
-            return null;
-        }
-        return sb.toString();
-    }
-
-    private static String parseSmaliContent(Path m) throws IOException {
-        List<String> lines = Files.readAllLines(m, StandardCharsets.UTF_8);
-        StringBuilder sb = new StringBuilder();
-
-        boolean found = false;
-        for (String ln : lines) {
-            if (!found) {
-                if (ln.startsWith(".method")) {
-                    // append here to keep the line number
-                    sb.append(".class LTT;.super Ljava/lang/Object;");
-                    sb.append(ln).append("\n");
-                    found = true;
-                } else {
-                    sb.append("\n");
-                }
-            } else {
-                sb.append(ln).append("\n");
-            }
-        }
-
-        return sb.toString();
-    }
-
-    public static class TestRunner extends ParentRunner<Runner> {
-
-        List<Runner> runners;
-
-        public TestRunner(Class<?> klass) throws InitializationError {
-            super(klass);
-            init(klass);
-        }
-
-        public void init(final Class<?> testClass) throws InitializationError {
-            URL url = testClass.getResource("/smalis/writeString.smali");
-            System.out.println("url is " + url);
-            Assert.assertNotNull(url);
-
-            final String file = url.getFile();
-            Assert.assertNotNull(file);
-
-            final Path basePath = new File(file).toPath().getParent().getParent().resolve("d2j-error-zips");
-
-            final Set<Path> files = new TreeSet<>();
-            try {
-                Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        if (file.getFileName().toString().endsWith(".zip")) {
-                            files.add(file);
-                        }
-                        return super.visitFile(file, attrs);
-                    }
-                });
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            FileSystemProvider zipFSP = null;
-            for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
-                String scheme = provider.getScheme();
-                if (scheme.equals("zip") || scheme.equals("jar")) {
-                    zipFSP = provider;
-                    break;
-                }
-            }
-            Assert.assertNotNull(zipFSP);
-
-            List<Runner> runners = new ArrayList<>();
-            for (final Path p : files) {
-                Map<String, ?> env = new HashMap<>();
-                try (FileSystem fs = zipFSP.newFileSystem(p, env)) {
-                    List<Path> methods = Files.walk(fs.getPath("/"))
-                            .filter(Files::isReadable)
-                            .filter(Files::isRegularFile)
-                            .filter(px -> {
-                                String fn = px.getFileName().toString();
-                                return fn.startsWith("m-") && fn.endsWith(".txt") || fn.equals("summary.txt");
-                            })
-                            .collect(Collectors.toList());
-
-                    for (Path m : methods) {
-                        processEachEntry(testClass, runners, p.getFileName().toString(), m);
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            this.runners = runners;
-        }
-
-        private void processEachEntry(Class<?> testClass, List<Runner> runners, String zipFileName, Path zipEntry)
-                throws IOException, InitializationError {
-
-            String smaliContent;
-            if (zipEntry.getFileName().toString().equals("summary.txt")) {
-                smaliContent = parseSmaliContentFromSummary(zipEntry);
-            } else {
-                smaliContent = parseSmaliContent(zipEntry);
-            }
-            if (smaliContent == null) {
-                return;
-            }
+	@BeforeAll
+	static void setup() {
+		for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
+			String scheme = provider.getScheme();
+			if (scheme.equals("zip") || scheme.equals("jar")) {
+				zipFSP = provider;
+				break;
+			}
+		}
+		assertNotNull(zipFSP);
+	}
 
 
-            String finalSmaliContent = smaliContent;
-            runners.add(new ParentRunner<String>(testClass) {
-                @Override
-                protected List<String> getChildren() {
-                    return Collections.singletonList(finalSmaliContent);
-                }
+	@ParameterizedTest
+	@MethodSource("findZips")
+	void test(Path zipPath) {
+		Map<String, ?> env = new HashMap<>();
+		try (FileSystem fs = zipFSP.newFileSystem(zipPath, env)) {
+			List<Path> methods = Files.walk(fs.getPath("/"))
+					.filter(Files::isReadable)
+					.filter(Files::isRegularFile)
+					.filter(px -> {
+						String fn = px.getFileName().toString();
+						return fn.startsWith("m-") && fn.endsWith(".txt") || fn.equals("summary.txt");
+					})
+					.collect(Collectors.toList());
 
-                @Override
-                protected String getName() {
-                    return "s2j [" + zipFileName + "]";
-                }
-
-                @Override
-                protected Description describeChild(String child) {
-                    return Description.createTestDescription(testClass, "[" + zipFileName + ":" + zipEntry + "]");
-                }
-
-                @Override
-                protected void runChild(final String child, RunNotifier notifier) {
-                    runLeaf(new Statement() {
-                        @Override
-                        public void evaluate() throws Throwable {
-                            DexClassNode classNode = Smali.smaliFile2Node(zipEntry.toString(), child);
-                            if (classNode.methods.size() > 1) { // split into methods
-                                for (DexMethodNode m : classNode.methods) {
-                                    DexClassNode sub = new DexClassNode(0, "Lx;", "Ly;", new String[0]);
-                                    sub.methods.add(m);
-                                    TestUtils.translateAndCheck(null, sub);
-                                }
-                            } else {
-                                TestUtils.translateAndCheck(null, classNode);
-                            }
-                        }
-                    }, describeChild(child), notifier);
-                }
-            });
-        }
+			for (Path m : methods) {
+				processEachEntry(zipPath.getFileName().toString(), m);
+			}
+		} catch (Exception ex) {
+			fail(ex);
+		}
+	}
 
 
-        @Override
-        protected List<Runner> getChildren() {
-            return runners;
-        }
+	private static void processEachEntry(String zipFileName, Path zipEntry) throws IOException, IllegalAccessException {
+		String smaliContent;
+		if (zipEntry.getFileName().toString().equals("summary.txt")) {
+			smaliContent = parseSmaliContentFromSummary(zipEntry);
+		} else {
+			smaliContent = parseSmaliContent(zipEntry);
+		}
+		if (smaliContent == null) {
+			return;
+		}
 
-        @Override
-        protected Description describeChild(Runner child) {
-            return child.getDescription();
-        }
+		DexClassNode classNode = Smali.smaliFile2Node(zipEntry.toString(), smaliContent);
+		assertNotNull(classNode);
 
-        @Override
-        protected void runChild(Runner child, RunNotifier notifier) {
-            child.run(notifier);
-        }
+		if (classNode.methods.size() > 1) { // split into methods
+			for (DexMethodNode m : classNode.methods) {
+				DexClassNode sub = new DexClassNode(0, "Lx;", "Ly;", new String[0]);
+				sub.methods.add(m);
+				TestUtils.translateAndCheck(null, sub);
+			}
+		} else {
+			TestUtils.translateAndCheck(null, classNode);
+		}
+	}
 
-    }
+	public static Stream<Arguments> findZips() {
+		URL url = D2jErrorZipsTest.class.getResource("/smalis/writeString.smali");
+		assertNotNull(url);
 
+		final String file = url.getFile();
+		assertNotNull(file);
+
+		final Path basePath = new File(file).toPath().getParent().getParent().resolve("d2j-error-zips");
+
+		final Set<Path> files = new TreeSet<>();
+		try {
+			Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					if (file.getFileName().toString().endsWith(".zip")) {
+						files.add(file);
+					}
+					return super.visitFile(file, attrs);
+				}
+			});
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return files.stream()
+				.map(Arguments::of);
+	}
+
+	private static String parseSmaliContentFromSummary(Path zipEntry) throws IOException {
+		List<String> lines = Files.readAllLines(zipEntry, StandardCharsets.UTF_8);
+		StringBuilder sb = new StringBuilder();
+		boolean hasMethod = false;
+		boolean inMethodContent = false;
+		for (String ln : lines) {
+			if (!inMethodContent) {
+				if (ln.startsWith(".method")) {
+					// append here to keep the line number
+					sb.append(".class LTT;.super Ljava/lang/Object;");
+					sb.append(ln);
+					inMethodContent = true;
+					hasMethod = true;
+				}
+			} else {
+				sb.append(ln);
+				if (ln.startsWith(".end method")) {
+					inMethodContent = false;
+				}
+			}
+			sb.append("\n");
+		}
+		if (!hasMethod) {
+			return null;
+		}
+		return sb.toString();
+	}
+
+	private static String parseSmaliContent(Path m) throws IOException {
+		List<String> lines = Files.readAllLines(m, StandardCharsets.UTF_8);
+		StringBuilder sb = new StringBuilder();
+
+		boolean found = false;
+		for (String ln : lines) {
+			if (!found) {
+				if (ln.startsWith(".method")) {
+					// append here to keep the line number
+					sb.append(".class LTT;.super Ljava/lang/Object;");
+					sb.append(ln).append("\n");
+					found = true;
+				} else {
+					sb.append("\n");
+				}
+			} else {
+				sb.append(ln).append("\n");
+			}
+		}
+
+		return sb.toString();
+	}
 }

@@ -2,11 +2,12 @@ package com.googlecode.dex2jar.test;
 
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.googlecode.d2j.DexConstants.ACC_PUBLIC;
 import static com.googlecode.d2j.DexConstants.ACC_STATIC;
@@ -19,11 +20,11 @@ import static com.googlecode.d2j.reader.Op.INVOKE_VIRTUAL;
 import static com.googlecode.d2j.reader.Op.NEW_ARRAY;
 import static com.googlecode.d2j.reader.Op.RETURN_VOID;
 
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class ArrayTypeTest {
 
     @Test
-    public static void a120(DexClassVisitor cv) {
+    public void a120(DexClassNode cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "b", new String[]{}, "V"));
         DexCodeVisitor code = mv.visitCode();
         code.visitRegister(3);
@@ -35,10 +36,11 @@ public class ArrayTypeTest {
         code.visitStmt0R(RETURN_VOID);
         code.visitEnd();
         mv.visitEnd();
+        cv.visitEnd();
     }
 
     @Test
-    public static void a122(DexClassVisitor cv) {
+    public void a122(DexClassNode cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "b", new String[]{}, "V"));
         DexCodeVisitor code = mv.visitCode();
         code.visitRegister(3);
@@ -48,10 +50,11 @@ public class ArrayTypeTest {
         code.visitStmt0R(RETURN_VOID);
         code.visitEnd();
         mv.visitEnd();
+        cv.visitEnd();
     }
 
     @Test
-    public static void a123(DexClassVisitor cv) {
+    public void a123(DexClassNode cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "b", new String[]{}, "V"));
         DexCodeVisitor code = mv.visitCode();
         code.visitRegister(3);
@@ -62,10 +65,11 @@ public class ArrayTypeTest {
         code.visitStmt0R(RETURN_VOID);
         code.visitEnd();
         mv.visitEnd();
+        cv.visitEnd();
     }
 
     @Test
-    public static void merge1(DexClassVisitor cv) {// obj = array
+    public void merge1(DexClassNode cv) {// obj = array
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "b", new String[]{}, "V"));
         DexCodeVisitor code = mv.visitCode();
         DexLabel L0 = new DexLabel();
@@ -84,6 +88,7 @@ public class ArrayTypeTest {
         code.visitJumpStmt(GOTO, -1, -1, L0);
         code.visitEnd();
         mv.visitEnd();
+        cv.visitEnd();
     }
 
 }

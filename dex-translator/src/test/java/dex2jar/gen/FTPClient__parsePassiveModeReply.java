@@ -11,8 +11,8 @@ import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
 import com.googlecode.dex2jar.test.DexTranslatorRunner;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.objectweb.asm.Opcodes;
 
 import static com.googlecode.d2j.reader.Op.AGET_OBJECT;
@@ -33,7 +33,7 @@ import static com.googlecode.d2j.reader.Op.RETURN_VOID;
 import static com.googlecode.d2j.reader.Op.SGET_OBJECT;
 import static com.googlecode.d2j.reader.Op.THROW;
 
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class FTPClient__parsePassiveModeReply implements Opcodes {
     @Test
     public static void m003___parsePassiveModeReply(DexClassVisitor cv) {
@@ -191,5 +191,6 @@ public class FTPClient__parsePassiveModeReply implements Opcodes {
             }
             mv.visitEnd();
         }
+        cv.visitEnd();
     }
 }

@@ -8,8 +8,7 @@ ext.antlr4Version = '4.9.3' // Newer versions only for Java 11+
 ext.asmVersion = '9.5'
 ext.baksmaliVersion = '2.5.2'
 ext.commonsCompressVersion = '1.22'
-ext.jUnitVintageEngineVersion = '5.9.2'
-ext.jUnitPlatformLauncherVersion = '1.9.2'
+ext.jUnitVersion = '5.9.2'
 ext.r8Version = '8.0.40'
 
 allprojects {
@@ -30,11 +29,19 @@ subprojects {
 
     dependencies {
         implementation fileTree(dir: 'libs', include: '*.jar')
-        testImplementation group: 'org.junit.vintage', name: 'junit-vintage-engine', version: project.property('jUnitVintageEngineVersion')
-        testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: project.property('jUnitPlatformLauncherVersion')
+        testImplementation "org.junit.jupiter:junit-jupiter-api:${project.property('jUnitVersion')}"
+        testImplementation "org.junit.jupiter:junit-jupiter-params:${project.property('jUnitVersion')}"
+        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${project.property('jUnitVersion')}"
     }
 
     [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
+
+    test {
+        useJUnitPlatform()
+
+        systemProperty 'junit.jupiter.execution.parallel.enabled', true
+        systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+    }
 
     // Cache list of tasks
     project.getAllTasks(true)

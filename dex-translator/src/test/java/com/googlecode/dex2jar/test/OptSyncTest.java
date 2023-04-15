@@ -3,12 +3,13 @@ package com.googlecode.dex2jar.test;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
 import java.io.PrintStream;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.googlecode.d2j.DexConstants.ACC_PUBLIC;
 import static com.googlecode.d2j.DexConstants.ACC_STATIC;
@@ -21,7 +22,7 @@ import static com.googlecode.d2j.reader.Op.RETURN_VOID;
 import static com.googlecode.d2j.reader.Op.SGET_OBJECT;
 import static com.googlecode.d2j.reader.Op.THROW;
 
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class OptSyncTest {
 
     public void a() {
@@ -67,7 +68,7 @@ public class OptSyncTest {
      * </pre>
      */
     @Test
-    public void test(DexClassVisitor cv) {
+    public void test(DexClassNode cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "a", new String[]{}, "V"));
         DexCodeVisitor code = mv.visitCode();
         int v0 = 0;
@@ -93,6 +94,7 @@ public class OptSyncTest {
         code.visitStmt1R(THROW, v1);
         code.visitEnd();
         mv.visitEnd();
+        cv.visitEnd();
     }
 
 }

@@ -15,18 +15,23 @@ import com.googlecode.d2j.visitors.DexFieldVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
 import java.io.File;
 import java.io.IOException;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AppWriterTest implements DexConstants {
 
-    @Test(expected = DexWriteException.class)
+    @Test
     public void testDupClz() {
-        DexFileWriter w = new DexFileWriter();
-        DexClassVisitor cv = w.visit(0, "La/b;", null, null);
-        cv.visitEnd();
-        cv = w.visit(0, "La/b;", null, null);
-        cv.visitEnd();
-        w.visitEnd();
+        assertThrows(DexWriteException.class, () -> {
+            DexFileWriter w = new DexFileWriter();
+            DexClassVisitor cv = w.visit(0, "La/b;", null, null);
+            cv.visitEnd();
+            cv = w.visit(0, "La/b;", null, null);
+            cv.visitEnd();
+            w.visitEnd();
+        });
     }
 
     @Test

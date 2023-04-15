@@ -8,7 +8,7 @@ import com.googlecode.dex2jar.tools.BaseCmd;
 import java.io.File;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BaksmaliTest {
 

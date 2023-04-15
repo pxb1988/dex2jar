@@ -1,44 +1,45 @@
 package com.googlecode.dex2jar.test;
 
+import com.android.tools.r8.internal.Ex;
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.node.DexClassNode;
 import java.util.List;
-import org.junit.runners.BlockJUnit4ClassRunner;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.Statement;
 
-public class DexTranslatorRunner extends BlockJUnit4ClassRunner {
+import com.googlecode.d2j.visitors.DexClassVisitor;
+import org.junit.jupiter.api.extension.*;
 
-    public DexTranslatorRunner(Class klass) throws InitializationError {
-        super(klass);
+import static org.junit.jupiter.api.Assertions.*;
+
+public class DexTranslatorRunner implements ParameterResolver {
+    @Override
+    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        return parameterContext.getParameter().getType().equals(DexClassNode.class);
     }
 
     @Override
-    protected Statement methodInvoker(final FrameworkMethod method, final Object test) {
-        if (method.getMethod().getParameterTypes().length > 0) {
-            return new Statement() {
-                @Override
-                public void evaluate() throws Throwable {
-                    // 1.invoke the method
-                    DexClassNode clzNode = new DexClassNode(DexConstants.ACC_PUBLIC, "La;", "Ljava/lang/Object;", null);
-                    if (method.isStatic()) {
-                        method.invokeExplosively(null, clzNode);
-                    } else {
-                        method.invokeExplosively(test, clzNode);
-                    }
-                    // 2. convert and verify
-                    TestUtils.translateAndCheck(clzNode);
-                }
-            };
-        } else {
-            return super.methodInvoker(method, test);
+    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        // Provide a class-node that will be modified by tests.
+        // When tests call 'visitEnd' the class-node will be validated.
+        return new ValidatingDexClassNode(DexConstants.ACC_PUBLIC, "La;", "Ljava/lang/Object;", null);
+    }
+
+    private static class ValidatingDexClassNode extends DexClassNode {
+        public ValidatingDexClassNode(DexClassVisitor v, int access, String className, String superClass, String[] interfaceNames) {
+            super(v, access, className, superClass, interfaceNames);
+        }
+
+        public ValidatingDexClassNode(int access, String className, String superClass, String[] interfaceNames) {
+            super(access, className, superClass, interfaceNames);
+        }
+
+        @Override
+        public void visitEnd() {
+            super.visitEnd();
+           try {
+               TestUtils.translateAndCheck(this);
+           }catch (Exception ex) {
+               fail(ex);
+           }
         }
     }
-
-    @Override
-    protected void validateTestMethods(List<Throwable> errors) {
-        // All methods are validate
-    }
-
 }

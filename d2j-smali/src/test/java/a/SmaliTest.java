@@ -25,8 +25,9 @@ import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.util.SyntheticAccessorResolver;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SmaliTest {
 
@@ -83,7 +84,7 @@ public class SmaliTest {
             String type = def.getType();
             System.out.println(type);
             DexClassNode dexClassNode = map.get(type);
-            Assert.assertNotNull(dexClassNode);
+            assertNotNull(dexClassNode);
             String smali = baksmali(def); // original
 
             Smali.smaliFile2Node("fake.smali", smali);
@@ -92,19 +93,17 @@ public class SmaliTest {
                 byte[] data = toDex(dexClassNode);
                 DexBackedClassDef def2 = new DexBackedDexFile(Opcodes.forApi(14), data).getClasses().iterator().next();
                 String baksmali3 = baksmali(def2); // original
-                Assert.assertEquals(smali, baksmali3);
+                assertEquals(smali, baksmali3);
             }
 
             String psmali = pbaksmali(dexClassNode);
             DexClassNode dexClassNode2 = Smali.smaliFile2Node("fake.smali", psmali);
-            Assert.assertEquals("cmp smalip", psmali, pbaksmali(dexClassNode2));
+            assertEquals(psmali, pbaksmali(dexClassNode2), "cmp smalip");
 
-            {
-                byte[] data = toDex(dexClassNode2);
-                DexBackedClassDef def2 = new DexBackedDexFile(Opcodes.forApi(14), data).getClasses().iterator().next();
-                String baksmali3 = baksmali(def2); // original
-                Assert.assertEquals(smali, baksmali3);
-            }
+            byte[] data = toDex(dexClassNode2);
+            DexBackedClassDef def2 = new DexBackedDexFile(Opcodes.forApi(14), data).getClasses().iterator().next();
+            String baksmali3 = baksmali(def2); // original
+            assertEquals(smali, baksmali3);
         }
     }
 

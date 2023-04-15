@@ -9,8 +9,10 @@ import com.googlecode.d2j.tools.jar.DexWeaver;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DexWaveTest {
 
@@ -64,7 +66,7 @@ public class DexWaveTest {
     private void assertEqual(DexClassNode expected, DexClassNode actual) throws IOException {
         String stdExpect = toStd(expected);
         String stdActual = toStd(actual);
-        Assert.assertEquals(stdExpect, stdActual);
+        assertEquals(stdExpect, stdActual);
     }
 
     public static String toStd(DexClassNode expected) throws IOException {

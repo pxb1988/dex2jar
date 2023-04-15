@@ -5,8 +5,8 @@ import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.googlecode.d2j.DexConstants.ACC_PUBLIC;
 import static com.googlecode.d2j.DexConstants.ACC_STATIC;
@@ -16,7 +16,7 @@ import static com.googlecode.d2j.DexConstants.ACC_STATIC;
  *
  * @author bob
  */
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class I168Test {
 
     @Test
@@ -33,6 +33,7 @@ public class I168Test {
         code.visitStmt1R(Op.RETURN, 25);
         code.visitEnd();
         mv.visitEnd();
+        cv.visitEnd();
     }
 
 }

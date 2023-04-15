@@ -5,8 +5,9 @@ import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.ts.AggTransformer;
 import com.googlecode.dex2jar.ir.ts.SSATransformer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
@@ -25,8 +26,8 @@ public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
         addStmt(nAssign(a, nNewIntArray(nInt(5))));
         addStmt(nReturn(a));
         transform();
-        Assert.assertEquals("only `return new int[5]` should left.", 1, stmts.getSize());
-        Assert.assertEquals("no local should left", 0, locals.size());
+        assertEquals(1, stmts.getSize(), "only `return new int[5]` should left.");
+        assertEquals(0, locals.size(), "no local should left");
     }
 
     @Test
@@ -41,8 +42,8 @@ public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
         addStmt(nAssign(c, nArray(a, b, "I")));
         addStmt(nReturn(c));
         transform();
-        Assert.assertEquals(1, stmts.getSize());
-        Assert.assertEquals(0, locals.size());
+        assertEquals(1, stmts.getSize());
+        assertEquals(0, locals.size());
     }
 
     @Test
@@ -59,7 +60,7 @@ public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
 
         transform();
 
-        Assert.assertTrue(method.locals.size() >= 2);
+        assertTrue(method.locals.size() >= 2);
     }
 
     @Test
@@ -89,8 +90,8 @@ public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
         addStmt(nReturn(c));
         new SSATransformer().transform(method);
         transform();
-        Assert.assertEquals(1, stmts.getSize());
-        Assert.assertEquals(0, locals.size());
+        assertEquals(1, stmts.getSize());
+        assertEquals(0, locals.size());
     }
 
 }

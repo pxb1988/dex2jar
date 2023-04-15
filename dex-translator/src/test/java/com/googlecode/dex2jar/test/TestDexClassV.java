@@ -4,11 +4,11 @@ import com.googlecode.d2j.Method;
 import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 
-@Ignore
+@Disabled
 public class TestDexClassV extends DexClassVisitor {
 
     private final int config;
