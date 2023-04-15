@@ -9,7 +9,7 @@ ext.asmVersion = '9.5'
 ext.baksmaliVersion = '2.5.2'
 ext.commonsCompressVersion = '1.22'
 ext.jUnitVersion = '5.9.2'
-ext.r8Version = '8.0.40'
+ext.r8Version = '4.0.52'
 
 allprojects {
     group = 'com.googlecode.d2j'
