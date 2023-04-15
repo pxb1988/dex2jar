@@ -36,9 +36,9 @@ public class BaksmaliBaseDexExceptionHandler extends BaseDexExceptionHandler {
             + "    https://github.com/ThexXTURBOXx/dex2jar/issues\n" //
             + "    nico.mexis@kabelmail.de";
 
-    private Map<DexMethodNode, Exception> exceptionMap = new HashMap<>();
+    private final Map<DexMethodNode, Exception> exceptionMap = new HashMap<>();
 
-    private List<Exception> fileExceptions = new ArrayList<>();
+    private final List<Exception> fileExceptions = new ArrayList<>();
 
     public boolean hasException() {
         return exceptionMap.size() > 0 || fileExceptions.size() > 0;

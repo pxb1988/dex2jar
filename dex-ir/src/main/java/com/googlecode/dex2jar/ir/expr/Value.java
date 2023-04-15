@@ -185,9 +185,9 @@ public abstract class Value implements Cloneable {
         SUB(
                 "-", MAY_THROW), THIS_REF(MAY_THROW), USHR(">>>", MAY_THROW), XOR("^", MAY_THROW);
 
-        private String name;
+        private final String name;
 
-        private int flags;
+        private final int flags;
 
         VT(int flags) {
             this(null, flags);

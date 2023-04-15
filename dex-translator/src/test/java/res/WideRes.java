@@ -36,8 +36,8 @@ public class WideRes {
     }
 
     long ddd() {
-        long b = 1l + 2;
-        long a = 12312l + b;
+        long b = 1L + 2;
+        long a = 12312L + b;
         a += 1231232134234234524L;
         a = a + b;
         a = a * b;

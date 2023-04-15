@@ -406,7 +406,7 @@ public class BaksmaliDumper implements DexConstants {
         if (n.superClass != null) {
             out.s(".super %s", escapeType(n.superClass));
         }
-        if (n.interfaceNames != null && n.interfaceNames.length > 0) {
+        if (n.interfaceNames != null) {
             for (String itf : n.interfaceNames) {
                 out.s(".implements %s", escapeType(itf));
             }

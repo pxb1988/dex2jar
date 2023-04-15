@@ -5,10 +5,10 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RemoveLocalFromSSATest extends BaseTransformerTest<RemoveLocalFromSSA> {
 

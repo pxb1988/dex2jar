@@ -9,11 +9,11 @@ import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.ConstTransformer;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ConstTransformerTest {
 

@@ -8,7 +8,6 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.ts.RemoveConstantFromSSA;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNewIntArray;
@@ -19,6 +18,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RemoveConstantFromSSATest extends BaseTransformerTest<RemoveConstantFromSSA> {
 

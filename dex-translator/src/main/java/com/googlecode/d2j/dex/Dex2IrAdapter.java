@@ -91,11 +91,11 @@ public class Dex2IrAdapter extends DexCodeVisitor implements Opcodes, DexConstan
 
     protected IrMethod irMethod;
 
-    private Method method;
+    private final Method method;
 
-    private boolean isStatic;
+    private final boolean isStatic;
 
-    private StmtList list;
+    private final StmtList list;
 
     private Local[] locals;
 

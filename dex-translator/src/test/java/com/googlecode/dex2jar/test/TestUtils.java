@@ -42,7 +42,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
 import org.junit.jupiter.api.Disabled;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;

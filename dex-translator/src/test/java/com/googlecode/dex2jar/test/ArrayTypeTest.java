@@ -3,7 +3,6 @@ package com.googlecode.dex2jar.test;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.node.DexClassNode;
-import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
 import org.junit.jupiter.api.Test;

@@ -13,7 +13,6 @@ import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
 import com.googlecode.dex2jar.ir.ts.SSATransformer;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nExceptionRef;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNull;
@@ -26,6 +25,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nLabel;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
 

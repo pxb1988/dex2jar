@@ -15,7 +15,6 @@ import com.googlecode.d2j.visitors.DexFieldVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
 import java.io.File;
 import java.io.IOException;
-
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

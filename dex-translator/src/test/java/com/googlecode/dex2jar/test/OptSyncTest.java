@@ -4,7 +4,6 @@ import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.node.DexClassNode;
-import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
 import java.io.PrintStream;

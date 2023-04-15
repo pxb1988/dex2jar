@@ -9,12 +9,11 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Transformer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 // Ignore the unused inspection; it is indeed used
 public abstract class BaseTransformerTest<T extends Transformer> {

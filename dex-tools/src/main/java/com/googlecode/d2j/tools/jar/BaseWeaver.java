@@ -256,11 +256,7 @@ public class BaseWeaver {
             if (!name.equals(mtdInfo.name)) {
                 return false;
             }
-            if (!owner.equals(mtdInfo.owner)) {
-                return false;
-            }
-
-            return true;
+            return owner.equals(mtdInfo.owner);
         }
 
         @Override

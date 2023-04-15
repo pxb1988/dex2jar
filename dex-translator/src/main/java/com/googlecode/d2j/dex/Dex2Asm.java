@@ -118,7 +118,7 @@ public class Dex2Asm {
         }
 
         public String toString() {
-            return "" + name;
+            return name;
         }
 
     }

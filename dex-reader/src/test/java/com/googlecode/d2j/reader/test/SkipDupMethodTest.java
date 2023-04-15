@@ -5,7 +5,6 @@ import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.reader.DexFileReader;
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

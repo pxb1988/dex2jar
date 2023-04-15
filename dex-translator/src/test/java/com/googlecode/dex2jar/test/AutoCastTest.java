@@ -9,14 +9,13 @@ import com.googlecode.d2j.visitors.DexFieldVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import static com.googlecode.d2j.reader.Op.ADD_INT;
 import static com.googlecode.d2j.reader.Op.CONST;
 import static com.googlecode.d2j.reader.Op.INVOKE_SUPER;
 import static com.googlecode.d2j.reader.Op.RETURN_VOID;
 import static com.googlecode.d2j.reader.Op.SGET_BOOLEAN;
 import static com.googlecode.d2j.reader.Op.SPUT_SHORT;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AutoCastTest implements DexConstants {
 

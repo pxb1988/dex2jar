@@ -7,8 +7,6 @@ import com.googlecode.dex2jar.ir.ts.AggTransformer;
 import com.googlecode.dex2jar.ir.ts.SSATransformer;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNewIntArray;
@@ -17,6 +15,7 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.niAdd;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AggTransformerTest extends BaseTransformerTest<AggTransformer> {
 

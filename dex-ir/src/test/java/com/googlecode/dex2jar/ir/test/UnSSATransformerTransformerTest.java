@@ -11,8 +11,6 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.UnSSATransformer;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeStatic;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nPhi;
@@ -26,6 +24,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nLock;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class UnSSATransformerTransformerTest extends BaseTransformerTest<UnSSATransformer> {
 

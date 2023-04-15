@@ -225,7 +225,7 @@ public class ZipFile implements AutoCloseable, ZipConstants {
                 } else {
                     byte[] commentBytes = new byte[commentLength];
                     raf.get(commentBytes);
-                    comment = new String(commentBytes, 0, commentBytes.length, StandardCharsets.UTF_8);
+                    comment = new String(commentBytes, StandardCharsets.UTF_8);
                 }
             }
         }

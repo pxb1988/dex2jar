@@ -980,12 +980,10 @@ public class DecryptStringCmd extends BaseCmd {
             }
         }
         Class<?>[] itfs = clz.getInterfaces();
-        if (itfs.length > 0) {
-            for (Class<?> itf : itfs) {
-                Method m = findAnyMethodMatch(itf, name, classes);
-                if (m != null) {
-                    return m;
-                }
+        for (Class<?> itf : itfs) {
+            Method m = findAnyMethodMatch(itf, name, classes);
+            if (m != null) {
+                return m;
             }
         }
         return null;

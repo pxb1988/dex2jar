@@ -11,17 +11,17 @@ public class Field {
     /**
      * name of the field.
      */
-    private String name;
+    private final String name;
 
     /**
      * owner of the field, in TypeDescriptor format.
      */
-    private String owner;
+    private final String owner;
 
     /**
      * type of the field, in TypeDescriptor format.
      */
-    private String type;
+    private final String type;
 
     public Field(String owner, String name, String type) {
         this.owner = owner;

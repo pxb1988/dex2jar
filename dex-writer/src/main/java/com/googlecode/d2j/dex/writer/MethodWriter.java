@@ -26,7 +26,7 @@ import com.googlecode.d2j.visitors.DexMethodVisitor;
     private final int parameterSize;
 
     MethodWriter(ClassDataItem.EncodedMethod encodedMethod, Method m,
-                        boolean isStatic, ConstPool cp) {
+                 boolean isStatic, ConstPool cp) {
         this.encodedMethod = encodedMethod;
         this.parameterSize = m.getParameterTypes().length;
         this.cp = cp;

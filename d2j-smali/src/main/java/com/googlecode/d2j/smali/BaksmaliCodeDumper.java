@@ -19,13 +19,13 @@ import java.util.Set;
 
 /*package*/ class BaksmaliCodeDumper extends DexCodeVisitor {
 
-    private boolean useParameterRegisters;
+    private final boolean useParameterRegisters;
 
-    private boolean useLocals;
+    private final boolean useLocals;
 
     private int nextLabelNumber;
 
-    private Out out;
+    private final Out out;
 
     final int startParamR;
 

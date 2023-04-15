@@ -193,7 +193,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
         // if (containsNulByte(nameBytes)) {
         // throw new ZipException("Filename contains NUL byte: " + Arrays.toString(nameBytes));
         // }
-        name = new String(nameBytes, 0, nameBytes.length, StandardCharsets.UTF_8);
+        name = new String(nameBytes, StandardCharsets.UTF_8);
 
         if (extraLength > 0) {
             if (skipCommentsAndExtra) {
@@ -212,7 +212,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
             } else {
                 byte[] commentBytes = new byte[commentByteCount];
                 it0.get(commentBytes);
-                comment = new String(commentBytes, 0, commentBytes.length, StandardCharsets.UTF_8);
+                comment = new String(commentBytes, StandardCharsets.UTF_8);
             }
         }
     }

@@ -9,7 +9,6 @@ import com.googlecode.d2j.tools.jar.DexWeaver;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

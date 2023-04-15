@@ -9,7 +9,6 @@ import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.TypeTransformer;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nConstant;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nEq;
@@ -26,6 +25,7 @@ import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
 import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
 
