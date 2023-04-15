@@ -9,18 +9,19 @@ dependencies {
     api project(':dex-reader')
     api project(':dex-ir')
     api project(':d2j-base-cmd')
+    api(group: 'com.android.tools', name: 'r8', version: project.property('r8Version'))
     api fileTree(dir: '../libs', include: '*.jar')
-    // api group: 'org.ow2.asm', name: 'asm', version: '9.4' // Fixed MethodCodeTooLargeException
-    api(group: 'org.ow2.asm', name: 'asm-analysis', version: '9.4') {
+    // api group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
+    api(group: 'org.ow2.asm', name: 'asm-analysis', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }
-    api(group: 'org.ow2.asm', name: 'asm-commons', version: '9.4') {
+    api(group: 'org.ow2.asm', name: 'asm-commons', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }
-    api(group: 'org.ow2.asm', name: 'asm-tree', version: '9.4') {
+    api(group: 'org.ow2.asm', name: 'asm-tree', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }
-    api(group: 'org.ow2.asm', name: 'asm-util', version: '9.4') {
+    api(group: 'org.ow2.asm', name: 'asm-util', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }
     testImplementation project(':d2j-smali')

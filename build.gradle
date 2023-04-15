@@ -3,12 +3,22 @@ plugins {
     id "com.github.johnrengelman.shadow" version "8.1.1"
 }
 
+ext.antlr3Version = '3.5.3'
+ext.antlr4Version = '4.9.3' // Newer versions only for Java 11+
+ext.asmVersion = '9.5'
+ext.baksmaliVersion = '2.5.2'
+ext.commonsCompressVersion = '1.22'
+ext.jUnitVintageEngineVersion = '5.9.2'
+ext.jUnitPlatformLauncherVersion = '1.9.2'
+ext.r8Version = '8.0.40'
+
 allprojects {
     group = 'com.googlecode.d2j'
     version = '2.1-SNAPSHOT'
 
     repositories {
         mavenCentral()
+        google()
     }
 }
 
@@ -20,8 +30,8 @@ subprojects {
 
     dependencies {
         implementation fileTree(dir: 'libs', include: '*.jar')
-        testImplementation group: 'org.junit.vintage', name: 'junit-vintage-engine', version: '5.9.2'
-        testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.9.2'
+        testImplementation group: 'org.junit.vintage', name: 'junit-vintage-engine', version: project.property('jUnitVintageEngineVersion')
+        testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: project.property('jUnitPlatformLauncherVersion')
     }
 
     [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }

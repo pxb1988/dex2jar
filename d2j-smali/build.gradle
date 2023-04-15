@@ -1,13 +1,16 @@
 apply plugin: 'antlr'
 
 dependencies {
-    implementation 'org.antlr:antlr4-runtime:4.9.3' // Newer versions only for Java 11+
+    implementation "org.antlr:antlr4-runtime:${project.property('antlr4Version')}"
+    implementation(group: 'org.antlr', name: 'antlr-runtime', version: project.property('antlr3Version')) {
+        exclude(module: 'stringtemplate')
+    }
     implementation project(':dex-reader')
     implementation project(':dex-reader-api')
-    antlr 'org.antlr:antlr4:4.9.3' // Newer versions only for Java 11+
+    antlr "org.antlr:antlr4:${project.property('antlr4Version')}"
     implementation project(':d2j-base-cmd')
     implementation project(':dex-writer')
-    testImplementation 'org.smali:baksmali:2.5.2'
+    testImplementation "org.smali:baksmali:${project.property('baksmaliVersion')}"
 }
 
 generateGrammarSource {
