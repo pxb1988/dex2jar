@@ -29,7 +29,7 @@ dependencies {
     }
 }
 
-task bin_gen(type: JavaExec) {
+tasks.register('bin_gen', JavaExec) {
     dependsOn jar
     classpath sourceSets.main.runtimeClasspath
     ext.binDir = "$buildDir/generated-sources/bin"
@@ -37,16 +37,19 @@ task bin_gen(type: JavaExec) {
     mainClass.set('com.googlecode.dex2jar.bin_gen.BinGen')
     args = ["$projectDir/src/main/bin_gen", "$ext.binDir"]
 }
-applicationDistribution.from(bin_gen)
-//applicationDistribution.from('src/main/jars') {
-//  into("lib")
-//}
-applicationDistribution.from('open-source-license.txt') {
-    into("lib")
-}
-applicationDistribution.from("$parent.rootDir") {
-    include("NOTICE.txt")
-    include("LICENSE.txt")
+
+application {
+    applicationDistribution.from(bin_gen)
+    //applicationDistribution.from('src/main/jars') {
+    //  into("lib")
+    //}
+    applicationDistribution.from('open-source-license.txt') {
+        into("lib")
+    }
+    applicationDistribution.from("$parent.rootDir") {
+        include("NOTICE.txt")
+        include("LICENSE.txt")
+    }
 }
 
 startScripts.dependsOn bin_gen

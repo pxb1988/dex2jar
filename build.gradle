@@ -1,5 +1,6 @@
 plugins {
     id "application"
+    id "base"
     id "com.github.johnrengelman.shadow" version "8.1.1"
 }
 
@@ -26,13 +27,14 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = targetCompatibility = 1.8
+    java {
+        sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+    }
 
     dependencies {
         implementation fileTree(dir: 'libs', include: '*.jar')
-        testImplementation "org.junit.jupiter:junit-jupiter-api:${project.property('jUnitVersion')}"
-        testImplementation "org.junit.jupiter:junit-jupiter-params:${project.property('jUnitVersion')}"
-        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${project.property('jUnitVersion')}"
+        testImplementation "org.junit.jupiter:junit-jupiter:${project.property('jUnitVersion')}"
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher:${project.property('jUnitPlatformVersion')}")
     }
 
     [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
@@ -61,8 +63,13 @@ subprojects {
     }
 }
 
-mainClassName = "com.googlecode.dex2jar.tools.Dex2jarCmd"
-archivesBaseName = "dex2jar"
+application {
+    mainClass = "com.googlecode.dex2jar.tools.Dex2jarCmd"
+}
+
+base {
+    archivesName = "dex2jar"
+}
 
 dependencies {
     implementation(project(":d2j-base-cmd")) {
