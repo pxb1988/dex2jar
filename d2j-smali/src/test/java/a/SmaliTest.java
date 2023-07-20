@@ -1,5 +1,13 @@
 package a;
 
+import com.android.tools.smali.baksmali.Adaptors.ClassDefinition;
+import com.android.tools.smali.baksmali.BaksmaliOptions;
+import com.android.tools.smali.baksmali.formatter.BaksmaliWriter;
+import com.android.tools.smali.dexlib2.DexFileFactory;
+import com.android.tools.smali.dexlib2.Opcodes;
+import com.android.tools.smali.dexlib2.dexbacked.DexBackedClassDef;
+import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile;
+import com.android.tools.smali.dexlib2.util.SyntheticAccessorResolver;
 import com.googlecode.d2j.dex.writer.DexFileWriter;
 import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.node.DexFileNode;
@@ -17,14 +25,6 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import org.jf.baksmali.Adaptors.ClassDefinition;
-import org.jf.baksmali.BaksmaliOptions;
-import org.jf.baksmali.formatter.BaksmaliWriter;
-import org.jf.dexlib2.DexFileFactory;
-import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.dexbacked.DexBackedClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedDexFile;
-import org.jf.dexlib2.util.SyntheticAccessorResolver;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

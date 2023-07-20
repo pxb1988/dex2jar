@@ -10,7 +10,7 @@ dependencies {
     antlr "org.antlr:antlr4:${project.property('antlr4Version')}"
     implementation project(':d2j-base-cmd')
     implementation project(':dex-writer')
-    testImplementation "org.smali:baksmali:${project.property('baksmaliVersion')}"
+    testImplementation "com.android.tools.smali:smali-baksmali:${project.property('baksmaliVersion')}"
 }
 
 generateGrammarSource {
