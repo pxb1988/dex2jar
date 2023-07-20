@@ -21,6 +21,7 @@ subprojects {
   artifacts.archives packageSources
   repositories {
     mavenCentral()
+    google()
   }
 
 // == support provided scope

@@ -6,7 +6,7 @@ dependencies {
   antlr 'org.antlr:antlr4:4.5'
   compile project(':d2j-base-cmd')
   compile project(':dex-writer')
-  testCompile 'org.smali:baksmali:2.0.6'
+    testImplementation "com.android.tools.smali:smali-baksmali:3.0.3"
 }
 
 generateGrammarSource {
