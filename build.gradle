@@ -7,9 +7,10 @@ ext.antlr3Version = '3.5.3'
 ext.antlr4Version = '4.9.3' // Newer versions only for Java 11+
 ext.asmVersion = '9.5'
 ext.baksmaliVersion = '3.0.3'
-ext.commonsCompressVersion = '1.22'
-ext.jUnitVersion = '5.9.2'
-ext.r8Version = '4.0.52'
+ext.commonsCompressVersion = '1.23.0'
+ext.jUnitVersion = '5.9.3'
+ext.jUnitPlatformVersion = '1.9.3'
+ext.r8Version = '4.0.63' // Newer versions only for Java 11+
 
 allprojects {
     group = 'com.googlecode.d2j'
