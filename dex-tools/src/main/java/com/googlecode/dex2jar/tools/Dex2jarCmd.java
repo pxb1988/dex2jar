@@ -14,6 +14,7 @@ public class Dex2jarCmd extends BaseCmd {
 
     public static void main(String... args) {
         new Dex2jarCmd().doMain(args);
+        //new Dex2jarCmd().doMain("app-debug.apk", "--force");
     }
 
     @Opt(opt = "e", longOpt = "exception-file", description = "detail exception file, default is "
