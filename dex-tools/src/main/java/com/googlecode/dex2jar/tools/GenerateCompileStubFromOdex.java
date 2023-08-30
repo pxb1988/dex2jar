@@ -110,7 +110,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
                         mv.visitInsn(Opcodes.DUP);
                         mv.visitLdcInsn("stub");
                         mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/RuntimeException", "<init>",
-                                "(Ljava/lang/String;)V");
+                                "(Ljava/lang/String;)V", false);
                         mv.visitInsn(Opcodes.ATHROW);
                         return mv;
                     }
