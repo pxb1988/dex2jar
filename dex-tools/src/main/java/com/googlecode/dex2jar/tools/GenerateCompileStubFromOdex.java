@@ -74,7 +74,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
                     System.err.println("Class " + classInternalName + " already exists, skipping.");
                     return null;
                 }
-                return new ClassVisitor(Opcodes.ASM4, new ClassWriter(ClassWriter.COMPUTE_MAXS)) {
+                return new ClassVisitor(Opcodes.ASM9, new ClassWriter(ClassWriter.COMPUTE_MAXS)) {
                     @Override
                     public void visitEnd() {
                         super.visitEnd();
@@ -110,7 +110,7 @@ public class GenerateCompileStubFromOdex extends BaseCmd {
                         mv.visitInsn(Opcodes.DUP);
                         mv.visitLdcInsn("stub");
                         mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/RuntimeException", "<init>",
-                                "(Ljava/lang/String;)V");
+                                "(Ljava/lang/String;)V", false);
                         mv.visitInsn(Opcodes.ATHROW);
                         return mv;
                     }

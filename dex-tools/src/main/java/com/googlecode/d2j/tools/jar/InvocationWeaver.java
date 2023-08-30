@@ -17,9 +17,10 @@
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
+
 import org.objectweb.asm.*;
+import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -128,28 +129,28 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             case Type.ARRAY:
                 return;
             case Type.INT:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
                 break;
             case Type.LONG:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
                 break;
             case Type.FLOAT:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Floag", "valueOf", "(F)Ljava/lang/Floag;");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Floag", "valueOf", "(F)Ljava/lang/Floag;", false);
                 break;
             case Type.DOUBLE:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
                 break;
             case Type.SHORT:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
                 break;
             case Type.CHAR:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
                 break;
             case Type.BOOLEAN:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
                 break;
             case Type.BYTE:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
                 break;
             case Type.VOID:
                 mv.visitInsn(ACONST_NULL);
@@ -174,35 +175,35 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                 break;
             case Type.INT:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I", false);
                 break;
             case Type.FLOAT:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "floatValue", "()F");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "floatValue", "()F", false);
                 break;
             case Type.LONG:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J", false);
                 break;
             case Type.DOUBLE:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
                 break;
             case Type.BYTE:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "byteValue", "()B");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "byteValue", "()B", false);
                 break;
             case Type.SHORT:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "shortValue", "()S");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "shortValue", "()S", false);
                 break;
             case Type.CHAR:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
                 break;
             case Type.BOOLEAN:
                 mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
                 break;
         }
     }
@@ -218,7 +219,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
     }
 
     public ClassVisitor wrapper(final ClassVisitor cv) {
-        return new RemappingClassAdapter(cv, remapper) {
+        return new ClassRemapper(cv, remapper) {
             Map<MtdInfo, MtdInfo> toCreate = new HashMap<MtdInfo, MtdInfo>();
             String clzName;
 
@@ -283,9 +284,9 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                 int nextIdx = callbacks.size();
                 mv.visitLdcInsn(nextIdx);
                 mv.visitMethodInsn(INVOKESPECIAL, getCurrentInvocationName(), "<init>",
-                        "(Ljava/lang/Object;[Ljava/lang/Object;I)V");
+                        "(Ljava/lang/Object;[Ljava/lang/Object;I)V", false);
 
-                mv.visitMethodInsn(INVOKESTATIC, toInternal(mapTo.owner), mapTo.name, mapTo.desc);
+                mv.visitMethodInsn(INVOKESTATIC, toInternal(mapTo.owner), mapTo.name, mapTo.desc, false);
                 unBox(ret, Type.getReturnType(mapTo.desc), mv);
                 mv.visitInsn(ret.getOpcode(IRETURN));
                 mv.visitMaxs(-1, -1);
@@ -330,7 +331,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                     mv.visitInsn(AALOAD);
                     unBox(args[i], OBJECT_TYPE, mv);
                 }
-                mv.visitMethodInsn(opcode, toInternal(t.owner), t.name, t.desc);
+                mv.visitMethodInsn(opcode, toInternal(t.owner), t.name, t.desc, opcode == INVOKEINTERFACE);
                 Type ret = Type.getReturnType(t.desc);
                 box(ret, mv);
                 mv.visitInsn(ARETURN);
@@ -361,7 +362,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                     src.owner = t.owner;
                     src.name = name;
                     src.desc = desc;
-                    return new MethodNode(Opcodes.ASM4, access, name, desc, signature, exceptions) {
+                    return new MethodNode(ASM9, access, name, desc, signature, exceptions) {
                         @Override
                         public void visitEnd() {
 
@@ -418,11 +419,11 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             }
             class ReplaceMethodVisitor extends MethodVisitor {
                 public ReplaceMethodVisitor(MethodVisitor mv) {
-                    super(Opcodes.ASM4, mv);
+                    super(ASM9, mv);
                 }
 
                 @Override
-                public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+                public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {
                     MtdInfo mapTo = findTargetMethod("L" + owner + ";", name, desc);
                     if (mapTo != null) {
                         boolean isStatic = opcode == INVOKESTATIC;
@@ -440,7 +441,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                             t.name = name;
                             t.desc = desc;
                             MtdInfo n = newMethodA(opcode, t, mapTo);
-                            super.visitMethodInsn(INVOKESTATIC, clzName, n.name, n.desc);
+                            super.visitMethodInsn(INVOKESTATIC, clzName, n.name, n.desc, isInterface);
                         } else { // simple replace
                             // checking for invalid replace
                             if (isStatic) {
@@ -463,12 +464,12 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                                 }
                             }
                             // replace it!
-                            super.visitMethodInsn(INVOKESTATIC, toInternal(mapTo.owner), mapTo.name, mapTo.desc);
+                            super.visitMethodInsn(INVOKESTATIC, toInternal(mapTo.owner), mapTo.name, mapTo.desc, isInterface);
                             unBox(orgRet, nRet, this.mv);
                         }
 
                     } else {
-                        super.visitMethodInsn(opcode, owner, name, desc);
+                        super.visitMethodInsn(opcode, owner, name, desc, isInterface);
                     }
                 }
             }
@@ -542,7 +543,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                     null);
             mv.visitCode();
             mv.visitVarInsn(ALOAD, 0);
-            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
+            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(ALOAD, 1);
             mv.visitFieldInsn(PUTFIELD, typeName, "thiz", "Ljava/lang/Object;");
@@ -616,20 +617,20 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                 if (cb.isStatic) {
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, typeName, "args", "[Ljava/lang/Object;");
-                    mv.visitMethodInsn(INVOKESTATIC, toInternal(m.owner), m.name, m.desc);
+                    mv.visitMethodInsn(INVOKESTATIC, toInternal(m.owner), m.name, m.desc, false);
                 } else if (cb.isSpecial) {
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, typeName, "thiz", "Ljava/lang/Object;");
                     mv.visitTypeInsn(CHECKCAST, toInternal(m.owner));
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, typeName, "args", "[Ljava/lang/Object;");
-                    mv.visitMethodInsn(INVOKEVIRTUAL, toInternal(m.owner), m.name, m.desc);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, toInternal(m.owner), m.name, m.desc, false);
                 } else {
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, typeName, "thiz", "Ljava/lang/Object;");
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, typeName, "args", "[Ljava/lang/Object;");
-                    mv.visitMethodInsn(INVOKESTATIC, toInternal(m.owner), m.name, m.desc);
+                    mv.visitMethodInsn(INVOKESTATIC, toInternal(m.owner), m.name, m.desc, false);
                 }
                 Type ret = Type.getReturnType(m.desc);
                 box(ret, mv);
@@ -639,7 +640,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
             mv.visitInsn(DUP);
             mv.visitLdcInsn("invalid idx");
-            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V");
+            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V", false);
             mv.visitInsn(ATHROW);
             mv.visitMaxs(-1, -1);
             mv.visitEnd();
@@ -682,7 +683,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
         mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
         mv.visitInsn(DUP);
         mv.visitLdcInsn("invalid idx");
-        mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V");
+        mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V", false);
         mv.visitInsn(ATHROW);
         mv.visitMaxs(-1, -1);
         mv.visitEnd();

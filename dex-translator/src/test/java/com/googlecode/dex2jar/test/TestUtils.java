@@ -39,8 +39,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
@@ -185,21 +183,16 @@ public abstract class TestUtils {
         return list;
     }
 
-    static Field buf;
-    static {
-        try {
-            buf = Printer.class.getDeclaredField("buf");
-        } catch (NoSuchFieldException | SecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+    private static class StringBuilderTextifier extends Textifier {
+        public StringBuilder getStringBuilder() {
+            return super.stringBuilder;
         }
-        buf.setAccessible(true);
     }
 
     static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)
             throws IllegalArgumentException, IllegalAccessException {
         Frame[] frames = a.getFrames();
-        Textifier t = new Textifier();
+        StringBuilderTextifier t = new StringBuilderTextifier();
         TraceMethodVisitor mv = new TraceMethodVisitor(t);
         String format = "%05d %-" + (method.maxStack + method.maxLocals + 6) + "s|%s";
         for (int j = 0; j < method.instructions.size(); ++j) {
@@ -218,11 +211,11 @@ public abstract class TestUtils {
                     s.append(getShortName(f.getStack(k).toString()));
                 }
             }
-            pw.printf(format, j, s, buf.get(t)); // mv.text.get(j));
+            pw.printf(format, j, s, t.getStringBuilder()); // mv.text.get(j));
         }
         for (int j = 0; j < method.tryCatchBlocks.size(); ++j) {
             ((TryCatchBlockNode) method.tryCatchBlocks.get(j)).accept(mv);
-            pw.print(" " + buf.get(t));
+            pw.print(" " + t.getStringBuilder());
         }
         pw.println();
         pw.flush();

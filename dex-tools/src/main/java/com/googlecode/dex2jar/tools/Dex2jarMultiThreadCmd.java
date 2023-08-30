@@ -37,8 +37,6 @@ import com.googlecode.d2j.dex.ExDex2Asm;
 import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.node.DexFileNode;
 import com.googlecode.d2j.reader.DexFileReader;
-import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 
 @BaseCmd.Syntax(cmd = "d2j-mt-dex2jar", syntax = "[options] <file0> [file1 ... fileN]", desc = "convert dex to jar")
 public class Dex2jarMultiThreadCmd extends BaseCmd {
@@ -109,7 +107,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
             public ClassVisitor create(final String name) {
                 final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
-                return new ClassVisitor(Opcodes.ASM4, rca) {
+                return new ClassVisitor(Opcodes.ASM9, rca) {
                     @Override
                     public void visitEnd() {
                         super.visitEnd();

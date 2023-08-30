@@ -25,7 +25,7 @@ package com.googlecode.d2j.jasmin;
     public boolean rebuildLine=false;
     private java.util.Map<String, Label> labelMap = new java.util.HashMap<>();
     private void reset0() {
-        cn = new ClassNode(ASM4);
+        cn = new ClassNode(Opcodes.ASM9);
         fn = null;
         mn = null;
     }
@@ -1103,7 +1103,7 @@ sMethod	@init{
         cn.methods=new ArrayList<>();
     }
     currentAv=mnv;
-    mn=new MethodNode(ASM4);
+    mn=new MethodNode(Opcodes.ASM9);
     cn.methods.add(mn);
     labelMap.clear();
     if(mn.exceptions==null){
@@ -1163,10 +1163,10 @@ code
 	            }
 	|	a=JOP z=sLabel  { line($a.line); visitJOP(getOp($a.text),getLabel($z.text)); }
 	|	a=XINVOKE e1=sMethodObject   {line($a.line);
-	                    mn.visitMethodInsn(getOp($a.text),$e1.ownerInternalName,$e1.memberName,$e1.desc);
+	                    mn.visitMethodInsn(getOp($a.text),$e1.ownerInternalName,$e1.memberName,$e1.desc, false);
 	                  }
 	|	a=INVOKEINTERFACE e2=sMethodObject INT?  {line($a.line);
-	                    mn.visitMethodInsn(getOp($a.text),$e2.ownerInternalName,$e2.memberName,$e2.desc);
+	                    mn.visitMethodInsn(getOp($a.text),$e2.ownerInternalName,$e2.memberName,$e2.desc, true);
 	                  }
 	|	a=INVOKEDYNAMIC e3=sMethodObject sId sMethodDesc '(' sInvokeDynamicE (',' sInvokeDynamicE)* ')'  {line($a.line); if(1==1) throw new RuntimeException("not support Yet!");}
 	|	a=MULTIANEWARRAY ff=sClassDesc c=INT   {line($a.line); mn.visitMultiANewArrayInsn(unEscape($ff.text),parseInt($c.text)); }

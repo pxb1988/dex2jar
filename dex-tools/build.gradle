@@ -9,6 +9,9 @@ dependencies {
   compile project(':d2j-jasmin')
   compile project(':dex-writer')
   compile project(':d2j-base-cmd')
+    implementation group: 'org.ow2.asm', name: 'asm-tree', version: '9.5'
+    implementation group: 'org.ow2.asm', name: 'asm-util', version: '9.5'
+    implementation group: 'org.ow2.asm', name: 'asm-commons', version: '9.5'
 }
 
 task bin_gen(type: JavaExec) {

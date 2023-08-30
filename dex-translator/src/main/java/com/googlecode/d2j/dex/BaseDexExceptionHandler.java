@@ -41,7 +41,7 @@ public class BaseDexExceptionHandler implements DexExceptionHandler {
         mv.visitTypeInsn(Opcodes.NEW, "java/lang/RuntimeException");
         mv.visitInsn(Opcodes.DUP);
         mv.visitLdcInsn(msg);
-        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V");
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V", false);
         mv.visitInsn(Opcodes.ATHROW);
     }
 }
