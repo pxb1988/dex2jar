@@ -85,6 +85,9 @@ public class FieldIdItem extends BaseItem implements Comparable<FieldIdItem> {
 
     @Override
     public int compareTo(FieldIdItem o) {
+        if (o == null) {
+            return 1;
+        }
         int x = clazz.compareTo(o.clazz);
         if (x != 0) {
             return x;

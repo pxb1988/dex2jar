@@ -19,6 +19,8 @@ package com.googlecode.d2j.dex.writer.item;
 import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.dex.writer.DexWriteException;
 
 import java.util.*;
@@ -40,6 +42,7 @@ public class ConstPool {
     public Map<TypeListItem, TypeListItem> typeLists = new TreeMap<>();
     public Map<String, TypeIdItem> types = new TreeMap<>();
     public Map<TypeIdItem, ClassDefItem> classDefs = new HashMap<>();
+    public Map<MethodHandleItem, MethodHandleItem> methodHandlers = new TreeMap<>();
 
     public Object wrapEncodedItem(Object value) {
         if (value instanceof DexType) {
@@ -50,8 +53,32 @@ public class ConstPool {
             value = uniqString((String) value);
         } else if (value instanceof Method) {
             value = uniqMethod((Method) value);
+        } else if (value instanceof MethodHandle) {
+            value = uniqMethodHandle((MethodHandle) value);
+        } else if (value instanceof Proto) {
+            value = uniqProto((Proto) value);
         }
         return value;
+    }
+
+    private MethodHandleItem uniqMethodHandle(MethodHandle value) {
+        MethodHandleItem mh = new MethodHandleItem();
+        mh.type = value.getType();
+        Field field = value.getField();
+        Method method = value.getMethod();
+        if (field != null) {
+            mh.field = uniqField(field);
+        } else if (method != null) {
+            mh.method = uniqMethod(method);
+        }
+
+        MethodHandleItem result = methodHandlers.get(mh);
+        if (result == null) {
+            methodHandlers.put(mh, mh);
+            result = mh;
+        }
+
+        return result;
     }
 
     public void clean() {
@@ -222,8 +249,11 @@ public class ConstPool {
         return key;
     }
 
-    private ProtoIdItem uniqProto(Method method) {
+    private ProtoIdItem uniqProto(Proto method) {
         return uniqProto(method.getParameterTypes(), method.getReturnType());
+    }
+    private ProtoIdItem uniqProto(Method method) {
+        return uniqProto(method.getProto());
     }
 
     public ProtoIdItem uniqProto(String[] types, String retDesc) {

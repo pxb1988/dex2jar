@@ -278,24 +278,24 @@ public class BaksmaliDumper implements DexConstants {
     private static String escapeMethodHandle(MethodHandle obj) {
         switch (obj.getType()) {
         case MethodHandle.INSTANCE_GET:
-            return ".iget " + escapeField(obj.getField());
+            return "instance-get@" + escapeField(obj.getField());
         case MethodHandle.INSTANCE_PUT:
-            return ".iput " + escapeField(obj.getField());
+            return "instance-put@" + escapeField(obj.getField());
         case MethodHandle.STATIC_GET:
-            return ".sget " + escapeField(obj.getField());
+            return "static-get@" + escapeField(obj.getField());
         case MethodHandle.STATIC_PUT:
-            return ".sput " + escapeField(obj.getField());
+            return "static-put@" + escapeField(obj.getField());
 
         case MethodHandle.INVOKE_INSTANCE:
-            return ".invoke-instance " + escapeMethod(obj.getMethod());
+            return "invoke-instance@" + escapeMethod(obj.getMethod());
         case MethodHandle.INVOKE_STATIC:
-            return ".invoke-static " + escapeMethod(obj.getMethod());
+            return "invoke-static@" + escapeMethod(obj.getMethod());
         case MethodHandle.INVOKE_CONSTRUCTOR:
-            return ".invoke-constructor " + escapeMethod(obj.getMethod());
+            return "invoke-constructor@" + escapeMethod(obj.getMethod());
         case MethodHandle.INVOKE_DIRECT:
-            return ".invoke-direct " + escapeMethod(obj.getMethod());
+            return "invoke-direct@" + escapeMethod(obj.getMethod());
         case MethodHandle.INVOKE_INTERFACE:
-            return ".invoke-interface " + escapeMethod(obj.getMethod());
+            return "invoke-interface@" + escapeMethod(obj.getMethod());
         default:
         }
         return "?";

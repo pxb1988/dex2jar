@@ -1589,6 +1589,12 @@ public class DexFileReader implements BaseDexFileReader {
                         dcv.visitTypeStmt(op, a, -1, getType(b));
                     }
                     break;
+                case kIndexMethodHandleRef:
+                    dcv.visitConstStmt(op, a, getMethodHandle(b));
+                    break;
+                case kIndexProtoRef:
+                    dcv.visitConstStmt(op, a, getProto(b));
+                    break;
                 default:
                     break;
                 }

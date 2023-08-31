@@ -254,6 +254,10 @@ public enum Op implements CFG {
             | kInstrInvoke, true), //
     INVOKE_CUSTOM_RANGE(0xfd, "invoke-custom/range", kFmt3rc, kIndexCallSiteRef, kInstrCanContinue | kInstrCanThrow
             | kInstrInvoke, true), //
+    CONST_METHOD_HANDLE(0xfe, "const-method-handle", kFmt21c, kIndexMethodHandleRef, kInstrCanContinue | kInstrCanThrow
+            , true), //
+    CONST_METHOD_TYPE(0xff, "const-method-type", kFmt21c, kIndexProtoRef, kInstrCanContinue | kInstrCanThrow
+            , true), //
     BAD_OP(-1, "bad-opcode", null, kIndexNone, 0, false), //
     ;
     public int opcode;
