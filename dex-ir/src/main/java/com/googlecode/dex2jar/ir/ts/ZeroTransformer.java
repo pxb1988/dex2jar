@@ -67,7 +67,7 @@ public class ZeroTransformer extends StatedTransformer {
                 }
             }
         }
-        if (assignStmtList.size() == 0) {
+        if (assignStmtList.isEmpty()) {
             return false;
         }
         List<LabelStmt> phiLabels = method.phiLabels;

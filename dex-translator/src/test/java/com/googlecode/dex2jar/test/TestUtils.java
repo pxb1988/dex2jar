@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
@@ -55,7 +54,6 @@ import org.objectweb.asm.tree.analysis.BasicVerifier;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.tree.analysis.Value;
 import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
@@ -174,22 +172,16 @@ public abstract class TestUtils {
         return list;
     }
 
-    static Field buf;
-
-    static {
-        try {
-            buf = Printer.class.getDeclaredField("text");
-        } catch (NoSuchFieldException | SecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+    private static class StringBuilderTextifier extends Textifier {
+        public StringBuilder getStringBuilder() {
+            return super.stringBuilder;
         }
-        buf.setAccessible(true);
     }
 
     static <T extends Value> void printAnalyzerResult(MethodNode method, Analyzer<T> a, final PrintWriter pw)
             throws IllegalArgumentException, IllegalAccessException {
-        Frame<T>[] frames = a.getFrames();
-        Textifier t = new Textifier();
+        Frame[] frames = a.getFrames();
+        StringBuilderTextifier t = new StringBuilderTextifier();
         TraceMethodVisitor mv = new TraceMethodVisitor(t);
         String format = "%05d %-" + (method.maxStack + method.maxLocals + 6) + "s|%s";
         for (int j = 0; j < method.instructions.size(); ++j) {
@@ -208,11 +200,11 @@ public abstract class TestUtils {
                     s.append(getShortName(f.getStack(k).toString()));
                 }
             }
-            pw.printf(format, j, s, buf.get(t)); // mv.text.get(j));
+            pw.printf(format, j, s, t.getStringBuilder()); // mv.text.get(j));
         }
         for (int j = 0; j < method.tryCatchBlocks.size(); ++j) {
-            method.tryCatchBlocks.get(j).accept(mv);
-            pw.print(" " + buf.get(t));
+            ((TryCatchBlockNode) method.tryCatchBlocks.get(j)).accept(mv);
+            pw.print(" " + t.getStringBuilder());
         }
         pw.println();
         pw.flush();
@@ -314,8 +306,12 @@ public abstract class TestUtils {
         CfOptions cfOptions = new CfOptions();
         cfOptions.strictNameCheck = false;
         DexOptions dexOptions = new DexOptions();
-        if (fileNode != null && fileNode.dexVersion >= DexConstants.DEX_037) {
-            dexOptions.minSdkVersion = 26;
+        if (fileNode != null) {
+            if (fileNode.dexVersion >= DexConstants.DEX_039) {
+                dexOptions.minSdkVersion = 28;
+            } else if (fileNode.dexVersion >= DexConstants.DEX_037) {
+                dexOptions.minSdkVersion = 26;
+            }
         }
 
         DirectClassFile dcf = new DirectClassFile(data, rca.getClassName() + ".class", true);

@@ -291,7 +291,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
 
     private void assertPhiStmt(LabelStmt label) {
         assertNotNull(label.phis);
-        assertTrue(label.phis.size() > 0);
+        assertTrue(!label.phis.isEmpty());
     }
 
     /**

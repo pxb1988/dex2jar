@@ -48,13 +48,13 @@ public final class Smali {
     public static DexClassNode smaliFile2Node(String name, InputStream in) throws IOException {
         DexFileNode dfn = new DexFileNode();
         smaliFile(name, in, dfn);
-        return dfn.clzs.size() > 0 ? dfn.clzs.get(0) : null;
+        return !dfn.clzs.isEmpty() ? dfn.clzs.get(0) : null;
     }
 
     public static DexClassNode smaliFile2Node(String name, String buff) {
         DexFileNode dfn = new DexFileNode();
         smaliFile(name, buff, dfn);
-        return dfn.clzs.size() > 0 ? dfn.clzs.get(0) : null;
+        return !dfn.clzs.isEmpty() ? dfn.clzs.get(0) : null;
     }
 
     private static void smali0(DexFileVisitor dcv, CharStream is) {

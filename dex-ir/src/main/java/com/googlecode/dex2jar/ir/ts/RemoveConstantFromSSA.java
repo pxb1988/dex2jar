@@ -72,7 +72,7 @@ public class RemoveConstantFromSSA extends StatedTransformer {
                 }
             }
         }
-        if (assignStmtList.size() == 0) {
+        if (assignStmtList.isEmpty()) {
             return false;
         }
         RemoveLocalFromSSA.fixReplace(cstMap);
@@ -123,7 +123,7 @@ public class RemoveConstantFromSSA extends StatedTransformer {
                                 usedInPhi.addAll(Arrays.asList(phi.getOp2().getOps()));
                             }
                         }
-                        if (labelStmt.phis.size() == 0) {
+                        if (labelStmt.phis.isEmpty()) {
                             it.remove();
                         }
                     }

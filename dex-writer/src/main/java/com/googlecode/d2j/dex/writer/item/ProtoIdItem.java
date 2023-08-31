@@ -84,7 +84,7 @@ public class ProtoIdItem extends BaseItem implements Comparable<ProtoIdItem> {
         out.uint("shorty_idx", shorty.index);
         out.uint("return_type_idx", ret.index);
         // can't use zero-size type_list_item in libart
-        out.uint("parameters_off", (parameters == null || parameters.items.size() == 0) ? 0 : parameters.offset);
+        out.uint("parameters_off", (parameters == null || parameters.items.isEmpty()) ? 0 : parameters.offset);
     }
 
 }

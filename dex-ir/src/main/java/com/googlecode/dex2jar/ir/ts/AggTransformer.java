@@ -25,7 +25,7 @@ public class AggTransformer extends StatedTransformer {
         // 1. merge location Insensitive stmts
         changed = simpleMergeLocals(method, changed, locationSensitiveStmts);
 
-        if (locationSensitiveStmts.size() == 0) {
+        if (locationSensitiveStmts.isEmpty()) {
             return changed;
         }
 
@@ -200,7 +200,7 @@ public class AggTransformer extends StatedTransformer {
      * </pre>
      */
     private boolean simpleMergeLocals(IrMethod method, boolean changed, Set<Stmt> locationSensitiveStmts) {
-        if (method.locals.size() == 0) {
+        if (method.locals.isEmpty()) {
             return false;
         }
         final int[] readCounts = Cfg.countLocalReads(method);

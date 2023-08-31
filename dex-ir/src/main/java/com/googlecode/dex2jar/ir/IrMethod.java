@@ -80,7 +80,7 @@ public class IrMethod {
             }
         }
         sb.append(") {\n\n").append(stmts).append("\n");
-        if (traps.size() > 0 || vars.size() > 0) {
+        if (!traps.isEmpty() || !vars.isEmpty()) {
             sb.append("=============\n");
             for (Trap trap : traps) {
                 sb.append(trap).append('\n');

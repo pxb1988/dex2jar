@@ -42,6 +42,7 @@ import java.util.TreeMap;
 
 import static com.googlecode.d2j.DexConstants.DEX_035;
 import static com.googlecode.d2j.DexConstants.DEX_037;
+import static com.googlecode.d2j.DexConstants.DEX_040;
 
 /**
  * Open and read a dex file.this is the entrance of dex-reader. to read a dex/odex, use the following code:
@@ -238,7 +239,7 @@ public class DexFileReader implements BaseDexFileReader {
             throw new DexException("Magic unsupported.");
         }
         int version = in.getInt() >> 8;
-        if (version < DEX_035) {
+        if (version < DEX_035 || version > DEX_040) {
             System.err.println("Unknown DEX version. Trying anyway...");
             //throw new DexException("not support version.");
         }
@@ -1670,6 +1671,12 @@ public class DexFileReader implements BaseDexFileReader {
                     } else {
                         dcv.visitTypeStmt(op, a, -1, getType(b));
                     }
+                    break;
+                case kIndexMethodHandleRef:
+                    dcv.visitConstStmt(op, a, getMethodHandle(b));
+                    break;
+                case kIndexProtoRef:
+                    dcv.visitConstStmt(op, a, getProto(b));
                     break;
                 default:
                     break;

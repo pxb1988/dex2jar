@@ -1161,12 +1161,10 @@ code
 	            }
 	|	a=JOP z=sLabel  { line($a.line); visitJOP(getOp($a.text),getLabel($z.text)); }
 	|	a=XINVOKE e1=sMethodObject   {line($a.line);
-	                    int op = getOp($a.text);
-	                    mn.visitMethodInsn(op,$e1.ownerInternalName,$e1.memberName,$e1.desc,op==INVOKEINTERFACE);
+	                    mn.visitMethodInsn(getOp($a.text),$e1.ownerInternalName,$e1.memberName,$e1.desc, false);
 	                  }
 	|	a=INVOKEINTERFACE e2=sMethodObject INT?  {line($a.line);
-	                    int op = getOp($a.text);
-	                    mn.visitMethodInsn(op,$e2.ownerInternalName,$e2.memberName,$e2.desc,op==INVOKEINTERFACE);
+	                    mn.visitMethodInsn(getOp($a.text),$e2.ownerInternalName,$e2.memberName,$e2.desc, true);
 	                  }
 	|	a=INVOKEDYNAMIC e3=sMethodObject sId sMethodDesc '(' sInvokeDynamicE (',' sInvokeDynamicE)* ')'  {line($a.line); if(1==1) throw new RuntimeException("not support Yet!");}
 	|	a=MULTIANEWARRAY ff=sClassDesc c=INT   {line($a.line); mn.visitMultiANewArrayInsn(unEscape($ff.text),parseInt($c.text)); }

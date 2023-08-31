@@ -73,6 +73,9 @@ public class MethodIdItem extends BaseItem implements Comparable<MethodIdItem> {
 
     @Override
     public int compareTo(MethodIdItem o) {
+        if (o == null) {
+            return 1;
+        }
         int x = clazz.compareTo(o.clazz);
         if (x != 0) {
             return x;

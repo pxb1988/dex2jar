@@ -4,6 +4,8 @@ import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.node.DexCodeNode;
 import com.googlecode.d2j.node.DexDebugNode;
 import com.googlecode.d2j.node.TryCatchNode;
@@ -73,12 +75,14 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeVirtual;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLCmp;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLength;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nLong;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nMethodHandle;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nMul;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNeg;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNew;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNewArray;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nNot;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nOr;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nProto;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nRem;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nShl;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nShr;
@@ -256,7 +260,7 @@ public class Dex2IRConverter {
                 phiLabels.add(labelStmt);
             }
         }
-        if (phiLabels.size() > 0) {
+        if (!phiLabels.isEmpty()) {
             target.phiLabels = phiLabels;
         }
 
@@ -356,7 +360,7 @@ public class Dex2IRConverter {
             }
         }
 
-        if (needChange.size() > 0) {
+        if (!needChange.isEmpty()) {
             for (TryCatchNode tcb : dexCodeNode.tryStmts) {
                 DexLabel[] handler = tcb.handler;
                 for (int i = 0; i < handler.length; i++) {
@@ -425,7 +429,7 @@ public class Dex2IRConverter {
                         phiValues.add(getLocal(v2));
                     }
                 }
-                if (phiValues.size() > 0) {
+                if (!phiValues.isEmpty()) {
                     phis.add(Stmts.nAssign(v.local, Exprs
                             .nPhi(phiValues.toArray(new Value[0]))));
                     phiValues.clear();
@@ -674,6 +678,10 @@ public class Dex2IRConverter {
                 case CONST_STRING:
                 case CONST_STRING_JUMBO:
                     return b(nString((String) ((ConstStmtNode) insn).value));
+                case CONST_METHOD_HANDLE:
+                    return b(nMethodHandle((MethodHandle) ((ConstStmtNode) insn).value));
+                case CONST_METHOD_TYPE:
+                    return b(nProto((Proto) ((ConstStmtNode) insn).value));
                 case SGET:
                 case SGET_BOOLEAN:
                 case SGET_BYTE:

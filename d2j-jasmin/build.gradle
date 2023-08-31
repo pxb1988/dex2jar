@@ -6,12 +6,6 @@ dependencies {
     }
     implementation fileTree(dir: '../libs', include: '*.jar')
     // implementation group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
-    implementation(group: 'org.ow2.asm', name: 'asm-analysis', version: project.property('asmVersion')) {
-        exclude(module: 'asm')
-    }
-    implementation(group: 'org.ow2.asm', name: 'asm-commons', version: project.property('asmVersion')) {
-        exclude(module: 'asm')
-    }
     implementation(group: 'org.ow2.asm', name: 'asm-tree', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }

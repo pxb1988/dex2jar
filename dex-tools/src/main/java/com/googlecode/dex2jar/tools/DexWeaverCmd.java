@@ -49,7 +49,7 @@ public class DexWeaverCmd extends BaseCmd {
 
         final Map<String, Method> map = new HashMap<>();
         for (String ln : Files.readAllLines(config, StandardCharsets.UTF_8)) {
-            if (ln.startsWith("#") || ln.length() == 0) {
+            if (ln.startsWith("#") || ln.isEmpty()) {
                 continue;
             }
             String[] x = ln.split("=");

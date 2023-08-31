@@ -226,7 +226,7 @@ public final class J2IRConverter {
                 phiLabels.add(labelStmt);
             }
         }
-        if (phiLabels.size() > 0) {
+        if (!phiLabels.isEmpty()) {
             target.phiLabels = phiLabels;
         }
 
@@ -245,7 +245,7 @@ public final class J2IRConverter {
                         phiValues.add(getLocal(v2));
                     }
                 }
-                if (phiValues.size() > 0) {
+                if (!phiValues.isEmpty()) {
                     phis.add(Stmts.nAssign(v.local,
                             Exprs.nPhi(phiValues.toArray(new com.googlecode.dex2jar.ir.expr.Value[0]))));
                     phiValues.clear();

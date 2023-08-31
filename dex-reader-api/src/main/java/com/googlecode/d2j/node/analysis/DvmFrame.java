@@ -60,6 +60,8 @@ public class DvmFrame<V> {
         case CONST_STRING:
         case CONST_STRING_JUMBO:
         case CONST_CLASS:
+        case CONST_METHOD_HANDLE:
+        case CONST_METHOD_TYPE:
             setReg(((ConstStmtNode) insn).a, interpreter.newOperation(insn));
             setTmp(null);
             break;
@@ -392,7 +394,7 @@ public class DvmFrame<V> {
             setTmp(null);
             break;
         default:
-            throw new RuntimeException();
+            throw new RuntimeException("Operation " + insn.op + " unsupported!");
         }
     }
 

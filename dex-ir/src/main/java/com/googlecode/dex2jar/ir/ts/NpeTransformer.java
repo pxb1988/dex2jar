@@ -32,7 +32,7 @@ public class NpeTransformer extends StatedTransformer {
     @Override
     public boolean transformReportChanged(IrMethod method) {
         boolean changed = false;
-        if (method.locals.size() == 0) {
+        if (method.locals.isEmpty()) {
             return false;
         }
         StmtSearcher st = new StmtSearcher() {

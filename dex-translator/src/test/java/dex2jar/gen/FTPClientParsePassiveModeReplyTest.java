@@ -34,9 +34,9 @@ import static com.googlecode.d2j.reader.Op.SGET_OBJECT;
 import static com.googlecode.d2j.reader.Op.THROW;
 
 @ExtendWith(DexTranslatorRunner.class)
-public class FTPClient__parsePassiveModeReply implements Opcodes {
+public class FTPClientParsePassiveModeReplyTest implements Opcodes {
     @Test
-    public static void m003___parsePassiveModeReply(DexClassVisitor cv) {
+    public void m003___parsePassiveModeReply(DexClassVisitor cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_PRIVATE, new Method("Lorg/apache/commons/net/ftp/FTPClient;",
                 "__parsePassiveModeReply", new String[]{"Ljava/lang/String;"}, "V"));
         if (mv != null) {

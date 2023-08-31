@@ -78,4 +78,6 @@ public interface DexConstants {
 
     int DEX_039 = 0x00303339;
 
+    int DEX_040 = 0x00303340;
+
 }

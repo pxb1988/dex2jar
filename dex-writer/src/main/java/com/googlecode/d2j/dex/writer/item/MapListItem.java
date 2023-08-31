@@ -22,7 +22,7 @@ public class MapListItem extends BaseItem {
     }
 
     public void cleanZeroSizeEntry() {
-        items.removeIf(i -> i == null || i.items.size() < 1);
+        items.removeIf(i -> i == null || i.items.isEmpty());
     }
 
     public void write(DataOut out) {

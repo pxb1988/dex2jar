@@ -173,8 +173,8 @@ public class JasminDumper implements Opcodes {
         }
 
         for (FieldNode fn : cn.fields) {
-            boolean annotations = fn.visibleAnnotations != null && fn.visibleAnnotations.size() > 0;
-            if (fn.invisibleAnnotations != null && fn.invisibleAnnotations.size() > 0) {
+            boolean annotations = fn.visibleAnnotations != null && !fn.visibleAnnotations.isEmpty();
+            if (fn.invisibleAnnotations != null && !fn.invisibleAnnotations.isEmpty()) {
                 annotations = true;
             }
             boolean deprecated = (fn.access & Opcodes.ACC_DEPRECATED) != 0;
@@ -767,7 +767,7 @@ public class JasminDumper implements Opcodes {
             pw.println();
         } else if (value instanceof List) {
             List<?> l = (List<?>) value;
-            if (l.size() > 0) {
+            if (!l.isEmpty()) {
                 Object o = l.get(0);
                 if (o instanceof String[]) {
                     pw.print("[e ");

@@ -26,7 +26,7 @@ public class VoidInvokeTransformer extends StatedTransformer {
 
     @Override
     public boolean transformReportChanged(IrMethod method) {
-        if (method.locals.size() == 0) {
+        if (method.locals.isEmpty()) {
             return false;
         }
         int[] reads = Cfg.countLocalReads(method);

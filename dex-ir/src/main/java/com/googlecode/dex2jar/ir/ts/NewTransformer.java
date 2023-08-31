@@ -76,10 +76,10 @@ public class NewTransformer implements Transformer {
             }
         }
 
-        if (init.size() > 0) {
+        if (!init.isEmpty()) {
             final int size = Cfg.reIndexLocal(method);
             makeSureUsedBeforeConstructor(method, init, size);
-            if (init.size() > 0) {
+            if (!init.isEmpty()) {
                 replace0(method, init, size);
             }
             for (Stmt stmt : method.stmts) {
@@ -273,7 +273,7 @@ public class NewTransformer implements Transformer {
 
                 if (dist.st == LABEL) {
                     List<AssignStmt> phis = ((LabelStmt) dist).phis;
-                    if (phis != null && phis.size() > 0) {
+                    if (phis != null && !phis.isEmpty()) {
                         for (AssignStmt phi : phis) {
                             for (Value value : phi.getOp2().getOps()) {
                                 Local local = (Local) value;

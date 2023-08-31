@@ -41,7 +41,7 @@ public class BaksmaliBaseDexExceptionHandler extends BaseDexExceptionHandler {
     private final List<Exception> fileExceptions = new ArrayList<>();
 
     public boolean hasException() {
-        return exceptionMap.size() > 0 || fileExceptions.size() > 0;
+        return !exceptionMap.isEmpty() || !fileExceptions.isEmpty();
     }
 
     @Override
@@ -155,11 +155,11 @@ public class BaksmaliBaseDexExceptionHandler extends BaseDexExceptionHandler {
         writer.write(REPORT_MESSAGE);
         writer.newLine();
         writer.newLine();
-        if (fileExceptions.size() > 0) {
+        if (!fileExceptions.isEmpty()) {
             writer.append(String.format("There are %d fails.", fileExceptions.size()));
             writer.newLine();
         }
-        if (exceptionMap.size() > 0) {
+        if (!exceptionMap.isEmpty()) {
             writer.append(String.format("There are %d methods fail to translate.", exceptionMap.size()));
             writer.newLine();
         }

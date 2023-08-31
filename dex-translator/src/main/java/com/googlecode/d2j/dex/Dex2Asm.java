@@ -426,7 +426,7 @@ public class Dex2Asm {
     }
 
     private static boolean isJavaIdentifier(String str) {
-        if (str.length() < 1) {
+        if (str.isEmpty()) {
             return false;
         }
         if (!Character.isJavaIdentifierStart(str.charAt(0))) {
@@ -701,14 +701,20 @@ public class Dex2Asm {
             MethodHandle mh = (MethodHandle) ele;
             switch (mh.getType()) {
             case MethodHandle.INSTANCE_GET:
-            case MethodHandle.STATIC_GET:
                 h = new Handle(Opcodes.H_GETFIELD, toInternalName(mh.getField().getOwner()), mh.getField().getName(),
                         mh.getField().getType(), false);
                 break;
             case MethodHandle.INSTANCE_PUT:
-            case MethodHandle.STATIC_PUT:
                 h = new Handle(Opcodes.H_PUTFIELD, toInternalName(mh.getField().getOwner()), mh.getField().getName(),
                         mh.getField().getType(), false);
+                break;
+            case MethodHandle.STATIC_GET:
+                h = new Handle(Opcodes.H_GETSTATIC, toInternalName(mh.getField().getOwner()), mh.getField().getName()
+                        , mh.getField().getType(), false);
+                break;
+            case MethodHandle.STATIC_PUT:
+                h = new Handle(Opcodes.H_PUTSTATIC, toInternalName(mh.getField().getOwner()), mh.getField().getName()
+                        , mh.getField().getType(), false);
                 break;
             case MethodHandle.INVOKE_INSTANCE:
                 h = new Handle(Opcodes.H_INVOKEVIRTUAL, toInternalName(mh.getMethod().getOwner()),

@@ -521,7 +521,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             }
         });
 
-        if (callbacks.size() > 0) {
+        if (!callbacks.isEmpty()) {
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
             String type = buildInvocationClz(cw);
             byte[] data = cw.toByteArray();

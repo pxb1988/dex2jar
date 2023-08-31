@@ -25,7 +25,7 @@ import static com.googlecode.d2j.reader.Op.THROW;
 public class I121Test {
 
     @Test
-    public static void i121(DexClassVisitor cv) {
+    public void i121(DexClassVisitor cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "a", new String[]{
                 "Ljava/lang/String;", "Ljava/lang/String;"}, "Ljava/lang/String;"));
         DexCodeVisitor code = mv.visitCode();

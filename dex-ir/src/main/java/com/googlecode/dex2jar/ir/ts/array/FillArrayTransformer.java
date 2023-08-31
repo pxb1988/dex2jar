@@ -137,18 +137,18 @@ public class FillArrayTransformer extends StatedTransformer {
         // find array match fixed size,fixed index, not in phi
         final Map<Local, ArrayObject> arraySizes = searchForArrayObject(method);
 
-        if (arraySizes.size() == 0) {
+        if (arraySizes.isEmpty()) {
             return false;
         }
 
         makeSureAllElementAreAssigned(arraySizes);
-        if (arraySizes.size() == 0) {
+        if (arraySizes.isEmpty()) {
             return false;
         }
 
         makeSureArrayUsedAfterAllElementAssigned(method, arraySizes);
 
-        if (arraySizes.size() == 0) {
+        if (arraySizes.isEmpty()) {
             return false;
         }
 
@@ -234,7 +234,7 @@ public class FillArrayTransformer extends StatedTransformer {
                         Cfg.travelMod(filledArrayExprs.get(i), tcb);
                     }
                 }
-            } else if (ao.used.size() != 0) {
+            } else if (!ao.used.isEmpty()) {
                 throw new RuntimeException("array is used multiple times");
             }
         }
@@ -534,7 +534,7 @@ public class FillArrayTransformer extends StatedTransformer {
     private Map<Local, ArrayObject> searchForArrayObject(IrMethod method) {
 
         final Map<Local, ArrayObject> arraySizes = new HashMap<>();
-        if (method.locals.size() == 0) {
+        if (method.locals.isEmpty()) {
             return arraySizes;
         }
         Cfg.createCFG(method);
@@ -580,7 +580,7 @@ public class FillArrayTransformer extends StatedTransformer {
                 }
             }
         });
-        if (arraySizes.size() > 0) {
+        if (!arraySizes.isEmpty()) {
             Set<Local> set = new HashSet<>();
             if (method.phiLabels != null) {
                 for (LabelStmt labelStmt : method.phiLabels) {
@@ -594,7 +594,7 @@ public class FillArrayTransformer extends StatedTransformer {
                     }
                 }
             }
-            if (set.size() > 0) {
+            if (!set.isEmpty()) {
                 for (Local local : set) {
                     arraySizes.remove(local);
                 }

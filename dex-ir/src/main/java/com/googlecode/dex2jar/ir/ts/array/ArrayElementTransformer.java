@@ -45,7 +45,7 @@ public class ArrayElementTransformer extends StatedTransformer {
     public boolean transformReportChanged(IrMethod method) {
 
         Set<Local> arrays = searchForArrayObject(method);
-        if (arrays.size() == 0) {
+        if (arrays.isEmpty()) {
             return false;
         }
         for (Local local : method.locals) {

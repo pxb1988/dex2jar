@@ -238,7 +238,7 @@ public class UnSSATransformer implements Transformer {
 
     @Override
     public void transform(IrMethod method) {
-        if (method.phiLabels == null || method.phiLabels.size() == 0) {
+        if (method.phiLabels == null || method.phiLabels.isEmpty()) {
             return;
         }
 
@@ -261,7 +261,7 @@ public class UnSSATransformer implements Transformer {
             Stmt stmt = phiLabel.getNext();
             if (stmt.st == ST.LABEL) {
                 LabelStmt labelStmt2 = (LabelStmt) stmt;
-                if (labelStmt2.phis != null && labelStmt2.phis.size() > 0) {
+                if (labelStmt2.phis != null && !labelStmt2.phis.isEmpty()) {
                     method.stmts.insertAfter(phiLabel, Stmts.nNop());
                 }
             }
@@ -416,7 +416,7 @@ public class UnSSATransformer implements Transformer {
                     }
                     {
                         List<LiveV> otherParent = v.otherParents;
-                        if (otherParent != null && otherParent.size() > 0) {
+                        if (otherParent != null && !otherParent.isEmpty()) {
                             for (LiveV parent : otherParent) {
                                 if (parent != null && !parent.used) {
                                     parent.used = true;

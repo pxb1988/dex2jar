@@ -51,7 +51,7 @@ public class LabelStmt extends E0Stmt {
         StringBuilder sb = new StringBuilder();
         sb.append(getDisplayName()).append(":");
 
-        if (phis != null && phis.size() > 0) {
+        if (phis != null && !phis.isEmpty()) {
             sb.append(" // ").append(phis);
         }
         if (lineNumber >= 0) {

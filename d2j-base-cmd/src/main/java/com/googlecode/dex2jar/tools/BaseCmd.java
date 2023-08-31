@@ -498,7 +498,7 @@ public abstract class BaseCmd {
         final int maxPaLength = 40;
         out.println(this.cmdName + " -- " + desc);
         out.println("usage: " + this.cmdName + " " + cmdLineSyntax);
-        if (this.optMap.size() > 0) {
+        if (!this.optMap.isEmpty()) {
             out.println("options:");
         }
         // [PART.A.........][Part.B

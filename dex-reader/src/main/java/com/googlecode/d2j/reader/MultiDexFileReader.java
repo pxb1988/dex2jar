@@ -58,7 +58,7 @@ public class MultiDexFileReader implements BaseDexFileReader {
                     }
                 }
             }
-            if (dexFileReaders.size() == 0) {
+            if (dexFileReaders.isEmpty()) {
                 throw new IOException("Can not find classes.dex in zip file");
             } else if (dexFileReaders.size() == 1) {
                 return dexFileReaders.firstEntry().getValue();

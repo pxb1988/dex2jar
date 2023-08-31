@@ -3,6 +3,7 @@ package com.googlecode.d2j.smali;
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.Visibility;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexAnnotationVisitor;
@@ -485,23 +486,30 @@ public final class Utils implements DexConstants {
         return -1;
     }
 
-    public static Method parseMethodAndUnescape(String owner, String part) throws RuntimeException {
-        int x = part.indexOf('(');
-        if (x < 0) {
-            throw new RuntimeException();
-        }
+    public static Proto parseProtoAndUnescape(String part) throws RuntimeException {
+        int x = 0;
         int y = part.indexOf(')', x);
         if (y < 0) {
             throw new RuntimeException();
         }
 
-        String methodName = unEscapeId(part.substring(0, x));
         String[] params = toTypeList(part.substring(x + 1, y));
         for (int i = 0; i < params.length; i++) {
             params[i] = unEscapeId(params[i]);
         }
         String ret = unEscapeId(part.substring(y + 1));
-        return new Method(owner, methodName, params, ret);
+        return new Proto(params, ret);
+    }
+
+    public static Method parseMethodAndUnescape(String owner, String part) throws RuntimeException {
+        int x = part.indexOf('(');
+        if (x < 0) {
+            throw new RuntimeException();
+        }
+
+        String methodName = unEscapeId(part.substring(0, x));
+
+        return new Method(owner, methodName, parseProtoAndUnescape(part.substring(x)));
     }
 
     public static Method parseMethodAndUnescape(String full) throws RuntimeException {

@@ -139,7 +139,7 @@ public final class DexFix {
     }
 
     static boolean isPrimitiveZero(String desc, Object value) {
-        if (value != null && desc != null && desc.length() > 0) {
+        if (value != null && desc != null && !desc.isEmpty()) {
             switch (desc.charAt(0)) {
             // case 'V':// VOID_TYPE
             case 'Z':// BOOLEAN_TYPE

@@ -19,7 +19,7 @@ import static com.googlecode.d2j.reader.Op.RETURN_VOID;
 public class Issue71Test implements DexConstants {
 
     @Test
-    public static void i71(DexClassVisitor cv) {
+    public void i71(DexClassVisitor cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_STATIC, new Method("La;", "test", new String[]{}, "V"));
         if (mv != null) {
             DexCodeVisitor code = mv.visitCode();

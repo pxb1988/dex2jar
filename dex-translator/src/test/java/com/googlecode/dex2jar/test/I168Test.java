@@ -20,7 +20,7 @@ import static com.googlecode.d2j.DexConstants.ACC_STATIC;
 public class I168Test {
 
     @Test
-    public static void i168(DexClassVisitor cv) {
+    public void i168(DexClassVisitor cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_PUBLIC | ACC_STATIC, new Method("La;", "a", new String[]{}, "I"));
         DexCodeVisitor code = mv.visitCode();
         code.visitRegister(2000); // 2000 locals

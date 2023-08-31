@@ -222,7 +222,7 @@ public class DecryptStringCmd extends BaseCmd {
         System.err.println(jar + " -> " + output);
 
         List<MethodConfig> methodConfigs = collectMethodConfigs();
-        if (methodConfigs == null || methodConfigs.size() == 0) {
+        if (methodConfigs == null || methodConfigs.isEmpty()) {
             System.err.println("No method selected !");
             return;
         }
@@ -901,7 +901,7 @@ public class DecryptStringCmd extends BaseCmd {
         List<MethodConfig> methodConfigs = new ArrayList<>();
         if (this.method != null) {
             for (String line : Files.readAllLines(this.method, StandardCharsets.UTF_8)) {
-                if (line.length() == 0 || line.startsWith("#")) {
+                if (line.isEmpty() || line.startsWith("#")) {
                     continue;
                 }
                 methodConfigs.add(this.build(line));

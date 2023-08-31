@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DexTranslatorRunner implements ParameterResolver {
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        return parameterContext.getParameter().getType().equals(DexClassNode.class);
+        return DexClassVisitor.class.isAssignableFrom(parameterContext.getParameter().getType());
     }
 
     @Override

@@ -222,7 +222,7 @@ public final class Cfg {
         Stack<Stmt> stack = new Stack<>();
         Stmt first = stmts.getFirst();
         Stmt nop = null;
-        if (first.st == ST.LABEL && first.cfgFroms.size() > 0) {
+        if (first.st == ST.LABEL && !first.cfgFroms.isEmpty()) {
             nop = Stmts.nNop();
             // for
             // L0:

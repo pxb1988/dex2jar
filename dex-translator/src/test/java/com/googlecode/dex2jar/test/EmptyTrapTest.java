@@ -28,7 +28,7 @@ import static com.googlecode.d2j.reader.Op.RETURN_OBJECT;
 public class EmptyTrapTest {
 
     @Test
-    public static void m005_toJSONString(DexClassVisitor cv) {
+    public void m005_toJSONString(DexClassVisitor cv) {
         DexMethodVisitor mv = cv.visitMethod(0, new Method("LJSResponseTest;", "toJSONString", new String[]{},
                 "Ljava/lang/String;"));
         if (mv != null) {

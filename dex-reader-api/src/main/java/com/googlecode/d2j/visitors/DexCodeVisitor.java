@@ -83,11 +83,22 @@ public class DexCodeVisitor {
     }
 
     /**
-     * <pre>
-     * CONST * CONST_WIDE * CONST_STRING * CONST_CLASS *
-     * </pre>
-     *
-     * @param value int/long/type
+     * @param op    CONST*
+     * @param ra    register
+     * @param value Integer,Long,DexType,MethodHandle,Proto
+     * @see Op#CONST
+     * @see Op#CONST_4
+     * @see Op#CONST_16
+     * @see Op#CONST_HIGH16
+     * @see Op#CONST_WIDE
+     * @see Op#CONST_WIDE_16
+     * @see Op#CONST_WIDE_32
+     * @see Op#CONST_WIDE_HIGH16
+     * @see Op#CONST_STRING
+     * @see Op#CONST_STRING_JUMBO
+     * @see Op#CONST_CLASS
+     * @see Op#CONST_METHOD_HANDLE
+     * @see Op#CONST_METHOD_TYPE
      */
     public void visitConstStmt(Op op, int ra, Object value) {
         if (visitor != null) {

@@ -51,12 +51,12 @@ public class CodeItem extends BaseItem {
         prepareTries();
 
         offset += 16 + insnSize * 2;
-        if (tries != null && tries.size() > 0) {
+        if (tries != null && !tries.isEmpty()) {
             if ((insnSize & 0x01) != 0) { // padding
                 offset += 2;
             }
             offset += 8 * tries.size();
-            if (handlers.size() > 0) {
+            if (!handlers.isEmpty()) {
                 int base = offset;
                 offset += lengthOfUleb128(handlers.size());
 
@@ -90,7 +90,7 @@ public class CodeItem extends BaseItem {
             insn.write(b);
         }
         out.bytes("insn", b.array());
-        if (tries != null && tries.size() > 0) {
+        if (tries != null && !tries.isEmpty()) {
             if ((insnSize & 0x01) != 0) { // padding
                 out.skip("padding", 2);
             }
@@ -104,7 +104,7 @@ public class CodeItem extends BaseItem {
                 lastEnd = ti.end.offset;
                 out.ushort("handler_off", ti.handler.handlerOff);
             }
-            if (handlers.size() > 0) {
+            if (!handlers.isEmpty()) {
                 out.uleb128("size", handlers.size());
                 for (EncodedCatchHandler h : handlers) {
 
@@ -129,7 +129,7 @@ public class CodeItem extends BaseItem {
     }
 
     private void prepareTries() {
-        if (tryItems.size() > 0) {
+        if (!tryItems.isEmpty()) {
             List<CodeItem.TryItem> uniqTrys = new ArrayList<>();
             { // merge dup trys
                 Set<TryItem> set = new HashSet<>();
@@ -147,7 +147,7 @@ public class CodeItem extends BaseItem {
                 }
                 set.clear();
                 this.tries = uniqTrys;
-                if (uniqTrys.size() > 0) {
+                if (!uniqTrys.isEmpty()) {
                     uniqTrys.sort(Comparator.comparingInt((TryItem o) -> o.start.offset)
                             .thenComparingInt(o -> o.end.offset));
                 }

@@ -115,7 +115,7 @@ public class SSATransformer implements Transformer {
             }
             p.frame = null;
         }
-        if (phiLabels.size() > 0) {
+        if (!phiLabels.isEmpty()) {
             method.phiLabels = phiLabels;
         }
     }

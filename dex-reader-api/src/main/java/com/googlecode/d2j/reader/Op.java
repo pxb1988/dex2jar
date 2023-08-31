@@ -29,8 +29,10 @@ import static com.googlecode.d2j.reader.InstructionFormat.kFmt51l;
 import static com.googlecode.d2j.reader.InstructionIndexType.kIndexCallSiteRef;
 import static com.googlecode.d2j.reader.InstructionIndexType.kIndexFieldRef;
 import static com.googlecode.d2j.reader.InstructionIndexType.kIndexMethodAndProtoRef;
+import static com.googlecode.d2j.reader.InstructionIndexType.kIndexMethodHandleRef;
 import static com.googlecode.d2j.reader.InstructionIndexType.kIndexMethodRef;
 import static com.googlecode.d2j.reader.InstructionIndexType.kIndexNone;
+import static com.googlecode.d2j.reader.InstructionIndexType.kIndexProtoRef;
 import static com.googlecode.d2j.reader.InstructionIndexType.kIndexStringRef;
 import static com.googlecode.d2j.reader.InstructionIndexType.kIndexTypeRef;
 
@@ -101,7 +103,7 @@ public enum Op implements CFG {
     IF_GEZ(0x3b, "if-gez", kFmt21t, kIndexNone, K_INSTR_CAN_BRANCH | K_INSTR_CAN_CONTINUE, false), //
     IF_GTZ(0x3c, "if-gtz", kFmt21t, kIndexNone, K_INSTR_CAN_BRANCH | K_INSTR_CAN_CONTINUE, false), //
     IF_LEZ(0x3d, "if-lez", kFmt21t, kIndexNone, K_INSTR_CAN_BRANCH | K_INSTR_CAN_CONTINUE, false), //
-//    UNUSED_3E(0x3e, "unused-3e", null, kIndexUnknown, 0, false), //
+    //    UNUSED_3E(0x3e, "unused-3e", null, kIndexUnknown, 0, false), //
 //    UNUSED_3F(0x3f, "unused-3f", null, kIndexUnknown, 0, false), //
 //    UNUSED_40(0x40, "unused-40", null, kIndexUnknown, 0, false), //
 //    UNUSED_41(0x41, "unused-41", null, kIndexUnknown, 0, false), //
@@ -163,7 +165,7 @@ public enum Op implements CFG {
             K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW | K_INSTR_INVOKE, true), //
     INVOKE_INTERFACE(0x72, "invoke-interface", kFmt35c, kIndexMethodRef,
             K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW | K_INSTR_INVOKE, true), //
-//    UNUSED_73(0x73, "unused-73", null, kIndexUnknown, 0, false), //
+    //    UNUSED_73(0x73, "unused-73", null, kIndexUnknown, 0, false), //
     INVOKE_VIRTUAL_RANGE(0x74, "invoke-virtual/range", kFmt3rc, kIndexMethodRef,
             K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW | K_INSTR_INVOKE, true), //
     INVOKE_SUPER_RANGE(0x75, "invoke-super/range", kFmt3rc, kIndexMethodRef,
@@ -174,7 +176,7 @@ public enum Op implements CFG {
             K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW | K_INSTR_INVOKE, true), //
     INVOKE_INTERFACE_RANGE(0x78, "invoke-interface/range", kFmt3rc, kIndexMethodRef,
             K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW | K_INSTR_INVOKE, true), //
-//    UNUSED_79(0x79, "unused-79", null, kIndexUnknown, 0, false), //
+    //    UNUSED_79(0x79, "unused-79", null, kIndexUnknown, 0, false), //
 //    UNUSED_7A(0x7a, "unused-7a", null, kIndexUnknown, 0, false), //
     NEG_INT(0x7b, "neg-int", kFmt12x, kIndexNone, K_INSTR_CAN_CONTINUE, true), //
     NOT_INT(0x7c, "not-int", kFmt12x, kIndexNone, K_INSTR_CAN_CONTINUE, true), //
@@ -288,6 +290,10 @@ public enum Op implements CFG {
             K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW | K_INSTR_INVOKE, true), //
     INVOKE_CUSTOM_RANGE(0xfd, "invoke-custom/range", kFmt3rc, kIndexCallSiteRef,
             K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW | K_INSTR_INVOKE, true), //
+    CONST_METHOD_HANDLE(0xfe, "const-method-handle", kFmt21c, kIndexMethodHandleRef,
+            K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW, true), //
+    CONST_METHOD_TYPE(0xff, "const-method-type", kFmt21c, kIndexProtoRef,
+            K_INSTR_CAN_CONTINUE | K_INSTR_CAN_THROW, true), //
     BAD_OP(-1, "bad-opcode", null, kIndexNone, 0, false); //
 
     public final int opcode;

@@ -63,6 +63,14 @@ public final class Exprs {
         return new Constant(i);
     }
 
+    public static Constant nMethodHandle(MethodHandle i) {
+        return new Constant(i);
+    }
+
+    public static Constant nProto(Proto i) {
+        return new Constant(i);
+    }
+
     public static BinopExpr nAdd(Value a, Value b, String type) {
         return new BinopExpr(VT.ADD, a, b, type);
     }

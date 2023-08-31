@@ -122,7 +122,7 @@ public class RemoveLocalFromSSA extends StatedTransformer {
                     }
                     set.clear();
                 }
-                if (labelStmt.phis.size() == 0) {
+                if (labelStmt.phis.isEmpty()) {
                     labelStmt.phis = null;
                     itLabel.remove();
                 }
@@ -174,7 +174,7 @@ public class RemoveLocalFromSSA extends StatedTransformer {
             while (itLabel.hasNext()) {
                 LabelStmt labelStmt = itLabel.next();
                 labelStmt.phis.removeIf(phi -> toDeletePhiAssign.contains(phi.getOp1()));
-                if (labelStmt.phis.size() == 0) {
+                if (labelStmt.phis.isEmpty()) {
                     labelStmt.phis = null;
                     itLabel.remove();
                 }
@@ -264,7 +264,7 @@ public class RemoveLocalFromSSA extends StatedTransformer {
             method.locals.remove(local);
             irChanged = true;
         }
-        if (toReplace.size() > 0) {
+        if (!toReplace.isEmpty()) {
             Cfg.travelMod(method.stmts, new Cfg.TravelCallBack() {
                 @Override
                 public Value onAssign(Local v, AssignStmt as) {

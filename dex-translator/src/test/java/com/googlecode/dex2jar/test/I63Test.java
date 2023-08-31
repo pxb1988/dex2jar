@@ -18,7 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class I63Test implements DexConstants {
 
     @Test
-    public static void i63(DexClassVisitor cv) {
+    public void i63(DexClassVisitor cv) {
         DexMethodVisitor mv = cv.visitMethod(ACC_STATIC, new Method("La;", "b", new String[]{}, "V"));
         if (mv != null) {
             DexCodeVisitor code = mv.visitCode();

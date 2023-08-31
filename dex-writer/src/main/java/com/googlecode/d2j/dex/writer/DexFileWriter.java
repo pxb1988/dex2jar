@@ -16,6 +16,7 @@ import com.googlecode.d2j.dex.writer.item.EncodedArrayItem;
 import com.googlecode.d2j.dex.writer.item.FieldIdItem;
 import com.googlecode.d2j.dex.writer.item.HeadItem;
 import com.googlecode.d2j.dex.writer.item.MapListItem;
+import com.googlecode.d2j.dex.writer.item.MethodHandleItem;
 import com.googlecode.d2j.dex.writer.item.MethodIdItem;
 import com.googlecode.d2j.dex.writer.item.ProtoIdItem;
 import com.googlecode.d2j.dex.writer.item.SectionItem;
@@ -145,6 +146,8 @@ public class DexFileWriter extends DexFileVisitor {
                 SectionType.TYPE_FIELD_ID_ITEM, cp.fields.values());
         SectionItem<MethodIdItem> methodIdSection = new SectionItem<>(
                 SectionType.TYPE_METHOD_ID_ITEM, cp.methods.values());
+        SectionItem<MethodHandleItem> methodHandlerSection = new SectionItem<>(
+                SectionType.TYPE_METHOD_HANDLE_ITEM, cp.methodHandlers.values());
         SectionItem<ClassDefItem> classDefSection = new SectionItem<>(
                 SectionType.TYPE_CLASS_DEF_ITEM, cp.buildSortedClassDefItems());
         SectionItem<TypeListItem> typeListSection = new SectionItem<>(
@@ -206,6 +209,7 @@ public class DexFileWriter extends DexFileVisitor {
             items.add(protoIdSection);
             items.add(fieldIdSection);
             items.add(methodIdSection);
+            items.add(methodHandlerSection);
             items.add(classDefSection);
 
             items.addAll(dataSectionItems);

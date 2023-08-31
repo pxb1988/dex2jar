@@ -152,7 +152,7 @@ public class Ir2JRegAssignTransformer implements Transformer {
 
     @Override
     public void transform(IrMethod method) {
-        if (method.locals.size() == 0) {
+        if (method.locals.isEmpty()) {
             return;
         }
         SimpleLiveAnalyze sa = new SimpleLiveAnalyze(method, true);

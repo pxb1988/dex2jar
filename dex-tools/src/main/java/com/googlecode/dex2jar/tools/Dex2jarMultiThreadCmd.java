@@ -46,7 +46,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
         if (fileList != null) {
             f.addAll(Files.readAllLines(fileList, StandardCharsets.UTF_8));
         }
-        if (f.size() < 1) {
+        if (f.isEmpty()) {
             throw new HelpException();
         }
 
