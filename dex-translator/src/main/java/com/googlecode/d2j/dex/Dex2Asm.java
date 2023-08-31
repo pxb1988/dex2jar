@@ -652,6 +652,9 @@ public class Dex2Asm {
     }
 
     public static Object[] convertConstantValues(Object[] v) {
+        if (v == null) {
+            return null;
+        }
         Object[] copy = Arrays.copyOf(v, v.length);
         for (int i = 0; i < copy.length; i++) {
             Object ele = copy[i];
@@ -665,42 +668,45 @@ public class Dex2Asm {
         if (ele instanceof DexType) {
             ele = Type.getType(((DexType) ele).desc);
         } else if (ele instanceof MethodHandle) {
-            Handle h = null;
-            MethodHandle mh = (MethodHandle) ele;
-            switch (mh.getType()) {
-                case MethodHandle.INSTANCE_GET:
-                    h = new Handle(Opcodes.H_GETFIELD, toInternalName(mh.getField().getOwner()), mh.getField().getName(), mh.getField().getType(), false);
-                    break;
-                case MethodHandle.INSTANCE_PUT:
-                    h = new Handle(Opcodes.H_PUTFIELD, toInternalName(mh.getField().getOwner()), mh.getField().getName(), mh.getField().getType(), false);
-                    break;
-                case MethodHandle.STATIC_GET:
-                    h = new Handle(Opcodes.H_GETSTATIC, toInternalName(mh.getField().getOwner()), mh.getField().getName(), mh.getField().getType(), false);
-                    break;
-                case MethodHandle.STATIC_PUT:
-                    h = new Handle(Opcodes.H_PUTSTATIC, toInternalName(mh.getField().getOwner()), mh.getField().getName(), mh.getField().getType(), false);
-                    break;
-                case MethodHandle.INVOKE_INSTANCE:
-                    h = new Handle(Opcodes.H_INVOKEVIRTUAL, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), false);
-                    break;
-                case MethodHandle.INVOKE_STATIC:
-                    h = new Handle(Opcodes.H_INVOKESTATIC, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), false);
-                    break;
-                case MethodHandle.INVOKE_CONSTRUCTOR:
-                    h = new Handle(Opcodes.H_NEWINVOKESPECIAL, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), false);
-                    break;
-                case MethodHandle.INVOKE_DIRECT:
-                    h = new Handle(Opcodes.H_INVOKESPECIAL, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), false);
-                    break;
-                case MethodHandle.INVOKE_INTERFACE:
-                    h = new Handle(Opcodes.H_INVOKEINTERFACE, toInternalName(mh.getMethod().getOwner()), mh.getMethod().getName(), mh.getMethod().getDesc(), true);
-                    break;
-            }
-            ele = h;
+            ele = convertHandler((MethodHandle) ele);
         } else if (ele instanceof Proto) {
             ele = Type.getMethodType(((Proto) ele).getDesc());
         }
         return ele;
+    }
+
+    public static Handle convertHandler(MethodHandle ele) {
+        Handle h = null;
+        switch (ele.getType()) {
+            case MethodHandle.INSTANCE_GET:
+                h = new Handle(Opcodes.H_GETFIELD, toInternalName(ele.getField().getOwner()), ele.getField().getName(), ele.getField().getType(), false);
+                break;
+            case MethodHandle.INSTANCE_PUT:
+                h = new Handle(Opcodes.H_PUTFIELD, toInternalName(ele.getField().getOwner()), ele.getField().getName(), ele.getField().getType(), false);
+                break;
+            case MethodHandle.STATIC_GET:
+                h = new Handle(Opcodes.H_GETSTATIC, toInternalName(ele.getField().getOwner()), ele.getField().getName(), ele.getField().getType(), false);
+                break;
+            case MethodHandle.STATIC_PUT:
+                h = new Handle(Opcodes.H_PUTSTATIC, toInternalName(ele.getField().getOwner()), ele.getField().getName(), ele.getField().getType(), false);
+                break;
+            case MethodHandle.INVOKE_INSTANCE:
+                h = new Handle(Opcodes.H_INVOKEVIRTUAL, toInternalName(ele.getMethod().getOwner()), ele.getMethod().getName(), ele.getMethod().getDesc(), false);
+                break;
+            case MethodHandle.INVOKE_STATIC:
+                h = new Handle(Opcodes.H_INVOKESTATIC, toInternalName(ele.getMethod().getOwner()), ele.getMethod().getName(), ele.getMethod().getDesc(), false);
+                break;
+            case MethodHandle.INVOKE_CONSTRUCTOR:
+                h = new Handle(Opcodes.H_NEWINVOKESPECIAL, toInternalName(ele.getMethod().getOwner()), ele.getMethod().getName(), ele.getMethod().getDesc(), false);
+                break;
+            case MethodHandle.INVOKE_DIRECT:
+                h = new Handle(Opcodes.H_INVOKESPECIAL, toInternalName(ele.getMethod().getOwner()), ele.getMethod().getName(), ele.getMethod().getDesc(), false);
+                break;
+            case MethodHandle.INVOKE_INTERFACE:
+                h = new Handle(Opcodes.H_INVOKEINTERFACE, toInternalName(ele.getMethod().getOwner()), ele.getMethod().getName(), ele.getMethod().getDesc(), true);
+                break;
+        }
+        return h;
     }
 
     public void convertMethod(DexClassNode classNode, DexMethodNode methodNode, ClassVisitor cv, ClzCtx clzCtx) {
