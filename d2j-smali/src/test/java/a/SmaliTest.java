@@ -1,5 +1,14 @@
 package a;
 
+import com.android.tools.smali.baksmali.Adaptors.ClassDefinition;
+import com.android.tools.smali.baksmali.BaksmaliOptions;
+import com.android.tools.smali.baksmali.formatter.BaksmaliWriter;
+import com.android.tools.smali.dexlib2.DexFileFactory;
+import com.android.tools.smali.dexlib2.Opcodes;
+import com.android.tools.smali.dexlib2.dexbacked.DexBackedClassDef;
+import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile;
+import com.android.tools.smali.dexlib2.util.SyntheticAccessorResolver;
+import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.dex.writer.DexFileWriter;
 import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.node.DexFileNode;
@@ -8,18 +17,16 @@ import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.d2j.smali.BaksmaliDumpOut;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.smali.Smali;
-import org.jf.baksmali.Adaptors.ClassDefinition;
-import org.jf.baksmali.baksmaliOptions;
-import org.jf.dexlib2.DexFileFactory;
-import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.dexbacked.DexBackedClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedDexFile;
-import org.jf.dexlib2.util.SyntheticAccessorResolver;
-import org.jf.util.IndentingWriter;
+
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,9 +71,18 @@ public class SmaliTest {
     }
 
     private void dotest(File dexFile) throws IOException {
+        int dexVersion = new DexFileReader(dexFile).getDexVersion();
+        Opcodes opcodes;
+        if (dexVersion >= DexConstants.DEX_039) {
+            opcodes = Opcodes.forApi(28);
+        } else if (dexVersion >= DexConstants.DEX_037) {
+            opcodes = Opcodes.forApi(26);
+        } else {
+            opcodes = Opcodes.forApi(0);
+        }
         DexBackedDexFile dex;
         try {
-            dex = DexFileFactory.loadDexFile(dexFile, 14, false);
+            dex = DexFileFactory.loadDexFile(dexFile, opcodes);
         } catch (DexBackedDexFile.NotADexFile ex) {
             ex.printStackTrace();
             return;
@@ -84,7 +100,7 @@ public class SmaliTest {
 
             {
                 byte[] data = toDex(dexClassNode);
-                DexBackedClassDef def2 = new DexBackedDexFile(new Opcodes(14, false), data).getClasses().iterator().next();
+                DexBackedClassDef def2 = new DexBackedDexFile(opcodes, data).getClasses().iterator().next();
                 String baksmali3 = baksmali(def2); // original
                 Assert.assertEquals(smali, baksmali3);
             }
@@ -95,7 +111,7 @@ public class SmaliTest {
 
             {
                 byte[] data = toDex(dexClassNode2);
-                DexBackedClassDef def2 = new DexBackedDexFile(new Opcodes(14, false), data).getClasses().iterator().next();
+                DexBackedClassDef def2 = new DexBackedDexFile(opcodes, data).getClasses().iterator().next();
                 String baksmali3 = baksmali(def2); // original
                 Assert.assertEquals(smali, baksmali3);
             }
@@ -119,13 +135,13 @@ public class SmaliTest {
     }
 
     private static String baksmali(DexBackedClassDef def) throws IOException {
-        baksmaliOptions opts = new baksmaliOptions();
-        opts.outputDebugInfo = false;
-        opts.syntheticAccessorResolver = new SyntheticAccessorResolver(Collections.EMPTY_LIST);
+        BaksmaliOptions opts = new BaksmaliOptions();
+        opts.debugInfo = false;
+        opts.syntheticAccessorResolver = new SyntheticAccessorResolver(def.dexFile.getOpcodes(), Collections.EMPTY_LIST);
         ClassDefinition classDefinition = new ClassDefinition(opts, def);
         StringWriter bufWriter = new StringWriter();
-        IndentingWriter writer = new IndentingWriter(bufWriter);
-        classDefinition.writeTo((IndentingWriter) writer);
+        BaksmaliWriter writer = new BaksmaliWriter(bufWriter);
+        classDefinition.writeTo(writer);
         writer.flush();
         return bufWriter.toString();
     }

@@ -58,7 +58,7 @@ fragment
 FRAGMENT_ARRAY_TYPE: ('[')+ (FRAGMENT_PRIMITIVE_TYPE|FRAGMENT_OBJECT_TYPE);
 
 fragment
-FRAGMENT_ID: (ESC_SEQ| ~('\\'|'\r'|'\n'|'\t'|' '|':'|'-'|'='|','|'{'|'}'|'('|')'|'+'|'\"'|'\''|'#'|'/'|'.'|';'))+;
+FRAGMENT_ID: (ESC_SEQ| ~('\\'|'\r'|'\n'|'\t'|' '|':'|'-'|'='|','|'{'|'}'|'('|')'|'+'|'\"'|'\''|'#'|'/'|'.'|';'|'@'))+;
 fragment
 FRAGMENT_METHOD_PROTO: '(' (FRAGMENT_OBJECT_TYPE|FRAGMENT_ARRAY_TYPE|FRAGMENT_PRIMITIVE_TYPE)* ')' ('V' | FRAGMENT_OBJECT_TYPE|FRAGMENT_ARRAY_TYPE|FRAGMENT_PRIMITIVE_TYPE)
 ;
@@ -194,6 +194,10 @@ sBaseValue
 	;
 sArrayValue: '{' sAnnotationValue? (',' sAnnotationValue)* '}';
 
+method_handler
+    : type=('static-get'|'static-put'|'instance-get'|'instance-put') '@' fld=FIELD_FULL
+    | type=('invoke-static'|'invoke-instance'|'invoke-direct'|'invoke-interface'|'invoke-constructor') '@' mtd=METHOD_FULL
+    ;
 
 sInstruction
     :fline
@@ -269,6 +273,8 @@ fconst
                                                       r1=REGISTER ',' cst=(INT|LONG)
 	| op=('const-string'|'const-string/jumbo')        r1=REGISTER ','  cst=STRING
     | op=('const-class'|'check-cast'|'new-instance')  r1=REGISTER ','  cst=(OBJECT_TYPE|ARRAY_TYPE)
+    | op='const-method-type'  r1=REGISTER ',' cst=METHOD_PROTO
+    | op='const-method-handle'  r1=REGISTER ',' h=method_handler
 	;
 ff1c	:	op=(SGET
 	|'sget-wide'

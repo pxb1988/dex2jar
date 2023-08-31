@@ -391,7 +391,7 @@ public class CodeWriter extends DexCodeVisitor {
     @Override
     public void visitConstStmt(Op op, int ra, Object value) {
         switch (op.format) {
-        case kFmt21c:// value is field,type,string
+        case kFmt21c:// value is field,type,string,method_handle,proto
         case kFmt31c:// value is string,
             value = cp.wrapEncodedItem(value);
             ops.add(new CodeWriter.IndexedInsn(op, ra, 0, (BaseItem) value));

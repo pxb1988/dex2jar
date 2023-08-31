@@ -138,6 +138,8 @@ public class DexFileWriter extends DexFileVisitor {
                 SectionType.TYPE_FIELD_ID_ITEM, cp.fields.values());
         SectionItem<MethodIdItem> methodIdSection = new SectionItem<>(
                 SectionType.TYPE_METHOD_ID_ITEM, cp.methods.values());
+        SectionItem<MethodHandleItem> methodHandlerSection = new SectionItem<>(
+                SectionType.TYPE_METHOD_HANDLE_ITEM, cp.methodHandlers.values());
         SectionItem<ClassDefItem> classDefSection = new SectionItem<>(
                 SectionType.TYPE_CLASS_DEF_ITEM, cp.buildSortedClassDefItems());
         SectionItem<TypeListItem> typeListSection = new SectionItem<>(
@@ -200,6 +202,7 @@ public class DexFileWriter extends DexFileVisitor {
             items.add(protoIdSection);
             items.add(fieldIdSection);
             items.add(methodIdSection);
+            items.add(methodHandlerSection);
             items.add(classDefSection);
 
             items.addAll(dataSectionItems);

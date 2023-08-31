@@ -352,6 +352,12 @@ public class AntlrSmaliUtil {
                         scv.visitConstStmt(op, r, v);
                     }
                     break;
+                    case CONST_METHOD_HANDLE:
+                        scv.visitConstStmt(op, r, parseMethodHandler(ctx.h));
+                        break;
+                    case CONST_METHOD_TYPE:
+                        scv.visitConstStmt(op, r, parseProtoAndUnescape(ctx.cst.getText()));
+                        break;
                     default:
                         throw new RuntimeException();
                 }
@@ -546,6 +552,42 @@ public class AntlrSmaliUtil {
             parserRuleContext.accept(v);
         }
         scv.visitEnd();
+    }
+
+    private static MethodHandle parseMethodHandler(SmaliParser.Method_handlerContext methodHandlerContext) {
+        MethodHandle value;
+        switch (methodHandlerContext.type.getText()) {
+            case "static-get":
+                value = new MethodHandle(MethodHandle.STATIC_GET, parseFieldAndUnescape(methodHandlerContext.fld.getText()));
+                break;
+            case "static-put":
+                value = new MethodHandle(MethodHandle.STATIC_PUT, parseFieldAndUnescape(methodHandlerContext.fld.getText()));
+                break;
+            case "instance-get":
+                value = new MethodHandle(MethodHandle.INSTANCE_GET, parseFieldAndUnescape(methodHandlerContext.fld.getText()));
+                break;
+            case "instance-put":
+                value = new MethodHandle(MethodHandle.INSTANCE_PUT, parseFieldAndUnescape(methodHandlerContext.fld.getText()));
+                break;
+            case "invoke-static":
+                value = new MethodHandle(MethodHandle.INVOKE_STATIC, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+                break;
+            case "invoke-instance":
+                value = new MethodHandle(MethodHandle.INVOKE_INSTANCE, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+                break;
+            case "invoke-direct":
+                value = new MethodHandle(MethodHandle.INVOKE_DIRECT, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+                break;
+            case "invoke-interface":
+                value = new MethodHandle(MethodHandle.INVOKE_INTERFACE, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+                break;
+            case "invoke-constructor":
+                value = new MethodHandle(MethodHandle.INVOKE_CONSTRUCTOR, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+                break;
+            default:
+                throw new RuntimeException("not support yet: " + methodHandlerContext.type);
+        }
+        return value;
     }
 
     private static int findTotalRegisters(SmaliParser.SMethodContext ctx, int ins) {

@@ -110,6 +110,8 @@ public class SectionItem<T extends BaseItem> extends BaseItem {
         TYPE_FIELD_ID_ITEM(0x0004, 4, 0), //
         TYPE_METHOD_ID_ITEM(0x0005, 1, 0), //
         TYPE_CLASS_DEF_ITEM(0x0006, 4, 0), //
+        TYPE_CALL_SITE_ID_ITEM(0x0007, 4, 0), //
+        TYPE_METHOD_HANDLE_ITEM(0x0008, 4, 0), //
         TYPE_MAP_LIST(0x1000, 4, 0), //
         TYPE_TYPE_LIST(0x1001, 4, 0), //
         TYPE_ANNOTATION_SET_REF_LIST(0x1002, 4, 0), //

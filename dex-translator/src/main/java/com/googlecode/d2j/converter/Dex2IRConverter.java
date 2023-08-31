@@ -4,6 +4,8 @@ import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.node.DexCodeNode;
 import com.googlecode.d2j.node.TryCatchNode;
 import com.googlecode.d2j.node.analysis.DvmFrame;
@@ -560,6 +562,10 @@ public class Dex2IRConverter {
                     case CONST_STRING:
                     case CONST_STRING_JUMBO:
                         return b(nString((String) ((ConstStmtNode) insn).value));
+                    case CONST_METHOD_HANDLE:
+                        return b(nMethodHandle((MethodHandle) ((ConstStmtNode) insn).value));
+                    case CONST_METHOD_TYPE:
+                        return b(nProto((Proto) ((ConstStmtNode) insn).value));
                     case SGET:
                     case SGET_BOOLEAN:
                     case SGET_BYTE:

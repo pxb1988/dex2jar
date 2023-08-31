@@ -13,4 +13,6 @@ package com.googlecode.d2j.reader;
     kIndexFieldOffset, // field offset (for static linked fields)
     kIndexMethodAndProtoRef, // 038,
     kIndexCallSiteRef, // 038,
+    kIndexMethodHandleRef,    // 039, constant method handle reference index
+    kIndexProtoRef,           // 039, prototype reference index
 };

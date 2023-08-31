@@ -18,6 +18,7 @@ package com.googlecode.d2j.converter;
 
 import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
 import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.asm.LdcOptimizeAdapter;
 import com.googlecode.d2j.dex.Dex2Asm;
@@ -679,8 +680,8 @@ public class IR2JConverter implements Opcodes {
                 Constant cst = (Constant) value;
                 if (cst.value.equals(Constant.Null)) {
                     asm.visitInsn(ACONST_NULL);
-                } else if (cst.value instanceof DexType) {
-                    asm.visitLdcInsn(Type.getType(((DexType) cst.value).desc));
+                } else if (cst.value instanceof DexType || cst.value instanceof MethodHandle || cst.value instanceof Proto) {
+                    asm.visitLdcInsn(Dex2Asm.convertConstantValue(cst.value));
                 } else {
                     asm.visitLdcInsn(cst.value);
                 }
