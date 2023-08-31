@@ -1,8 +1,13 @@
 package res;
 
-import java.nio.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 
 public class Hex {
+
     public static long[] decode_J(String src) {
         byte[] d = decode_B(src);
         ByteBuffer b = ByteBuffer.wrap(d);
@@ -12,6 +17,7 @@ public class Hex {
         s.get(data);
         return data;
     }
+
     public static int[] decode_I(String src) {
         byte[] d = decode_B(src);
         ByteBuffer b = ByteBuffer.wrap(d);
@@ -38,7 +44,7 @@ public class Hex {
         for (int i = 0; i < ret.length; i++) {
             char h = d[2 * i];
             char l = d[2 * i + 1];
-            int hh = 0;
+            int hh;
             if (h >= '0' && h <= '9') {
                 hh = h - '0';
             } else if (h >= 'a' && h <= 'f') {
@@ -48,18 +54,19 @@ public class Hex {
             } else {
                 throw new RuntimeException();
             }
-            int ll = 0;
+            int ll;
             if (l >= '0' && l <= '9') {
-                ll = h - '0';
+                ll = l - '0';
             } else if (l >= 'a' && l <= 'f') {
-                ll = h - 'a' + 10;
+                ll = l - 'a' + 10;
             } else if (l >= 'A' && l <= 'F') {
-                ll = h - 'A' + 10;
+                ll = l - 'A' + 10;
             } else {
                 throw new RuntimeException();
             }
-            d[i] = (char) ((hh << 4) | ll);
+            ret[i] = (byte) ((hh << 4) | ll);
         }
         return ret;
     }
+
 }
