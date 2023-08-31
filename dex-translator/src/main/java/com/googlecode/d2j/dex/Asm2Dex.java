@@ -75,4 +75,12 @@ public class Asm2Dex {
     static private Field toField(String internalName, String name, String desc) {
         return new Field("L" + internalName + ";", name, desc);
     }
+
+    public static String[] toDescArray(Type[] ts) {
+        String[] ds = new String[ts.length];
+        for (int i = 0; i < ts.length; i++) {
+            ds[i] = ts[i].getDescriptor();
+        }
+        return ds;
+    }
 }

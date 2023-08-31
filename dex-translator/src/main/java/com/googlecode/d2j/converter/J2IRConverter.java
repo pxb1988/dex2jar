@@ -754,14 +754,6 @@ public class J2IRConverter {
                 return null;
             }
 
-            public String[] toDescArray(Type[] ts) {
-                String[] ds = new String[ts.length];
-                for (int i = 0; i < ts.length; i++) {
-                    ds[i] = ts[i].getDescriptor();
-                }
-                return ds;
-            }
-
             @Override
             public JvmValue naryOperation(AbstractInsnNode insn, List<? extends JvmValue> xvalues) throws AnalyzerException {
 
@@ -785,7 +777,7 @@ public class J2IRConverter {
                     com.googlecode.dex2jar.ir.expr.Value v = null;
                     String ret = Type.getReturnType(mi.desc).getDescriptor();
                     String owner = "L" + mi.owner + ";";
-                    String ps[] = toDescArray(Type.getArgumentTypes(mi.desc));
+                    String ps[] = Asm2Dex.toDescArray(Type.getArgumentTypes(mi.desc));
                     switch (insn.getOpcode()) {
                         case INVOKEVIRTUAL:
                             v = Exprs.nInvokeVirtual(values, owner, mi.name, ps, ret);
