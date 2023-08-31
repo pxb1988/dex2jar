@@ -45,7 +45,7 @@ public class ClassDefItem extends BaseItem {
     @Off
     private AnnotationsDirectoryItem annotations;// Build later
     @Off
-    private EncodedArrayItem staticValues; // Build later
+    private EncodedArray staticValues; // Build later
 
     @Override
     public int place(int offset) {
@@ -77,8 +77,7 @@ public class ClassDefItem extends BaseItem {
         }
 
         if (count >= 0) {
-            EncodedArrayItem encodedArrayItem = cp.putEnCodedArrayItem();
-            EncodedArray array = encodedArrayItem.value;
+            EncodedArray array = new EncodedArray();
             for (int i = 0; i <= count; i++) {
                 EncodedField f = fs.get(i);
                 EncodedValue ev = f.staticValue;
@@ -88,7 +87,7 @@ public class ClassDefItem extends BaseItem {
                     array.values.add(ev);
                 }
             }
-            staticValues = encodedArrayItem;
+            staticValues = cp.uniqEncodedArrayItem(array);
         }
     }
 

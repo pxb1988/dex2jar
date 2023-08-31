@@ -72,14 +72,7 @@ public class SmaliTest {
 
     private void dotest(File dexFile) throws IOException {
         int dexVersion = new DexFileReader(dexFile).getDexVersion();
-        Opcodes opcodes;
-        if (dexVersion >= DexConstants.DEX_039) {
-            opcodes = Opcodes.forApi(28);
-        } else if (dexVersion >= DexConstants.DEX_037) {
-            opcodes = Opcodes.forApi(26);
-        } else {
-            opcodes = Opcodes.forApi(0);
-        }
+        Opcodes opcodes = Opcodes.forApi(DexConstants.toMiniAndroidApiLevel(dexVersion));
         DexBackedDexFile dex;
         try {
             dex = DexFileFactory.loadDexFile(dexFile, opcodes);

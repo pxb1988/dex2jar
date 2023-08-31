@@ -135,8 +135,8 @@ public class ASMifierCodeV extends DexCodeVisitor implements DexConstants {
     }
 
     @Override
-    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
-        m.s("code.visitMethodStmt(%s,%s,%s,%s,%s,%s);", op(op), Escape.v(args), Escape.v(name), Escape.v(proto), Escape.v(bsm), Escape.v(bsmArgs));
+    public void visitMethodStmt(Op op, int[] args, CallSite callSite) {
+        m.s("code.visitMethodStmt(%s,%s,%s);", op(op), Escape.v(args), Escape.v(callSite));
     }
 
     @Override

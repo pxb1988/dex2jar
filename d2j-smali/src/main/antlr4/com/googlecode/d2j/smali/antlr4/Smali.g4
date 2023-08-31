@@ -175,8 +175,7 @@ sAnnotationValue
 	:sSubannotation
 	|sBaseValue
 	|sArrayValue
-	| ( '.iget' | '.iput' | '.sget' | '.sput' ) FIELD_FULL
-	| ( '.invoke-instance' | '.invoke-static' ) METHOD_FULL
+	| method_handler
 	;// field,method,array,subannotation
 sBaseValue
 	:STRING
@@ -197,6 +196,11 @@ sArrayValue: '{' sAnnotationValue? (',' sAnnotationValue)* '}';
 method_handler
     : type=('static-get'|'static-put'|'instance-get'|'instance-put') '@' fld=FIELD_FULL
     | type=('invoke-static'|'invoke-instance'|'invoke-direct'|'invoke-interface'|'invoke-constructor') '@' mtd=METHOD_FULL
+    ;
+
+// FIXME samli syntax only write out method_handler's method field
+call_site
+    : name=sAnnotationKeyName '(' method_name=STRING ',' method_type=METHOD_PROTO (',' sBaseValue)* ')' '@' bsm=METHOD_FULL
     ;
 
 sInstruction
@@ -415,9 +419,9 @@ fm45cc	:	op='invoke-polymorphic'  '{' (REGISTER (',' REGISTER)* )? '}' ',' metho
 	;
 fm4rcc	:	op='invoke-polymorphic/range'  '{' (rstart=REGISTER '..' rend=REGISTER)? '}' ',' method=METHOD_FULL ',' proto=METHOD_PROTO
 	;
-fmcustomc	:	op='invoke-custom'  '{' (REGISTER (',' REGISTER)* )? '}' ',' sArrayValue
+fmcustomc	:	op='invoke-custom'  '{' (REGISTER (',' REGISTER)* )? '}' ',' call_site
 	;
-fmcustomrc	:	op='invoke-custom/range'  '{' (rstart=REGISTER '..' rend=REGISTER)? '}' ',' sArrayValue
+fmcustomrc	:	op='invoke-custom/range'  '{' (rstart=REGISTER '..' rend=REGISTER)? '}' ',' call_site
 	;
 ftrc	:	op='filled-new-array/range' '{' (rstart=REGISTER '..' rend=REGISTER)? '}' ',' type=(OBJECT_TYPE|ARRAY_TYPE);
 f31t: op=('fill-array-data'|'packed-switch'|'sparse-switch') r1=REGISTER ',' label=LABEL;

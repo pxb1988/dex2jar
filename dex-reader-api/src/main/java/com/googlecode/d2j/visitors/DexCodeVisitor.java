@@ -238,9 +238,9 @@ public class DexCodeVisitor {
      * OP_INVOKE_CUSTOM
      * </pre>
      */
-    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
+    public void visitMethodStmt(Op op, int[] args, CallSite callSite) {
         if (visitor != null) {
-            visitor.visitMethodStmt(op, args, name, proto, bsm, bsmArgs);
+            visitor.visitMethodStmt(op, args, callSite);
         }
     }
 

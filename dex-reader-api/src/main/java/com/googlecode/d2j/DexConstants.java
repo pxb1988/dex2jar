@@ -52,10 +52,25 @@ public abstract interface DexConstants {
     String ANNOTATION_INNER_CLASS_TYPE = "Ldalvik/annotation/InnerClass;";
     String ANNOTATION_MEMBER_CLASSES_TYPE = "Ldalvik/annotation/MemberClasses;";
 
+    static int toMiniAndroidApiLevel(int dexVersion) {
+        if (dexVersion <= DEX_035 || dexVersion <= DEX_036) {
+            return 0;
+        } else if (dexVersion == DEX_037) {
+            return 24;
+        } else if (dexVersion == DEX_038) {
+            return 26;
+        } else {
+            return 28;
+        }
+    }
     int DEX_035 = 0x00303335;
+    @Deprecated
     int DEX_036 = 0x00303336;
+    // android 7.0, api 24
     int DEX_037 = 0x00303337;
+    // android 8.0, api 26
     int DEX_038 = 0x00303338;
+    // android 9.0, api 28
     int DEX_039 = 0x00303339;
     int DEX_040 = 0x00303340;
 }

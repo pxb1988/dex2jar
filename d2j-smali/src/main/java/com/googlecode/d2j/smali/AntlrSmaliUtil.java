@@ -432,6 +432,65 @@ public class AntlrSmaliUtil {
             }
 
             @Override
+            public Object visitFm4rcc(SmaliParser.Fm4rccContext ctx) {
+                if (ctx.rstart != null) {
+                    int start = m.pareReg(ctx.rstart.getText());
+                    int end = m.pareReg(ctx.rend.getText());
+                    int size = end - start + 1;
+                    int[] rs = new int[size];
+                    for (int i = 0; i < size; i++) {
+                        rs[i] = start + i;
+                    }
+                    scv.visitMethodStmt(getOp(ctx.op), rs, parseMethodAndUnescape(ctx.method.getText()), parseProtoAndUnescape(ctx.proto.getText()));
+                } else {
+                    scv.visitMethodStmt(getOp(ctx.op), new int[0], parseMethodAndUnescape(ctx.method.getText()), parseProtoAndUnescape(ctx.proto.getText()));
+                }
+                return null;
+            }
+
+            @Override
+            public Object visitFm45cc(SmaliParser.Fm45ccContext ctx) {
+                Op op = getOp(ctx.op);
+                List<TerminalNode> ts = ctx.REGISTER();
+                int[] rs = new int[ts.size()];
+                for (int i = 0; i < ts.size(); i++) {
+                    rs[i] = m.pareReg(ts.get(i).getSymbol().getText());
+                }
+                scv.visitMethodStmt(op, rs, parseMethodAndUnescape(ctx.method.getText()), parseProtoAndUnescape(ctx.proto.getText()));
+                return null;
+            }
+
+            @Override
+            public Object visitFmcustomc(SmaliParser.FmcustomcContext ctx) {
+                Op op = getOp(ctx.op);
+
+                List<TerminalNode> ts = ctx.REGISTER();
+                int[] rs = new int[ts.size()];
+                for (int i = 0; i < ts.size(); i++) {
+                    rs[i] = m.pareReg(ts.get(i).getSymbol().getText());
+                }
+                scv.visitMethodStmt(op, rs, parseCallSite(ctx.call_site()));
+                return null;
+            }
+
+            @Override
+            public Object visitFmcustomrc(SmaliParser.FmcustomrcContext ctx) {
+                if (ctx.rstart != null) {
+                    int start = m.pareReg(ctx.rstart.getText());
+                    int end = m.pareReg(ctx.rend.getText());
+                    int size = end - start + 1;
+                    int[] rs = new int[size];
+                    for (int i = 0; i < size; i++) {
+                        rs[i] = start + i;
+                    }
+                    scv.visitMethodStmt(getOp(ctx.op), rs, parseCallSite(ctx.call_site()));
+                } else {
+                    scv.visitMethodStmt(getOp(ctx.op), new int[0], parseCallSite(ctx.call_site()));
+                }
+                return null;
+            }
+
+            @Override
             public Object visitFmrc(SmaliParser.FmrcContext ctx) {
                 if (ctx.rstart != null) {
                     int start = m.pareReg(ctx.rstart.getText());
@@ -552,6 +611,25 @@ public class AntlrSmaliUtil {
             parserRuleContext.accept(v);
         }
         scv.visitEnd();
+    }
+
+    private static CallSite parseCallSite(SmaliParser.Call_siteContext callSiteContext) {
+
+        List<SmaliParser.SBaseValueContext> sBaseValueContexts = callSiteContext.sBaseValue();
+        Object[] args = new Object[sBaseValueContexts.size()];
+        int i = 0;
+        for (SmaliParser.SBaseValueContext baseValueContext : sBaseValueContexts) {
+            args[i] = parseBaseValue(baseValueContext);
+            i++;
+        }
+
+        return new CallSite(
+                unEscapeId(callSiteContext.name.getText()),
+                new MethodHandle(MethodHandle.INVOKE_STATIC, parseMethodAndUnescape(callSiteContext.bsm.getText())),
+                unescapeStr(callSiteContext.method_name.getText()),
+                parseProtoAndUnescape(callSiteContext.method_type.getText()),
+                args
+        );
     }
 
     private static MethodHandle parseMethodHandler(SmaliParser.Method_handlerContext methodHandlerContext) {
@@ -780,6 +858,10 @@ public class AntlrSmaliUtil {
                 SmaliParser.SBaseValueContext baseValueContext = (SmaliParser.SBaseValueContext) t;
                 Object value = parseBaseValue(baseValueContext);
                 dexAnnotationVisitor.visit(name, value);
+                break;
+            case SmaliParser.RULE_method_handler:
+                MethodHandle methodHandle = parseMethodHandler((SmaliParser.Method_handlerContext) t);
+                dexAnnotationVisitor.visit(name, methodHandle);
                 break;
         }
     }

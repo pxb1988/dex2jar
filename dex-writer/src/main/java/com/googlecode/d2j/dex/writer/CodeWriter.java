@@ -16,9 +16,11 @@
  */
 package com.googlecode.d2j.dex.writer;
 
+import com.googlecode.d2j.CallSite;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
+import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.dex.writer.insn.*;
 import com.googlecode.d2j.dex.writer.item.*;
 import com.googlecode.d2j.reader.Op;
@@ -390,6 +392,9 @@ public class CodeWriter extends DexCodeVisitor {
      */
     @Override
     public void visitConstStmt(Op op, int ra, Object value) {
+        if (op == CONST_METHOD_HANDLE || op == CONST_METHOD_TYPE) {
+            cp.dex039();
+        }
         switch (op.format) {
         case kFmt21c:// value is field,type,string,method_handle,proto
         case kFmt31c:// value is string,
@@ -489,6 +494,33 @@ public class CodeWriter extends DexCodeVisitor {
         } else if (op.format == kFmt35c) {
             ops.add(new CodeWriter.OP35c(op, args, cp.uniqMethod(method)));
         }
+        if (args.length > max_out_reg_size) {
+            max_out_reg_size = args.length;
+        }
+    }
+
+    @Override
+    public void visitMethodStmt(Op op, int[] args, CallSite callSite) {
+        cp.dex038();
+        if (op.format == kFmt3rc) {
+            ops.add(new CodeWriter.OP3rc(op, args, cp.uniqCallSite(callSite)));
+        } else if (op.format == kFmt35c) {
+            ops.add(new CodeWriter.OP35c(op, args, cp.uniqCallSite(callSite)));
+        }
+        if (args.length > max_out_reg_size) {
+            max_out_reg_size = args.length;
+        }
+    }
+
+    @Override
+    public void visitMethodStmt(Op op, int[] args, Method bsm, Proto proto) {
+        cp.dex038();
+        if (op.format == kFmt4rcc) {
+            ops.add(new CodeWriter.OP4rcc(op, args, cp.uniqMethod(bsm), cp.uniqProto(proto)));
+        } else if (op.format == kFmt45cc) {
+            ops.add(new CodeWriter.OP45cc(op, args, cp.uniqMethod(bsm), cp.uniqProto(proto)));
+        }
+
         if (args.length > max_out_reg_size) {
             max_out_reg_size = args.length;
         }
@@ -747,6 +779,95 @@ public class CodeWriter extends DexCodeVisitor {
             checkContentUShort(op, "@BBBB", item.index);
             out.put((byte) op.opcode).put((byte) ((A << 4) | (G & 0xF))).putShort((short) item.index)
                     .put((byte) ((D << 4) | (C & 0xF))).put((byte) ((F << 4) | (E & 0xF)));
+        }
+    }
+
+    //A|G|op BBBB F|E|D|C HHHH
+    public static class OP45cc extends OpInsn {
+        final BaseItem mtd;
+        final BaseItem proto;
+        int A, C, D, E, F, G;
+
+        public OP45cc(Op op, int[] args, BaseItem mtd, BaseItem proto) {
+            super(op);
+            int A = args.length;
+            if (A > 5) {
+                throw new CantNotFixContentException(op, "A", A);
+            }
+            this.A = A;
+            switch (A) { // [A=5] op {vC, vD, vE, vF, vG},
+                case 5:
+                    G = args[4];
+                    checkContentU4bit(op, "vG", G);
+                case 4:
+                    F = args[3];
+                    checkContentU4bit(op, "vF", F);
+                case 3:
+                    E = args[2];
+                    checkContentU4bit(op, "vE", E);
+                case 2:
+                    D = args[1];
+                    checkContentU4bit(op, "vD", D);
+                case 1:
+                    C = args[0];
+                    checkContentU4bit(op, "vC", C);
+                    break;
+            }
+            this.mtd = mtd;
+            this.proto = proto;
+        }
+
+        @Override
+        public void write(ByteBuffer out) { // A|G|op BBBB F|E|D|C HHHH
+            checkContentUShort(op, "@BBBB", mtd.index);
+            checkContentUShort(op, "@HHHH", proto.index);
+            out
+                    .put((byte) op.opcode).put((byte) ((A << 4) | (G & 0xF))) //
+                    .putShort((short) mtd.index) //
+                    .put((byte) ((D << 4) | (C & 0xF))).put((byte) ((F << 4) | (E & 0xF))) //
+                    .putShort((short) proto.index) //
+
+            ;
+        }
+    }
+    // AA|op BBBB CCCC HHHH
+    public static class OP4rcc extends OpInsn {
+        final BaseItem mtd;
+        final BaseItem proto;
+        final int length;
+        final int start;
+
+        public OP4rcc(Op op, int[] args, BaseItem mtd, BaseItem proto) {
+            super(op);
+            this.mtd = mtd;
+            this.proto = proto;
+            length = args.length;
+            checkContentUByte(op, "AA", length);
+            if (length > 0) {
+                start = args[0];
+                checkContentUShort(op, "CCCC", start);
+                for (int i = 1; i < args.length; i++) {
+                    if (start + i != args[i]) {
+                        throw new CantNotFixContentException(op, "a", args[i]);
+                    }
+                }
+            } else {
+                start = 0;
+            }
+
+        }
+
+        @Override
+        public void write(ByteBuffer out) {
+            checkContentUShort(op, "@BBBB", mtd.index);
+            checkContentUShort(op, "@HHHH", proto.index);
+            out
+                    .put((byte) op.opcode).put((byte) length) //
+                    .putShort((short) mtd.index) //
+                    .putShort((short) start) //
+                    .putShort((short) proto.index) //
+            ;
+
         }
     }
 
