@@ -1,9 +1,9 @@
 package com.googlecode.d2j.visitors;
 
+import com.googlecode.d2j.CallSite;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
-import com.googlecode.d2j.MethodHandle;
 import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.reader.Op;
 
@@ -198,9 +198,9 @@ public class DexCodeVisitor {
      * OP_INVOKE_CUSTOM
      * </pre>
      */
-    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
+    public void visitMethodStmt(Op op, int[] args, CallSite callSite) {
         if (visitor != null) {
-            visitor.visitMethodStmt(op, args, name, proto, bsm, bsmArgs);
+            visitor.visitMethodStmt(op, args, callSite);
         }
     }
 

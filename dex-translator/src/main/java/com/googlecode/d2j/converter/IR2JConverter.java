@@ -1,5 +1,6 @@
 package com.googlecode.d2j.converter;
 
+import com.googlecode.d2j.CallSite;
 import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.MethodHandle;
@@ -41,7 +42,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -858,8 +858,10 @@ public class IR2JConverter implements Opcodes {
             } else {
                 throw new RuntimeException();
             }
-            asm.visitInvokeDynamicInsn(ice.name, ice.proto.getDesc(),
-                    (Handle) Dex2Asm.convertConstantValue(ice.handle), Dex2Asm.convertConstantValues(ice.bsmArgs));
+            CallSite callSite = ice.callSite;
+            asm.visitInvokeDynamicInsn(callSite.getMethodName(), callSite.getMethodProto().getDesc(),
+                    Dex2Asm.convertHandler(callSite.getBootstrapMethodHandler()),
+                    Dex2Asm.convertConstantValues(callSite.getExtraArguments()));
         }
         break;
         case INVOKE_POLYMORPHIC: {

@@ -3,12 +3,14 @@ package com.googlecode.d2j.dex.writer.ev;
 import com.googlecode.d2j.dex.writer.io.DataOut;
 import com.googlecode.d2j.dex.writer.item.BaseItem;
 import com.googlecode.d2j.dex.writer.item.FieldIdItem;
+import com.googlecode.d2j.dex.writer.item.MethodHandleItem;
 import com.googlecode.d2j.dex.writer.item.MethodIdItem;
+import com.googlecode.d2j.dex.writer.item.ProtoIdItem;
 import com.googlecode.d2j.dex.writer.item.StringIdItem;
 import com.googlecode.d2j.dex.writer.item.TypeIdItem;
 import java.util.Objects;
 
-public class EncodedValue {
+public class EncodedValue implements Comparable<EncodedValue> {
 
     public static final int VALUE_ANNOTATION = 0x1d;
 
@@ -31,6 +33,10 @@ public class EncodedValue {
     public static final int VALUE_INT = 0x04;
 
     public static final int VALUE_LONG = 0x06;
+
+    public static final int VALUE_METHOD_TYPE = 0x15;
+
+    public static final int VALUE_METHOD_HANDLE = 0x16;
 
     public static final int VALUE_METHOD = 0x1a;
 
@@ -124,6 +130,10 @@ public class EncodedValue {
             return new EncodedValue(VALUE_FIELD, v);
         } else if (v instanceof MethodIdItem) {
             return new EncodedValue(VALUE_METHOD, v);
+        } else if (v instanceof MethodHandleItem) {
+            return new EncodedValue(VALUE_METHOD_HANDLE, v);
+        } else if (v instanceof ProtoIdItem) {
+            return new EncodedValue(VALUE_METHOD_TYPE, v);
         }
 
 
@@ -270,6 +280,8 @@ public class EncodedValue {
         case VALUE_FIELD:
         case VALUE_METHOD:
         case VALUE_ENUM:
+        case VALUE_METHOD_HANDLE:
+        case VALUE_METHOD_TYPE:
         default:
             return offset + getValueArg() + 1;
         }
@@ -300,6 +312,8 @@ public class EncodedValue {
         case VALUE_FIELD:
         case VALUE_METHOD:
         case VALUE_ENUM:
+        case VALUE_METHOD_HANDLE:
+        case VALUE_METHOD_TYPE:
             BaseItem bi = (BaseItem) value;
             return lengthOfUint(bi.index) - 1;
         default:
@@ -346,6 +360,8 @@ public class EncodedValue {
         case VALUE_FIELD:
         case VALUE_METHOD:
         case VALUE_ENUM:
+        case VALUE_METHOD_HANDLE:
+        case VALUE_METHOD_TYPE:
             out.bytes("value_xidx", encodeLong(valueArg + 1, ((BaseItem) value).index));
             break;
         case VALUE_ARRAY: {
@@ -378,4 +394,55 @@ public class EncodedValue {
         return s;
     }
 
+    @Override
+    public int compareTo(EncodedValue o) {
+        if (o == null) {
+            return 1;
+        }
+        int x = Integer.compare(valueType, o.valueType);
+        if (x != 0) {
+            return x;
+        }
+        switch (valueType) {
+        case VALUE_NULL:
+            return 0;
+        case VALUE_BOOLEAN:
+            return Boolean.compare((Boolean) value, (Boolean) o.value);
+        case VALUE_SHORT:
+            return ((Short) value).compareTo((Short) o.value);
+        case VALUE_CHAR:
+            return ((Character) value).compareTo((Character) o.value);
+        case VALUE_INT:
+            return ((Integer) value).compareTo((Integer) o.value);
+        case VALUE_LONG:
+            return ((Long) value).compareTo((Long) o.value);
+        case VALUE_DOUBLE:
+            return Long.compare(Double.doubleToLongBits((Double) value), Double.doubleToLongBits((Double) o.value));
+        case VALUE_FLOAT:
+            return Integer.compare(Float.floatToIntBits((Float) value), Float.floatToIntBits((Float) o.value));
+        case VALUE_STRING:
+        case VALUE_TYPE:
+        case VALUE_FIELD:
+        case VALUE_METHOD:
+        case VALUE_ENUM:
+        case VALUE_METHOD_HANDLE:
+        case VALUE_METHOD_TYPE:
+            if (value instanceof Comparable) {
+                return ((Comparable) value).compareTo(value);
+            } else {
+                throw new RuntimeException();
+            }
+        case VALUE_ARRAY: {
+            return ((EncodedArray) value).compareTo((EncodedArray) o.value);
+        }
+        case VALUE_ANNOTATION: {
+            return ((EncodedAnnotation) value).compareTo((EncodedAnnotation) o.value);
+        }
+        case VALUE_BYTE: {
+            return Byte.compare((Byte) value, (Byte) o.value);
+        }
+        default:
+            throw new RuntimeException();
+        }
+    }
 }

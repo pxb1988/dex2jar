@@ -307,11 +307,7 @@ public abstract class TestUtils {
         cfOptions.strictNameCheck = false;
         DexOptions dexOptions = new DexOptions();
         if (fileNode != null) {
-            if (fileNode.dexVersion >= DexConstants.DEX_039) {
-                dexOptions.minSdkVersion = 28;
-            } else if (fileNode.dexVersion >= DexConstants.DEX_037) {
-                dexOptions.minSdkVersion = 26;
-            }
+            dexOptions.minSdkVersion = DexConstants.toMiniAndroidApiLevel(fileNode.dexVersion);
         }
 
         DirectClassFile dcf = new DirectClassFile(data, rca.getClassName() + ".class", true);

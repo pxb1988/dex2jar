@@ -2,9 +2,10 @@ package com.googlecode.d2j.converter;
 
 // CHECKSTYLE:OFF
 
-import com.googlecode.d2j.Method;
+import com.googlecode.d2j.CallSite;
 import com.googlecode.d2j.MethodHandle;
 import com.googlecode.d2j.Proto;
+import com.googlecode.d2j.dex.Asm2Dex;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Exprs;
@@ -799,14 +800,6 @@ public final class J2IRConverter {
                 return null;
             }
 
-            public String[] toDescArray(Type[] ts) {
-                String[] ds = new String[ts.length];
-                for (int i = 0; i < ts.length; i++) {
-                    ds[i] = ts[i].getDescriptor();
-                }
-                return ds;
-            }
-
             @Override
             public JvmValue naryOperation(AbstractInsnNode insn, List<? extends JvmValue> xvalues) {
                 com.googlecode.dex2jar.ir.expr.Value[] values =
@@ -820,29 +813,18 @@ public final class J2IRConverter {
                     return b(Type.getType(multi.desc).getSize(), n);
                 } else if (insn.getOpcode() == INVOKEDYNAMIC) {
                     InvokeDynamicInsnNode mi = (InvokeDynamicInsnNode) insn;
-                    Handle bsm = mi.bsm;
-                    Type[] a = Type.getArgumentTypes(bsm.getDesc());
-                    String[] params = new String[a.length];
-                    for (int i = 0; i < a.length; i += 1) {
-                        params[i] = a[i].getDescriptor();
-                    }
-                    Method method = new Method("L" + bsm.getOwner() + ";", bsm.getName(), params,
-                            Type.getReturnType(bsm.getDesc()).getDescriptor());
-                    MethodHandle mh = new MethodHandle(MethodHandle.getTypeFromAsmOpcode(bsm.getTag()), method);
-                    Type[] t = Type.getArgumentTypes(mi.desc);
-                    String[] paramDesc = new String[t.length];
-                    for (int i = 0; i < t.length; i += 1) {
-                        paramDesc[i] = t[i].getDescriptor();
-                    }
-                    InvokeCustomExpr d = Exprs.nInvokeCustom(values, mi.name, new Proto(paramDesc,
-                            Type.getReturnType(mi.desc).getDescriptor()), mh, mi.bsmArgs);
+                    MethodHandle methodHandle = Asm2Dex.toMethodHandle(mi.bsm);
+                    Proto methodType = Asm2Dex.toMethodType(mi.desc);
+                    Object[] extraObjects = Asm2Dex.convertConstObjects(mi.bsmArgs);
+                    InvokeCustomExpr d = Exprs.nInvokeCustom(values, new CallSite(null, methodHandle, mi.name,
+                            methodType, extraObjects));
                     return b(Type.getReturnType(mi.desc).getSize(), d);
                 } else {
                     MethodInsnNode mi = (MethodInsnNode) insn;
                     com.googlecode.dex2jar.ir.expr.Value v = null;
                     String ret = Type.getReturnType(mi.desc).getDescriptor();
                     String owner = "L" + mi.owner + ";";
-                    String[] ps = toDescArray(Type.getArgumentTypes(mi.desc));
+                    String ps[] = Asm2Dex.toDescArray(Type.getArgumentTypes(mi.desc));
                     switch (insn.getOpcode()) {
                     case INVOKEVIRTUAL:
                         v = Exprs.nInvokeVirtual(values, owner, mi.name, ps, ret);

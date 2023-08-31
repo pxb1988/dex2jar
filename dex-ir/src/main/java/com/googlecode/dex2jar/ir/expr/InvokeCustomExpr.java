@@ -1,50 +1,36 @@
 package com.googlecode.dex2jar.ir.expr;
 
-import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.CallSite;
 import com.googlecode.d2j.Proto;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 
 public class InvokeCustomExpr extends InvokeExpr {
-
-    public String name;
-
-    public Proto proto;
-
-    public MethodHandle handle;
-
-    public Object[] bsmArgs;
+    public CallSite callSite;
 
     @Override
     protected void releaseMemory() {
-        name = null;
-        proto = null;
-        handle = null;
-        bsmArgs = null;
+        callSite = null;
         super.releaseMemory();
     }
 
     @Override
     public Proto getProto() {
-        return proto;
+        return callSite.getMethodProto();
     }
 
-    public InvokeCustomExpr(VT type, Value[] args, String methodName, Proto proto, MethodHandle handle,
-                            Object[] bsmArgs) {
-        super(type, args, handle == null ? null : handle.getMethod());
-        this.proto = proto;
-        this.name = methodName;
-        this.handle = handle;
-        this.bsmArgs = bsmArgs;
+    public InvokeCustomExpr(VT type, Value[] args, CallSite callSite) {
+        super(type, args, callSite.getBootstrapMethodHandler().getMethod());
+        this.callSite = callSite;
     }
 
     @Override
     public InvokeCustomExpr clone() {
-        return new InvokeCustomExpr(vt, cloneOps(), name, proto, handle, bsmArgs);
+        return new InvokeCustomExpr(vt, cloneOps(), callSite);
     }
 
     @Override
     public InvokeCustomExpr clone(LabelAndLocalMapper mapper) {
-        return new InvokeCustomExpr(vt, cloneOps(mapper), name, proto, handle, bsmArgs);
+        return new InvokeCustomExpr(vt, cloneOps(mapper), callSite);
     }
 
     @Override

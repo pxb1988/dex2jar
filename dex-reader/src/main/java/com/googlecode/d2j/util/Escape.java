@@ -1,5 +1,6 @@
 package com.googlecode.d2j.util;
 
+import com.googlecode.d2j.CallSite;
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Field;
@@ -258,6 +259,26 @@ public final class Escape implements DexConstants {
         return sb.append("}").toString();
     }
 
+    public static String v(CallSite callSite) {
+        StringBuilder sb = new StringBuilder()
+                .append("new CallSite(")
+                .append(v(callSite.getName()))
+                .append(", ")
+                .append(v(callSite.getBootstrapMethodHandler()))
+                .append(", ")
+                .append(v(callSite.getMethodName()))
+                .append(", ")
+                .append(v(callSite.getMethodProto()));
+        Object[] extraArguments = callSite.getExtraArguments();
+        if (extraArguments != null && extraArguments.length > 0) {
+            for (Object arg : extraArguments) {
+                sb.append(", ").append(v(arg));
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
     public static String v(Object obj) {
         if (obj == null) {
             return "null";
@@ -281,6 +302,9 @@ public final class Escape implements DexConstants {
         }
         if (obj instanceof MethodHandle) {
             return v((MethodHandle) obj);
+        }
+        if (obj instanceof CallSite) {
+            return v((CallSite) obj);
         }
 
         if (obj instanceof Integer) {

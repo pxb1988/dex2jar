@@ -1,9 +1,9 @@
 package com.googlecode.d2j.node;
 
+import com.googlecode.d2j.CallSite;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
-import com.googlecode.d2j.MethodHandle;
 import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.node.insn.ConstStmtNode;
 import com.googlecode.d2j.node.insn.DexLabelStmtNode;
@@ -117,8 +117,8 @@ public class DexCodeNode extends DexCodeVisitor {
     }
 
     @Override
-    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
-        add(new MethodCustomStmtNode(op, args, name, proto, bsm, bsmArgs));
+    public void visitMethodStmt(Op op, int[] args, CallSite callSite) {
+        add(new MethodCustomStmtNode(op, args, callSite));
     }
 
     @Override

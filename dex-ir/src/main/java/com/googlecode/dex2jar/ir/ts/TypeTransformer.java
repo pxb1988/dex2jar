@@ -486,7 +486,7 @@ public class TypeTransformer implements Transformer {
                 return b;
             } else { // as==bs;
                 String elementTypeA = a.substring(as);
-                String elementTypeB = a.substring(bs);
+                String elementTypeB = b.substring(bs);
                 TypeClass ta = TypeClass.clzOf(elementTypeA);
                 TypeClass tb = TypeClass.clzOf(elementTypeB);
                 if (ta.fixed && !tb.fixed) {

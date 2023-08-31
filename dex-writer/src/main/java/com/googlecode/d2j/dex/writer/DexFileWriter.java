@@ -1,5 +1,6 @@
 package com.googlecode.d2j.dex.writer;
 
+import com.googlecode.d2j.dex.writer.ev.EncodedArray;
 import com.googlecode.d2j.dex.writer.io.ByteBufferOut;
 import com.googlecode.d2j.dex.writer.io.DataOut;
 import com.googlecode.d2j.dex.writer.item.AnnotationItem;
@@ -7,12 +8,12 @@ import com.googlecode.d2j.dex.writer.item.AnnotationSetItem;
 import com.googlecode.d2j.dex.writer.item.AnnotationSetRefListItem;
 import com.googlecode.d2j.dex.writer.item.AnnotationsDirectoryItem;
 import com.googlecode.d2j.dex.writer.item.BaseItem;
+import com.googlecode.d2j.dex.writer.item.CallSiteIdItem;
 import com.googlecode.d2j.dex.writer.item.ClassDataItem;
 import com.googlecode.d2j.dex.writer.item.ClassDefItem;
 import com.googlecode.d2j.dex.writer.item.CodeItem;
 import com.googlecode.d2j.dex.writer.item.ConstPool;
 import com.googlecode.d2j.dex.writer.item.DebugInfoItem;
-import com.googlecode.d2j.dex.writer.item.EncodedArrayItem;
 import com.googlecode.d2j.dex.writer.item.FieldIdItem;
 import com.googlecode.d2j.dex.writer.item.HeadItem;
 import com.googlecode.d2j.dex.writer.item.MapListItem;
@@ -132,6 +133,7 @@ public class DexFileWriter extends DexFileVisitor {
 
         mapItem = new MapListItem();
         headItem = new HeadItem();
+        headItem.version = cp.dexVersion;
         SectionItem<HeadItem> headSection = new SectionItem<>(SectionType.TYPE_HEADER_ITEM);
         headSection.items.add(headItem);
         SectionItem<MapListItem> mapSection = new SectionItem<>(SectionType.TYPE_MAP_LIST);
@@ -168,8 +170,10 @@ public class DexFileWriter extends DexFileVisitor {
                 SectionType.TYPE_DEBUG_INFO_ITEM, cp.debugInfoItems);
         SectionItem<AnnotationItem> annotationItemSection = new SectionItem<>(
                 SectionType.TYPE_ANNOTATION_ITEM, cp.annotationItems.values());
-        SectionItem<EncodedArrayItem> encodedArrayItemSection = new SectionItem<>(
-                SectionType.TYPE_ENCODED_ARRAY_ITEM, cp.encodedArrayItems);
+        SectionItem<EncodedArray> encodedArrayItemSection = new SectionItem<>(
+                SectionType.TYPE_ENCODED_ARRAY_ITEM, cp.encodedArrayItems.values());
+        SectionItem<CallSiteIdItem> callSiteIdItemSectionItem = new SectionItem<>(
+                SectionType.TYPE_CALL_SITE_ID_ITEM, cp.callSiteIdItems.values());
         SectionItem<AnnotationsDirectoryItem> annotationsDirectoryItemSection = new SectionItem<>(
                 SectionType.TYPE_ANNOTATIONS_DIRECTORY_ITEM,
                 cp.annotationsDirectoryItems);
@@ -209,8 +213,13 @@ public class DexFileWriter extends DexFileVisitor {
             items.add(protoIdSection);
             items.add(fieldIdSection);
             items.add(methodIdSection);
-            items.add(methodHandlerSection);
             items.add(classDefSection);
+            if (callSiteIdItemSectionItem.items.size() > 0) {
+                items.add(callSiteIdItemSectionItem);
+            }
+            if (methodHandlerSection.items.size() > 0) {
+                items.add(methodHandlerSection);
+            }
 
             items.addAll(dataSectionItems);
         }

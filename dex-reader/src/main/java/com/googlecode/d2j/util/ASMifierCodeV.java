@@ -1,10 +1,10 @@
 package com.googlecode.d2j.util;
 
+import com.googlecode.d2j.CallSite;
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
-import com.googlecode.d2j.MethodHandle;
 import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
@@ -126,9 +126,8 @@ public class ASMifierCodeV extends DexCodeVisitor implements DexConstants {
     }
 
     @Override
-    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
-        m.s("code.visitMethodStmt(%s,%s,%s,%s,%s,%s);", op(op), Escape.v(args), Escape.v(name), Escape.v(proto),
-                Escape.v(bsm), Escape.v(bsmArgs));
+    public void visitMethodStmt(Op op, int[] args, CallSite callSite) {
+        m.s("code.visitMethodStmt(%s,%s,%s);", op(op), Escape.v(args), Escape.v(callSite));
     }
 
     @Override
