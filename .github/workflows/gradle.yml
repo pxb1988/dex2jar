@@ -6,6 +6,8 @@ name: Java CI with Gradle
 on:
   push:
     branches: [ 2.x ]
+    tags:
+      - v*
   pull_request:
     branches: [ 2.x ]
 
