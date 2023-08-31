@@ -47,12 +47,10 @@ import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.BasicVerifier;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
@@ -329,11 +327,7 @@ public abstract class TestUtils {
         cfOptions.strictNameCheck = false;
         DexOptions dexOptions = new DexOptions();
         if (fileNode != null) {
-            if (fileNode.dexVersion >= DexConstants.DEX_039) {
-                dexOptions.minSdkVersion = 28;
-            } else if (fileNode.dexVersion >= DexConstants.DEX_037) {
-                dexOptions.minSdkVersion = 26;
-            }
+            dexOptions.minSdkVersion = DexConstants.toMiniAndroidApiLevel(fileNode.dexVersion);
         }
 
         DirectClassFile dcf = new DirectClassFile(data, rca.getClassName() + ".class", true);

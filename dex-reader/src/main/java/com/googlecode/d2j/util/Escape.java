@@ -263,6 +263,26 @@ public class Escape implements DexConstants {
         return sb.append("}").toString();
     }
 
+    public static String v(CallSite callSite) {
+        StringBuilder sb = new StringBuilder()
+                .append("new CallSite(")
+                .append(v(callSite.getName()))
+                .append(", ")
+                .append(v(callSite.getBootstrapMethodHandler()))
+                .append(", ")
+                .append(v(callSite.getMethodName()))
+                .append(", ")
+                .append(v(callSite.getMethodProto()));
+        Object[] extraArguments = callSite.getExtraArguments();
+        if (extraArguments != null && extraArguments.length > 0) {
+            for (Object arg : extraArguments) {
+                sb.append(", ").append(v(arg));
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
     public static String v(Object obj) {
         if (obj == null) {
             return "null";
@@ -286,6 +306,9 @@ public class Escape implements DexConstants {
         }
         if (obj instanceof MethodHandle) {
             return v((MethodHandle) obj);
+        }
+        if (obj instanceof CallSite) {
+            return v((CallSite) obj);
         }
 
         if (obj instanceof Integer) {

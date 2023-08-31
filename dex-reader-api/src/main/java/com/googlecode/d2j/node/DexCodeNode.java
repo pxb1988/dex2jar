@@ -110,8 +110,8 @@ public class DexCodeNode extends DexCodeVisitor {
     }
 
     @Override
-    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
-        add(new MethodCustomStmtNode(op, args, name, proto, bsm, bsmArgs));
+    public void visitMethodStmt(Op op, int[] args, CallSite callSite) {
+        add(new MethodCustomStmtNode(op, args, callSite));
     }
 
     @Override

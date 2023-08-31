@@ -20,9 +20,10 @@ import com.googlecode.d2j.dex.writer.io.DataOut;
 import com.googlecode.d2j.dex.writer.item.BaseItem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class EncodedArray {
+public class EncodedArray extends BaseItem implements Comparable<EncodedArray> {
 
     public List<EncodedValue> values = new ArrayList<>(5);
 
@@ -56,5 +57,25 @@ public class EncodedArray {
         for (EncodedValue ev : values) {
             ev.write(out);
         }
+    }
+
+    @Override
+    public int compareTo(EncodedArray o) {
+        if (o == null) {
+            return 1;
+        }
+        int x = Integer.compare(values.size(), o.values.size());
+        if (x != 0) {
+            return x;
+        }
+        for (int i = 0; i < values.size(); i++) {
+            EncodedValue a = values.get(i);
+            EncodedValue b = o.values.get(i);
+            x = a.compareTo(b);
+            if (x != 0) {
+                return x;
+            }
+        }
+        return 0;
     }
 }

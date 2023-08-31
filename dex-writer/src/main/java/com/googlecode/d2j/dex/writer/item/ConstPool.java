@@ -16,17 +16,24 @@
  */
 package com.googlecode.d2j.dex.writer.item;
 
+import com.googlecode.d2j.CallSite;
+import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.DexType;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.MethodHandle;
 import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.dex.writer.DexWriteException;
+import com.googlecode.d2j.dex.writer.ev.EncodedArray;
+import com.googlecode.d2j.dex.writer.ev.EncodedValue;
 
 import java.util.*;
 
 public class ConstPool {
-    public List<EncodedArrayItem> encodedArrayItems = new ArrayList<>();
+    public int dexVersion = DexConstants.DEX_035;
+
+    public Map<CallSiteIdItem, CallSiteIdItem> callSiteIdItems = new TreeMap<>();
+    public Map<EncodedArray, EncodedArray> encodedArrayItems = new TreeMap<>();
     public Map<AnnotationSetRefListItem, AnnotationSetRefListItem> annotationSetRefListItems = new HashMap<>();
     public List<CodeItem> codeItems = new ArrayList<>();
     public List<ClassDataItem> classDataItems = new ArrayList<>();
@@ -46,17 +53,17 @@ public class ConstPool {
 
     public Object wrapEncodedItem(Object value) {
         if (value instanceof DexType) {
-            value = uniqType(((DexType) value).desc);
+            return uniqType(((DexType) value).desc);
         } else if (value instanceof Field) {
-            value = uniqField((Field) value);
+            return uniqField((Field) value);
         } else if (value instanceof String) {
-            value = uniqString((String) value);
+            return uniqString((String) value);
         } else if (value instanceof Method) {
-            value = uniqMethod((Method) value);
+            return uniqMethod((Method) value);
         } else if (value instanceof MethodHandle) {
-            value = uniqMethodHandle((MethodHandle) value);
+            return uniqMethodHandle((MethodHandle) value);
         } else if (value instanceof Proto) {
-            value = uniqProto((Proto) value);
+            return uniqProto((Proto) value);
         }
         return value;
     }
@@ -127,6 +134,18 @@ public class ConstPool {
 
     public void addDebugInfoItem(DebugInfoItem debugInfoItem) {
         debugInfoItems.add(debugInfoItem);
+    }
+
+    public void dex039() {
+        if (dexVersion < DexConstants.DEX_039) {
+            dexVersion = DexConstants.DEX_039;
+        }
+    }
+
+    public void dex038() {
+        if (dexVersion < DexConstants.DEX_038) {
+            dexVersion = DexConstants.DEX_038;
+        }
     }
 
     static class PE {
@@ -249,7 +268,7 @@ public class ConstPool {
         return key;
     }
 
-    private ProtoIdItem uniqProto(Proto method) {
+    public ProtoIdItem uniqProto(Proto method) {
         return uniqProto(method.getParameterTypes(), method.getReturnType());
     }
     private ProtoIdItem uniqProto(Method method) {
@@ -337,11 +356,31 @@ public class ConstPool {
         return dataItem;
     }
 
-    // TODO change EncodedArrayItem to uniq
-    public EncodedArrayItem putEnCodedArrayItem() {
-        EncodedArrayItem arrayItem = new EncodedArrayItem();
-        encodedArrayItems.add(arrayItem);
-        return arrayItem;
+    public CallSiteIdItem uniqCallSite(CallSite callSite) {
+        EncodedArray e = new EncodedArray();
+        e.values.add(new EncodedValue(EncodedValue.VALUE_METHOD_HANDLE, uniqMethodHandle(callSite.getBootstrapMethodHandler())));
+        e.values.add(new EncodedValue(EncodedValue.VALUE_STRING, uniqString(callSite.getMethodName())));
+        e.values.add(new EncodedValue(EncodedValue.VALUE_METHOD_TYPE, uniqProto(callSite.getMethodProto())));
+        for (Object arg : callSite.getExtraArguments()) {
+            e.values.add(EncodedValue.wrap(wrapEncodedItem(arg)));
+        }
+        CallSiteIdItem k = new CallSiteIdItem(callSite.getName(), uniqEncodedArrayItem(e));
+
+        CallSiteIdItem v = callSiteIdItems.get(k);
+        if (v == null) {
+            v = k;
+            callSiteIdItems.put(v, v);
+        }
+        return v;
+    }
+
+    public EncodedArray uniqEncodedArrayItem(EncodedArray k) {
+        EncodedArray v = encodedArrayItems.get(k);
+        if (v == null) {
+            v = k;
+            encodedArrayItems.put(v, v);
+        }
+        return v;
     }
 
     public AnnotationSetItem uniqAnnotationSetItem(AnnotationSetItem key) {

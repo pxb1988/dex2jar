@@ -385,14 +385,25 @@ import java.util.*;
     }
 
     @Override
-    public void visitMethodStmt(Op op, int[] args, String name, Proto proto, MethodHandle bsm, Object... bsmArgs) {
+    public void visitMethodStmt(Op op, int[] args, CallSite callSite) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{ ").append( BaksmaliDumper.escapeValue(bsm)).append(", ").append(BaksmaliDumper.escapeValue(name)).append(", ").append(BaksmaliDumper.escapeMethodDesc(proto));
-        for(Object o: bsmArgs) {
-            sb.append(", ").append(BaksmaliDumper.escapeValue(o));
-        }
-        sb.append("}");
+        Object[] extraArguments = callSite.getExtraArguments();
 
+        //     invoke-custom/range {v0 .. v5}, call_site_1("runDynamic", (IIIIII)V, 0x378)@L038;->bsm(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;I)Ljava/lang/invoke/CallSite;
+
+        sb
+                .append(BaksmaliDumper.escapeId(callSite.getName()))
+                .append('(')
+                .append(BaksmaliDumper.escapeValue(callSite.getMethodName()))
+                .append(", ")
+                .append(BaksmaliDumper.escapeMethodDesc(callSite.getMethodProto()));
+        if (extraArguments != null && extraArguments.length > 0) {
+            for (Object o : extraArguments) {
+                sb.append(", ").append(BaksmaliDumper.escapeValue(o));
+            }
+        }
+        // FIXME samli syntax only write out method_handler's method field
+        sb.append(")@").append(BaksmaliDumper.escapeMethod(callSite.getBootstrapMethodHandler().getMethod()));
 
         if (args.length > 0) {
             if (op.format == InstructionFormat.kFmt3rc) { // invoke-x/range

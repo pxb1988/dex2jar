@@ -205,7 +205,7 @@ public class DexFileReader implements BaseDexFileReader {
         int call_site_ids_size = 0;
         int method_handle_ids_off = 0;
         int method_handle_ids_size = 0;
-        if (dex_version > DEX_037) {
+        if (dex_version >= DEX_038) {
             in.position(map_off);
             int size = in.getInt();
             for (int i = 0; i < size; i++) {
@@ -1642,9 +1642,7 @@ public class DexFileReader implements BaseDexFileReader {
                 if (op.indexType == InstructionIndexType.kIndexTypeRef) {
                     dcv.visitFilledNewArrayStmt(op, regs, getType(b));
                 } else if (op.indexType == InstructionIndexType.kIndexCallSiteRef) {
-                    Object[] callsite = getCallSite(b);
-                    Object[] constArgs = Arrays.copyOfRange(callsite, 3, callsite.length);
-                    dcv.visitMethodStmt(op, regs, (String) callsite[1], (Proto) callsite[2], (MethodHandle) callsite[0], constArgs);
+                    dcv.visitMethodStmt(op, regs, getCallSite(b));
                 } else {
                     dcv.visitMethodStmt(op, regs, getMethod(b));
                 }
@@ -1661,9 +1659,7 @@ public class DexFileReader implements BaseDexFileReader {
                 if (op.indexType == InstructionIndexType.kIndexTypeRef) {
                     dcv.visitFilledNewArrayStmt(op, regs, getType(b));
                 } else if (op.indexType == InstructionIndexType.kIndexCallSiteRef) {
-                    Object[] callsite = getCallSite(b);
-                    Object[] constArgs = Arrays.copyOfRange(callsite, 3, callsite.length - 3);
-                    dcv.visitMethodStmt(op, regs, (String) callsite[1], (Proto) callsite[2], (MethodHandle) callsite[0], constArgs);
+                    dcv.visitMethodStmt(op, regs, getCallSite(b));
                 } else {
                     dcv.visitMethodStmt(op, regs, getMethod(b));
                 }
@@ -1785,11 +1781,24 @@ public class DexFileReader implements BaseDexFileReader {
         }
     }
 
-    private Object[] getCallSite(int b) {
+    private CallSite getCallSite(int b) {
         callSiteIdIn.position(b * 4);
         int call_site_off = callSiteIdIn.getInt();
 
-        return read_encoded_array_item(call_site_off);
+        Object[] call_site_items = read_encoded_array_item(call_site_off);
+        Object[] constArgs;
+        if (call_site_items.length > 3) {
+            constArgs = Arrays.copyOfRange(call_site_items, 3, call_site_items.length);
+        } else {
+            constArgs = new Object[0];
+        }
+
+        return new CallSite(
+                String.format("call_site_%d", b),
+                (MethodHandle) call_site_items[0],
+                (String) call_site_items[1],
+                (Proto) call_site_items[2],
+                constArgs);
     }
 
     /**

@@ -16,13 +16,14 @@
  */
 package com.googlecode.d2j.dex.writer.item;
 
+import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.dex.writer.io.DataOut;
 
-public class HeadItem extends BaseItem {
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-    public static final int V035 = 0x00353330;
-    public static final int V036 = 0x00363330;
-    public int version = V035;
+public class HeadItem extends BaseItem {
+    public int version = DexConstants.DEX_035;
     public SectionItem<MapListItem> mapSection;
     public SectionItem<StringIdItem> stringIdSection;
     public SectionItem<TypeIdItem> typeIdSection;
@@ -34,7 +35,9 @@ public class HeadItem extends BaseItem {
 
     public void write(DataOut out) {
         out.uint("magic", 0x0A786564);
-        out.uint("version", version);
+
+        // version in DexConstants is big endian
+        out.bytes("version", writeBigEndian(version << 8));
         out.skip4("checksum");
         out.skip("signature", 20);
         out.uint("file_size", fileSize);
@@ -62,6 +65,11 @@ public class HeadItem extends BaseItem {
         out.uint("data_size", fileSize - mapSection.offset);   // every thing after map is data section
         out.uint("data_off", mapSection.offset);// map is the first in data section
 
+    }
+
+    private static byte[] writeBigEndian(int value) {
+        return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN)
+                .putInt(value).array();
     }
 
     @Override

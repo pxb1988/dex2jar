@@ -28,7 +28,6 @@ import java.util.List;
 public class SectionItem<T extends BaseItem> extends BaseItem {
     final public SectionType sectionType;
     public final List<T> items = new ArrayList<>();
-    int size = 0;
 
     public SectionItem(SectionType typeCode) {
         super();
@@ -52,10 +51,6 @@ public class SectionItem<T extends BaseItem> extends BaseItem {
         }
     }
 
-    public int size() {
-        return size;
-    }
-
     public int place(int offset) {
         final int startOffset = offset;
         int index = 0;
@@ -66,7 +61,6 @@ public class SectionItem<T extends BaseItem> extends BaseItem {
             index++;
             offset = t.place(offset);
         }
-        size = offset - startOffset;
         return offset;
     }
 
