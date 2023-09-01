@@ -16,6 +16,7 @@
  */
 package com.googlecode.d2j.dex;
 
+import org.objectweb.asm.AsmBridge;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
@@ -32,7 +33,7 @@ public class ExDex2Asm extends Dex2Asm {
 
     @Override
     public void convertCode(DexMethodNode methodNode, MethodVisitor mv, ClzCtx clzCtx) {
-//        MethodVisitor mw = AsmBridge.searchMethodWriter(mv);
+        MethodVisitor mw = AsmBridge.searchMethodWriter(mv);
         MethodNode mn = new MethodNode(Opcodes.ASM9, methodNode.access, methodNode.method.getName(),
                 methodNode.method.getDesc(), null, null);
         try {
@@ -48,15 +49,15 @@ public class ExDex2Asm extends Dex2Asm {
         }
         // code convert ok, copy to MethodWriter and check for Size
         mn.accept(mv);
-//        if (mw != null) {
-//            try {
-//                AsmBridge.sizeOfMethodWriter(mw);
-//            } catch (Exception ex) {
-//                mn.instructions.clear();
-//                mn.tryCatchBlocks.clear();
-//                exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, ex);
-//                AsmBridge.replaceMethodWriter(mw, mn);
-//            }
-//        }
+        if (mw != null) {
+            try {
+                AsmBridge.sizeOfMethodWriter(mw);
+            } catch (Exception ex) {
+                mn.instructions.clear();
+                mn.tryCatchBlocks.clear();
+                exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, ex);
+                AsmBridge.replaceMethodWriter(mw, mn);
+            }
+        }
     }
 }
