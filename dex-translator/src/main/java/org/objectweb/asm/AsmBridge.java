@@ -19,7 +19,7 @@ package org.objectweb.asm;
 import java.lang.reflect.Field;
 import org.objectweb.asm.tree.MethodNode;
 
-public class AsmBridge {
+public final class AsmBridge {
 
     public static MethodVisitor searchMethodWriter(MethodVisitor methodVisitor) {
         while (methodVisitor != null && !(methodVisitor instanceof MethodWriter)) {
@@ -36,7 +36,8 @@ public class AsmBridge {
     private static void removeMethodWriter(MethodWriter methodWriter) {
         SymbolTable symbolTable;
         ClassWriter classWriter;
-        MethodWriter firstMethodWriter, lastMethodWriter;
+        MethodWriter firstMethodWriter;
+        MethodWriter lastMethodWriter;
 
         // Get the SymbolTable for accessing ClassWriter
         try {
@@ -98,6 +99,10 @@ public class AsmBridge {
         } catch (IllegalAccessException | NoSuchFieldException exc) {
             exc.printStackTrace();
         }
+    }
+
+    private AsmBridge() {
+        throw new UnsupportedOperationException();
     }
 
 }
