@@ -981,24 +981,10 @@ public class DexFileReader implements BaseDexFileReader {
         return getString(typeIdIn.getInt(id * 4));
     }
 
-    private static boolean isPowerOfTwo(int i) {
-        return (i & (i - 1)) == 0;
-    }
-
-    private static int removeHiddenAccess(int accessFlags) {
-        // Refer to art/libdexfile/dex/hidden_api_access_flags.h
-        if (!isPowerOfTwo(accessFlags & DexConstants.ACC_VISIBILITY_FLAGS)) {
-            accessFlags ^= DexConstants.ACC_VISIBILITY_FLAGS;
-        }
-        accessFlags &= ~((accessFlags & DexConstants.ACC_NATIVE) != 0 ?
-                DexConstants.ACC_DEX_HIDDEN_BIT_NATIVE : DexConstants.ACC_DEX_HIDDEN_BIT);
-        return accessFlags;
-    }
-
     private int acceptField(ByteBuffer in, int lastIndex, DexClassVisitor dcv,
             Map<Integer, Integer> fieldAnnotationPositions, Object value, int config) {
         int diff = readULeb128i(in);
-        int field_access_flags = removeHiddenAccess(readULeb128i(in));
+        int field_access_flags = readULeb128i(in);
         int field_id = lastIndex + diff;
         Field field = getField(field_id);
         // //////////////////////////////////////////////////////////////
@@ -1024,7 +1010,7 @@ public class DexFileReader implements BaseDexFileReader {
             Map<Integer, Integer> parameterAnnos, int config, boolean firstMethod) {
         int offset = in.position();
         int diff = readULeb128i(in);
-        int method_access_flags = removeHiddenAccess(readULeb128i(in));
+        int method_access_flags = readULeb128i(in);
         int code_off = readULeb128i(in);
         int method_id = lastIndex + diff;
         Method method = getMethod(method_id);

@@ -58,6 +58,20 @@ import java.util.Set;
 import java.util.Stack;
 
 public class Dex2Asm {
+    private static boolean isPowerOfTwo(int i) {
+        return (i & (i - 1)) == 0;
+    }
+
+    private static int removeHiddenAccess(int accessFlags) {
+        // Refer to art/libdexfile/dex/hidden_api_access_flags.h
+        if (!isPowerOfTwo(accessFlags & DexConstants.ACC_VISIBILITY_FLAGS)) {
+            accessFlags ^= DexConstants.ACC_VISIBILITY_FLAGS;
+        }
+        accessFlags &= ~((accessFlags & DexConstants.ACC_NATIVE) != 0 ?
+                DexConstants.ACC_DEX_HIDDEN_BIT_NATIVE : DexConstants.ACC_DEX_HIDDEN_BIT);
+        return accessFlags;
+    }
+
     public static class ClzCtx {
         public String classDescriptor;
         public String hexDecodeMethodNamePrefix;
@@ -319,7 +333,9 @@ public class Dex2Asm {
                     + " by changing its signature to null");
             signature = null;
         }
-        int access = methodNode.access;
+
+        // HiddenApiAccessFlags is valid for .dex but not for .class
+        int access = removeHiddenAccess(methodNode.access);
         // clear ACC_DECLARED_SYNCHRONIZED and ACC_CONSTRUCTOR from method flags
         final int cleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | DexConstants.ACC_CONSTRUCTOR));
         access &= cleanFlag;
@@ -615,10 +631,11 @@ public class Dex2Asm {
             signature = null;
         }
 
-
+        // HiddenApiAccessFlags is valid for .dex but not for .class
+        int access = removeHiddenAccess(fieldNode.access);
         final int fieldCleanFlag = ~((DexConstants.ACC_DECLARED_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC));
-        FieldVisitor fv = cv.visitField(fieldNode.access & fieldCleanFlag, fieldNode.field.getName(),
-                    fieldNode.field.getType(), signature, value);
+        FieldVisitor fv = cv.visitField(access & fieldCleanFlag, fieldNode.field.getName(),
+                fieldNode.field.getType(), signature, value);
 
         if (fv == null) {
             return;
