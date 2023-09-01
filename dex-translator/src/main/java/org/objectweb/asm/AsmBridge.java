@@ -34,25 +34,17 @@ public final class AsmBridge {
     }
 
     private static void removeMethodWriter(MethodWriter methodWriter) {
-        SymbolTable symbolTable;
-        ClassWriter classWriter;
         MethodWriter firstMethodWriter;
         MethodWriter lastMethodWriter;
 
-        // Get the SymbolTable for accessing ClassWriter
         try {
-            Field stField = methodWriter.getClass().getDeclaredField("symbolTable");
-            stField.setAccessible(true);
-            symbolTable = (SymbolTable) stField.get(methodWriter);
+            ClassWriter classWriter = reflectForClassWriter(methodWriter);
 
-            // Get ClassWriter object from methodWriter's SymbolTable
-            classWriter = symbolTable.classWriter;
-
-            Field fmField = classWriter.getClass().getDeclaredField("firstMethod");
+            Field fmField = ClassWriter.class.getDeclaredField("firstMethod");
             fmField.setAccessible(true);
             firstMethodWriter = (MethodWriter) fmField.get(classWriter);
 
-            Field lmField = classWriter.getClass().getDeclaredField("lastMethod");
+            Field lmField = ClassWriter.class.getDeclaredField("lastMethod");
             lmField.setAccessible(true);
             lastMethodWriter = (MethodWriter) lmField.get(classWriter);
 
@@ -80,19 +72,20 @@ public final class AsmBridge {
         }
     }
 
+    private static ClassWriter reflectForClassWriter(MethodWriter methodWriter) throws NoSuchFieldException, IllegalAccessException {
+        // Get the SymbolTable for accessing ClassWriter
+        Field stField = MethodWriter.class.getDeclaredField("symbolTable");
+        stField.setAccessible(true);
+        SymbolTable symbolTable = (SymbolTable) stField.get(methodWriter);
+        // Get ClassWriter object from methodWriter's SymbolTable
+        return symbolTable.classWriter;
+    }
+
     public static void replaceMethodWriter(MethodVisitor methodVisitor, MethodNode methodNode) {
         MethodWriter methodWriter = (MethodWriter) methodVisitor;
-        SymbolTable symbolTable;
-        ClassWriter classWriter;
 
-        // Get the SymbolTable for accessing ClassWriter
         try {
-            Field stField = methodWriter.getClass().getDeclaredField("symbolTable");
-            stField.setAccessible(true);
-            symbolTable = (SymbolTable) stField.get(methodWriter);
-
-            // Get ClassWriter object from methodWriter's SymbolTable
-            classWriter = symbolTable.classWriter;
+            ClassWriter classWriter = reflectForClassWriter(methodWriter);
 
             methodNode.accept(classWriter);
             removeMethodWriter(methodWriter);
