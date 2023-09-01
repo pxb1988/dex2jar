@@ -3,6 +3,7 @@ package com.googlecode.d2j.dex;
 import com.googlecode.d2j.DexException;
 import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.dex2jar.tools.Constants;
+import org.objectweb.asm.AsmBridge;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -16,7 +17,7 @@ public class ExDex2Asm extends Dex2Asm {
 
     @Override
     public void convertCode(DexMethodNode methodNode, MethodVisitor mv, ClzCtx clzCtx) {
-//        MethodVisitor mw = AsmBridge.searchMethodWriter(mv);
+        MethodVisitor mw = AsmBridge.searchMethodWriter(mv);
         MethodNode mn = new MethodNode(Constants.ASM_VERSION, methodNode.access, methodNode.method.getName(),
                 methodNode.method.getDesc(), null, null);
         try {
@@ -33,21 +34,21 @@ public class ExDex2Asm extends Dex2Asm {
         }
         // code convert ok, copy to MethodWriter and check for Size
         mn.accept(mv);
-        //if (mw != null) {
-        //    try {
-        //        AsmBridge.sizeOfMethodWriter(mw);
-        //    } catch (Exception ex) {
-        //        mn.instructions.clear();
-        //        mn.tryCatchBlocks.clear();
-        //        if (exceptionHandler == null) {
-        //            new DexException(ex, "Failed to convert code for %s", methodNode.method)
-        //                    .printStackTrace();
-        //        } else {
-        //            exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, ex);
-        //        }
-        //        AsmBridge.replaceMethodWriter(mw, mn);
-        //    }
-        //}
+        if (mw != null) {
+            try {
+                AsmBridge.sizeOfMethodWriter(mw);
+            } catch (Exception ex) {
+                mn.instructions.clear();
+                mn.tryCatchBlocks.clear();
+                if (exceptionHandler == null) {
+                    new DexException(ex, "Failed to convert code for %s", methodNode.method)
+                            .printStackTrace();
+                } else {
+                    exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, ex);
+                }
+                AsmBridge.replaceMethodWriter(mw, mn);
+            }
+        }
     }
 
 }
