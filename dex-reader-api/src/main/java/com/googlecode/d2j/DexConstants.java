@@ -44,6 +44,10 @@ public interface DexConstants {
     int ACC_CONSTRUCTOR = 0x10000;// constructor method (class or instance initializer)
     int ACC_DECLARED_SYNCHRONIZED = 0x20000;
 
+    int ACC_VISIBILITY_FLAGS = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
+    int ACC_DEX_HIDDEN_BIT = 0x00000020; // field, method (not native)
+    int ACC_DEX_HIDDEN_BIT_NATIVE = 0x00000200; // method (native)
+
     String ANNOTATION_DEFAULT_TYPE = "Ldalvik/annotation/AnnotationDefault;";
     String ANNOTATION_SIGNATURE_TYPE = "Ldalvik/annotation/Signature;";
     String ANNOTATION_THROWS_TYPE = "Ldalvik/annotation/Throws;";
