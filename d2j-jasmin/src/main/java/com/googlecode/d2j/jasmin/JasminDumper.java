@@ -89,7 +89,7 @@ import java.util.*;
  * @author Eric Bruneton
  */
 public class JasminDumper implements Opcodes {
-    private static Set<String> ACCESS_KWS = new HashSet<String>(Arrays
+    private static final Set<String> ACCESS_KWS = new HashSet<>(Arrays
             .asList("abstract", "private", "protected", "public", "enum", "final", "interface", "static", "strictfp", "native", "super"));
 
     public JasminDumper(PrintWriter pw) {
@@ -187,10 +187,7 @@ public class JasminDumper implements Opcodes {
         }
 
         for (FieldNode fn : cn.fields) {
-            boolean annotations = false;
-            if (fn.visibleAnnotations != null && fn.visibleAnnotations.size() > 0) {
-                annotations = true;
-            }
+            boolean annotations = fn.visibleAnnotations != null && fn.visibleAnnotations.size() > 0;
             if (fn.invisibleAnnotations != null && fn.invisibleAnnotations.size() > 0) {
                 annotations = true;
             }
@@ -388,11 +385,16 @@ public class JasminDumper implements Opcodes {
                             pw.print('/');
                             pw.print(name);
                             pw.print(desc);
-                            if (opcode == Opcodes.INVOKEINTERFACE) {
+                            if (isInterface) {
                                 pw.print(' ');
                                 pw.print((Type.getArgumentsAndReturnSizes(desc) >> 2) - 1);
                             }
                             pw.println();
+                        }
+
+                        @Override
+                        public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+                            visitMethodInsn(opcode, owner, name, desc, opcode == INVOKEINTERFACE);
                         }
 
                         @Override
@@ -766,7 +768,7 @@ public class JasminDumper implements Opcodes {
             pw.print("[F = ");
             float[] v = (float[]) value;
             for (float element : v) {
-                print(new Float(element));
+                print(element);
                 pw.print(' ');
             }
             pw.println();
@@ -774,7 +776,7 @@ public class JasminDumper implements Opcodes {
             pw.print("[D = ");
             double[] v = (double[]) value;
             for (double element : v) {
-                print(new Double(element));
+                print(element);
                 pw.print(' ');
             }
             pw.println();
@@ -829,10 +831,10 @@ public class JasminDumper implements Opcodes {
             pw.println(((Byte) value).intValue());
         } else if (value instanceof Boolean) {
             pw.print("Z = ");
-            pw.println(((Boolean) value).booleanValue() ? 1 : 0);
+            pw.println((Boolean) value ? 1 : 0);
         } else if (value instanceof Character) {
             pw.print("C = ");
-            pw.println(new Integer(((Character) value).charValue()));
+            pw.println(new Integer((Character) value));
         } else if (value instanceof Short) {
             pw.print("S = ");
             pw.println(((Short) value).intValue());
@@ -870,9 +872,9 @@ public class JasminDumper implements Opcodes {
         } else if (value instanceof Byte) {
             pw.print(((Byte) value).intValue());
         } else if (value instanceof Boolean) {
-            pw.print(((Boolean) value).booleanValue() ? 1 : 0);
+            pw.print((Boolean) value ? 1 : 0);
         } else if (value instanceof Character) {
-            pw.print(new Integer(((Character) value).charValue()));
+            pw.print(new Integer((Character) value));
         } else if (value instanceof Short) {
             pw.print(((Short) value).intValue());
         } else if (value instanceof Type) {

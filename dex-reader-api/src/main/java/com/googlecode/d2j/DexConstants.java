@@ -21,7 +21,7 @@ package com.googlecode.d2j;
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
-public abstract interface DexConstants {
+public interface DexConstants {
 
     int ACC_PUBLIC = 0x0001; // class, field, method
     int ACC_PRIVATE = 0x0002; // class, field, method

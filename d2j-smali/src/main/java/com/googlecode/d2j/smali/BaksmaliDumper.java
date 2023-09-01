@@ -112,7 +112,7 @@ public class BaksmaliDumper implements DexConstants {
         for (int i = 0; i < id.length(); ++i) {
             char c = id.charAt(i);
             if (c == '-') {
-                sb.append(c);
+                sb.append('-');
             } else {
                 escape1(sb, c);
             }
@@ -235,35 +235,35 @@ public class BaksmaliDumper implements DexConstants {
         if (obj instanceof Integer) {
             int i = ((Integer) obj);
             if (i == Integer.MIN_VALUE) {
-                return "0x" + Integer.toHexString(i);
+                return "0x" + Integer.toHexString(Integer.MIN_VALUE);
             }
             return obj.toString();
         }
         if (obj instanceof Long) {
-            Long v = ((Long) obj);
+            long v = ((Long) obj);
             if (v == Long.MIN_VALUE) {
-                return "0x" + Long.toHexString(v) + "L";
+                return "0x" + Long.toHexString(Long.MIN_VALUE) + "L";
             } else {
-                return ((Long) obj).toString() + "L";
+                return obj + "L";
             }
         }
         if (obj instanceof Float) {
-            return ((Float) obj).toString() + "F";
+            return obj + "F";
         }
         if (obj instanceof Double) {
-            return ((Double) obj).toString() + "D";
+            return obj + "D";
         }
         if (obj instanceof Short) {
-            return ((Short) obj).toString() + "S";
+            return obj + "S";
         }
         if (obj instanceof Byte) {
             return ((Byte) obj).toString() + 't';
         }
         if (obj instanceof Character) {
             StringBuilder buf = new StringBuilder();
-            buf.append("\'");
-            escape0(buf, ((Character) obj).charValue());
-            buf.append("\'");
+            buf.append("'");
+            escape0(buf, (Character) obj);
+            buf.append("'");
             return buf.toString();
         }
         if (obj instanceof Boolean) {

@@ -45,12 +45,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
  */
 public class RemoveConstantFromSSA extends StatedTransformer {
 
-    public static final Comparator<Local> LOCAL_COMPARATOR = new Comparator<Local>() {
-        @Override
-        public int compare(Local local, Local t1) {
-            return Integer.compare(local._ls_index, t1._ls_index);
-        }
-    };
+    public static final Comparator<Local> LOCAL_COMPARATOR = Comparator.comparingInt(local -> local._ls_index);
 
     @Override
     public boolean transformReportChanged(IrMethod method) {

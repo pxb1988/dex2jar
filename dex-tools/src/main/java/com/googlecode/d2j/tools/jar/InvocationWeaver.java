@@ -111,7 +111,7 @@ import java.util.jar.Manifest;
  */
 public class InvocationWeaver extends BaseWeaver implements Opcodes {
     private static final Type OBJECT_TYPE = Type.getType(Object.class);
-    private Remapper remapper = new Remapper() {
+    private final Remapper remapper = new Remapper() {
 
         @Override
         public String mapDesc(String desc) {
@@ -208,19 +208,19 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
         }
     }
 
-    public byte[] wave0(byte[] data) throws IOException {
+    public byte[] wave0(byte[] data) {
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
         wave0(data, cw);
         return cw.toByteArray();
     }
 
-    public void wave0(byte[] data, final ClassVisitor cv) throws IOException {
+    public void wave0(byte[] data, final ClassVisitor cv) {
         new ClassReader(data).accept(wrapper(cv), ClassReader.EXPAND_FRAMES);
     }
 
     public ClassVisitor wrapper(final ClassVisitor cv) {
         return new ClassRemapper(cv, remapper) {
-            Map<MtdInfo, MtdInfo> toCreate = new HashMap<MtdInfo, MtdInfo>();
+            final Map<MtdInfo, MtdInfo> toCreate = new HashMap<>();
             String clzName;
 
             private MtdInfo newMethodA(int opcode, MtdInfo t, MtdInfo mapTo) {
@@ -239,7 +239,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                     List<Type> ts = new ArrayList<>(args.length + 1);
                     ts.add(Type.getType(t.owner));
                     ts.addAll(Arrays.asList(args));
-                    n.desc = Type.getMethodDescriptor(ret, ts.toArray(new Type[ts.size()]));
+                    n.desc = Type.getMethodDescriptor(ret, ts.toArray(new Type[0]));
                 } else {
                     n.desc = t.desc;
                 }
@@ -357,9 +357,8 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                     t1.owner = "L" + clzName + ";";
                     t1.name = buildMethodAName(name) ;
                     t1.desc = desc;
-                    final MtdInfo t = t1;
                     final MtdInfo src = new MtdInfo();
-                    src.owner = t.owner;
+                    src.owner = t1.owner;
                     src.name = name;
                     src.desc = desc;
                     return new MethodNode(ASM9, access, name, desc, signature, exceptions) {
@@ -382,10 +381,10 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                             } else {
                                 opcode = Opcodes.INVOKEVIRTUAL;
                             }
-                            genMethodACode(opcode, t, mapTo, superMv, src);
+                            genMethodACode(opcode, t1, mapTo, superMv, src);
 
                             int newAccess = (access & ~(ACC_PRIVATE | ACC_PROTECTED)) | ACC_PUBLIC; // make sure public
-                            MethodVisitor rmv = wrap(superMethodVisitor(newAccess, t.name, desc, null, null));
+                            MethodVisitor rmv = wrap(superMethodVisitor(newAccess, t1.name, desc, null, null));
                             if(rmv!=null) {
                                 rmv.visitCode();
                                 int n, i;
@@ -423,14 +422,15 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                 }
 
                 @Override
-                public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {
+                public void visitMethodInsn(int opcode, String owner, String name, String desc,
+                                            boolean isInterface) {
                     MtdInfo mapTo = findTargetMethod("L" + owner + ";", name, desc);
                     if (mapTo != null) {
                         boolean isStatic = opcode == INVOKESTATIC;
                         Type orgRet = Type.getReturnType(desc);
-                        Type orgArgs[] = Type.getArgumentTypes(desc);
+                        Type[] orgArgs = Type.getArgumentTypes(desc);
                         Type nRet = Type.getReturnType(mapTo.desc);
-                        Type nArgs[] = Type.getArgumentTypes(mapTo.desc);
+                        Type[] nArgs = Type.getArgumentTypes(mapTo.desc);
                         if (orgRet.getSort() != Type.VOID && nRet.getSort() == Type.VOID) {
                             throw new RuntimeException("can't cast " + nRet + " to " + orgRet);
                         }
@@ -472,6 +472,11 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                         super.visitMethodInsn(opcode, owner, name, desc, isInterface);
                     }
                 }
+
+                @Override
+                public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+                    visitMethodInsn(opcode, owner, name, desc, opcode == INVOKEINTERFACE);
+                }
             }
 
         };
@@ -479,42 +484,38 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
 
     public void wave(Path from, final Path to) throws IOException {
 
-        BaseCmd.walkJarOrDir(from, new BaseCmd.FileVisitorX() {
-            @Override
-            public void visitFile(Path file, String relative) throws IOException {
-                String name = relative;
-                Path targetPath = to.resolve(relative);
-                BaseCmd.createParentDirectories(targetPath);
-                if (name.endsWith(".class")) {
-                    String clzName = name.substring(0, name.length() - ".class".length());
-                    if (ignores.contains(clzName)) {
-                        Files.copy(file, targetPath);
+        BaseCmd.walkJarOrDir(from, (file, relative) -> {
+            Path targetPath = to.resolve(relative);
+            BaseCmd.createParentDirectories(targetPath);
+            if (relative.endsWith(".class")) {
+                String clzName = relative.substring(0, relative.length() - ".class".length());
+                if (ignores.contains(clzName)) {
+                    Files.copy(file, targetPath);
+                } else {
+                    byte[] out = wave0(Files.readAllBytes(file));
+                    Files.write(targetPath, out);
+                }
+            } else {
+                if (relative.startsWith("META-INF/")) {
+                    if (relative.equals(JarFile.MANIFEST_NAME)) {
+                        try (InputStream in = Files.newInputStream(file)) {
+                            Manifest mf = new Manifest(in);
+                            mf.getMainAttributes().put(new Name("X-NOTICE"), "Modified");
+                            mf.getEntries().clear();
+
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            mf.write(baos);
+                            baos.flush();
+                            Files.write(targetPath, baos.toByteArray());
+                        }
+                    } else if (relative.endsWith(".DSA") || relative.endsWith(".RSA") || relative.endsWith(".SF")
+                            || relative.endsWith(".ECDSA")) {
+                        // ignored
                     } else {
-                        byte[] out = wave0(Files.readAllBytes(file));
-                        Files.write(targetPath, out);
+                        Files.copy(file, targetPath);
                     }
                 } else {
-                    if (name.startsWith("META-INF/")) {
-                        if (name.equals(JarFile.MANIFEST_NAME)) {
-                            try (InputStream in = Files.newInputStream(file)) {
-                                Manifest mf = new Manifest(in);
-                                mf.getMainAttributes().put(new Name("X-NOTICE"), "Modified");
-                                mf.getEntries().clear();
-
-                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                mf.write(baos);
-                                baos.flush();
-                                Files.write(targetPath, baos.toByteArray());
-                            }
-                        } else if (name.endsWith(".DSA") || name.endsWith(".RSA") || name.endsWith(".SF")
-                                || name.endsWith(".ECDSA")) {
-                            // ignored
-                        } else {
-                            Files.copy(file, targetPath);
-                        }
-                    } else {
-                        Files.copy(file, targetPath);
-                    }
+                    Files.copy(file, targetPath);
                 }
             }
         });
@@ -558,24 +559,9 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             mv.visitEnd();
         }
         {
-            genSwitchMethod(cw, typeName, "getMethodOwner", new CB() {
-                @Override
-                public String getKey(MtdInfo mtd) {
-                    return toInternal(mtd.owner);
-                }
-            });
-            genSwitchMethod(cw, typeName, "getMethodName", new CB() {
-                @Override
-                public String getKey(MtdInfo mtd) {
-                    return mtd.name;
-                }
-            });
-            genSwitchMethod(cw, typeName, "getMethodDesc", new CB() {
-                @Override
-                public String getKey(MtdInfo mtd) {
-                    return mtd.desc;
-                }
-            });
+            genSwitchMethod(cw, typeName, "getMethodOwner", mtd -> toInternal(mtd.owner));
+            genSwitchMethod(cw, typeName, "getMethodName", mtd -> mtd.name);
+            genSwitchMethod(cw, typeName, "getMethodDesc", mtd -> mtd.desc);
         }
         {
             MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "getArguments", "()[Ljava/lang/Object;", null, null);

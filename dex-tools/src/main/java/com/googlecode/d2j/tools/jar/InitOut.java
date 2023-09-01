@@ -20,22 +20,22 @@ import static com.googlecode.d2j.util.AccUtils.*;
 import static org.objectweb.asm.Opcodes.*;
 
 public class InitOut {
-    private static Set<String> keywords = new HashSet<String>(Arrays.asList("abstract", "continue", "for", "new",
+    private static final Set<String> keywords = new HashSet<String>(Arrays.asList("abstract", "continue", "for", "new",
             "switch", "assert", "default", "goto", "package", "synchronized", "boolean", "do", "if", "private", "this",
             "break", "double", "implements", "protected", "throw", "byte", "else", "import", "public", "throws",
             "case", "enum", "instanceof", "return", "transient", "catch", "extends", "int", "short", "try", "char",
             "final", "interface", "static", "void", "class", "finally", "long", "strictfp", "volatile", "const",
             "float", "native", "super", "while"));
     private int clzIndex = 0;
-    private Set<String> clzMap = new TreeSet<String>();
-    private Set<String> clzSet = new TreeSet<String>();
+    private Set<String> clzMap = new TreeSet<>();
+    private Set<String> clzSet = new TreeSet<>();
     private Path from;
     private int maxLength = 40;
-    private Set<String> memberMap = new TreeSet<String>();
+    private Set<String> memberMap = new TreeSet<>();
     private int minLength = 2;
     private int pkgIndex = 0;
-    private Set<String> pkgMap = new TreeSet<String>();
-    private Set<String> pkgSet = new TreeSet<String>();
+    private Set<String> pkgMap = new TreeSet<>();
+    private Set<String> pkgSet = new TreeSet<>();
     private boolean initEnumNames = false;
     private boolean initSourceNames = false;
     private boolean initAssertionNames = false;
@@ -112,10 +112,10 @@ public class InitOut {
                 }
                 sb.append(short4LongName(member.name));
                 if (x > 0) {
-                    memberMap.add("m " + owner + "." + member.name + member.desc + "=" + sb.toString());
+                    memberMap.add("m " + owner + "." + member.name + member.desc + "=" + sb);
                 } else {
                     memberMap.add("m " + owner + "." + member.name
-                            + member.desc.substring(0, member.desc.indexOf(')') + 1) + "=" + sb.toString());
+                            + member.desc.substring(0, member.desc.indexOf(')') + 1) + "=" + sb);
                 }
             } else {
                 StringBuilder sb = new StringBuilder();

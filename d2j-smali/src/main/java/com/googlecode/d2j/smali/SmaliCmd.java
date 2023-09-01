@@ -32,12 +32,12 @@ public class SmaliCmd extends BaseCmd {
         if (showVersionThenExits) {
             System.out.println("smali 1.4.2p (https://sourceforge.net/p/dex2jar)");
             System.out.println("Copyright (c) 2009-2013 Panxiaobo (pxb1988@gmail.com)");
-            System.out.println("Apache license (http://www.apache.org/licenses/LICENSE-2.0)");
+            System.out.println("Apache license (https://www.apache.org/licenses/LICENSE-2.0)");
             return;
         }
 
         if (!readSmaliFromStdin && remainingArgs.length < 1) {
-            System.err.println("ERRPR: no file to process");
+            System.err.println("ERROR: no file to process");
             return;
         }
 
@@ -45,7 +45,6 @@ public class SmaliCmd extends BaseCmd {
             output = new File("out.dex").toPath();
         }
 
-        Smali smali = new Smali();
         DexFileWriter fw = new DexFileWriter();
 
         DexFileVisitor fv = new DexFileVisitor(fw) {
@@ -55,7 +54,7 @@ public class SmaliCmd extends BaseCmd {
         };
 
         if (readSmaliFromStdin) {
-            smali.smaliFile("<stdin>", System.in, fv);
+            Smali.smaliFile("<stdin>", System.in, fv);
             System.err.println("smali <stdin> -> " + output);
         }
 
@@ -65,7 +64,7 @@ public class SmaliCmd extends BaseCmd {
                 System.err.println("skip " + file + ", it is not a dir or a file");
             } else {
                 System.err.println("smali " + s + " -> " + output);
-                smali.smali(file, fv);
+                Smali.smali(file, fv);
             }
         }
 
