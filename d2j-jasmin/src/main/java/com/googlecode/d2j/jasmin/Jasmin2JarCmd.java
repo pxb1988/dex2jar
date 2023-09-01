@@ -46,13 +46,13 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
     @Opt(longOpt = "no-compute-max", description = "", hasArg = false)
     private boolean noComputeMax;
 
-    @Opt(opt = "cv", longOpt = "class-version", description = "default .class version, [1~18], default 8 for JAVA8")
+    @Opt(opt = "cv", longOpt = "class-version", description = "default .class version, [1~21], default 8 for JAVA8")
     private int classVersion = 8;
 
     public Jasmin2JarCmd() {
     }
 
-    public static void main(String... args) throws SecurityException {
+    public static void main(String... args) throws ClassNotFoundException, SecurityException {
         new Jasmin2JarCmd().doMain(args);
     }
 
@@ -62,8 +62,9 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
             usage();
             return;
         }
-        if (classVersion < 1 || classVersion > 18) {
-            throw new HelpException("-cv,--class-version out of range, 1-18 is supported.");
+        int maxClassVersion = Constants.JAVA_VERSIONS.length - 1;
+        if (classVersion < 1 || classVersion > maxClassVersion) {
+            throw new HelpException("-cv,--class-version out of range, 1-" + maxClassVersion + " is supported.");
         }
 
         Path jar = new File(remainingArgs[0]).toPath().toAbsolutePath();

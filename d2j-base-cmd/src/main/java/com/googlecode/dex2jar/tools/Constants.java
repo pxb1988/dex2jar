@@ -27,7 +27,10 @@ public final class Constants {
             Opcodes.V15,
             Opcodes.V16,
             Opcodes.V17,
-            Opcodes.V18
+            Opcodes.V18,
+            Opcodes.V19,
+            Opcodes.V20,
+            Opcodes.V21,
     };
 
     public static final int ASM_VERSION = Opcodes.ASM9;

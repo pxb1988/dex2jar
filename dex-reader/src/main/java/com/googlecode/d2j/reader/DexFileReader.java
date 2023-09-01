@@ -1196,8 +1196,7 @@ public class DexFileReader implements BaseDexFileReader {
     }
 
     private void findLabels(byte[] insns, BitSet nextBit, BitSet badOps, Map<Integer, DexLabel> labelsMap,
-                            Set<Integer> handlers,
-                            Method method) {
+                            Set<Integer> handlers, Method method) {
         Queue<Integer> q = new LinkedList<>();
         q.add(0);
         q.addAll(handlers);

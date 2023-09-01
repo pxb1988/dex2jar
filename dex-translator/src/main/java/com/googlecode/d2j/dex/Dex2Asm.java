@@ -102,14 +102,18 @@ public class Dex2Asm {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) {
+            if (this == o)
                 return true;
-            }
-            if (!(o instanceof Clz)) {
+            if (o == null)
                 return false;
+            if (getClass() != o.getClass())
+                return false;
+            Clz other = (Clz) o;
+            if (name == null) {
+                return other.name == null;
+            } else {
+                return name.equals(other.name);
             }
-            Clz clz = (Clz) o;
-            return Objects.equals(name, clz.name);
         }
 
         @Override

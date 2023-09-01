@@ -478,6 +478,10 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                     }
                 }
 
+                @Override
+                public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+                    visitMethodInsn(opcode, owner, name, desc, opcode == INVOKEINTERFACE);
+                }
             }
 
         };

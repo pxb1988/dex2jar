@@ -414,7 +414,7 @@ public final class Utils implements DexConstants {
                         }
                     }
                     if (x == 0) {
-                        throw new RuntimeException("can't pase string");
+                        throw new RuntimeException("Can't parse string");
                     }
                     sb.append((char) Integer.parseInt(str.substring(i + 1, i + 1 + x), 8));
                     i += 1 + x;

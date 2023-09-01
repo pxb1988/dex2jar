@@ -174,9 +174,6 @@ public class JasminDumper implements Opcodes {
 
         for (FieldNode fn : cn.fields) {
             boolean annotations = fn.visibleAnnotations != null && !fn.visibleAnnotations.isEmpty();
-            if (fn.invisibleAnnotations != null && !fn.invisibleAnnotations.isEmpty()) {
-                annotations = true;
-            }
             boolean deprecated = (fn.access & Opcodes.ACC_DEPRECATED) != 0;
             pw.print("\n.field");
             pw.print(accessFld(fn.access));
@@ -377,6 +374,11 @@ public class JasminDumper implements Opcodes {
                                 pw.print((Type.getArgumentsAndReturnSizes(desc) >> 2) - 1);
                             }
                             pw.println();
+                        }
+
+                        @Override
+                        public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+                            visitMethodInsn(opcode, owner, name, desc, opcode == INVOKEINTERFACE);
                         }
 
                         @Override

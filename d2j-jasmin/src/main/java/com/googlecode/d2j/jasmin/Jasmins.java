@@ -24,7 +24,7 @@ public final class Jasmins {
         try (BufferedReader bufferedReader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             return parse(file.toString(), bufferedReader);
         } catch (RecognitionException e) {
-            throw new RuntimeException("Fail to assemble " + file, e);
+            throw new RuntimeException("Failed to assemble " + file, e);
         }
     }
 
