@@ -61,6 +61,13 @@ subprojects {
                 }
         }
     }
+
+    // Workaround for https://github.com/gradle/gradle/issues/820
+    configurations {
+        api {
+            extendsFrom = extendsFrom.findAll { it != configurations.antlr }
+        }
+    }
 }
 
 application {
