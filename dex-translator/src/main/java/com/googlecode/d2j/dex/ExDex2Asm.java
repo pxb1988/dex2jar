@@ -48,7 +48,13 @@ public class ExDex2Asm extends Dex2Asm {
             }
         }
         // code convert ok, copy to MethodWriter and check for Size
-        mn.accept(mv);
+        try {
+            mn.accept(mv);
+        } catch (Exception e) {
+            System.out.println("Cannot convert " + clzCtx.classDescriptor);
+            if (exceptionHandler != null)
+                exceptionHandler.handleMethodTranslateException(methodNode.method, methodNode, mn, e);
+        }
         if (mw != null) {
             try {
                 AsmBridge.sizeOfMethodWriter(mw);
