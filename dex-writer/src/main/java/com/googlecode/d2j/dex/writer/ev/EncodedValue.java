@@ -428,7 +428,7 @@ public class EncodedValue implements Comparable<EncodedValue> {
         case VALUE_METHOD_HANDLE:
         case VALUE_METHOD_TYPE:
             if (value instanceof Comparable) {
-                return ((Comparable) value).compareTo(value);
+                return ((Comparable) value).compareTo(o.value);
             } else {
                 throw new RuntimeException();
             }
