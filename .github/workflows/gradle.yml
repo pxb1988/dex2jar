@@ -24,11 +24,12 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
     - name: Build dex-tools with Gradle
-      run: ./gradlew check distZip
+      run: |
+         ./gradlew "-DGITHUB_REF_NAME=${GITHUB_REF_NAME}" check distZip
 
     - name: Archive dex tools
       uses: actions/upload-artifact@v3
       if: success()
       with:
-        name: dex-tools-2.2-SNAPSHOT
-        path: dex-tools/build/distributions/dex-tools-2.2-SNAPSHOT.zip
+        name: dex-tools
+        path: dex-tools/build/distributions/dex-tools-*.zip
