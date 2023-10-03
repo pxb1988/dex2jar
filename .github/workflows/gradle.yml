@@ -35,5 +35,5 @@ jobs:
       uses: actions/upload-artifact@v3
       if: success()
       with:
-        name: dex-tools-2.1-SNAPSHOT
-        path: dex-tools/build/distributions/dex-tools-2.1-SNAPSHOT.zip
+        name: dex-tools
+        path: dex-tools/build/distributions/dex-tools-*.zip
