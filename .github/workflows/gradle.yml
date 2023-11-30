@@ -29,7 +29,7 @@ jobs:
     - uses: ncipollo/release-action@v1
       with:
         tag: v${{ github.run_number }}
-        artifacts: dex-tools/build/distributions/dex-tools-2.1-SNAPSHOT.zip
+        artifacts: dex-tools/build/distributions/dex-tools-2.4-SNAPSHOT.zip
 
     - name: Archive dex tools
       uses: actions/upload-artifact@v3
