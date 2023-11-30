@@ -19,6 +19,7 @@ import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.visitors.DexClassVisitor;
+import com.googlecode.dex2jar.tools.Constants;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -173,6 +174,10 @@ public abstract class TestUtils {
     }
 
     private static class StringBuilderTextifier extends Textifier {
+        public StringBuilderTextifier() {
+            super(Constants.ASM_VERSION);
+        }
+
         public StringBuilder getStringBuilder() {
             return super.stringBuilder;
         }
