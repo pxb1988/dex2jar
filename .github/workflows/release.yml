@@ -1,0 +1,41 @@
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build dex-tools with Gradle
+        run: ./gradlew check distZip
+
+      - uses: ncipollo/release-action@v1
+        if: success()
+        with:
+          tag: 2.4.${{ github.run_number }}
+          artifacts: dex-tools/build/distributions/dex-tools-*.zip
+
+      - name: Archive dex tools
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: dex-tools
+          path: dex-tools/build/distributions/dex-tools-*.zip
+
+      - name: Publish to Maven Central
+        run: ./gradlew publish -Pversion=2.4.${{ github.run_number }}
