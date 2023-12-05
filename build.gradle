@@ -43,6 +43,7 @@ nexusPublishing {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
+    apply plugin: 'signing'
 
     java {
         sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
@@ -72,6 +73,15 @@ subprojects {
     // Cache list of tasks
     project.getAllTasks(true)
 
+    signing {
+        var signingKey = providers.environmentVariable("GPG_SIGNING_KEY")
+        var signingPassphrase = providers.environmentVariable("GPG_SIGNING_PASSPHRASE")
+        if (signingKey.present && signingPassphrase.present) {
+            useInMemoryPgpKeys(signingKey.get(), signingPassphrase.get())
+            sign publishing.publications
+        }
+    }
+
     publishing {
         publications {
             mavenJava(MavenPublication) {
@@ -80,8 +90,11 @@ subprojects {
                 version = project.version.toString()
                 if (tasks.findByName("shadowJar") == null)
                     from(components.java)
-                else
-                    artifact(tasks.findByName("shadowJar"))
+                else {
+                    artifact(tasks.named("shadowJar"))
+                    artifact(tasks.named("sourcesJar"))
+                    artifact(tasks.named("javadocJar"))
+                }
                 pom {
                     name.set(project.name)
                     description.set(Meta.desc)
@@ -120,17 +133,6 @@ subprojects {
             }
         }
     }
-
-    signing {
-        var signingKey = providers.environmentVariable("GPG_SIGNING_KEY")
-        var signingPassphrase = providers.environmentVariable("GPG_SIGNING_PASSPHRASE")
-        if (signingKey.present && signingPassphrase.present) {
-            useInMemoryPgpKeys(signingKey.get(), signingPassphrase.get())
-            sign(publishing.publications)
-        }
-    }
-
-    // ./gradlew publish closeAndReleaseStagingRepository
 
     // Workaround for https://github.com/gradle/gradle/issues/820
     configurations {
