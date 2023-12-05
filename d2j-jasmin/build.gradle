@@ -17,3 +17,9 @@ dependencies {
 }
 
 sourceSets.main.antlr.srcDirs = ['src/main/antlr3']
+
+// From https://github.com/gradle/gradle/issues/19555#issuecomment-1593252653
+sourceSets.configureEach {
+    var generateGrammarSource = tasks.named(getTaskName("generate", "GrammarSource"))
+    java.srcDir(generateGrammarSource.map { files() })
+}

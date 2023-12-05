@@ -1,8 +1,6 @@
 apply plugin: 'com.github.johnrengelman.shadow'
 
 description = 'Module for including external libraries'
-group 'com.googlecode.d2j'
-version '2.4-SNAPSHOT'
 
 dependencies {
     implementation fileTree(dir: '../libs', include: '*.jar')
