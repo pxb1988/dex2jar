@@ -22,7 +22,7 @@ jobs:
           cache: 'gradle'
 
       - name: Build dex-tools with Gradle
-        run: ./gradlew check distZip
+        run: ./gradlew check -Pversion=2.4.${{ github.run_number }} distZip
 
       - uses: ncipollo/release-action@v1
         if: success()
@@ -38,7 +38,7 @@ jobs:
           path: dex-tools/build/distributions/dex-tools-*.zip
 
       - name: Publish to Maven Central
-        run: ./gradlew publish -Pversion=2.4.${{ github.run_number }}
+        run: ./gradlew -Pversion=2.4.${{ github.run_number }} publish
         env:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_SIGNING_PASSPHRASE: ${{ secrets.GPG_SIGNING_PASSPHRASE }}
