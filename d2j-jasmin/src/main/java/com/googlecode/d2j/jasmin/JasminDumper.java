@@ -37,9 +37,9 @@ import org.objectweb.asm.util.Printer;
  * .class public Hello
  * .super java/lang/Object
  *
- * .method public <init>()V
+ * .method public &lt;init&gt;()V
  * aload 0
- * invokespecial java/lang/Object/<init>()V
+ * invokespecial java/lang/Object/&lt;init&gt;()V
  * return
  * .limit locals 1
  * .limit stack 1

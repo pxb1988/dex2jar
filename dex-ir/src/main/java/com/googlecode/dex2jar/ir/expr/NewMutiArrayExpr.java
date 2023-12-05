@@ -20,10 +20,10 @@ public class NewMutiArrayExpr extends EnExpr {
 
     /**
      * the dimension of the array,
-     * <p/>
+     * <p>
      * for baseType: I, dimension 4, the result type is int[][][][];
-     * <p/>
-     * NOTICE, not all dimension are init in ops, so ops.length <= dimension
+     * <p>
+     * NOTICE, not all dimension are init in ops, so ops.length &le; dimension
      */
     public int dimension;
 

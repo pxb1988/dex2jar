@@ -37,7 +37,7 @@ public final class Baksmali {
 
     /**
      * <pre>
-     *  -p,--no-parameter-registers use the v<n> syntax instead of the p<n> syntax for registers
+     *  -p,--no-parameter-registers use the v&lt;n&gt; syntax instead of the p&lt;n&gt; syntax for registers
      *  mapped to method parameters
      * </pre>
      */

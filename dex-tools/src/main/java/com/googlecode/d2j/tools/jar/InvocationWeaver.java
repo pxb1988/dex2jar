@@ -33,34 +33,34 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 
 /**
  * 1. Replace class A by another class B, include superclass, new for
- * <p/>
+ * <p>
  * <pre>
  *     class Test1 extends A ...
  *     class Test2 implements A ...
  *     void amethod(A a) ...
  * </pre>
- * <p/>
+ * <p>
  * after
- * <p/>
+ * <p>
  * <pre>
  *     class Test1 extends B ...
  *     class Test2 extends B ...
  *     void amethod(B a) ...
  * </pre>
- * <p/>
+ * <p>
  * 2. Replace method A to another method B, method B must be public static, and in either 'public static RET b(ARGs)' or
  * 'public RET b(Invocation inv)' RET: same return type with method A or Object ARGs: if method A is static, ARGs is
  * same with method A, if method A is non-static the ARGs is 'thiz, arguments in methodA'
- * <p/>
+ * <p>
  * <pre>
  * public int a() {
  *     Test t = new Test();
  *     return t.test(1, 2);
  * }
  * </pre>
- * <p/>
+ * <p>
  * after
- * <p/>
+ * <p>
  * <pre>
  *     // direct replace
  *     public int a(){
@@ -82,17 +82,17 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
  *        return box(t.test(args[0].intValue(),args[1].intValue()));
  *     }
  * </pre>
- * <p/>
+ * <p>
  * 3. Replace Methods Implementations
- * <p/>
+ * <p>
  * <pre>
  * public int test() {
  *         ...
  * }
  * </pre>
- * <p/>
+ * <p>
  * after
- * <p/>
+ * <p>
  * <pre>
  *     public int test(){
  *          MethodInvocation i=new MethodInvocation(t, new Object[]{a.b})

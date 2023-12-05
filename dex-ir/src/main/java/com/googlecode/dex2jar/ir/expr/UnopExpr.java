@@ -22,9 +22,6 @@ public class UnopExpr extends E1Expr {
         super.releaseMemory();
     }
 
-    /**
-     *
-     */
     public UnopExpr(VT vt, Value value, String type) {
         super(vt, value);
         this.type = type;

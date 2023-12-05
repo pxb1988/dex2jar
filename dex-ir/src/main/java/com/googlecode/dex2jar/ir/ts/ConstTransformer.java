@@ -18,7 +18,7 @@ import java.util.Set;
 
 /**
  * Replace must-be-constant local to constant
- * <p/>
+ * <p>
  * Require a SSA form, usually run after {@link SSATransformer}
  *
  * @author Panxiaobo

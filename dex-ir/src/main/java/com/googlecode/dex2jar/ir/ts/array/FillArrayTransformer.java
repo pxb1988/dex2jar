@@ -30,10 +30,12 @@ import java.util.Set;
 /**
  * require SSA, usually run after ConstTransformer 1. array is fixed size. 2. array object init and use once, (exclude
  * the element assignment) 3. all elements are init with fixed index before use. 4. the array is not in PhiExpr 5. and
- * for array object init at A, use at B; A and B must in same loop/path, so G(A->B), G(A->C->B), G(A->C,A->D,C->B,D->B),
- * G(A->C,C->D,D->C,C->B) and G(A->C,C->A,C->B) is ok to transform, but for G(A->C,C->B,B->D,D->C), B is in a loop
- * (B->D->C->B), should not transformed.
- * <p/>
+ * for array object init at A, use at B; A and B must in same loop/path, so G(A-&gt;B), G(A-&gt;C-&gt;B), G(A-&gt;C,
+ * A-&gt;D,C-&gt;B,D-&gt;B),
+ * G(A-&gt;C,C-&gt;D,D-&gt;C,C-&gt;B) and G(A-&gt;C,C-&gt;A,C-&gt;B) is ok to transform, but for G(A-&gt;C,C-&gt;B,
+ * B-&gt;D,D-&gt;C), B is in a loop
+ * (B-&gt;D-&gt;C-&gt;B), should not transformed.
+ * <p>
  * transform
  *
  * <pre>

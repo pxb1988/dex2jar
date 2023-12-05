@@ -21,7 +21,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
  *   return a0
  * L1:
  * ======
- * .var L0 ~ L1 1 -> test // int
+ * .var L0 ~ L1 1 -&gt; test // int
  * </pre>
  * <p>
  * after:
@@ -34,7 +34,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
  *   return a0
  * L1:
  * ======
- * .var L0 ~ L1 d1 -> test // int
+ * .var L0 ~ L1 d1 -&gt; test // int
  * </pre>
  *
  * @author Panxiaobo

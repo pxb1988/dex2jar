@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * <ol>
  * <li>Move {@link Stmt}s outside a {@link Trap} if {@link Stmt}s are not throw</li>
  * <li>Remove {@link Trap} if all {@link Stmt}s are not throw</li>
- * <li>...;GOTO L2; ... ; L2: ; return; => ...;return ; ... ; L2: ; return;</li>
+ * <li>...;GOTO L2; ... ; L2: ; return; =&gt; ...;return ; ... ; L2: ; return;</li>
  * </ol>
  *
  * @author bob

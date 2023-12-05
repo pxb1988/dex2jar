@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * transforme IR to simple 3-addr format
+ * transform IR to simple 3-addr format
  * <p>
- * a=b+c+d; => e=b+c; a=e+d;
+ * a=b+c+d; =&gt; e=b+c; a=e+d;
  *
  * @author bob
  */

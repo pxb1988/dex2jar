@@ -29,18 +29,18 @@ import static com.googlecode.dex2jar.ir.stmt.Stmt.ST.VOID_INVOKE;
 
 /**
  * simply merge
- * <p/>
+ * <p>
  * <pre>
  *     a=NEW Labc;
- *     a.<init>();
+ *     a.&lt;init&gt;();
  * </pre>
- * <p/>
+ * <p>
  * to
- * <p/>
+ * <p>
  * <pre>
  * a = new abc();
  * </pre>
- * <p/>
+ * <p>
  * Run after [SSATransformer, RemoveLocalFromSSA]
  */
 public class NewTransformer implements Transformer {

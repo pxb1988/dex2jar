@@ -23,9 +23,6 @@ public class IfStmt extends E1Stmt implements JumpStmt {
         this.target = target;
     }
 
-    /**
-     * IF
-     */
     public IfStmt(ST type, Value condition, LabelStmt target) {
         super(type, condition);
         this.target = target;
