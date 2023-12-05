@@ -4,9 +4,7 @@ target/*
 build
 */.project
 */.classpath
-*/.*
 
-.*
 *.bak
 *.orig
 */nb-configuration.xml
@@ -16,4 +14,6 @@ build
 *~
 *.class
 
-!.gitignore
+.gradle
+.idea
+.vscode
