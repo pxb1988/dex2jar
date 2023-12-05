@@ -1,9 +1,13 @@
+plugins {
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+}
+
 apply plugin: 'com.github.johnrengelman.shadow'
 
 description = 'Module for including external libraries'
 
 dependencies {
-    implementation fileTree(dir: '../libs', include: '*.jar')
+    api fileTree(dir: '../libs', include: '*.jar')
 }
 
 tasks.jar.enabled = false // Don't build normal jar

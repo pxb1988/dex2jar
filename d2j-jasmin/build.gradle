@@ -1,18 +1,18 @@
 apply plugin: 'antlr'
 
 dependencies {
-    implementation(group: 'org.antlr', name: 'antlr-runtime', version: project.property('antlr3Version')) {
+    api(group: 'org.antlr', name: 'antlr-runtime', version: project.property('antlr3Version')) {
         exclude(module: 'stringtemplate')
     }
-    implementation fileTree(dir: '../libs', include: '*.jar')
-    // implementation group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
-    implementation(group: 'org.ow2.asm', name: 'asm-tree', version: project.property('asmVersion')) {
+    api project(':d2j-external')
+    // api group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
+    api(group: 'org.ow2.asm', name: 'asm-tree', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }
-    implementation(group: 'org.ow2.asm', name: 'asm-util', version: project.property('asmVersion')) {
+    api(group: 'org.ow2.asm', name: 'asm-util', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }
-    implementation project(':d2j-base-cmd')
+    api project(':d2j-base-cmd')
     antlr "org.antlr:antlr:${project.property('antlr3Version')}"
 }
 

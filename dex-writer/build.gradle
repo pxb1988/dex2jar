@@ -1,6 +1,6 @@
 description = 'Dex Writer'
 
 dependencies {
-    implementation project(':dex-reader-api')
+    api project(':dex-reader-api')
     testImplementation project(':dex-reader')
 }

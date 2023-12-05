@@ -1,5 +1,5 @@
 description = 'Dex Translator'
 
 dependencies {
-    implementation project(':dex-reader-api')
+    api project(':dex-reader-api')
 }

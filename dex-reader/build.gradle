@@ -1,6 +1,6 @@
 description = 'Dex Reader'
 
 dependencies {
-    implementation project(':dex-reader-api')
+    api project(':dex-reader-api')
     testImplementation(group: 'org.apache.commons', name: 'commons-compress', version: project.property('commonsCompressVersion'))
 }

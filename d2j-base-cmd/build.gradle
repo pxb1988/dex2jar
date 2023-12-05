@@ -1,5 +1,5 @@
 description = 'a simple cmd parser'
 
 dependencies {
-    implementation fileTree(dir: '../libs', include: '*.jar')
+    api project(':d2j-external')
 }

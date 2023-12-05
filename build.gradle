@@ -1,7 +1,6 @@
 plugins {
     id "application"
     id "base"
-    id "com.github.johnrengelman.shadow" version "8.1.1"
     id "signing"
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0-rc-1"
 }
@@ -14,16 +13,6 @@ ext.commonsCompressVersion = '1.25.0'
 ext.jUnitVersion = '5.10.1'
 ext.jUnitPlatformVersion = '1.10.1'
 ext.r8Version = '4.0.63' // Newer versions only for Java 11+
-
-allprojects {
-    group = 'de.femtopedia.dex2jar'
-    version = project.findProperty('version') ?: '2.4-SNAPSHOT'
-
-    repositories {
-        mavenCentral()
-        google()
-    }
-}
 
 nexusPublishing {
     repositories {
@@ -40,10 +29,19 @@ nexusPublishing {
     }
 }
 
-subprojects {
-    apply plugin: 'java'
+allprojects {
+    apply plugin: 'java-library'
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
+
+    group = 'de.femtopedia.dex2jar'
+    version = project.findProperty('version')
+    version = version == null || version == 'unspecified' ? '2.4-SNAPSHOT' : version
+
+    repositories {
+        mavenCentral()
+        google()
+    }
 
     java {
         sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
@@ -69,10 +67,14 @@ subprojects {
         systemProperty 'junit.jupiter.execution.parallel.enabled', true
         systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
     }
+}
 
+subprojects {
     // Cache list of tasks
     project.getAllTasks(true)
+}
 
+allprojects {
     signing {
         var signingKey = providers.environmentVariable("GPG_SIGNING_KEY")
         var signingPassphrase = providers.environmentVariable("GPG_SIGNING_PASSPHRASE")
@@ -116,15 +118,9 @@ subprojects {
                         }
                     }
                     scm {
-                        url.set(
-                                "https://${Meta.githubRepo}.git"
-                        )
-                        connection.set(
-                                "scm:git:git://${Meta.githubRepo}.git"
-                        )
-                        developerConnection.set(
-                                "scm:git:git://${Meta.githubRepo}.git"
-                        )
+                        url.set("https://${Meta.githubRepo}.git")
+                        connection.set("scm:git:git://${Meta.githubRepo}.git")
+                        developerConnection.set("scm:git:git://${Meta.githubRepo}.git")
                     }
                     issueManagement {
                         url.set("https://${Meta.githubRepo}/issues")
@@ -151,46 +147,17 @@ base {
 }
 
 dependencies {
-    implementation(project(":d2j-base-cmd")) {
-        transitive = false
-    }
-    implementation(project(":d2j-external")) // Transitive please
-    implementation(project(":d2j-jasmin")) {
-        transitive = false
-    }
-    implementation(project(":d2j-smali")) {
-        transitive = false
-    }
-    implementation(project(":dex-ir")) {
-        transitive = false
-    }
-    implementation(project(":dex-reader")) {
-        transitive = false
-    }
-    implementation(project(":dex-reader-api")) {
-        transitive = false
-    }
-    implementation(project(":dex-tools")) {
-        transitive = false
-    }
-    implementation(project(":dex-translator")) {
-        transitive = false
-    }
-    implementation(project(":dex-writer")) {
-        transitive = false
-    }
+    api(project(":d2j-base-cmd"))
+    api(project(":d2j-external"))
+    api(project(":d2j-jasmin"))
+    api(project(":d2j-smali"))
+    api(project(":dex-ir"))
+    api(project(":dex-reader"))
+    api(project(":dex-reader-api"))
+    api(project(":dex-tools"))
+    api(project(":dex-translator"))
+    api(project(":dex-writer"))
 }
-
-tasks.jar.enabled = false // Don't build normal jar
-
-shadowJar {
-    archiveClassifier.set(null)
-}
-
-// Get rid of Gradle warnings
-tasks.distTar.dependsOn tasks.shadowJar
-tasks.distZip.dependsOn tasks.shadowJar
-tasks.startScripts.dependsOn tasks.shadowJar
 
 class Meta {
     public static final var desc = "Tools to work with android .dex and java .class files"

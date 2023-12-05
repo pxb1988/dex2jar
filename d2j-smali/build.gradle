@@ -1,12 +1,12 @@
 apply plugin: 'antlr'
 
 dependencies {
-    implementation "org.antlr:antlr4-runtime:${project.property('antlr4Version')}"
-    implementation project(':dex-reader-api')
-    implementation project(':dex-reader')
+    api "org.antlr:antlr4-runtime:${project.property('antlr4Version')}"
+    api project(':dex-reader-api')
+    api project(':dex-reader')
     antlr "org.antlr:antlr4:${project.property('antlr4Version')}"
-    implementation project(':d2j-base-cmd')
-    implementation project(':dex-writer')
+    api project(':d2j-base-cmd')
+    api project(':dex-writer')
     testImplementation "com.android.tools.smali:smali-baksmali:${project.property('baksmaliVersion')}"
 }
 

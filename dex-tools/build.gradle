@@ -5,20 +5,20 @@ plugins {
 description = 'Dex Tools'
 
 dependencies {
-    implementation project(':dex-translator')
-    implementation project(':d2j-smali')
-    implementation project(':d2j-jasmin')
-    implementation project(':dex-writer')
-    implementation project(':d2j-base-cmd')
-    implementation fileTree(dir: '../libs', include: '*.jar')
-    // implementation group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
-    implementation(group: 'org.ow2.asm', name: 'asm-tree', version: project.property('asmVersion')) {
+    api project(':dex-translator')
+    api project(':d2j-smali')
+    api project(':d2j-jasmin')
+    api project(':dex-writer')
+    api project(':d2j-base-cmd')
+    api project(':d2j-external')
+    // api group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
+    api(group: 'org.ow2.asm', name: 'asm-tree', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }
-    implementation(group: 'org.ow2.asm', name: 'asm-util', version: project.property('asmVersion')) {
+    api(group: 'org.ow2.asm', name: 'asm-util', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }
-    implementation(group: 'org.ow2.asm', name: 'asm-commons', version: project.property('asmVersion')) {
+    api(group: 'org.ow2.asm', name: 'asm-commons', version: project.property('asmVersion')) {
         exclude(module: 'asm')
     }
     testImplementation "org.antlr:antlr-runtime:${project.property('antlr3Version')}"
