@@ -2,6 +2,8 @@ plugins {
     id "application"
     id "base"
     id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "signing"
+    id "io.github.gradle-nexus.publish-plugin" version "2.0.0-rc-1"
 }
 
 ext.antlr3Version = '3.5.3'
@@ -14,12 +16,27 @@ ext.jUnitPlatformVersion = '1.10.1'
 ext.r8Version = '4.0.63' // Newer versions only for Java 11+
 
 allprojects {
-    group = 'com.googlecode.d2j'
+    group = 'de.femtopedia.dex2jar'
     version = '2.4-SNAPSHOT'
 
     repositories {
         mavenCentral()
         google()
+    }
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri(Meta.release))
+            snapshotRepositoryUrl.set(uri(Meta.snapshot))
+            var ossrhUsername = providers.environmentVariable("OSSRH_USERNAME")
+            var ossrhPassword = providers.environmentVariable("OSSRH_PASSWORD")
+            if (ossrhUsername.present && ossrhPassword.present) {
+                username.set(ossrhUsername.get())
+                password.set(ossrhPassword.get())
+            }
+        }
     }
 }
 
@@ -29,6 +46,12 @@ subprojects {
 
     java {
         sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+        withSourcesJar()
+        withJavadocJar()
+    }
+
+    javadoc {
+        options.encoding = 'UTF-8'
     }
 
     dependencies {
@@ -51,16 +74,63 @@ subprojects {
 
     publishing {
         publications {
-            if (tasks.findByName("shadowJar") == null)
-                mavenJava(MavenPublication) {
+            mavenJava(MavenPublication) {
+                groupId = project.group.toString()
+                artifactId = project.name
+                version = project.version.toString()
+                if (tasks.findByName("shadowJar") == null)
                     from(components.java)
-                }
-            else
-                mavenJava(MavenPublication) {
+                else
                     artifact(tasks.findByName("shadowJar"))
+                pom {
+                    name.set(project.name)
+                    description.set(Meta.desc)
+                    url.set("https://${Meta.githubRepo}")
+                    licenses {
+                        license {
+                            name.set(Meta.license)
+                            url.set("https://opensource.org/licenses/Apache-2.0")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("pxb1988")
+                            name.set("Bob Pan")
+                        }
+                        developer {
+                            id.set("ThexXTURBOXx")
+                            name.set("Nico Mexis")
+                        }
+                    }
+                    scm {
+                        url.set(
+                                "https://${Meta.githubRepo}.git"
+                        )
+                        connection.set(
+                                "scm:git:git://${Meta.githubRepo}.git"
+                        )
+                        developerConnection.set(
+                                "scm:git:git://${Meta.githubRepo}.git"
+                        )
+                    }
+                    issueManagement {
+                        url.set("https://${Meta.githubRepo}/issues")
+                    }
                 }
+            }
         }
     }
+
+    signing {
+        var signingKey = providers.environmentVariable("GPG_SIGNING_KEY")
+        var signingPassphrase = providers.environmentVariable("GPG_SIGNING_PASSPHRASE")
+        if (signingKey.present && signingPassphrase.present) {
+            useInMemoryPgpKeys(signingKey.get(), signingPassphrase.get())
+            sign(publishing.publications)
+        }
+    }
+
+    // ./gradlew publish closeAndReleaseStagingRepository
 
     // Workaround for https://github.com/gradle/gradle/issues/820
     configurations {
@@ -119,3 +189,11 @@ shadowJar {
 tasks.distTar.dependsOn tasks.shadowJar
 tasks.distZip.dependsOn tasks.shadowJar
 tasks.startScripts.dependsOn tasks.shadowJar
+
+class Meta {
+    public static final var desc = "Tools to work with android .dex and java .class files"
+    public static final var license = "Apache-2.0"
+    public static final var githubRepo = "github.com/ThexXTURBOXx/dex2jar"
+    public static final var release = "https://s01.oss.sonatype.org/service/local/"
+    public static final var snapshot = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+}
