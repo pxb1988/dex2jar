@@ -21,6 +21,12 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Setup Gradle to generate and submit dependency graphs
+        uses: gradle/gradle-build-action@v2
+        with:
+          dependency-graph: generate-and-submit
+          artifact-retention-days: 1
+
       - name: Build dex-tools with Gradle
         run: ./gradlew check -Pversion=2.4.${{ github.run_number }} distZip
 
