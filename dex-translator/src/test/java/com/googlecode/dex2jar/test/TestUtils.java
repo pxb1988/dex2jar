@@ -154,15 +154,11 @@ public abstract class TestUtils {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     String name = file.getFileName().toString();
-                    boolean add = false;
                     for (String ext : exts) {
                         if (name.endsWith(ext)) {
-                            add = true;
+                            list.add(file);
                             break;
                         }
-                    }
-                    if (add) {
-                        list.add(file);
                     }
                     return super.visitFile(file, attrs);
                 }
