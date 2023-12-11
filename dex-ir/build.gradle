@@ -1,4 +1,8 @@
-description = 'Dex Translator'
+plugins {
+    id "dex2jar.build-conventions"
+}
+
+description = 'Intermediate representations for dex2jar'
 
 dependencies {
     api project(':dex-reader-api')

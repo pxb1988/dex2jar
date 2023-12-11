@@ -3,137 +3,22 @@ plugins {
     id "base"
     id "signing"
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0-rc-1"
+    id "dex2jar.build-conventions"
 }
 
-ext.antlr3Version = '3.5.3'
-ext.antlr4Version = '4.9.3' // Newer versions only for Java 11+
-ext.asmVersion = '9.6'
-ext.baksmaliVersion = '3.0.3'
-ext.commonsCompressVersion = '1.25.0'
-ext.jUnitVersion = '5.10.1'
-ext.jUnitPlatformVersion = '1.10.1'
-ext.r8Version = '4.0.63' // Newer versions only for Java 11+
+description = 'Supermodule for dex2jar'
 
 nexusPublishing {
     repositories {
         sonatype {
-            nexusUrl.set(uri(Meta.release))
-            snapshotRepositoryUrl.set(uri(Meta.snapshot))
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
             var ossrhUsername = providers.environmentVariable("OSSRH_USERNAME")
             var ossrhPassword = providers.environmentVariable("OSSRH_PASSWORD")
             if (ossrhUsername.present && ossrhPassword.present) {
                 username.set(ossrhUsername.get())
                 password.set(ossrhPassword.get())
             }
-        }
-    }
-}
-
-allprojects {
-    apply plugin: 'java-library'
-    apply plugin: 'maven-publish'
-    apply plugin: 'signing'
-
-    group = 'de.femtopedia.dex2jar'
-    version = project.findProperty('version')
-    version = version == null || version == 'unspecified' ? '2.4-SNAPSHOT' : version
-
-    repositories {
-        mavenCentral()
-        google()
-    }
-
-    java {
-        sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
-        withSourcesJar()
-        withJavadocJar()
-    }
-
-    javadoc {
-        options.encoding = 'UTF-8'
-    }
-
-    dependencies {
-        implementation fileTree(dir: 'libs', include: '*.jar')
-        testImplementation "org.junit.jupiter:junit-jupiter:${project.property('jUnitVersion')}"
-        testRuntimeOnly("org.junit.platform:junit-platform-launcher:${project.property('jUnitPlatformVersion')}")
-    }
-
-    [compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
-
-    test {
-        useJUnitPlatform()
-
-        systemProperty 'junit.jupiter.execution.parallel.enabled', true
-        systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
-    }
-}
-
-subprojects {
-    // Cache list of tasks
-    project.getAllTasks(true)
-}
-
-allprojects {
-    signing {
-        var signingKey = providers.environmentVariable("GPG_SIGNING_KEY")
-        var signingPassphrase = providers.environmentVariable("GPG_SIGNING_PASSPHRASE")
-        if (signingKey.present && signingPassphrase.present) {
-            useInMemoryPgpKeys(signingKey.get(), signingPassphrase.get())
-            sign publishing.publications
-        }
-    }
-
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                groupId = project.group.toString()
-                artifactId = project.name
-                version = project.version.toString()
-                if (tasks.findByName("shadowJar") == null)
-                    from(components.java)
-                else {
-                    artifact(tasks.named("shadowJar"))
-                    artifact(tasks.named("sourcesJar"))
-                    artifact(tasks.named("javadocJar"))
-                }
-                pom {
-                    name.set(project.name)
-                    description.set(Meta.desc)
-                    url.set("https://${Meta.githubRepo}")
-                    licenses {
-                        license {
-                            name.set(Meta.license)
-                            url.set("https://opensource.org/licenses/Apache-2.0")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("pxb1988")
-                            name.set("Bob Pan")
-                        }
-                        developer {
-                            id.set("ThexXTURBOXx")
-                            name.set("Nico Mexis")
-                        }
-                    }
-                    scm {
-                        url.set("https://${Meta.githubRepo}.git")
-                        connection.set("scm:git:git://${Meta.githubRepo}.git")
-                        developerConnection.set("scm:git:git://${Meta.githubRepo}.git")
-                    }
-                    issueManagement {
-                        url.set("https://${Meta.githubRepo}/issues")
-                    }
-                }
-            }
-        }
-    }
-
-    // Workaround for https://github.com/gradle/gradle/issues/820
-    configurations {
-        api {
-            extendsFrom = extendsFrom.findAll { it != configurations.antlr }
         }
     }
 }
@@ -157,12 +42,4 @@ dependencies {
     api(project(":dex-tools"))
     api(project(":dex-translator"))
     api(project(":dex-writer"))
-}
-
-class Meta {
-    public static final var desc = "Tools to work with android .dex and java .class files"
-    public static final var license = "Apache-2.0"
-    public static final var githubRepo = "github.com/ThexXTURBOXx/dex2jar"
-    public static final var release = "https://s01.oss.sonatype.org/service/local/"
-    public static final var snapshot = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
 }

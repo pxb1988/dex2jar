@@ -1,4 +1,9 @@
-apply plugin: 'antlr'
+plugins {
+    id "antlr"
+    id "dex2jar.build-conventions"
+}
+
+description = "Smali support for dex2jar"
 
 dependencies {
     api "org.antlr:antlr4-runtime:${project.property('antlr4Version')}"
@@ -17,10 +22,4 @@ generateGrammarSource {
 sourceSets {
     test.output.resourcesDir = "build/classes/test"
     main.antlr.srcDirs = ['src/main/antlr4']
-}
-
-// From https://github.com/gradle/gradle/issues/19555#issuecomment-1593252653
-sourceSets.configureEach {
-    var generateGrammarSource = tasks.named(getTaskName("generate", "GrammarSource"))
-    java.srcDir(generateGrammarSource.map { files() })
 }

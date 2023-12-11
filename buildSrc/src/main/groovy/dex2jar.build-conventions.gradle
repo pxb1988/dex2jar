@@ -1,0 +1,123 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+ext.antlr3Version = '3.5.3'
+ext.antlr4Version = '4.9.3' // Newer versions only for Java 11+
+ext.asmVersion = '9.6'
+ext.baksmaliVersion = '3.0.3'
+ext.commonsCompressVersion = '1.25.0'
+ext.jUnitVersion = '5.10.1'
+ext.jUnitPlatformVersion = '1.10.1'
+ext.r8Version = '4.0.63' // Newer versions only for Java 11+
+
+group = 'de.femtopedia.dex2jar'
+version = project.findProperty('version')
+version = version == null || version == 'unspecified' ? '2.4-SNAPSHOT' : version
+
+repositories {
+    mavenCentral()
+    google()
+}
+
+java {
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+    withJavadocJar()
+}
+
+javadoc {
+    options.encoding = 'UTF-8'
+    options.source = '8'
+}
+
+dependencies {
+    testImplementation "org.junit.jupiter:junit-jupiter:${project.property('jUnitVersion')}"
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${project.property('jUnitPlatformVersion')}")
+}
+
+[compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
+
+signing {
+    var signingKey = providers.environmentVariable("GPG_SIGNING_KEY")
+    var signingPassphrase = providers.environmentVariable("GPG_SIGNING_PASSPHRASE")
+    if (signingKey.present && signingPassphrase.present) {
+        useInMemoryPgpKeys(signingKey.get(), signingPassphrase.get())
+        sign publishing.publications
+    }
+}
+
+// Workaround for https://github.com/gradle/gradle/issues/820
+configurations {
+    api {
+        extendsFrom = extendsFrom.findAll { it != configurations.antlr }
+    }
+}
+
+// Workaround from https://github.com/gradle/gradle/issues/19555#issuecomment-1593252653
+try {
+    sourceSets.configureEach {
+        var generateGrammarSource = tasks.named(getTaskName("generate", "GrammarSource"))
+        java.srcDir(generateGrammarSource.map { files() })
+    }
+} catch (Throwable ignored) {
+}
+
+test {
+    dependsOn ':d2j-external:shadowJar'
+    useJUnitPlatform()
+    systemProperty 'junit.jupiter.execution.parallel.enabled', true
+    systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                groupId = project.group.toString()
+                artifactId = project.name
+                version = project.version.toString()
+                if (project.name == "d2j-external") {
+                    artifact(shadowJar)
+                    artifact(sourcesJar)
+                    artifact(javadocJar)
+                } else {
+                    from(components.java)
+                }
+                pom {
+                    name.set(project.name)
+                    description.set(project.description)
+                    url.set("https://github.com/ThexXTURBOXx/dex2jar")
+                    licenses {
+                        license {
+                            name.set('The Apache License, Version 2.0')
+                            url.set('https://www.apache.org/licenses/LICENSE-2.0.txt')
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("pxb1988")
+                            name.set("Bob Pan")
+                            email.set("pxb1988@gmail.com")
+                        }
+                        developer {
+                            id.set("ThexXTURBOXx")
+                            name.set("Nico Mexis")
+                            email.set("nico.mexis@kabelmail.de")
+                        }
+                    }
+                    scm {
+                        url.set("https://github.com/ThexXTURBOXx/dex2jar.git")
+                        connection.set("scm:git:git://github.com/ThexXTURBOXx/dex2jar.git")
+                        developerConnection.set("scm:git:git://github.com/ThexXTURBOXx/dex2jar.git")
+                    }
+                    issueManagement {
+                        url.set("https://github.com/ThexXTURBOXx/dex2jar/issues")
+                    }
+                }
+            }
+        }
+    }
+}

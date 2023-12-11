@@ -1,8 +1,9 @@
 plugins {
     id "application"
+    id "dex2jar.build-conventions"
 }
 
-description = 'Dex Tools'
+description = 'Dex/Dalvik tools for dex2jar'
 
 dependencies {
     api project(':dex-translator')
@@ -25,9 +26,9 @@ dependencies {
 }
 
 tasks.register('bin_gen', JavaExec) {
-    dependsOn jar
+    dependsOn jar, ':d2j-external:shadowJar'
     classpath sourceSets.main.runtimeClasspath
-    ext.binDir = "$buildDir/generated-sources/bin"
+    ext.binDir = "${layout.buildDirectory.asFile.get()}/generated-sources/bin"
     outputs.dir file(ext.binDir)
     mainClass.set('com.googlecode.dex2jar.bin_gen.BinGen')
     args = ["$projectDir/src/main/bin_gen", "$ext.binDir"]

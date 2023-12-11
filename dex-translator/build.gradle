@@ -1,8 +1,8 @@
 plugins {
-    id('java-library')
+    id "dex2jar.build-conventions"
 }
 
-description = 'Dex Translator'
+description = 'Dex/Dalvik translator for dex2jar'
 
 dependencies {
     api project(':dex-reader-api')
