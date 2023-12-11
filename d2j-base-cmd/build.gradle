@@ -5,5 +5,5 @@ plugins {
 description = "Simple cmd parser for dex2jar"
 
 dependencies {
-    api project(':d2j-external')
+    api project(path: ':d2j-external', configuration: 'shadow')
 }

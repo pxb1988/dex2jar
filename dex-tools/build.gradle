@@ -11,7 +11,7 @@ dependencies {
     api project(':d2j-jasmin')
     api project(':dex-writer')
     api project(':d2j-base-cmd')
-    api project(':d2j-external')
+    api project(path: ':d2j-external', configuration: 'shadow')
     // api group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
     api(group: 'org.ow2.asm', name: 'asm-tree', version: project.property('asmVersion')) {
         exclude(module: 'asm')
@@ -36,9 +36,6 @@ tasks.register('bin_gen', JavaExec) {
 
 application {
     applicationDistribution.from(bin_gen)
-    //applicationDistribution.from('src/main/jars') {
-    //  into("lib")
-    //}
     applicationDistribution.from('open-source-license.txt') {
         into("lib")
     }

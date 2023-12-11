@@ -1,5 +1,4 @@
 plugins {
-    id "application"
     id "base"
     id "signing"
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0-rc-1"
@@ -23,17 +22,9 @@ nexusPublishing {
     }
 }
 
-application {
-    mainClass = "com.googlecode.dex2jar.tools.Dex2jarCmd"
-}
-
-base {
-    archivesName = "dex2jar"
-}
-
 dependencies {
     api(project(":d2j-base-cmd"))
-    api(project(":d2j-external"))
+    api project(path: ':d2j-external', configuration: 'shadow')
     api(project(":d2j-jasmin"))
     api(project(":d2j-smali"))
     api(project(":dex-ir"))

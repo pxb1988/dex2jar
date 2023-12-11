@@ -9,7 +9,7 @@ dependencies {
     api project(':dex-reader')
     api project(':dex-ir')
     api project(':d2j-base-cmd')
-    api fileTree(dir: '../libs', include: '*.jar')
+    api project(path: ':d2j-external', configuration: 'shadow')
     // api group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
     api(group: 'org.ow2.asm', name: 'asm-tree', version: project.property('asmVersion')) {
         exclude(module: 'asm')

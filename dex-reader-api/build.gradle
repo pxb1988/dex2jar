@@ -5,6 +5,6 @@ plugins {
 description = 'Dex/Dalvik reader API for dex2jar'
 
 dependencies {
-    api project(':d2j-external')
+    api project(path: ':d2j-external', configuration: 'shadow')
     // api group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
 }

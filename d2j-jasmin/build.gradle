@@ -9,7 +9,7 @@ dependencies {
     api(group: 'org.antlr', name: 'antlr-runtime', version: project.property('antlr3Version')) {
         exclude(module: 'stringtemplate')
     }
-    api project(':d2j-external')
+    api project(path: ':d2j-external', configuration: 'shadow')
     // api group: 'org.ow2.asm', name: 'asm', version: project.property('asmVersion') // Fixed MethodCodeTooLargeException
     api(group: 'org.ow2.asm', name: 'asm-tree', version: project.property('asmVersion')) {
         exclude(module: 'asm')

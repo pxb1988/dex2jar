@@ -6,7 +6,7 @@ plugins {
 description = "External and fixed libraries for dex2jar"
 
 dependencies {
-    api fileTree(dir: '../libs', include: '*.jar')
+    implementation fileTree(dir: '../libs', include: '*.jar')
 }
 
 tasks.jar.enabled = false // Don't build normal jar
