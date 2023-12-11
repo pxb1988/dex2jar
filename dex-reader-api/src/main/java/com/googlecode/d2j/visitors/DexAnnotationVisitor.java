@@ -1,8 +1,9 @@
 package com.googlecode.d2j.visitors;
 
 /**
- * A visitor to visit a Java annotation. The methods of this interface must be called in the following order: (
- * <tt>visit</tt> | <tt>visitEnum</tt> | <tt>visitAnnotation</tt> | <tt>visitArray</tt>)* <tt>visitEnd</tt>.
+ * A visitor to visit a Java annotation. The methods of this interface must be called in the following
+ * order: (<code>visit</code> | <code>visitEnum</code> | <code>visitAnnotation</code> |
+ * <code>visitArray</code>)* <code>visitEnd</code>.
  *
  * @author Eric Bruneton
  * @author Eugene Kuleshov
@@ -53,7 +54,8 @@ public class DexAnnotationVisitor {
      *
      * @param name the value name.
      * @param desc the descriptor of the nested annotation-class.
-     * @return a visitor to visit the actual nested annotation value, or <tt>null</tt> if this visitor is not interested
+     * @return a visitor to visit the actual nested annotation value, or <code>null</code> if this visitor is not
+     *         interested
      *         in visiting this nested annotation. <i>The nested annotation value must be fully visited before calling
      *         other methods on this annotation visitor</i>.
      */

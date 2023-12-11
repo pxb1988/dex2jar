@@ -28,7 +28,7 @@ import org.objectweb.asm.util.Printer;
  * <p>
  * Disassembled view of the classes in Jasmin assembler format.
  * <p>
- * The trace printed when visiting the <tt>Hello</tt> class is the following:
+ * The trace printed when visiting the <code>Hello</code> class is the following:
  * <p>
  * <blockquote>
  *
@@ -55,7 +55,7 @@ import org.objectweb.asm.util.Printer;
  * .end method
  * </pre>
  *
- * </blockquote> where <tt>Hello</tt> is defined by:
+ * </blockquote> where <code>Hello</code> is defined by:
  * <p>
  * <blockquote>
  *
