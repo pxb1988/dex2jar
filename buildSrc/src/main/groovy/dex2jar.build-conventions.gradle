@@ -22,6 +22,12 @@ repositories {
     google()
 }
 
+jar {
+    manifest {
+        attributes('Implementation-Version': version)
+    }
+}
+
 java {
     sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
     withSourcesJar()

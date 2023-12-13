@@ -567,10 +567,10 @@ public abstract class BaseCmd {
             }
         }
         String ver = getVersionString();
-        if (ver != null && !"".equals(ver)) {
+        if (ver != null && !ver.isEmpty()) {
             out.println("version: " + ver);
         }
-        if (onlineHelp != null && !"".equals(onlineHelp)) {
+        if (onlineHelp != null && !onlineHelp.isEmpty()) {
             if (onlineHelp.length() + "online help: ".length() > maxLength) {
                 out.println("online help: ");
                 out.println(onlineHelp);
