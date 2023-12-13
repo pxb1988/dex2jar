@@ -58,6 +58,9 @@ public class Dex2jarCmd extends BaseCmd {
     @Opt(opt = "nc", longOpt = "no-code", hasArg = false, description = "")
     private boolean noCode = false;
 
+    @Opt(opt = "dsn", longOpt = "dont-sanitize-names", hasArg = false, description = "do not replace '_' by '-'")
+    private boolean dontSanitizeNames = false;
+
     @Override
     protected void doCommandLine() throws Exception {
         if (remainingArgs.length == 0) {
@@ -101,7 +104,7 @@ public class Dex2jarCmd extends BaseCmd {
             BaksmaliBaseDexExceptionHandler handler = notHandleException ? null : new BaksmaliBaseDexExceptionHandler();
             Dex2jar.from(reader).withExceptionHandler(handler).reUseReg(reuseReg).topoLogicalSort()
                     .skipDebug(!debugInfo).optimizeSynchronized(this.optmizeSynchronized).printIR(printIR)
-                    .noCode(noCode).skipExceptions(skipExceptions).to(file);
+                    .noCode(noCode).skipExceptions(skipExceptions).dontSanitizeNames(dontSanitizeNames).to(file);
 
             if (!notHandleException) {
                 if (handler.hasException()) {

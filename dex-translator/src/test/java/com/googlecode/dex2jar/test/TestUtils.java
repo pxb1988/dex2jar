@@ -290,7 +290,7 @@ public abstract class TestUtils {
             }
         };
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
+        final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw, false);
         ClassVisitorFactory cvf = classInternalName -> rca;
         if (fileNode != null) {
             dex2Asm.convertClass(clzNode, cvf, fileNode);

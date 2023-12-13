@@ -75,7 +75,8 @@ public final class Dex2jar {
             @Override
             public ClassVisitor create(final String name) {
                 final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-                final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
+                final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw,
+                        (readerConfig & DexFileReader.DONT_SANITIZE_NAMES) != 0);
                 return new ClassVisitor(Constants.ASM_VERSION, rca) {
                     @Override
                     public void visitEnd() {
@@ -310,6 +311,15 @@ public final class Dex2jar {
             this.readerConfig |= DexFileReader.SKIP_EXCEPTION;
         } else {
             this.readerConfig &= ~DexFileReader.SKIP_EXCEPTION;
+        }
+        return this;
+    }
+
+    public Dex2jar dontSanitizeNames(boolean b) {
+        if (b) {
+            this.readerConfig |= DexFileReader.DONT_SANITIZE_NAMES;
+        } else {
+            this.readerConfig &= ~DexFileReader.DONT_SANITIZE_NAMES;
         }
         return this;
     }

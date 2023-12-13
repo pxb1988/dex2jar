@@ -40,6 +40,9 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
     @Opt(opt = "fl", longOpt = "file-list", description = "a file contains a list of dex to process")
     private Path fileList;
 
+    @Opt(opt = "dsn", longOpt = "dont-sanitize-names", hasArg = false, description = "do not replace '_' by '-'")
+    private boolean dontSanitizeNames = false;
+
     @Override
     protected void doCommandLine() throws Exception {
         List<String> f = new ArrayList<>(Arrays.asList(remainingArgs));
@@ -95,7 +98,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
             @Override
             public ClassVisitor create(final String name) {
                 final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-                final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
+                final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw, dontSanitizeNames);
                 return new ClassVisitor(Constants.ASM_VERSION, rca) {
                     @Override
                     public void visitEnd() {

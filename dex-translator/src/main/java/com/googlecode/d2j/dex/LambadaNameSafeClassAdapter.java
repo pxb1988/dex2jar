@@ -1,35 +1,34 @@
 package com.googlecode.d2j.dex;
 
+import com.googlecode.dex2jar.tools.Constants;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 
 public class LambadaNameSafeClassAdapter extends ClassRemapper {
 
+    private final boolean dontSanitizeNames;
+
     public String getClassName() {
-        return remapper.mapType(className);
+        return dontSanitizeNames ? className : remapper.mapType(className);
     }
 
-    public LambadaNameSafeClassAdapter(ClassVisitor cv) {
-        super(cv, new Remapper() {
-            private String fixName(String name) {
-                if (name != null) {
-                    return name.replace('-', '_');
-                }
-                return null;
-            }
+    private static String fixName(String name) {
+        if (name == null) return null;
+        return name.replace('-', '_');
+    }
 
-            private String[] fixNames(String[] names) {
-                if (names != null) {
-                    String[] ret = new String[names.length];
-                    for (int i = 0; i < names.length; ++i) {
-                        ret[i] = fixName(names[i]);
-                    }
-                    return ret;
-                }
-                return null;
-            }
+    private static String[] fixNames(String[] names) {
+        if (names == null) return null;
+        String[] ret = new String[names.length];
+        for (int i = 0; i < names.length; ++i)
+            ret[i] = fixName(names[i]);
+        return ret;
+    }
 
+    public LambadaNameSafeClassAdapter(ClassVisitor cv, boolean dontSanitizeNames) {
+        super(Constants.ASM_VERSION, cv, dontSanitizeNames ? new Remapper() {
+        } : new Remapper() {
             @Override
             public String mapType(String type) {
                 return super.mapType(fixName(type));
@@ -85,6 +84,8 @@ public class LambadaNameSafeClassAdapter extends ClassRemapper {
                 return super.map(fixName(internalName));
             }
         });
+
+        this.dontSanitizeNames = dontSanitizeNames;
     }
 
 }
