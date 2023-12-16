@@ -98,6 +98,13 @@ public class DexFileReader implements BaseDexFileReader {
 
     public static final int DONT_SANITIZE_NAMES = 1 << 9;
 
+    /**
+     * Instruct ASM to compute frames when generating class files,
+     * using {@link org.objectweb.asm.ClassWriter#COMPUTE_FRAMES}
+     * **EXPERIMENTAL CODE**
+     */
+    public static final int COMPUTE_FRAMES = 1 << 10;
+
     // private static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
 
     static final int DBG_END_SEQUENCE = 0x00;

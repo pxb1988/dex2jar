@@ -20,9 +20,12 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -57,6 +60,11 @@ public final class Dex2jar {
         doTranslate(null, baos);
     }
 
+    private static String toInternalClassName(String key) {
+        if (key.endsWith(";")) key = key.substring(1, key.length() - 1);
+        return key;
+    }
+
     /**
      * Translates a dex file to a class file and writes it to the specified destination path and stream.
      *
@@ -71,10 +79,42 @@ public final class Dex2jar {
         } catch (Exception ex) {
             exceptionHandler.handleFileException(ex);
         }
+
+        Map<String, String> parentsByName = fileNode.clzs.stream()
+                .filter(c -> c.superClass != null)
+                .collect(Collectors.toMap(
+                        c -> toInternalClassName(c.className),
+                        c -> toInternalClassName(c.superClass)));
+
         ClassVisitorFactory cvf = new ClassVisitorFactory() {
             @Override
             public ClassVisitor create(final String name) {
-                final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                final ClassWriter cw = (readerConfig & DexFileReader.COMPUTE_FRAMES) == 0
+                        ? new ClassWriter(ClassWriter.COMPUTE_MAXS)
+                        : new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
+                    @Override
+                    protected String getCommonSuperClass(String type1, String type2) {
+                        if (type1.equals(type2)) return type1;
+
+                        List<String> parentsOfType1 = new ArrayList<>();
+                        parentsOfType1.add(type1);
+                        while (parentsByName.containsKey(type1)) {
+                            type1 = parentsByName.get(type1);
+                            parentsOfType1.add(type1);
+                        }
+
+                        while (parentsByName.containsKey(type2)) {
+                            type2 = parentsByName.get(type2);
+                            if (parentsOfType1.contains(type2)) return type2;
+                        }
+
+                        try {
+                            return super.getCommonSuperClass(type1, type2);
+                        } catch (Throwable t) {
+                            return "java/util/Object";
+                        }
+                    }
+                };
                 final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw,
                         (readerConfig & DexFileReader.DONT_SANITIZE_NAMES) != 0);
                 return new ClassVisitor(Constants.ASM_VERSION, rca) {
@@ -320,6 +360,15 @@ public final class Dex2jar {
             this.readerConfig |= DexFileReader.DONT_SANITIZE_NAMES;
         } else {
             this.readerConfig &= ~DexFileReader.DONT_SANITIZE_NAMES;
+        }
+        return this;
+    }
+
+    public Dex2jar computeFrames(boolean b) {
+        if (b) {
+            this.readerConfig |= DexFileReader.COMPUTE_FRAMES;
+        } else {
+            this.readerConfig &= ~DexFileReader.COMPUTE_FRAMES;
         }
         return this;
     }
