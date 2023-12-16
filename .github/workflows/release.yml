@@ -37,7 +37,7 @@ jobs:
           artifacts: dex-tools/build/distributions/dex-tools-*.zip
 
       - name: Archive dex tools
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success()
         with:
           name: dex-tools
