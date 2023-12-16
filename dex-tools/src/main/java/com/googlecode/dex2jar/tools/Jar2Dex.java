@@ -1,11 +1,12 @@
 package com.googlecode.dex2jar.tools;
 
+import com.android.dx.command.Main;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 
 @BaseCmd.Syntax(cmd = "d2j-jar2dex", syntax = "[options] <dir>", desc = "Convert jar to dex by invoking dx.")
 public class Jar2Dex extends BaseCmd {
@@ -19,6 +20,12 @@ public class Jar2Dex extends BaseCmd {
 
     @Opt(opt = "s", longOpt = "sdk", description = "set minSdkVersion")
     private int minSdkVersion = 13;
+
+    @Opt(opt = "d", longOpt = "debug", description = "debug output")
+    private boolean debug = false;
+
+    @Opt(opt = "v", longOpt = "verbose", description = "verbose output")
+    private boolean verbose = false;
 
     @Opt(opt = "o", longOpt = "output", description = "output .dex file, default is $current_dir/[jar-name]-jar2dex"
             + ".dex", argName = "out-dex-file")
@@ -73,15 +80,18 @@ public class Jar2Dex extends BaseCmd {
 
             System.out.println("jar2dex " + realJar + " -> " + output);
 
-            Class<?> c = Class.forName("com.android.dx.command.Main");
-            Method m = c.getMethod("main", String[].class);
-
-            String[] ps = new String[]{"--dex", "--no-strict",
+            List<String> ps = Arrays.asList(
+                    "--dex", "--no-strict",
                     "--output=" + output.toAbsolutePath(),
-                    "--min-sdk-version=" + minSdkVersion,
-                    realJar.toAbsolutePath().toString()};
-            System.out.println("call com.android.dx.command.Main.main" + Arrays.toString(ps));
-            m.invoke(null, (Object) ps);
+                    "--min-sdk-version=" + minSdkVersion
+            );
+            if (verbose) ps.add("--verbose");
+            if (debug) ps.add("--debug");
+            ps.add(realJar.toAbsolutePath().toString());
+
+            System.out.println("call com.android.dx.command.Main.main" + ps);
+
+            Main.main(ps.toArray(new String[0]));
         } finally {
             if (tmp != null) {
                 Files.deleteIfExists(tmp);
