@@ -20,10 +20,37 @@ This is [Nico Mexis'](https://github.com/ThexXTURBOXx) fork of the dex2jar proje
 
 ## Downloads
 
-**To download the latest builds, head to the [Releases](https://github.com/ThexXTURBOXx/dex2jar/releases).**
+This fork has builds available in the following formats.<br>
+You can also only depend on a single module, if needed. The following sections include all the modules.
 
-**Note: the builds in [Releases](https://github.com/ThexXTURBOXx/dex2jar/releases) are automatically built by GitHub
-Actions.**
+### Maven
+
+The builds are available on [Maven Central](https://mvnrepository.com/artifact/de.femtopedia.dex2jar).
+
+```xml
+<dependency>
+    <groupId>de.femtopedia.dex2jar</groupId>
+    <artifactId>dex2jar</artifactId>
+    <version>VERSION</version>
+</dependency>
+```
+
+### Gradle
+
+The builds are available on [Maven Central](https://mvnrepository.com/artifact/de.femtopedia.dex2jar).
+
+```groovy
+implementation 'de.femtopedia.dex2jar:dex2jar:VERSION'
+```
+
+### GitHub Releases
+
+To download the latest builds, head to the [Releases](https://github.com/ThexXTURBOXx/dex2jar/releases).
+
+**Note**: The builds in [Releases](https://github.com/ThexXTURBOXx/dex2jar/releases) are automatically built by GitHub
+Actions.
+
+## Modules
 
 Tools to work with android .dex and java .class files
 
