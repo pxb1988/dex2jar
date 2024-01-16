@@ -20,11 +20,11 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -89,6 +89,7 @@ public final class Dex2jar {
         ClassVisitorFactory cvf = new ClassVisitorFactory() {
             @Override
             public ClassVisitor create(final String name) {
+                // If we choose to recompute the stack map frames, we need a special impl
                 final ClassWriter cw = (readerConfig & DexFileReader.COMPUTE_FRAMES) == 0
                         ? new ClassWriter(ClassWriter.COMPUTE_MAXS)
                         : new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
@@ -96,21 +97,25 @@ public final class Dex2jar {
                     protected String getCommonSuperClass(String type1, String type2) {
                         if (type1.equals(type2)) return type1;
 
-                        List<String> parentsOfType1 = new ArrayList<>();
+                        // First collect all the possible parents of type1
+                        Set<String> parentsOfType1 = new HashSet<>();
                         parentsOfType1.add(type1);
                         while (parentsByName.containsKey(type1)) {
                             type1 = parentsByName.get(type1);
                             parentsOfType1.add(type1);
                         }
 
+                        // Then we see whether type2 or any of its parents match
                         while (parentsByName.containsKey(type2)) {
                             type2 = parentsByName.get(type2);
                             if (parentsOfType1.contains(type2)) return type2;
                         }
 
                         try {
+                            // Maybe the default impl can resolve the rest
                             return super.getCommonSuperClass(type1, type2);
                         } catch (Throwable t) {
+                            // If all else fails
                             return "java/util/Object";
                         }
                     }
