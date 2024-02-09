@@ -44,7 +44,7 @@ jobs:
           path: dex-tools/build/distributions/dex-tools-*.zip
 
       - name: Publish to Maven Central
-        run: ./gradlew -Pversion=2.4.${{ github.run_number }} publish closeAndReleaseStagingRepository
+        run: ./gradlew -Pversion=2.4.${{ github.run_number }} publish closeAndReleaseStagingRepositories
         env:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_SIGNING_PASSPHRASE: ${{ secrets.GPG_SIGNING_PASSPHRASE }}
