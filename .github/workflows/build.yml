@@ -22,11 +22,10 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Setup Gradle to generate dependency graphs
-        uses: gradle/gradle-build-action@v2
+      - name: Generate dependency graphs
+        uses: gradle/actions/dependency-submission@v3
         with:
           dependency-graph: generate
-          artifact-retention-days: 1
 
       - name: Build dex-tools with Gradle
         run: ./gradlew check distZip
