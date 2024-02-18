@@ -70,17 +70,18 @@ public abstract class TestUtils {
     }
 
     public static void checkZipFile(File zip) throws Exception {
-        ZipFile zipFile = new ZipFile(zip);
-        for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements(); ) {
-            ZipEntry entry = e.nextElement();
-            if (entry.getName().endsWith(".class")) {
-                StringWriter sw = new StringWriter();
-                // PrintWriter pw = new PrintWriter(sw);
+        try (ZipFile zipFile = new ZipFile(zip)) {
+            for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements(); ) {
+                ZipEntry entry = e.nextElement();
+                if (entry.getName().endsWith(".class")) {
+                    StringWriter sw = new StringWriter();
+                    // PrintWriter pw = new PrintWriter(sw);
 
-                try (InputStream is = zipFile.getInputStream(entry)) {
-                    verify(new ClassReader(ZipUtil.toByteArray(is)));
+                    try (InputStream is = zipFile.getInputStream(entry)) {
+                        verify(new ClassReader(ZipUtil.toByteArray(is)));
+                    }
+                    assertEquals(0, sw.toString().length(), sw.toString());
                 }
-                assertEquals(0, sw.toString().length(), sw.toString());
             }
         }
     }
