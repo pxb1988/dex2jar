@@ -657,11 +657,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
         for (int i = 0; i < labels.length; i++) {
             Callback cb = callbacks.get(i);
             String key = callback.getKey((MtdInfo) cb.target);
-            Label label = strMap.get(key);
-            if (label == null) {
-                label = new Label();
-                strMap.put(key, label);
-            }
+            Label label = strMap.computeIfAbsent(key, k -> new Label());
             labels[i] = label;
         }
 

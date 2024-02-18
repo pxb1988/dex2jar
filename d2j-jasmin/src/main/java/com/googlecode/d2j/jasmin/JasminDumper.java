@@ -656,11 +656,7 @@ public class JasminDumper implements Opcodes {
     }
 
     protected void print(final Label l) {
-        String name = labelNames.get(l);
-        if (name == null) {
-            name = "L" + labelNames.size();
-            labelNames.put(l, name);
-        }
+        String name = labelNames.computeIfAbsent(l, k -> "L" + labelNames.size());
         pw.print(name);
     }
 

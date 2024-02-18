@@ -18,7 +18,7 @@ public class BadZipEntryFlagTest {
     public void test1() throws IOException {
         ZipArchiveInputStream zis = new ZipArchiveInputStream(BadZipEntryFlagTest.class.getResourceAsStream("/bad"
                 + ".zip"));
-        for (ZipArchiveEntry e = zis.getNextZipEntry(); e != null; e = zis.getNextZipEntry()) {
+        for (ZipArchiveEntry e = zis.getNextEntry(); e != null; e = zis.getNextEntry()) {
             e.getGeneralPurposeBit().useEncryption(false);
             if (!e.isDirectory()) {
                 zis.read();
