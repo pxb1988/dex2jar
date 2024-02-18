@@ -5,6 +5,7 @@ import java.io.File;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class Jar2Dex extends BaseCmd {
     private boolean verbose = false;
 
     @Opt(opt = "o", longOpt = "output", description = "output .dex file, default is $current_dir/[jar-name]-jar2dex"
-            + ".dex", argName = "out-dex-file")
+                                                      + ".dex", argName = "out-dex-file")
     private Path output;
 
     @Override
@@ -80,11 +81,11 @@ public class Jar2Dex extends BaseCmd {
 
             System.out.println("jar2dex " + realJar + " -> " + output);
 
-            List<String> ps = Arrays.asList(
+            List<String> ps = new ArrayList<>(Arrays.asList(
                     "--dex", "--no-strict",
                     "--output=" + output.toAbsolutePath(),
                     "--min-sdk-version=" + minSdkVersion
-            );
+            ));
             if (verbose) ps.add("--verbose");
             if (debug) ps.add("--debug");
             ps.add(realJar.toAbsolutePath().toString());
