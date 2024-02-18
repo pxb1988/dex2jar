@@ -5,7 +5,7 @@ plugins {
 }
 
 ext.antlr3Version = '3.5.3'
-ext.antlr4Version = '4.9.3' // Newer versions only for Java 11+
+ext.antlr4Version = '4.13.1'
 ext.asmVersion = '9.6'
 ext.baksmaliVersion = '3.0.3'
 ext.commonsCompressVersion = '1.25.0'
@@ -44,7 +44,12 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:${project.property('jUnitPlatformVersion')}")
 }
 
-[compileJava, compileTestJava]*.options.collect { options -> options.encoding = 'UTF-8' }
+[compileJava, compileTestJava]*.options.collect { options ->
+    {
+        options.encoding = 'UTF-8'
+        options.release.set(8)
+    }
+}
 
 signing {
     var signingKey = providers.environmentVariable("GPG_SIGNING_KEY")
