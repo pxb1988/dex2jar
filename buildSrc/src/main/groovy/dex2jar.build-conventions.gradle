@@ -28,15 +28,16 @@ jar {
     }
 }
 
+final javaVersion = JavaVersion.VERSION_1_8
 java {
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = targetCompatibility = javaVersion
     withSourcesJar()
     withJavadocJar()
 }
 
 javadoc {
     options.encoding = 'UTF-8'
-    options.source = '8'
+    options.source = javaVersion.majorVersion
 }
 
 dependencies {
@@ -47,7 +48,7 @@ dependencies {
 [compileJava, compileTestJava]*.options.collect { options ->
     {
         options.encoding = 'UTF-8'
-        options.release.set(8)
+        options.release.set(javaVersion.majorVersion.toInteger())
     }
 }
 
