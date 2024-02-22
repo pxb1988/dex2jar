@@ -7,8 +7,8 @@ plugins {
 ext.antlr3Version = '3.5.3'
 ext.antlr4Version = '4.13.1'
 ext.asmVersion = '9.6'
-ext.baksmaliVersion = '3.0.3'
-ext.commonsCompressVersion = '1.25.0'
+ext.baksmaliVersion = '3.0.5'
+ext.commonsCompressVersion = '1.26.0'
 ext.jUnitVersion = '5.10.2'
 ext.jUnitPlatformVersion = '1.10.2'
 ext.r8Version = '4.0.63' // Newer versions only for Java 11+
