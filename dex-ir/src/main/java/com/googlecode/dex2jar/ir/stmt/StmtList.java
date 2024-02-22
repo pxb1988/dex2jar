@@ -1,44 +1,30 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.stmt;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * Represent a list of statement.
- * 
+ *
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
 public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
 
     private static class StmtListIterator implements Iterator<Stmt> {
-        private Stmt current, next;
+
+        private Stmt current;
+
+        private Stmt next;
+
         private final StmtList list;
 
         /**
-         * @param list
-         * @param next
+         *
          */
-        public StmtListIterator(StmtList list, Stmt next) {
+        StmtListIterator(StmtList list, Stmt next) {
             super();
             this.list = list;
             this.next = next;
@@ -51,11 +37,10 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
 
         @Override
         public Stmt next() {
-            Stmt x = current = next;
+            current = next;
+            Stmt x = current;
             if (x != null) {
                 next = x.next;
-            } else {
-                next = null;
             }
             return x;
         }
@@ -67,11 +52,15 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
                 current = null;
             }
         }
+
     }
 
-    private Stmt first, last;
+    private Stmt first;
+
+    private Stmt last;
 
     private int index = 1;
+
     private int size = 0;
 
     public void add(Stmt stmt) {
@@ -156,9 +145,11 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         indexIt(stmt);
         stmt.list = this;
         size++;
-        if (first == null) {// empty
-            first = last = stmt;
-            stmt.pre = stmt.next = null;
+        if (first == null) { // empty
+            last = stmt;
+            first = last;
+            stmt.next = null;
+            stmt.pre = null;
         } else {
             stmt.pre = null;
             stmt.next = first;
@@ -171,9 +162,11 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
         indexIt(stmt);
         stmt.list = this;
         size++;
-        if (first == null) {// empty
-            first = last = stmt;
-            stmt.pre = stmt.next = null;
+        if (first == null) { // empty
+            last = stmt;
+            first = last;
+            stmt.next = null;
+            stmt.pre = null;
         } else {
             stmt.next = null;
             stmt.pre = last;
@@ -185,7 +178,7 @@ public class StmtList implements Iterable<Stmt>, java.util.Comparator<Stmt> {
     @Override
     public Iterator<Stmt> iterator() {
         return new StmtListIterator(this, first);
-    };
+    }
 
     public void remove(Stmt stmt) {
         if (stmt.list == this) {

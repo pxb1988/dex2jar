@@ -1,24 +1,23 @@
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.d2j.tools.jar.ClassInfo.MemberInfo;
-
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-
+import com.googlecode.dex2jar.tools.Constants;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import static com.googlecode.d2j.util.AccUtils.isBridge;
 import static com.googlecode.d2j.util.AccUtils.isSynthetic;
 
 public class ScanBridgeAdapter extends ClassVisitor implements Opcodes {
 
-    private Map<String, MemberInfo> bridge = new HashMap<String, MemberInfo>();
+    private final Map<String, MemberInfo> bridge = new HashMap<>();
 
     public ScanBridgeAdapter(ClassVisitor cv) {
-        super(ASM9, cv);
+        super(Constants.ASM_VERSION, cv);
     }
 
     // private String currentName;
@@ -39,14 +38,14 @@ public class ScanBridgeAdapter extends ClassVisitor implements Opcodes {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
         if (isBridge(access) && isSynthetic(access)) {
             if (mv == null) {
-                mv = new MethodVisitor(ASM9) {
+                mv = new MethodVisitor(Constants.ASM_VERSION) {
                 };
             }
             final MemberInfo member = new MemberInfo();
             member.access = access;
             member.desc = desc;
             member.name = name;
-            mv = new MethodVisitor(ASM9, mv) {
+            mv = new MethodVisitor(Constants.ASM_VERSION, mv) {
 
                 @Override
                 public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {

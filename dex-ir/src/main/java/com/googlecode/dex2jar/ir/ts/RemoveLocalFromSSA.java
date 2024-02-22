@@ -1,22 +1,4 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
-
-import java.util.*;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Local;
@@ -25,8 +7,19 @@ import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class RemoveLocalFromSSA extends StatedTransformer {
+
     static <T extends Value> void replaceAssign(List<AssignStmt> assignStmtList, Map<Local, T> toReplace) {
         for (AssignStmt as : assignStmtList) {
             Value right = as.getOp2();
@@ -48,7 +41,8 @@ public class RemoveLocalFromSSA extends StatedTransformer {
             }
         }
         boolean changed = false;
-        for (Iterator<AssignStmt> it = assignStmtList.iterator(); it.hasNext(); ) {
+        Iterator<AssignStmt> it = assignStmtList.iterator();
+        while (it.hasNext()) {
             AssignStmt as = it.next();
             if (!usedInPhi.contains(as.getOp1())) {
                 it.remove();
@@ -83,10 +77,15 @@ public class RemoveLocalFromSSA extends StatedTransformer {
     }
 
     static class PhiObject {
+
         Set<PhiObject> parent = new HashSet<>();
+
         Set<PhiObject> children = new HashSet<>();
+
         Local local;
+
         boolean isInitByPhi = false;
+
     }
 
     public static PhiObject getOrCreate(Map<Local, PhiObject> map, Local local) {
@@ -108,9 +107,11 @@ public class RemoveLocalFromSSA extends StatedTransformer {
     private boolean simplePhi(List<LabelStmt> phiLabels, Map<Local, Local> toReplace, Set<Value> set) {
         boolean changed = false;
         if (phiLabels != null) {
-            for (Iterator<LabelStmt> itLabel = phiLabels.iterator(); itLabel.hasNext(); ) {
+            Iterator<LabelStmt> itLabel = phiLabels.iterator();
+            while (itLabel.hasNext()) {
                 LabelStmt labelStmt = itLabel.next();
-                for (Iterator<AssignStmt> it = labelStmt.phis.iterator(); it.hasNext(); ) {
+                Iterator<AssignStmt> it = labelStmt.phis.iterator();
+                while (it.hasNext()) {
                     AssignStmt phi = it.next();
                     set.addAll(Arrays.asList(phi.getOp2().getOps()));
                     set.remove(phi.getOp1());
@@ -121,7 +122,7 @@ public class RemoveLocalFromSSA extends StatedTransformer {
                     }
                     set.clear();
                 }
-                if (labelStmt.phis.size() == 0) {
+                if (labelStmt.phis.isEmpty()) {
                     labelStmt.phis = null;
                     itLabel.remove();
                 }
@@ -169,10 +170,11 @@ public class RemoveLocalFromSSA extends StatedTransformer {
                     }
                 }
             }
-            for (Iterator<LabelStmt> itLabel = phiLabels.iterator(); itLabel.hasNext(); ) {
+            Iterator<LabelStmt> itLabel = phiLabels.iterator();
+            while (itLabel.hasNext()) {
                 LabelStmt labelStmt = itLabel.next();
                 labelStmt.phis.removeIf(phi -> toDeletePhiAssign.contains(phi.getOp1()));
-                if (labelStmt.phis.size() == 0) {
+                if (labelStmt.phis.isEmpty()) {
                     labelStmt.phis = null;
                     itLabel.remove();
                 }
@@ -203,14 +205,14 @@ public class RemoveLocalFromSSA extends StatedTransformer {
 
     static <T> void fixReplace(Map<Local, T> toReplace) {
         List<Map.Entry<Local, T>> set = new ArrayList<>(toReplace.entrySet());
-        set.sort(Comparator.comparingInt(localTEntry -> localTEntry.getKey()._ls_index));
+        set.sort(Comparator.comparingInt(localTEntry -> localTEntry.getKey().lsIndex));
 
         boolean changed = true;
         while (changed) {
             changed = false;
             for (Map.Entry<Local, T> e : set) {
                 T b = e.getValue();
-                if(b instanceof  Local) {
+                if (b instanceof Local) {
                     T n = toReplace.get(b);
                     if (n != null && b != n) {
                         changed = true;
@@ -245,11 +247,11 @@ public class RemoveLocalFromSSA extends StatedTransformer {
                 replacePhi(phiLabels, toReplace, set);
             }
 
-            while (simplePhi(phiLabels, toReplace, set)) {// remove a = phi(b)
+            while (simplePhi(phiLabels, toReplace, set)) { // remove a = phi(b)
                 fixReplace(toReplace);
                 replacePhi(phiLabels, toReplace, set);
             }
-            while (simpleAssign(phiLabels, assignStmtList, toReplace, method.stmts)) {// remove a=b
+            while (simpleAssign(phiLabels, assignStmtList, toReplace, method.stmts)) { // remove a=b
                 fixReplace(toReplace);
                 replaceAssign(assignStmtList, toReplace);
                 changed = true;
@@ -262,7 +264,7 @@ public class RemoveLocalFromSSA extends StatedTransformer {
             method.locals.remove(local);
             irChanged = true;
         }
-        if (toReplace.size() > 0) {
+        if (!toReplace.isEmpty()) {
             Cfg.travelMod(method.stmts, new Cfg.TravelCallBack() {
                 @Override
                 public Value onAssign(Local v, AssignStmt as) {
@@ -278,4 +280,5 @@ public class RemoveLocalFromSSA extends StatedTransformer {
         }
         return irChanged;
     }
+
 }

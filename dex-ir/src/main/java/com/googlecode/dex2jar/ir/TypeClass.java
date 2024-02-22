@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2014 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir;
 
 public enum TypeClass {
@@ -33,8 +17,8 @@ public enum TypeClass {
     IF("i"), //
     JD("w"); //
 
-    public String name;
-    public boolean fixed;
+    public final String name;
+    public final boolean fixed;
 
     TypeClass(String use, boolean fixed) {
         this.name = use;
@@ -98,7 +82,7 @@ public enum TypeClass {
                     // special case for merge I and Z
                     // https://bitbucket.org/pxb1988/dex2jar/issues/1/javalangruntimeexception-can-not-merge-i
                     // http://sourceforge.net/p/dex2jar/tickets/237/
-                    if ((thizCls == INT && clz == BOOLEAN) || (thizCls == BOOLEAN || clz == INT)) {
+                    if ((thizCls == INT && clz == BOOLEAN) || (thizCls == BOOLEAN && clz == INT)) {
                         return INT;
                     }
                     throw new RuntimeException("Can't merge " + thizCls + " and " + clz);
@@ -126,47 +110,47 @@ public enum TypeClass {
             throw new RuntimeException("Can't merge " + a + " and " + b);
         }
         switch (a) {
-            case ZIL:
-                switch (b) {
-                    case ZIFL:
-                        return ZIL;
-                    case IF:
-                        return INT;
-                    case ZIF:
-                    case ZI:
-                        return ZI;
-                    default:
-                }
+        case ZIL:
+            switch (b) {
             case ZIFL:
-                return b;
+                return ZIL;
             case IF:
-                switch (b) {
-                    case ZIL:
-                    case ZI:
-                        return INT;
-                    case ZIFL:
-                    case ZIF:
-                        return IF;
-                    default:
-                }
+                return INT;
             case ZIF:
-                switch (b) {
-                    case IF:
-                        return IF;
-                    case ZIL:
-                    case ZI:
-                        return ZI;
-                    case ZIFL:
-                        return ZIF;
-                    default:
-                }
             case ZI:
-                if (b == TypeClass.IF) {
-                    return INT;
-                } else {
-                    return ZI;
-                }
+                return ZI;
             default:
+            }
+        case ZIFL:
+            return b;
+        case IF:
+            switch (b) {
+            case ZIL:
+            case ZI:
+                return INT;
+            case ZIFL:
+            case ZIF:
+                return IF;
+            default:
+            }
+        case ZIF:
+            switch (b) {
+            case IF:
+                return IF;
+            case ZIL:
+            case ZI:
+                return ZI;
+            case ZIFL:
+                return ZIF;
+            default:
+            }
+        case ZI:
+            if (b == TypeClass.IF) {
+                return INT;
+            } else {
+                return ZI;
+            }
+        default:
         }
         throw new RuntimeException();
     }

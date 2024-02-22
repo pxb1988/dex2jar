@@ -3,7 +3,13 @@ package com.googlecode.dex2jar.ir.ts;
 import com.googlecode.d2j.DexType;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.StmtTraveler;
-import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.expr.Constant;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
+import com.googlecode.dex2jar.ir.expr.InvokeExpr;
+import com.googlecode.dex2jar.ir.expr.StaticFieldExpr;
+import com.googlecode.dex2jar.ir.expr.TypeExpr;
+import com.googlecode.dex2jar.ir.expr.Value;
 
 /**
  * dex does have the instruction to create a multi-array. the implement is to
@@ -18,9 +24,10 @@ import com.googlecode.dex2jar.ir.expr.*;
  * </pre>
  */
 public class MultiArrayTransformer extends StatedTransformer {
+
     @Override
     public boolean transformReportChanged(IrMethod method) {
-        final boolean changed[] = {false};
+        final boolean[] changed = {false};
         new StmtTraveler() {
             @Override
             public Value travel(Value op) {
@@ -55,34 +62,34 @@ public class MultiArrayTransformer extends StatedTransformer {
                                         StaticFieldExpr sfe = (StaticFieldExpr) arg0;
                                         if (sfe.owner.startsWith("Ljava/lang/") && sfe.name.equals("TYPE")) {
                                             switch (sfe.owner) {
-                                                case "Ljava/lang/Boolean;":
-                                                    elementType = "Z";
-                                                    break;
-                                                case "Ljava/lang/Byte;":
-                                                    elementType = "B";
-                                                    break;
-                                                case "Ljava/lang/Short;":
-                                                    elementType = "S";
-                                                    break;
-                                                case "Ljava/lang/Character;":
-                                                    elementType = "C";
-                                                    break;
-                                                case "Ljava/lang/Integer;":
-                                                    elementType = "I";
-                                                    break;
-                                                case "Ljava/lang/Long;":
-                                                    elementType = "J";
-                                                    break;
-                                                case "Ljava/lang/Float;":
-                                                    elementType = "F";
-                                                    break;
-                                                case "Ljava/lang/Double;":
-                                                    elementType = "D";
-                                                    break;
-                                                case "Ljava/lang/Void;":
-                                                    elementType = "V";
-                                                    break;
-                                                default:
+                                            case "Ljava/lang/Boolean;":
+                                                elementType = "Z";
+                                                break;
+                                            case "Ljava/lang/Byte;":
+                                                elementType = "B";
+                                                break;
+                                            case "Ljava/lang/Short;":
+                                                elementType = "S";
+                                                break;
+                                            case "Ljava/lang/Character;":
+                                                elementType = "C";
+                                                break;
+                                            case "Ljava/lang/Integer;":
+                                                elementType = "I";
+                                                break;
+                                            case "Ljava/lang/Long;":
+                                                elementType = "J";
+                                                break;
+                                            case "Ljava/lang/Float;":
+                                                elementType = "F";
+                                                break;
+                                            case "Ljava/lang/Double;":
+                                                elementType = "D";
+                                                break;
+                                            case "Ljava/lang/Void;":
+                                                elementType = "V";
+                                                break;
+                                            default:
                                             }
                                         }
                                     }
@@ -97,12 +104,13 @@ public class MultiArrayTransformer extends StatedTransformer {
                                             }
                                             changed[0] = true;
                                             if (d > 0) {
-                                                return Exprs.nNewMutiArray(elementType.substring(d), d + 1, new Value[]{dt});
+                                                return Exprs.nNewMutiArray(elementType.substring(d), d + 1,
+                                                        new Value[]{dt});
                                             } else {
                                                 return Exprs.nNewArray(elementType, dt);
                                             }
                                         }
-                                    } else {// [I
+                                    } else { // [I
                                         if (dt.vt == Value.VT.FILLED_ARRAY) {
                                             FilledArrayExpr filledArrayExpr = (FilledArrayExpr) dt;
                                             int d = filledArrayExpr.getOps().length;
@@ -112,7 +120,8 @@ public class MultiArrayTransformer extends StatedTransformer {
                                                     d1++;
                                                 }
                                                 changed[0] = true;
-                                                return Exprs.nNewMutiArray(elementType.substring(d1), d1 + d, filledArrayExpr.getOps());
+                                                return Exprs.nNewMutiArray(elementType.substring(d1), d1 + d,
+                                                        filledArrayExpr.getOps());
                                             }
                                         }
                                     }
@@ -127,4 +136,5 @@ public class MultiArrayTransformer extends StatedTransformer {
 
         return changed[0];
     }
+
 }

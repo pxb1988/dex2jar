@@ -1,24 +1,29 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2015 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
-
-import org.objectweb.asm.*;
+import com.googlecode.dex2jar.tools.Constants;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Modifier;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.jar.Attributes.Name;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.InsnList;
@@ -26,47 +31,36 @@ import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Modifier;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.jar.Attributes.Name;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
-
 /**
- * 1. Replace class A to another class B, include superclass, new for
- * <p/>
+ * 1. Replace class A by another class B, include superclass, new for
+ * <p>
  * <pre>
  *     class Test1 extends A ...
  *     class Test2 implements A ...
  *     void amethod(A a) ...
  * </pre>
- * <p/>
+ * <p>
  * after
- * <p/>
+ * <p>
  * <pre>
  *     class Test1 extends B ...
  *     class Test2 extends B ...
  *     void amethod(B a) ...
  * </pre>
- * <p/>
+ * <p>
  * 2. Replace method A to another method B, method B must be public static, and in either 'public static RET b(ARGs)' or
  * 'public RET b(Invocation inv)' RET: same return type with method A or Object ARGs: if method A is static, ARGs is
  * same with method A, if method A is non-static the ARGs is 'thiz, arguments in methodA'
- * <p/>
+ * <p>
  * <pre>
  * public int a() {
  *     Test t = new Test();
  *     return t.test(1, 2);
  * }
  * </pre>
- * <p/>
+ * <p>
  * after
- * <p/>
+ * <p>
  * <pre>
  *     // direct replace
  *     public int a(){
@@ -88,17 +82,17 @@ import java.util.jar.Manifest;
  *        return box(t.test(args[0].intValue(),args[1].intValue()));
  *     }
  * </pre>
- * <p/>
+ * <p>
  * 3. Replace Methods Implementations
- * <p/>
+ * <p>
  * <pre>
  * public int test() {
  *         ...
  * }
  * </pre>
- * <p/>
+ * <p>
  * after
- * <p/>
+ * <p>
  * <pre>
  *     public int test(){
  *          MethodInvocation i=new MethodInvocation(t, new Object[]{a.b})
@@ -110,7 +104,9 @@ import java.util.jar.Manifest;
  * </pre>
  */
 public class InvocationWeaver extends BaseWeaver implements Opcodes {
+
     private static final Type OBJECT_TYPE = Type.getType(Object.class);
+
     private final Remapper remapper = new Remapper() {
 
         @Override
@@ -123,42 +119,44 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
         }
     };
 
-    static private void box(Type arg, MethodVisitor mv) {
+    private static void box(Type arg, MethodVisitor mv) {
         switch (arg.getSort()) {
-            case Type.OBJECT:
-            case Type.ARRAY:
-                return;
-            case Type.INT:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-                break;
-            case Type.LONG:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
-                break;
-            case Type.FLOAT:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Floag", "valueOf", "(F)Ljava/lang/Floag;", false);
-                break;
-            case Type.DOUBLE:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
-                break;
-            case Type.SHORT:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
-                break;
-            case Type.CHAR:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-                break;
-            case Type.BOOLEAN:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
-                break;
-            case Type.BYTE:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
-                break;
-            case Type.VOID:
-                mv.visitInsn(ACONST_NULL);
-                break;
+        case Type.OBJECT:
+        case Type.ARRAY:
+            return;
+        case Type.INT:
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+            break;
+        case Type.LONG:
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+            break;
+        case Type.FLOAT:
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Floag", "valueOf", "(F)Ljava/lang/Floag;", false);
+            break;
+        case Type.DOUBLE:
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+            break;
+        case Type.SHORT:
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
+            break;
+        case Type.CHAR:
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+            break;
+        case Type.BOOLEAN:
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+            break;
+        case Type.BYTE:
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
+            break;
+        case Type.VOID:
+            mv.visitInsn(ACONST_NULL);
+            break;
+        default:
+            break;
         }
     }
 
-    static private void unBox(Type orgRet, Type nRet, MethodVisitor mv) {
+    private static void unBox(Type orgRet, Type nRet, MethodVisitor mv) {
         if (orgRet.equals(nRet)) {
             return;
         }
@@ -169,42 +167,44 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             throw new RuntimeException("invalid ret type:" + nRet);
         }
         switch (orgRet.getSort()) {
-            case Type.OBJECT:
-            case Type.ARRAY:
-                mv.visitTypeInsn(CHECKCAST, orgRet.getInternalName());
-                break;
-            case Type.INT:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I", false);
-                break;
-            case Type.FLOAT:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "floatValue", "()F", false);
-                break;
-            case Type.LONG:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J", false);
-                break;
-            case Type.DOUBLE:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                break;
-            case Type.BYTE:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "byteValue", "()B", false);
-                break;
-            case Type.SHORT:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "shortValue", "()S", false);
-                break;
-            case Type.CHAR:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
-                break;
-            case Type.BOOLEAN:
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-                break;
+        case Type.OBJECT:
+        case Type.ARRAY:
+            mv.visitTypeInsn(CHECKCAST, orgRet.getInternalName());
+            break;
+        case Type.INT:
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "intValue", "()I", false);
+            break;
+        case Type.FLOAT:
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "floatValue", "()F", false);
+            break;
+        case Type.LONG:
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "longValue", "()J", false);
+            break;
+        case Type.DOUBLE:
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+            break;
+        case Type.BYTE:
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "byteValue", "()B", false);
+            break;
+        case Type.SHORT:
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "shortValue", "()S", false);
+            break;
+        case Type.CHAR:
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
+            break;
+        case Type.BOOLEAN:
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+            break;
+        default:
+            break;
         }
     }
 
@@ -304,7 +304,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
             private MtdInfo newMethodCallback(int opcode, MtdInfo t) {
                 MtdInfo n = new MtdInfo();
                 n.owner = "L" + className + ";";
-                n.name = buildCallbackMethodName(t.name) ;
+                n.name = buildCallbackMethodName(t.name);
                 if (opcode == INVOKESPECIAL || opcode == INVOKESTATIC) {
                     n.desc = "([Ljava/lang/Object;)Ljava/lang/Object;";
                 } else {
@@ -355,13 +355,13 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                 if (mapTo != null) {
                     final MtdInfo t1 = new MtdInfo();
                     t1.owner = "L" + clzName + ";";
-                    t1.name = buildMethodAName(name) ;
+                    t1.name = buildMethodAName(name);
                     t1.desc = desc;
                     final MtdInfo src = new MtdInfo();
                     src.owner = t1.owner;
                     src.name = name;
                     src.desc = desc;
-                    return new MethodNode(ASM9, access, name, desc, signature, exceptions) {
+                    return new MethodNode(Constants.ASM_VERSION, access, name, desc, signature, exceptions) {
                         @Override
                         public void visitEnd() {
 
@@ -385,9 +385,10 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
 
                             int newAccess = (access & ~(ACC_PRIVATE | ACC_PROTECTED)) | ACC_PUBLIC; // make sure public
                             MethodVisitor rmv = wrap(superMethodVisitor(newAccess, t1.name, desc, null, null));
-                            if(rmv!=null) {
+                            if (rmv != null) {
                                 rmv.visitCode();
-                                int n, i;
+                                int n;
+                                int i;
                                 n = tryCatchBlocks == null ? 0 : tryCatchBlocks.size();
 
                                 for (i = 0; i < n; ++i) {
@@ -409,16 +410,19 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                 }
             }
 
-            private MethodVisitor superMethodVisitor(int access, String name, String desc, String signature, String[] exceptions) {
+            private MethodVisitor superMethodVisitor(int access, String name, String desc, String signature,
+                                                     String[] exceptions) {
                 return super.visitMethod(access, name, desc, signature, exceptions);
             }
 
-            MethodVisitor wrap(MethodVisitor mv){
-                return  mv==null?null: new ReplaceMethodVisitor(mv);
+            MethodVisitor wrap(MethodVisitor mv) {
+                return mv == null ? null : new ReplaceMethodVisitor(mv);
             }
+
             class ReplaceMethodVisitor extends MethodVisitor {
-                public ReplaceMethodVisitor(MethodVisitor mv) {
-                    super(ASM9, mv);
+
+                ReplaceMethodVisitor(MethodVisitor mv) {
+                    super(Constants.ASM_VERSION, mv);
                 }
 
                 @Override
@@ -464,7 +468,8 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                                 }
                             }
                             // replace it!
-                            super.visitMethodInsn(INVOKESTATIC, toInternal(mapTo.owner), mapTo.name, mapTo.desc, isInterface);
+                            super.visitMethodInsn(INVOKESTATIC, toInternal(mapTo.owner), mapTo.name, mapTo.desc,
+                                    isInterface);
                             unBox(orgRet, nRet, this.mv);
                         }
 
@@ -508,19 +513,19 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
                             baos.flush();
                             Files.write(targetPath, baos.toByteArray());
                         }
-                    } else if (relative.endsWith(".DSA") || relative.endsWith(".RSA") || relative.endsWith(".SF")
-                            || relative.endsWith(".ECDSA")) {
-                        // ignored
-                    } else {
+                    } else if (!relative.endsWith(".DSA") && !relative.endsWith(".RSA")
+                            && !relative.endsWith(".SF") && !relative.endsWith(".ECDSA")) {
                         Files.copy(file, targetPath);
-                    }
+                    } /* else {
+                        // ignored
+                    }*/
                 } else {
                     Files.copy(file, targetPath);
                 }
             }
         });
 
-        if (callbacks.size() > 0) {
+        if (!callbacks.isEmpty()) {
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
             String type = buildInvocationClz(cw);
             byte[] data = cw.toByteArray();
@@ -635,7 +640,9 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
     }
 
     interface CB {
+
         String getKey(MtdInfo mtd);
+
     }
 
     private void genSwitchMethod(ClassVisitor cw, String typeName, String methodName, CB callback) {
@@ -650,11 +657,7 @@ public class InvocationWeaver extends BaseWeaver implements Opcodes {
         for (int i = 0; i < labels.length; i++) {
             Callback cb = callbacks.get(i);
             String key = callback.getKey((MtdInfo) cb.target);
-            Label label = strMap.get(key);
-            if (label == null) {
-                label = new Label();
-                strMap.put(key, label);
-            }
+            Label label = strMap.computeIfAbsent(key, k -> new Label());
             labels[i] = label;
         }
 

@@ -1,35 +1,21 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex.writer.item;
 
 import com.googlecode.d2j.dex.writer.ann.Idx;
 import com.googlecode.d2j.dex.writer.ann.Off;
 import com.googlecode.d2j.dex.writer.ev.EncodedValue;
 import com.googlecode.d2j.dex.writer.io.DataOut;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class ClassDataItem extends BaseItem {
+
     public final List<EncodedField> staticFields = new ArrayList<>(5);
+
     public final List<EncodedField> instanceFields = new ArrayList<>(5);
+
     public final List<EncodedMethod> directMethods = new ArrayList<>(5);
+
     public final List<EncodedMethod> virtualMethods = new ArrayList<>(5);
 
     @Override
@@ -46,7 +32,7 @@ public class ClassDataItem extends BaseItem {
     }
 
     private int placeMethod(int offset, List<EncodedMethod> methods) {
-        if (methods.size() == 0) {
+        if (methods.isEmpty()) {
             return offset;
         }
         int lastIdx = 0;
@@ -60,7 +46,7 @@ public class ClassDataItem extends BaseItem {
     }
 
     private int placeField(int offset, List<EncodedField> fields) {
-        if (fields.size() == 0) {
+        if (fields.isEmpty()) {
             return offset;
         }
         int lastIdx = 0;
@@ -86,7 +72,7 @@ public class ClassDataItem extends BaseItem {
     }
 
     private void writeMethod(DataOut out, List<EncodedMethod> methods) {
-        if (methods == null || methods.size() == 0) {
+        if (methods == null || methods.isEmpty()) {
             return;
         }
         int lastIdx = 0;
@@ -99,7 +85,7 @@ public class ClassDataItem extends BaseItem {
     }
 
     private void writeField(DataOut out, List<EncodedField> fields) {
-        if (fields == null || fields.size() == 0) {
+        if (fields == null || fields.isEmpty()) {
             return;
         }
         int lastIdx = 0;
@@ -115,45 +101,43 @@ public class ClassDataItem extends BaseItem {
     }
 
     public void prepare(ConstPool cp) {
-        Comparator<EncodedField> fc = new Comparator<EncodedField>() {
-
-            @Override
-            public int compare(EncodedField arg0, EncodedField arg1) {
-                return arg0.field.compareTo(arg1.field);
-            }
-        };
-        Comparator<EncodedMethod> mc = new
-
-                Comparator<EncodedMethod>() {
-
-                    @Override
-                    public int compare(EncodedMethod arg0, EncodedMethod arg1) {
-                        return arg0.method.compareTo(arg1.method);
-                    }
-                };
-        Collections.sort(instanceFields, fc);
-        Collections.sort(staticFields, fc);
-        Collections.sort(directMethods, mc);
-        Collections.sort(virtualMethods, mc);
+        Comparator<EncodedField> fc = Comparator.comparing(arg0 -> arg0.field);
+        Comparator<EncodedMethod> mc = Comparator.comparing(arg0 -> arg0.method);
+        instanceFields.sort(fc);
+        staticFields.sort(fc);
+        directMethods.sort(mc);
+        virtualMethods.sort(mc);
 
     }
 
     public static class EncodedField {
+
         public int accessFlags;
+
         @Idx
         public FieldIdItem field;
+
         public EncodedValue staticValue;
+
         public AnnotationSetItem annotationSetItem;
+
     }
 
     public static class EncodedMethod {
+
         public int accessFlags;
+
         @Idx
         public MethodIdItem method;
+
         @Off
         public CodeItem code;
+
         //
         public AnnotationSetItem annotationSetItem;
+
         public AnnotationSetRefListItem parameterAnnotation;
+
     }
+
 }

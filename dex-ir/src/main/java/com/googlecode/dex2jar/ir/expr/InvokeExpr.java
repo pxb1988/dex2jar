@@ -1,25 +1,9 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.expr;
 
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.Proto;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.Util;
-import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
 
 /**
  * Represent a method invocation expression. To represent a {@link VT#INVOKE_INTERFACE},{@link VT#INVOKE_SPECIAL} or
@@ -46,13 +30,12 @@ public class InvokeExpr extends AbstractInvokeExpr {
 
     @Override
     public Proto getProto() {
-        return method.getProto();
+        return method == null ? null : method.getProto();
     }
 
     public InvokeExpr(VT type, Value[] args, String ownerType, String methodName, String[] argmentTypes,
                       String returnType) {
-        super(type, args);
-        this.method = new Method(ownerType, methodName, argmentTypes, returnType);
+        this(type, args, new Method(ownerType, methodName, argmentTypes, returnType));
     }
 
     public InvokeExpr(VT type, Value[] args, Method method) {
@@ -61,12 +44,12 @@ public class InvokeExpr extends AbstractInvokeExpr {
     }
 
     @Override
-    public Value clone() {
+    public InvokeExpr clone() {
         return new InvokeExpr(vt, cloneOps(), method);
     }
 
     @Override
-    public Value clone(LabelAndLocalMapper mapper) {
+    public InvokeExpr clone(LabelAndLocalMapper mapper) {
         return new InvokeExpr(vt, cloneOps(mapper), method);
     }
 
@@ -75,13 +58,13 @@ public class InvokeExpr extends AbstractInvokeExpr {
         StringBuilder sb = new StringBuilder();
 
         int i = 0;
-        if (super.vt == VT.INVOKE_NEW) {
-            sb.append("new ").append(Util.toShortClassName(method.getOwner()));
-        } else if (super.vt == VT.INVOKE_STATIC) {
-            sb.append(Util.toShortClassName(method.getOwner())).append('.')
-                    .append(this.method.getName());
+        if (vt == VT.INVOKE_NEW) {
+            sb.append("new ").append(Util.toShortClassName(getOwner()));
+        } else if (vt == VT.INVOKE_STATIC) {
+            sb.append(Util.toShortClassName(getOwner())).append('.')
+                    .append(getName());
         } else {
-            sb.append(ops[i++]).append('.').append(this.method.getName());
+            sb.append(ops[i++]).append('.').append(getName());
         }
         sb.append('(');
         boolean first = true;
@@ -98,19 +81,19 @@ public class InvokeExpr extends AbstractInvokeExpr {
     }
 
     public String getOwner() {
-        return method.getOwner();
+        return method == null ? null : method.getOwner();
     }
 
     public String getRet() {
-        return method.getReturnType();
+        return method == null ? null : method.getReturnType();
     }
 
     public String getName() {
-        return method.getName();
+        return method == null ? null : method.getName();
     }
 
     public String[] getArgs() {
-        return method.getParameterTypes();
+        return method == null ? null : method.getParameterTypes();
     }
 
 }

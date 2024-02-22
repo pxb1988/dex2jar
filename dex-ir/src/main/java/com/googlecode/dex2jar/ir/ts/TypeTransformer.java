@@ -1,34 +1,38 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2014 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.d2j.DexType;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.TypeClass;
-import com.googlecode.dex2jar.ir.expr.*;
-import com.googlecode.dex2jar.ir.expr.Value.*;
+import com.googlecode.dex2jar.ir.expr.AbstractInvokeExpr;
+import com.googlecode.dex2jar.ir.expr.ArrayExpr;
+import com.googlecode.dex2jar.ir.expr.BinopExpr;
+import com.googlecode.dex2jar.ir.expr.CastExpr;
+import com.googlecode.dex2jar.ir.expr.Constant;
+import com.googlecode.dex2jar.ir.expr.FieldExpr;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
+import com.googlecode.dex2jar.ir.expr.NewExpr;
+import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
+import com.googlecode.dex2jar.ir.expr.RefExpr;
+import com.googlecode.dex2jar.ir.expr.StaticFieldExpr;
+import com.googlecode.dex2jar.ir.expr.TypeExpr;
+import com.googlecode.dex2jar.ir.expr.UnopExpr;
+import com.googlecode.dex2jar.ir.expr.Value;
+import com.googlecode.dex2jar.ir.expr.Value.E0Expr;
+import com.googlecode.dex2jar.ir.expr.Value.E1Expr;
+import com.googlecode.dex2jar.ir.expr.Value.E2Expr;
+import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
+import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E1Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Type and correct Exprs
@@ -37,7 +41,7 @@ import java.util.*;
  */
 public class TypeTransformer implements Transformer {
 
-    private static final String[] possibleIntTypes = new String[]{"B", "S", "C", "I"};
+    private static final String[] POSSIBLE_INT_TYPES = new String[]{"B", "S", "C", "I"};
 
     @Override
     public void transform(IrMethod irMethod) {
@@ -55,39 +59,39 @@ public class TypeTransformer implements Transformer {
             if (ref.value.vt == VT.CONSTANT) {
                 Constant cst = (Constant) ref.value;
                 switch (type.charAt(0)) {
-                    case '[':
-                    case 'L':
-                        if (Integer.valueOf(0).equals(cst.value)) {
-                            cst.value = Constant.Null;
+                case '[':
+                case 'L':
+                    if (Integer.valueOf(0).equals(cst.value)) {
+                        cst.value = Constant.NULL;
+                    }
+                    if (type.equals("[F") && cst.value instanceof int[]) {
+                        int[] x = (int[]) cst.value;
+                        float[] f = new float[x.length];
+                        for (int i = 0; i < x.length; i++) {
+                            f[i] = Float.intBitsToFloat(x[i]);
                         }
-                        if (type.equals("[F") && cst.value instanceof int[]) {
-                            int[] x = (int[]) cst.value;
-                            float[] f = new float[x.length];
-                            for (int i = 0; i < x.length; i++) {
-                                f[i] = Float.intBitsToFloat(x[i]);
-                            }
-                            cst.value = f;
+                        cst.value = f;
+                    }
+                    if (type.equals("[D") && cst.value instanceof long[]) {
+                        long[] x = (long[]) cst.value;
+                        double[] f = new double[x.length];
+                        for (int i = 0; i < x.length; i++) {
+                            f[i] = Double.longBitsToDouble(x[i]);
                         }
-                        if (type.equals("[D") && cst.value instanceof long[]) {
-                            long[] x = (long[]) cst.value;
-                            double[] f = new double[x.length];
-                            for (int i = 0; i < x.length; i++) {
-                                f[i] = Double.longBitsToDouble(x[i]);
-                            }
-                            cst.value = f;
-                        }
-                        break;
-                    case 'F':
-                        if (!(cst.value instanceof Float)) {
-                            cst.value = Float.intBitsToFloat(((Number) cst.value).intValue());
-                        }
-                        break;
-                    case 'D':
-                        if (!(cst.value instanceof Double)) {
-                            cst.value = Double.longBitsToDouble(((Number) cst.value).longValue());
-                        }
-                        break;
-                    default:
+                        cst.value = f;
+                    }
+                    break;
+                case 'F':
+                    if (!(cst.value instanceof Float)) {
+                        cst.value = Float.intBitsToFloat(((Number) cst.value).intValue());
+                    }
+                    break;
+                case 'D':
+                    if (!(cst.value instanceof Double)) {
+                        cst.value = Double.longBitsToDouble(((Number) cst.value).longValue());
+                    }
+                    break;
+                default:
                 }
             }
             Value value = ref.value;
@@ -169,25 +173,32 @@ public class TypeTransformer implements Transformer {
     public static class TypeRef {
 
         public final Value value;
+
         /**
          * same use, have same
          */
         public Set<TypeRef> sameValues = null;
+
         /**
          * reference to values
          */
         public Set<TypeRef> gArrayValues = null;
+
         public Set<TypeRef> sArrayValues = null;
+
         /**
          * reference to root
          */
         public Set<TypeRef> arrayRoots = null;
 
         public Set<TypeRef> parents = null;
+
         public Set<TypeRef> children = null;
 
         public TypeClass clz = TypeClass.UNKNOWN;
+
         public String provideDesc = null;
+
         public Set<String> uses;
 
         private TypeRef next;
@@ -287,7 +298,7 @@ public class TypeTransformer implements Transformer {
                 return "J";
             }
             if (thiz.uses != null) {
-                for (String t : possibleIntTypes) {
+                for (String t : POSSIBLE_INT_TYPES) {
                     if (thiz.uses.contains(t)) {
                         return t;
                     }
@@ -295,7 +306,7 @@ public class TypeTransformer implements Transformer {
             }
 
             switch (clz) {
-                case ZI:
+            case ZI:
             case INT:
             case IF:
                 return "I";
@@ -350,10 +361,12 @@ public class TypeTransformer implements Transformer {
     }
 
     private static class TypeAnalyze {
+
         protected IrMethod method;
+
         private final List<TypeRef> refs = new ArrayList<>();
 
-        public TypeAnalyze(IrMethod method) {
+        TypeAnalyze(IrMethod method) {
             super();
             this.method = method;
         }
@@ -460,10 +473,6 @@ public class TypeTransformer implements Transformer {
          * [[B + [[D -> [L
          * [B + L -> [B
          * [[B + [B -> [[B
-         *
-         * @param a
-         * @param b
-         * @return
          */
         private static String mergeTypeEx(String a, String b) {
             if (a.equals(b)) {
@@ -493,8 +502,8 @@ public class TypeTransformer implements Transformer {
                     }
                     if (ta == TypeClass.INT) {
                         String chooseType = "I";
-                        for (int i = possibleIntTypes.length - 1; i >= 0; i--) {
-                            String t = possibleIntTypes[i];
+                        for (int i = POSSIBLE_INT_TYPES.length - 1; i >= 0; i--) {
+                            String t = POSSIBLE_INT_TYPES[i];
                             if (a.equals(t) || b.equals(t)) {
                                 chooseType = t;
                                 break;
@@ -515,19 +524,20 @@ public class TypeTransformer implements Transformer {
             TypeClass clz = ref.clz;
 
             switch (clz) {
-                case BOOLEAN:
-                case FLOAT:
-                case LONG:
-                case DOUBLE:
-                case VOID:
-                    ref.provideDesc = clz.name;
-                    break;
-                default:
+            case BOOLEAN:
+            case FLOAT:
+            case LONG:
+            case DOUBLE:
+            case VOID:
+                ref.provideDesc = clz.name;
+                break;
+            default:
             }
             String provideDesc = ref.provideDesc;
             if (provideDesc == null && ref.parents != null && ref.parents.size() > 1) {
                 if (isAllParentSetted(ref)) {
-                    ref.provideDesc = provideDesc = mergeParentType(ref.parents);
+                    provideDesc = mergeParentType(ref.parents);
+                    ref.provideDesc = provideDesc;
                 }
             }
             if (ref.parents != null) {
@@ -604,15 +614,16 @@ public class TypeTransformer implements Transformer {
                 return b;
             } else if (ta.fixed) {
                 // special allow merge of Z and I
-                if ((ta == TypeClass.INT && tb == TypeClass.BOOLEAN) || (tb == TypeClass.INT && ta == TypeClass.BOOLEAN)) {
+                if ((ta == TypeClass.INT && tb == TypeClass.BOOLEAN)
+                        || (tb == TypeClass.INT && ta == TypeClass.BOOLEAN)) {
                     return "I";
                 }
                 if (ta != tb) {
                     throw new RuntimeException();
                 }
                 if (ta == TypeClass.INT) {
-                    for (int i = possibleIntTypes.length - 1; i >= 0; i--) {
-                        String t = possibleIntTypes[i];
+                    for (int i = POSSIBLE_INT_TYPES.length - 1; i >= 0; i--) {
+                        String t = POSSIBLE_INT_TYPES[i];
                         if (a.equals(t) || b.equals(t)) {
                             return t;
                         }
@@ -678,121 +689,121 @@ public class TypeTransformer implements Transformer {
 
         private void e0expr(E0Expr op, boolean getValue) {
             switch (op.vt) {
-                case LOCAL:
-                    break;
-                case NEW:
-                    NewExpr newExpr = (NewExpr) op;
-                    provideAs(newExpr, newExpr.type);
-                    break;
-                case THIS_REF:
-                case PARAMETER_REF:
-                case EXCEPTION_REF:
-                    RefExpr refExpr = (RefExpr) op;
-                    String refType = refExpr.type;
-                    if (refType == null && op.vt == VT.EXCEPTION_REF) {
-                        refType = "Ljava/lang/Throwable;";
-                    }
-                    provideAs(refExpr, refType);
-                    break;
-                case STATIC_FIELD:
-                    StaticFieldExpr fe = (StaticFieldExpr) op;
-                    if (getValue) {// getfield
-                        provideAs(fe, fe.type);
-                    } else {// putfield
-                        useAs(fe, fe.type);
-                    }
-                    break;
-                case CONSTANT:
-                    Constant cst = (Constant) op;
-                    Object value = cst.value;
-                    if (value instanceof String) {
-                        provideAs(cst, "Ljava/lang/String;");
-                    } else if (value instanceof DexType) {
-                        provideAs(cst, "Ljava/lang/Class;");
-                    } else if (value instanceof Number) {
-                        if (value instanceof Integer || value instanceof Byte || value instanceof Short) {
-                            int a = ((Number) value).intValue();
-                            if (a == 0) {
-                                provideAs(cst, TypeClass.ZIFL.name); // zero, false or, float
-                            } else if (a == 1) {
-                                provideAs(cst, TypeClass.ZIF.name);
-                            } else {
-                                provideAs(cst, TypeClass.IF.name);
-                            }
-                        } else if (value instanceof Long) {
-                            provideAs(cst, "w");
-                        } else if (value instanceof Float) {
-                            provideAs(cst, "F");
-                        } else if (value instanceof Double) {
-                            provideAs(cst, "D");
+            case LOCAL:
+                break;
+            case NEW:
+                NewExpr newExpr = (NewExpr) op;
+                provideAs(newExpr, newExpr.type);
+                break;
+            case THIS_REF:
+            case PARAMETER_REF:
+            case EXCEPTION_REF:
+                RefExpr refExpr = (RefExpr) op;
+                String refType = refExpr.type;
+                if (refType == null && op.vt == VT.EXCEPTION_REF) {
+                    refType = "Ljava/lang/Throwable;";
+                }
+                provideAs(refExpr, refType);
+                break;
+            case STATIC_FIELD:
+                StaticFieldExpr fe = (StaticFieldExpr) op;
+                if (getValue) { // getfield
+                    provideAs(fe, fe.type);
+                } else { // putfield
+                    useAs(fe, fe.type);
+                }
+                break;
+            case CONSTANT:
+                Constant cst = (Constant) op;
+                Object value = cst.value;
+                if (value instanceof String) {
+                    provideAs(cst, "Ljava/lang/String;");
+                } else if (value instanceof DexType) {
+                    provideAs(cst, "Ljava/lang/Class;");
+                } else if (value instanceof Number) {
+                    if (value instanceof Integer || value instanceof Byte || value instanceof Short) {
+                        int a = ((Number) value).intValue();
+                        if (a == 0) {
+                            provideAs(cst, TypeClass.ZIFL.name); // zero, false or, float
+                        } else if (a == 1) {
+                            provideAs(cst, TypeClass.ZIF.name);
+                        } else {
+                            provideAs(cst, TypeClass.IF.name);
                         }
-                    } else if (value instanceof Character) {
-                        provideAs(cst, "C");
-                    } else {
-                        provideAs(cst, "L");
+                    } else if (value instanceof Long) {
+                        provideAs(cst, "w");
+                    } else if (value instanceof Float) {
+                        provideAs(cst, "F");
+                    } else if (value instanceof Double) {
+                        provideAs(cst, "D");
                     }
-                    break;
-                default:
+                } else if (value instanceof Character) {
+                    provideAs(cst, "C");
+                } else {
+                    provideAs(cst, "L");
+                }
+                break;
+            default:
             }
         }
 
         private void e1expr(E1Expr e1, boolean getValue) {
             Value v = e1.op;
             switch (e1.vt) {
-                case CAST:
-                    CastExpr ce = (CastExpr) e1;
-                    if (ce.to.equals("B")) { // special case for I2B
-                        useAs(v, TypeClass.ZI.name);
-                        provideAs(e1, TypeClass.ZI.name);
-                    } else {
-                        useAs(v, ce.from);
-                        provideAs(e1, ce.to);
-                    }
-                    break;
-                case FIELD:
-                    FieldExpr fe = (FieldExpr) e1;
-                    if (getValue) {// getfield
-                        provideAs(fe, fe.type);
-                    } else {// putfield
-                        useAs(fe, fe.type);
-                    }
-                    if (v != null) {
-                        useAs(v, fe.owner);
-                    }
-                    break;
+            case CAST:
+                CastExpr ce = (CastExpr) e1;
+                if (ce.to.equals("B")) { // special case for I2B
+                    useAs(v, TypeClass.ZI.name);
+                    provideAs(e1, TypeClass.ZI.name);
+                } else {
+                    useAs(v, ce.from);
+                    provideAs(e1, ce.to);
+                }
+                break;
+            case FIELD:
+                FieldExpr fe = (FieldExpr) e1;
+                if (getValue) { // getfield
+                    provideAs(fe, fe.type);
+                } else { // putfield
+                    useAs(fe, fe.type);
+                }
+                if (v != null) {
+                    useAs(v, fe.owner);
+                }
+                break;
 
-                case CHECK_CAST: {
-                    TypeExpr te = (TypeExpr) e1;
-                    provideAs(te, te.type);
-                    useAs(v, "L");
-                }
-                break;
-                case INSTANCE_OF: {
-                    TypeExpr te = (TypeExpr) e1;
-                    provideAs(te, "Z");
-                    useAs(v, "L");
-                }
-                break;
-                case NEW_ARRAY: {
-                    TypeExpr te = (TypeExpr) e1;
-                    provideAs(te, "[" + te.type);
-                    useAs(v, "I");
-                }
-                break;
-                case LENGTH: {
-                    UnopExpr ue = (UnopExpr) e1;
-                    provideAs(ue, "I");
-                    useAs(v, "[?");
-                }
-                break;
-                case NEG:
-                case NOT: {
-                    UnopExpr ue = (UnopExpr) e1;
-                    provideAs(ue, ue.type);
-                    useAs(v, ue.type);
-                }
-                break;
-                default:
+            case CHECK_CAST: {
+                TypeExpr te = (TypeExpr) e1;
+                provideAs(te, te.type);
+                useAs(v, "L");
+            }
+            break;
+            case INSTANCE_OF: {
+                TypeExpr te = (TypeExpr) e1;
+                provideAs(te, "Z");
+                useAs(v, "L");
+            }
+            break;
+            case NEW_ARRAY: {
+                TypeExpr te = (TypeExpr) e1;
+                provideAs(te, "[" + te.type);
+                useAs(v, "I");
+            }
+            break;
+            case LENGTH: {
+                UnopExpr ue = (UnopExpr) e1;
+                provideAs(ue, "I");
+                useAs(v, "[?");
+            }
+            break;
+            case NEG:
+            case NOT: {
+                UnopExpr ue = (UnopExpr) e1;
+                provideAs(ue, ue.type);
+                useAs(v, ue.type);
+            }
+            break;
+            default:
             }
             if (v != null) {
                 exExpr(v);
@@ -803,89 +814,89 @@ public class TypeTransformer implements Transformer {
             Value a = e2.op1.trim();
             Value b = e2.op2.trim();
             switch (e2.vt) {
-                case ARRAY:
-                    useAs(b, "I");
-                    String elementType = ((ArrayExpr) e2).elementType;
-                    // TypeClass ts = TypeClass.clzOf(elementType);
-                    useAs(a, "[" + elementType);
-                    if (getValue) {
-                        provideAs(e2, elementType);
+            case ARRAY:
+                useAs(b, "I");
+                String elementType = ((ArrayExpr) e2).elementType;
+                // TypeClass ts = TypeClass.clzOf(elementType);
+                useAs(a, "[" + elementType);
+                if (getValue) {
+                    provideAs(e2, elementType);
 
-                        linkGetArray(a, e2);
-                    } else {
-                        useAs(e2, elementType);
+                    linkGetArray(a, e2);
+                } else {
+                    useAs(e2, elementType);
 
-                        linkSetArray(a, e2);
-                    }
-                    break;
-                case LCMP:
-                case FCMPG:
-                case FCMPL:
-                case DCMPG:
-                case DCMPL: {
-                    BinopExpr be = (BinopExpr) e2;
-                    useAs(a, be.type);
-                    useAs(b, be.type);
-                    provideAs(e2, "I");
+                    linkSetArray(a, e2);
                 }
                 break;
-                case EQ:
-                case NE: {
-                    useAs(e2.getOp2(), TypeClass.ZIL.name);
-                    useAs(e2.getOp1(), TypeClass.ZIL.name);
-                    linkSameAs(e2.getOp1(), e2.getOp2());
-                    provideAs(e2, "Z");
-                }
-                break;
-                case GE:
-                case GT:
-                case LE:
-                case LT: {
-                    BinopExpr be = (BinopExpr) e2;
-                    useAs(a, be.type);
-                    useAs(b, be.type);
-                    provideAs(e2, "Z");
-                }
-                break;
-                case ADD:
-                case SUB:
-                case IDIV:
-                case LDIV:
-                case FDIV:
-                case DDIV:
-                case MUL:
-                case REM: {
-                    BinopExpr be = (BinopExpr) e2;
-                    useAs(a, be.type);
-                    useAs(b, be.type);
+            case LCMP:
+            case FCMPG:
+            case FCMPL:
+            case DCMPG:
+            case DCMPL: {
+                BinopExpr be = (BinopExpr) e2;
+                useAs(a, be.type);
+                useAs(b, be.type);
+                provideAs(e2, "I");
+            }
+            break;
+            case EQ:
+            case NE: {
+                useAs(e2.getOp2(), TypeClass.ZIL.name);
+                useAs(e2.getOp1(), TypeClass.ZIL.name);
+                linkSameAs(e2.getOp1(), e2.getOp2());
+                provideAs(e2, "Z");
+            }
+            break;
+            case GE:
+            case GT:
+            case LE:
+            case LT: {
+                BinopExpr be = (BinopExpr) e2;
+                useAs(a, be.type);
+                useAs(b, be.type);
+                provideAs(e2, "Z");
+            }
+            break;
+            case ADD:
+            case SUB:
+            case IDIV:
+            case LDIV:
+            case FDIV:
+            case DDIV:
+            case MUL:
+            case REM: {
+                BinopExpr be = (BinopExpr) e2;
+                useAs(a, be.type);
+                useAs(b, be.type);
+                provideAs(e2, be.type);
+            }
+            break;
+            case OR:
+            case AND:
+            case XOR: {
+                BinopExpr be = (BinopExpr) e2;
+                useAs(a, be.type);
+                useAs(b, be.type);
+                // linkSameAs(a, b);
+                if ("J".equals(be.type) || "w".equals(be.type)) {
                     provideAs(e2, be.type);
+                } else {
+                    provideAs(e2, TypeClass.ZI.name);
                 }
-                break;
-                case OR:
-                case AND:
-                case XOR: {
-                    BinopExpr be = (BinopExpr) e2;
-                    useAs(a, be.type);
-                    useAs(b, be.type);
-                    // linkSameAs(a, b);
-                    if ("J".equals(be.type) || "w".equals(be.type)) {
-                        provideAs(e2, be.type);
-                    } else {
-                        provideAs(e2, TypeClass.ZI.name);
-                    }
-                }
-                break;
-                case SHL:
-                case SHR:
-                case USHR: {
-                    BinopExpr be = (BinopExpr) e2;
-                    useAs(a, be.type);
-                    useAs(b, "I");
-                    provideAs(e2, be.type);
-                }
-                break;
-                default:
-                    throw new UnsupportedOperationException();
+            }
+            break;
+            case SHL:
+            case SHR:
+            case USHR: {
+                BinopExpr be = (BinopExpr) e2;
+                useAs(a, be.type);
+                useAs(b, "I");
+                provideAs(e2, be.type);
+            }
+            break;
+            default:
+                throw new UnsupportedOperationException();
             }
             if (a != null) {
                 exExpr(a);
@@ -911,59 +922,59 @@ public class TypeTransformer implements Transformer {
         private void enexpr(EnExpr enExpr) {
             Value[] vbs = enExpr.ops;
             switch (enExpr.vt) {
-                case INVOKE_NEW:
-                case INVOKE_INTERFACE:
-                case INVOKE_SPECIAL:
-                case INVOKE_STATIC:
-                case INVOKE_VIRTUAL:
-                case INVOKE_POLYMORPHIC:
-                case INVOKE_CUSTOM: {
-                    AbstractInvokeExpr ice = (AbstractInvokeExpr) enExpr;
-                    String type = ice.getProto().getReturnType();
-                    provideAs(enExpr, type);
-                    useAs(enExpr, type); // no one else will use it
+            case INVOKE_NEW:
+            case INVOKE_INTERFACE:
+            case INVOKE_SPECIAL:
+            case INVOKE_STATIC:
+            case INVOKE_VIRTUAL:
+            case INVOKE_POLYMORPHIC:
+            case INVOKE_CUSTOM: {
+                AbstractInvokeExpr ice = (AbstractInvokeExpr) enExpr;
+                String type = ice.getProto().getReturnType();
+                provideAs(enExpr, type);
+                useAs(enExpr, type); // no one else will use it
 
-                    String[] argTypes = ice.getProto().getParameterTypes();
-                    if (argTypes.length == vbs.length) {
-                        for (int i = 0; i < vbs.length; i++) {
-                            useAs(vbs[i], argTypes[i]);
-                        }
-                    } else if (argTypes.length + 1 == vbs.length) {
-                        useAs(vbs[0], "L");
-                        for (int i = 1; i < vbs.length; i++) {
-                            useAs(vbs[i], argTypes[i - 1]);
-                        }
-                    } else {
-                        throw new RuntimeException();
+                String[] argTypes = ice.getProto().getParameterTypes();
+                if (argTypes.length == vbs.length) {
+                    for (int i = 0; i < vbs.length; i++) {
+                        useAs(vbs[i], argTypes[i]);
                     }
+                } else if (argTypes.length + 1 == vbs.length) {
+                    useAs(vbs[0], "L");
+                    for (int i = 1; i < vbs.length; i++) {
+                        useAs(vbs[i], argTypes[i - 1]);
+                    }
+                } else {
+                    throw new RuntimeException();
+                }
+            }
+            break;
+
+            case FILLED_ARRAY:
+                FilledArrayExpr fae = (FilledArrayExpr) enExpr;
+                for (Value vb : vbs) {
+                    useAs(vb, fae.type);
+                }
+                provideAs(fae, "[" + fae.type);
+                break;
+            case NEW_MUTI_ARRAY:
+                NewMutiArrayExpr nmae = (NewMutiArrayExpr) enExpr;
+                for (Value vb : vbs) {
+                    useAs(vb, "I");
+                }
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < nmae.dimension; i++) {
+                    sb.append('[');
+                }
+                sb.append(nmae.baseType);
+                provideAs(nmae, sb.toString());
+                break;
+            case PHI:
+                for (Value vb : vbs) {
+                    linkFromTo(vb, enExpr);
                 }
                 break;
-
-                case FILLED_ARRAY:
-                    FilledArrayExpr fae = (FilledArrayExpr) enExpr;
-                    for (Value vb : vbs) {
-                        useAs(vb, fae.type);
-                    }
-                    provideAs(fae, "[" + fae.type);
-                    break;
-                case NEW_MUTI_ARRAY:
-                    NewMutiArrayExpr nmae = (NewMutiArrayExpr) enExpr;
-                    for (Value vb : vbs) {
-                        useAs(vb, "I");
-                    }
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < nmae.dimension; i++) {
-                        sb.append('[');
-                    }
-                    sb.append(nmae.baseType);
-                    provideAs(nmae, sb.toString());
-                    break;
-                case PHI:
-                    for (Value vb : vbs) {
-                        linkFromTo(vb, enExpr);
-                    }
-                    break;
-                default:
+            default:
             }
             for (Value vb : enExpr.ops) {
                 exExpr(vb);
@@ -975,20 +986,21 @@ public class TypeTransformer implements Transformer {
         }
 
         private void exExpr(Value op, boolean getValue) {
-
             switch (op.et) {
-                case E0:
-                    e0expr((E0Expr) op, getValue);
-                    break;
-                case E1:
-                    e1expr((E1Expr) op, getValue);
-                    break;
-                case E2:
-                    e2expr((E2Expr) op, getValue);
-                    break;
-                case En:
-                    enexpr((EnExpr) op);
-                    break;
+            case E0:
+                e0expr((E0Expr) op, getValue);
+                break;
+            case E1:
+                e1expr((E1Expr) op, getValue);
+                break;
+            case E2:
+                e2expr((E2Expr) op, getValue);
+                break;
+            case En:
+                enexpr((EnExpr) op);
+                break;
+            default:
+                break;
             }
         }
 
@@ -1056,24 +1068,24 @@ public class TypeTransformer implements Transformer {
             }
             Value op = s.op;
             switch (s.st) {
-                case LOOKUP_SWITCH:
-                case TABLE_SWITCH:
-                    useAs(op, "I");
-                    break;
-                case IF:
-                    useAs(op, "Z");
-                    break;
-                case LOCK:
-                case UNLOCK:
-                    useAs(op, "L");
-                    break;
-                case THROW:
-                    useAs(op, "Ljava/lang/Throwable;");
-                    break;
-                case RETURN:
-                    useAs(op, method.ret);
-                    break;
-                default:
+            case LOOKUP_SWITCH:
+            case TABLE_SWITCH:
+                useAs(op, "I");
+                break;
+            case IF:
+                useAs(op, "Z");
+                break;
+            case LOCK:
+            case UNLOCK:
+                useAs(op, "L");
+                break;
+            case THROW:
+                useAs(op, "Ljava/lang/Throwable;");
+                break;
+            case RETURN:
+                useAs(op, method.ret);
+                break;
+            default:
             }
             exExpr(op);
         }
@@ -1093,27 +1105,29 @@ public class TypeTransformer implements Transformer {
         private void sxStmt() {
             for (Stmt p = method.stmts.getFirst(); p != null; p = p.getNext()) {
                 switch (p.et) {
-                    case E0:
-                        // label, nop and return-void
-                        if (p.st == ST.LABEL) {
-                            LabelStmt labelStmt = (LabelStmt) p;
-                            if (labelStmt.phis != null) {
-                                for (AssignStmt phi : labelStmt.phis) {
-                                    s2stmt(phi);
-                                }
+                case E0:
+                    // label, nop and return-void
+                    if (p.st == ST.LABEL) {
+                        LabelStmt labelStmt = (LabelStmt) p;
+                        if (labelStmt.phis != null) {
+                            for (AssignStmt phi : labelStmt.phis) {
+                                s2stmt(phi);
                             }
                         }
-                        break;
-                    case E1:
-                        s1stmt((E1Stmt) p);
-                        break;
-                    case E2:
-                        s2stmt((E2Stmt) p);
-                        break;
-                    case En:
-                        // no stmt yet
-                        // enstmt((EnStmt) p, refs, relationRefs);
-                        break;
+                    }
+                    break;
+                case E1:
+                    s1stmt((E1Stmt) p);
+                    break;
+                case E2:
+                    s2stmt((E2Stmt) p);
+                    break;
+                case En:
+                    // no stmt yet
+                    // enstmt((EnStmt) p, refs, relationRefs);
+                    break;
+                default:
+                    break;
                 }
             }
         }
@@ -1132,5 +1146,7 @@ public class TypeTransformer implements Transformer {
             typeRef.addUses(type);
             typeRef.updateTypeClass(TypeClass.clzOf(type));
         }
+
     }
+
 }

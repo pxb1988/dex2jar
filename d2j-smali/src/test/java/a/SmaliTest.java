@@ -17,21 +17,21 @@ import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.d2j.smali.BaksmaliDumpOut;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.smali.Smali;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SmaliTest {
+
     @Test
     public void test() throws IOException {
         DexFileNode dfn = new DexFileNode();
@@ -64,17 +64,13 @@ public class SmaliTest {
             for (File f : fs) {
                 if (f.getName().endsWith(".dex") || f.getName().endsWith(".apk")) {
                     System.out.println(f.getName());
-                    if (f.getName().equals("dex040.dex")) {
-                        // FIXME smali 3.0.3 not support space in SimpleName
-                        continue;
-                    }
-                    dotest(f);
+                    doTest(f);
                 }
             }
         }
     }
 
-    private void dotest(File dexFile) throws IOException {
+    private void doTest(File dexFile) throws IOException {
         int dexVersion = new DexFileReader(dexFile).getDexVersion();
         Opcodes opcodes = Opcodes.forApi(DexConstants.toMiniAndroidApiLevel(dexVersion));
         DexBackedDexFile dex;
@@ -84,13 +80,14 @@ public class SmaliTest {
             ex.printStackTrace();
             return;
         }
+
         Map<String, DexClassNode> map = readDex(dexFile);
 
         for (DexBackedClassDef def : dex.getClasses()) {
             String type = def.getType();
             System.out.println(type);
             DexClassNode dexClassNode = map.get(type);
-            Assert.assertNotNull(dexClassNode);
+            assertNotNull(dexClassNode);
             String smali = baksmali(def); // original
 
             Smali.smaliFile2Node("fake.smali", smali);
@@ -99,19 +96,17 @@ public class SmaliTest {
                 byte[] data = toDex(dexClassNode);
                 DexBackedClassDef def2 = new DexBackedDexFile(opcodes, data).getClasses().iterator().next();
                 String baksmali3 = baksmali(def2); // original
-                Assert.assertEquals(smali, baksmali3);
+                assertEquals(smali, baksmali3);
             }
 
             String psmali = pbaksmali(dexClassNode);
             DexClassNode dexClassNode2 = Smali.smaliFile2Node("fake.smali", psmali);
-            Assert.assertEquals("cmp smalip", psmali, pbaksmali(dexClassNode2));
+            assertEquals(psmali, pbaksmali(dexClassNode2), "cmp smalip");
 
-            {
-                byte[] data = toDex(dexClassNode2);
-                DexBackedClassDef def2 = new DexBackedDexFile(opcodes, data).getClasses().iterator().next();
-                String baksmali3 = baksmali(def2); // original
-                Assert.assertEquals(smali, baksmali3);
-            }
+            byte[] data = toDex(dexClassNode2);
+            DexBackedClassDef def2 = new DexBackedDexFile(opcodes, data).getClasses().iterator().next();
+            String baksmali3 = baksmali(def2); // original
+            assertEquals(smali, baksmali3);
         }
     }
 
@@ -134,7 +129,7 @@ public class SmaliTest {
     private static String baksmali(DexBackedClassDef def) throws IOException {
         BaksmaliOptions opts = new BaksmaliOptions();
         opts.debugInfo = false;
-        opts.syntheticAccessorResolver = new SyntheticAccessorResolver(def.dexFile.getOpcodes(), Collections.EMPTY_LIST);
+        opts.syntheticAccessorResolver = new SyntheticAccessorResolver(def.dexFile.getOpcodes(), new ArrayList<>());
         ClassDefinition classDefinition = new ClassDefinition(opts, def);
         StringWriter bufWriter = new StringWriter();
         BaksmaliWriter writer = new BaksmaliWriter(bufWriter);
@@ -142,4 +137,5 @@ public class SmaliTest {
         writer.flush();
         return bufWriter.toString();
     }
+
 }

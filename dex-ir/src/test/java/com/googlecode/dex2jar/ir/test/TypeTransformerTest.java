@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.test;
 
 import com.googlecode.dex2jar.ir.TypeClass;
@@ -23,13 +7,28 @@ import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.TypeTransformer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nConstant;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nEq;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInvokeStatic;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nLong;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNewMutiArray;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nOr;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nStaticField;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nFillArrayData;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturnVoid;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nVoidInvoke;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
+
     /**
      * base test
      */
@@ -42,7 +41,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nReturn(b));
 
         transform();
-        Assert.assertEquals("", "L", b.valueType.substring(0, 1));
+        assertEquals("L", b.valueType.substring(0, 1));
     }
 
     @Test
@@ -53,7 +52,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         AssignStmt st1 = addStmt(nAssign(b, nInt(0)));
         UnopStmt st3 = addStmt(nReturn(b));
         transform();
-        Assert.assertEquals("", b.valueType, "F");
+        assertEquals(b.valueType, "F");
     }
 
     @Test
@@ -62,12 +61,12 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         Local b = addLocal("b");
 
         addStmt(nAssign(b, nStaticField("La;", "z", "B")));
-        addStmt(nVoidInvoke(nInvokeStatic(new Value[] { b }, "La;", "y", new String[] { "I" }, "V")));
+        addStmt(nVoidInvoke(nInvokeStatic(new Value[]{b}, "La;", "y", new String[]{"I"}, "V")));
         addStmt(nAssign(nStaticField("La;", "z", "B"), b));
         addStmt(nReturnVoid());
         transform();
         // FIXME fix type detect
-        // Assert.assertEquals("", "I", b.valueType);
+        // assertEquals("I", b.valueType);
     }
 
     @Test
@@ -76,12 +75,12 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         Local b = addLocal("b");
 
         addStmt(nAssign(b, nInt(255)));
-        addStmt(nVoidInvoke(nInvokeStatic(new Value[] { b }, "La;", "y", new String[] { "I" }, "V")));
+        addStmt(nVoidInvoke(nInvokeStatic(new Value[]{b}, "La;", "y", new String[]{"I"}, "V")));
         addStmt(nAssign(nStaticField("La;", "z", "C"), b));
         addStmt(nReturnVoid());
         transform();
         // FIXME fix type detect
-        // Assert.assertEquals("", "I", b.valueType);
+        // assertEquals("I", b.valueType);
     }
 
     // @Ignore("type b to Int is ok to this context")
@@ -96,7 +95,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(L0);
         addStmt(nReturnVoid());
         transform();
-        Assert.assertEquals("", "I", b.valueType);
+        assertEquals("I", b.valueType);
     }
 
     @Test
@@ -111,7 +110,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nReturnVoid());
         transform();
         // FIXME local should type to Z but I works as well
-        // Assert.assertEquals("", "Z", b.valueType);
+        // assertEquals("Z", b.valueType);
     }
 
     @Test
@@ -125,7 +124,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nAssign(c, nArray(b, nInt(3), TypeClass.IF.name)));
         addStmt(nReturnVoid());
         transform();
-        Assert.assertEquals("", b.valueType, "[F");
+        assertEquals(b.valueType, "[F");
     }
 
     @Test
@@ -139,7 +138,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
 
         addStmt(nReturnVoid());
         transform();
-        Assert.assertEquals("I", c.valueType);
+        assertEquals("I", c.valueType);
     }
 
 
@@ -152,7 +151,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nAssign(nArray(nArray(b, nInt(5), TypeClass.OBJECT.name), nInt(1), TypeClass.JD.name), nLong(0)));
         addStmt(nReturnVoid());
         transform();
-        Assert.assertEquals("", b.valueType, "[[D");
+        assertEquals(b.valueType, "[[D");
     }
 
     @Test
@@ -165,6 +164,7 @@ public class TypeTransformerTest extends BaseTransformerTest<TypeTransformer> {
         addStmt(nReturnVoid());
         transform();
         // this case is ok to fail as the NPE transformer cover this
-        // Assert.assertEquals("", "[[D", b.valueType);
+        // assertEquals("[[D", b.valueType);
     }
+
 }

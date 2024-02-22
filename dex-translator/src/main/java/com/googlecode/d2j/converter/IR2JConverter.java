@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.converter;
 
 import com.googlecode.d2j.CallSite;
@@ -25,30 +9,56 @@ import com.googlecode.d2j.asm.LdcOptimizeAdapter;
 import com.googlecode.d2j.dex.Dex2Asm;
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.expr.ArrayExpr;
+import com.googlecode.dex2jar.ir.expr.CastExpr;
+import com.googlecode.dex2jar.ir.expr.Constant;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.FieldExpr;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
+import com.googlecode.dex2jar.ir.expr.InvokeCustomExpr;
+import com.googlecode.dex2jar.ir.expr.InvokeExpr;
+import com.googlecode.dex2jar.ir.expr.InvokePolymorphicExpr;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.NewExpr;
+import com.googlecode.dex2jar.ir.expr.NewMutiArrayExpr;
+import com.googlecode.dex2jar.ir.expr.StaticFieldExpr;
+import com.googlecode.dex2jar.ir.expr.TypeExpr;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.expr.Value.E1Expr;
 import com.googlecode.dex2jar.ir.expr.Value.E2Expr;
 import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
 import com.googlecode.dex2jar.ir.expr.Value.VT;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.GotoStmt;
+import com.googlecode.dex2jar.ir.stmt.IfStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-import org.objectweb.asm.*;
-
+import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
+import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
-@SuppressWarnings("incomplete-switch")
 public class IR2JConverter implements Opcodes {
 
     public static final int MAX_FILL_ARRAY_BYTES = 500;
+
     private boolean optimizeSynchronized = false;
+
     Dex2Asm.ClzCtx clzCtx;
+
     IrMethod ir;
+
     MethodVisitor asm;
+
     public IR2JConverter() {
         super();
     }
@@ -91,9 +101,6 @@ public class IR2JConverter implements Opcodes {
     /**
      * an empty try-catch block will cause other crash, we check this by finding non-label stmts between
      * {@link Trap#start} and {@link Trap#end}. if find we add the try-catch or we drop the try-catch.
-     *
-     * @param ir
-     * @param asm
      */
     private void reBuildTryCatchBlocks(IrMethod ir, MethodVisitor asm) {
         for (Trap trap : ir.traps) {
@@ -120,14 +127,13 @@ public class IR2JConverter implements Opcodes {
     }
 
 
-
     private void reBuildInstructions(IrMethod ir, MethodVisitor asm) {
         asm = new LdcOptimizeAdapter(asm);
         int maxLocalIndex = 0;
         for (Local local : ir.locals) {
-            maxLocalIndex = Math.max(maxLocalIndex, local._ls_index);
+            maxLocalIndex = Math.max(maxLocalIndex, local.lsIndex);
         }
-        Map<String, Integer> lockMap = new HashMap<String, Integer>();
+        Map<String, Integer> lockMap = new HashMap<>();
         for (Stmt st : ir.stmts) {
             switch (st.st) {
             case LABEL:
@@ -146,12 +152,12 @@ public class IR2JConverter implements Opcodes {
                 case LOCAL:
 
                     Local local = ((Local) v1);
-                    int i = local._ls_index;
+                    int i = local.lsIndex;
 
                     boolean skipOrg = false;
-                    if (v2.vt == VT.LOCAL && (i == ((Local) v2)._ls_index)) {// check for a=a
+                    if (v2.vt == VT.LOCAL && (i == ((Local) v2).lsIndex)) { // check for a=a
                         skipOrg = true;
-                    } else if (v1.valueType.charAt(0) == 'I') {// check for IINC
+                    } else if (v1.valueType.charAt(0) == 'I') { // check for IINC
                         if (v2.vt == VT.ADD) {
                             if (isLocalWithIndex(v2.getOp1(), i) && v2.getOp2().vt == VT.CONSTANT) { // a=a+1;
                                 int increment = (Integer) ((Constant) v2.getOp2()).value;
@@ -223,13 +229,15 @@ public class IR2JConverter implements Opcodes {
                         asm.visitInsn(getOpcode(tp2, IASTORE));
                     }
                     break;
+                default:
+                    break;
                 }
             }
-                break;
+            break;
             case IDENTITY: {
                 E2Stmt e2 = (E2Stmt) st;
                 if (e2.op2.vt == VT.EXCEPTION_REF) {
-                    int index = ((Local) e2.op1)._ls_index;
+                    int index = ((Local) e2.op1).lsIndex;
                     if (index >= 0) {
                         asm.visitVarInsn(ASTORE, index);
                     } else {
@@ -237,9 +245,9 @@ public class IR2JConverter implements Opcodes {
                     }
                 }
             }
-                break;
+            break;
 
-            case FILL_ARRAY_DATA:{
+            case FILL_ARRAY_DATA: {
                 E2Stmt e2 = (E2Stmt) st;
                 if (e2.getOp2().vt == VT.CONSTANT) {
                     Object arrayData = ((Constant) e2.getOp2()).value;
@@ -361,7 +369,7 @@ public class IR2JConverter implements Opcodes {
                     case CONSTANT: {
                         String key;
                         if (v.vt == VT.LOCAL) {
-                            key = "L" + ((Local) v)._ls_index;
+                            key = "L" + ((Local) v).lsIndex;
                         } else {
                             key = "C" + ((Constant) v).value;
                         }
@@ -371,14 +379,14 @@ public class IR2JConverter implements Opcodes {
                         asm.visitVarInsn(getOpcode(v, ISTORE), nIndex);
                         lockMap.put(key, nIndex);
                     }
-                        break;
+                    break;
                     default:
                         throw new RuntimeException();
                     }
                 }
                 asm.visitInsn(MONITORENTER);
             }
-                break;
+            break;
             case UNLOCK: {
                 Value v = ((UnopStmt) st).op;
                 if (optimizeSynchronized) {
@@ -387,7 +395,7 @@ public class IR2JConverter implements Opcodes {
                     case CONSTANT: {
                         String key;
                         if (v.vt == VT.LOCAL) {
-                            key = "L" + ((Local) v)._ls_index;
+                            key = "L" + ((Local) v).lsIndex;
                         } else {
                             key = "C" + ((Constant) v).value;
                         }
@@ -398,7 +406,7 @@ public class IR2JConverter implements Opcodes {
                             accept(v, asm);
                         }
                     }
-                        break;
+                    break;
                     // TODO other
                     default: {
                         accept(v, asm);
@@ -410,7 +418,7 @@ public class IR2JConverter implements Opcodes {
                 }
                 asm.visitInsn(MONITOREXIT);
             }
-                break;
+            break;
             case NOP:
                 break;
             case RETURN: {
@@ -419,31 +427,31 @@ public class IR2JConverter implements Opcodes {
                 insertI2x(v.valueType, ir.ret, asm);
                 asm.visitInsn(getOpcode(v, IRETURN));
             }
-                break;
+            break;
             case RETURN_VOID:
                 asm.visitInsn(RETURN);
                 break;
             case LOOKUP_SWITCH: {
                 LookupSwitchStmt lss = (LookupSwitchStmt) st;
                 accept(lss.op, asm);
-                Label targets[] = new Label[lss.targets.length];
+                Label[] targets = new Label[lss.targets.length];
                 for (int i = 0; i < targets.length; i++) {
                     targets[i] = (Label) lss.targets[i].tag;
                 }
                 asm.visitLookupSwitchInsn((Label) lss.defaultTarget.tag, lss.lookupValues, targets);
             }
-                break;
+            break;
             case TABLE_SWITCH: {
                 TableSwitchStmt tss = (TableSwitchStmt) st;
                 accept(tss.op, asm);
-                Label targets[] = new Label[tss.targets.length];
+                Label[] targets = new Label[tss.targets.length];
                 for (int i = 0; i < targets.length; i++) {
                     targets[i] = (Label) tss.targets[i].tag;
                 }
                 asm.visitTableSwitchInsn(tss.lowIndex, tss.lowIndex + targets.length - 1,
                         (Label) tss.defaultTarget.tag, targets);
             }
-                break;
+            break;
             case THROW:
                 accept(((UnopStmt) st).op, asm);
                 asm.visitInsn(ATHROW);
@@ -457,13 +465,13 @@ public class IR2JConverter implements Opcodes {
                     asm.visitInsn(POP);
                 } else if (!"V".equals(ret)) {
                     switch (ret.charAt(0)) {
-                        case 'J':
-                        case 'D':
-                            asm.visitInsn(POP2);
-                            break;
-                        default:
-                            asm.visitInsn(POP);
-                            break;
+                    case 'J':
+                    case 'D':
+                        asm.visitInsn(POP2);
+                        break;
+                    default:
+                        asm.visitInsn(POP);
+                        break;
                     }
                 }
                 break;
@@ -504,15 +512,11 @@ public class IR2JConverter implements Opcodes {
     }
 
     private static boolean isLocalWithIndex(Value v, int i) {
-        return v.vt == VT.LOCAL && ((Local) v)._ls_index == i;
+        return v.vt == VT.LOCAL && ((Local) v).lsIndex == i;
     }
 
     /**
      * insert I2x instruction
-     *
-     * @param tos
-     * @param expect
-     * @param mv
      */
     private static void insertI2x(String tos, String expect, MethodVisitor mv) {
         switch (expect.charAt(0)) {
@@ -522,6 +526,8 @@ public class IR2JConverter implements Opcodes {
             case 'C':
             case 'I':
                 mv.visitInsn(I2B);
+            default:
+                break;
             }
             break;
         case 'S':
@@ -529,13 +535,19 @@ public class IR2JConverter implements Opcodes {
             case 'C':
             case 'I':
                 mv.visitInsn(I2S);
+            default:
+                break;
             }
             break;
         case 'C':
             switch (tos.charAt(0)) {
             case 'I':
                 mv.visitInsn(I2C);
+            default:
+                break;
             }
+            break;
+        default:
             break;
         }
     }
@@ -543,7 +555,7 @@ public class IR2JConverter implements Opcodes {
     static boolean isZeroOrNull(Value v1) {
         if (v1.vt == VT.CONSTANT) {
             Object v = ((Constant) v1).value;
-            return Integer.valueOf(0).equals(v) || Constant.Null.equals(v);
+            return Integer.valueOf(0).equals(v) || Constant.NULL.equals(v);
         }
         return false;
     }
@@ -562,7 +574,7 @@ public class IR2JConverter implements Opcodes {
             // IF_ACMPx
             // IF[non]null
             if (isZeroOrNull(v1) || isZeroOrNull(v2)) { // IF[non]null
-                if (isZeroOrNull(v2)) {// v2 is null
+                if (isZeroOrNull(v2)) { // v2 is null
                     accept(v1, asm);
                 } else {
                     accept(v2, asm);
@@ -578,7 +590,7 @@ public class IR2JConverter implements Opcodes {
             // IFx
             // IF_ICMPx
             if (isZeroOrNull(v1) || isZeroOrNull(v2)) { // IFx
-                if (isZeroOrNull(v2)) {// v2 is zero
+                if (isZeroOrNull(v2)) { // v2 is zero
                     accept(v1, asm);
                 } else {
                     accept(v2, asm);
@@ -601,6 +613,8 @@ public class IR2JConverter implements Opcodes {
                     break;
                 case LT:
                     asm.visitJumpInsn(IFLT, target);
+                    break;
+                default:
                     break;
                 }
             } else { // IF_ICMPx
@@ -625,6 +639,8 @@ public class IR2JConverter implements Opcodes {
                 case LT:
                     asm.visitJumpInsn(IF_ICMPLT, target);
                     break;
+                default:
+                    break;
                 }
             }
             break;
@@ -632,11 +648,7 @@ public class IR2JConverter implements Opcodes {
     }
 
     /**
-     *
-     * @param v
-     * @param op
-     *            DUP
-     * @return
+     * @param op DUP
      */
     static int getOpcode(Value v, int op) {
         return getOpcode(v.valueType, op);
@@ -644,28 +656,28 @@ public class IR2JConverter implements Opcodes {
 
     static int getOpcode(String v, int op) {
         switch (v.charAt(0)) {
-            case 'L':
-            case '[':
-                return Type.getType("La;").getOpcode(op);
-            case 'Z':
-                return Type.BOOLEAN_TYPE.getOpcode(op);
-            case 'B':
-                return Type.BYTE_TYPE.getOpcode(op);
-            case 'S':
-                return Type.SHORT_TYPE.getOpcode(op);
-            case 'C':
-                return Type.CHAR_TYPE.getOpcode(op);
-            case 'I':
-                return Type.INT_TYPE.getOpcode(op);
-            case 'F':
-                return Type.FLOAT_TYPE.getOpcode(op);
-            case 'J':
-                return Type.LONG_TYPE.getOpcode(op);
-            case 'D':
-                return Type.DOUBLE_TYPE.getOpcode(op);
-            default:
-                // FIXME handle undetected types
-                return Type.INT_TYPE.getOpcode(op); // treat other as int
+        case 'L':
+        case '[':
+            return Type.getType("La;").getOpcode(op);
+        case 'Z':
+            return Type.BOOLEAN_TYPE.getOpcode(op);
+        case 'B':
+            return Type.BYTE_TYPE.getOpcode(op);
+        case 'S':
+            return Type.SHORT_TYPE.getOpcode(op);
+        case 'C':
+            return Type.CHAR_TYPE.getOpcode(op);
+        case 'I':
+            return Type.INT_TYPE.getOpcode(op);
+        case 'F':
+            return Type.FLOAT_TYPE.getOpcode(op);
+        case 'J':
+            return Type.LONG_TYPE.getOpcode(op);
+        case 'D':
+            return Type.DOUBLE_TYPE.getOpcode(op);
+        default:
+            // FIXME handle undetected types
+            return Type.INT_TYPE.getOpcode(op); // treat other as int
         }
     }
 
@@ -675,11 +687,11 @@ public class IR2JConverter implements Opcodes {
         case E0:
             switch (value.vt) {
             case LOCAL:
-                asm.visitVarInsn(getOpcode(value, ILOAD), ((Local) value)._ls_index);
+                asm.visitVarInsn(getOpcode(value, ILOAD), ((Local) value).lsIndex);
                 break;
             case CONSTANT:
                 Constant cst = (Constant) value;
-                if (cst.value.equals(Constant.Null)) {
+                if (cst.value.equals(Constant.NULL)) {
                     asm.visitInsn(ACONST_NULL);
                 } else if (cst.value instanceof DexType || cst.value instanceof MethodHandle || cst.value instanceof Proto) {
                     asm.visitLdcInsn(Dex2Asm.convertConstantValue(cst.value));
@@ -691,8 +703,10 @@ public class IR2JConverter implements Opcodes {
                 asm.visitTypeInsn(NEW, toInternal(((NewExpr) value).type));
                 break;
             case STATIC_FIELD:
-                StaticFieldExpr sfe= (StaticFieldExpr) value;
-                asm.visitFieldInsn(GETSTATIC,toInternal(sfe.owner),sfe.name,sfe.type);
+                StaticFieldExpr sfe = (StaticFieldExpr) value;
+                asm.visitFieldInsn(GETSTATIC, toInternal(sfe.owner), sfe.name, sfe.type);
+                break;
+            default:
                 break;
             }
             break;
@@ -704,6 +718,8 @@ public class IR2JConverter implements Opcodes {
             break;
         case En:
             reBuildEnExpression((EnExpr) value, asm);
+            break;
+        default:
             break;
         }
     }
@@ -747,8 +763,9 @@ public class IR2JConverter implements Opcodes {
 
 
             for (int i = 0; i < fae.ops.length; i++) {
-                if (fae.ops[i] == null)
+                if (fae.ops[i] == null) {
                     continue;
+                }
                 asm.visitInsn(DUP);
                 asm.visitLdcInsn(i);
                 accept(fae.ops[i], asm);
@@ -817,12 +834,13 @@ public class IR2JConverter implements Opcodes {
             if (ie.vt == VT.INVOKE_NEW) {
                 p = new Proto(p.getParameterTypes(), "V");
             }
-            asm.visitMethodInsn(opcode, toInternal(ie.getOwner()), ie.getName(), p.getDesc(), opcode == INVOKEINTERFACE);
+            asm.visitMethodInsn(opcode, toInternal(ie.getOwner()), ie.getName(), p.getDesc(),
+                    opcode == INVOKEINTERFACE);
         }
         break;
         case INVOKE_CUSTOM: {
             InvokeCustomExpr ice = (InvokeCustomExpr) value;
-            String argTypes[] = ice.getProto().getParameterTypes();
+            String[] argTypes = ice.getProto().getParameterTypes();
             Value[] vbs = ice.getOps();
             if (argTypes.length == vbs.length) {
                 for (int i = 0; i < vbs.length; i++) {
@@ -849,7 +867,7 @@ public class IR2JConverter implements Opcodes {
         case INVOKE_POLYMORPHIC: {
             InvokePolymorphicExpr ipe = (InvokePolymorphicExpr) value;
             Method m = ipe.method;
-            String argTypes[] = ipe.getProto().getParameterTypes();
+            String[] argTypes = ipe.getProto().getParameterTypes();
             Value[] vbs = ipe.getOps();
             accept(vbs[0], asm);
             for (int i = 1; i < vbs.length; i++) {
@@ -859,49 +877,52 @@ public class IR2JConverter implements Opcodes {
             }
             asm.visitMethodInsn(INVOKEVIRTUAL, toInternal(m.getOwner()), m.getName(), ipe.getProto().getDesc(), false);
         }
+        default:
+            break;
         }
     }
 
     private static byte[] collectDataAsByteArray(Value[] ops, String t) {
         switch (t) {
-            case "B": {
-                byte[] d = new byte[ops.length];
-                for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
-                    Value op = ops[i];
-                    Constant cst = (Constant) op;
-                    d[i] = ((Number) cst.value).byteValue();
-                }
-                return d;
+        case "B": {
+            byte[] d = new byte[ops.length];
+            for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
+                Value op = ops[i];
+                Constant cst = (Constant) op;
+                d[i] = ((Number) cst.value).byteValue();
             }
-            case "S": {
-                short[] d = new short[ops.length];
-                for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
-                    Value op = ops[i];
-                    Constant cst = (Constant) op;
-                    d[i] = ((Number) cst.value).shortValue();
-                }
-                return toLittleEndianArray(d);
-            }
-            case "I": {
-                int[] d = new int[ops.length];
-                for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
-                    Value op = ops[i];
-                    Constant cst = (Constant) op;
-                    d[i] = ((Number) cst.value).intValue();
-                }
-                return toLittleEndianArray(d);
-            }
-            case "J": {
-                long[] d = new long[ops.length];
-                for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
-                    Value op = ops[i];
-                    Constant cst = (Constant) op;
-                    d[i] = ((Number) cst.value).longValue();
-                }
-                return toLittleEndianArray(d);
-            }
+            return d;
         }
-        return null;
+        case "S": {
+            short[] d = new short[ops.length];
+            for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
+                Value op = ops[i];
+                Constant cst = (Constant) op;
+                d[i] = ((Number) cst.value).shortValue();
+            }
+            return toLittleEndianArray(d);
+        }
+        case "I": {
+            int[] d = new int[ops.length];
+            for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
+                Value op = ops[i];
+                Constant cst = (Constant) op;
+                d[i] = ((Number) cst.value).intValue();
+            }
+            return toLittleEndianArray(d);
+        }
+        case "J": {
+            long[] d = new long[ops.length];
+            for (int i = 0, opsLength = ops.length; i < opsLength; i++) {
+                Value op = ops[i];
+                Constant cst = (Constant) op;
+                d[i] = ((Number) cst.value).longValue();
+            }
+            return toLittleEndianArray(d);
+        }
+        default:
+            return null;
+        }
     }
 
     private static byte[] toLittleEndianArray(Object d) {
@@ -918,21 +939,21 @@ public class IR2JConverter implements Opcodes {
     }
 
     private static byte[] toLittleEndianArray(long[] d) {
-        ByteBuffer b = ByteBuffer.allocate(d.length *8);
+        ByteBuffer b = ByteBuffer.allocate(d.length * 8);
         b.order(ByteOrder.LITTLE_ENDIAN);
         b.asLongBuffer().put(d);
         return b.array();
     }
 
     private static byte[] toLittleEndianArray(int[] d) {
-        ByteBuffer b = ByteBuffer.allocate(d.length *4);
+        ByteBuffer b = ByteBuffer.allocate(d.length * 4);
         b.order(ByteOrder.LITTLE_ENDIAN);
         b.asIntBuffer().put(d);
         return b.array();
     }
 
     private static byte[] toLittleEndianArray(short[] d) {
-        ByteBuffer b = ByteBuffer.allocate(d.length *2);
+        ByteBuffer b = ByteBuffer.allocate(d.length * 2);
         b.order(ByteOrder.LITTLE_ENDIAN);
         b.asShortBuffer().put(d);
         return b.array();
@@ -948,10 +969,10 @@ public class IR2JConverter implements Opcodes {
     }
 
     private static void box(String provideType, String expectedType, MethodVisitor asm) {
-        if(provideType.equals(expectedType)){
+        if (provideType.equals(expectedType)) {
             return;
         }
-        if(expectedType.equals("V")){
+        if (expectedType.equals("V")) {
             switch (provideType.charAt(0)) {
             case 'J':
             case 'D':
@@ -1071,7 +1092,8 @@ public class IR2JConverter implements Opcodes {
             break;
 
         default:
-            throw new RuntimeException("i have trouble to auto convert from " + provideType + " to " + expectedType + " currently");
+            throw new RuntimeException("i have trouble to auto convert from " + provideType
+                    + " to " + expectedType + " currently");
         }
     }
 
@@ -1119,20 +1141,22 @@ public class IR2JConverter implements Opcodes {
             case 'D':
                 asm.visitIntInsn(NEWARRAY, T_DOUBLE);
                 break;
+            default:
+                break;
             }
         }
-            break;
+        break;
         case CHECK_CAST:
         case INSTANCE_OF: {
             TypeExpr te = (TypeExpr) e1;
             asm.visitTypeInsn(e1.vt == VT.CHECK_CAST ? CHECKCAST : INSTANCEOF, toInternal(te.type));
         }
-            break;
+        break;
         case CAST: {
             CastExpr te = (CastExpr) e1;
             cast2(e1.op.valueType, te.to, asm);
         }
-            break;
+        break;
         case LENGTH:
             asm.visitInsn(ARRAYLENGTH);
             break;
@@ -1140,13 +1164,22 @@ public class IR2JConverter implements Opcodes {
             asm.visitInsn(getOpcode(e1, INEG));
             break;
         case NOT: // fix issue#207 missing ~ bitwise complement operator
-            if (e1.getOp().valueType.equals("I")) {
+            switch (e1.getOp().valueType) {
+            case "I": {
                 asm.visitLdcInsn(-1);
                 asm.visitInsn(getOpcode(e1, IXOR));
-            } else if (e1.getOp().valueType.equals("J")) {
+            }
+            break;
+            case "J": {
                 asm.visitLdcInsn(-1L);
                 asm.visitInsn(getOpcode(e1, IXOR));
             }
+            break;
+            default:
+                break;
+            }
+            break;
+        default:
             break;
         }
     }
@@ -1170,7 +1203,7 @@ public class IR2JConverter implements Opcodes {
                     return;
                 }
             }
-                break;
+            break;
             case 'F': {
                 float s = (Float) constant.value;
                 if (s < 0) {
@@ -1179,7 +1212,7 @@ public class IR2JConverter implements Opcodes {
                     return;
                 }
             }
-                break;
+            break;
             case 'J': {
                 long s = (Long) constant.value;
                 if (s < 0) {
@@ -1188,7 +1221,7 @@ public class IR2JConverter implements Opcodes {
                     return;
                 }
             }
-                break;
+            break;
             case 'D': {
                 double s = (Double) constant.value;
                 if (s < 0) {
@@ -1197,6 +1230,8 @@ public class IR2JConverter implements Opcodes {
                     return;
                 }
             }
+            break;
+            default:
                 break;
             }
         }
@@ -1265,6 +1300,8 @@ public class IR2JConverter implements Opcodes {
         case DCMPL:
             asm.visitInsn(DCMPL);
             break;
+        default:
+            break;
         }
     }
 
@@ -1297,9 +1334,11 @@ public class IR2JConverter implements Opcodes {
             case 'S':
                 asm.visitInsn(I2S);
                 break;
+            default:
+                break;
             }
         }
-            break;
+        break;
         case 'J': {
             switch (t2.charAt(0)) {
             case 'I':
@@ -1311,9 +1350,11 @@ public class IR2JConverter implements Opcodes {
             case 'D':
                 asm.visitInsn(L2D);
                 break;
+            default:
+                break;
             }
         }
-            break;
+        break;
         case 'D': {
             switch (t2.charAt(0)) {
             case 'I':
@@ -1325,9 +1366,11 @@ public class IR2JConverter implements Opcodes {
             case 'J':
                 asm.visitInsn(D2L);
                 break;
+            default:
+                break;
             }
         }
-            break;
+        break;
         case 'F': {
             switch (t2.charAt(0)) {
             case 'I':
@@ -1339,9 +1382,14 @@ public class IR2JConverter implements Opcodes {
             case 'D':
                 asm.visitInsn(F2D);
                 break;
+            default:
+                break;
             }
             break;
         }
+        default:
+            break;
         }
     }
+
 }

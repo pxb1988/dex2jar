@@ -1,18 +1,31 @@
 package com.googlecode.dex2jar.ir.test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.*;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.*;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
+import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.RemoveLocalFromSSA;
 import com.googlecode.dex2jar.ir.ts.SSATransformer;
+import org.junit.jupiter.api.Test;
+
+import static com.googlecode.dex2jar.ir.expr.Exprs.nExceptionRef;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nNull;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.expr.Exprs.niGt;
+import static com.googlecode.dex2jar.ir.expr.Exprs.njGt;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nGoto;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIdentity;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nIf;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nLabel;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
 
@@ -30,9 +43,9 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
 
         transform();
 
-        Assert.assertSame(st2.op1, st3.op);
-        Assert.assertNotSame("st1 and st1 must be cut", st1.op1, st2.op1);
-        Assert.assertTrue(method.locals.size() == 2);
+        assertSame(st2.op1, st3.op);
+        assertNotSame(st1.op1, st2.op1, "st1 and st1 must be cut");
+        assertEquals(2, method.locals.size());
     }
 
     /**
@@ -71,7 +84,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         addStmt(nReturn(b));
 
         transform();
-        Assert.assertEquals(3, method.locals.size());// phi inserted
+        assertEquals(3, method.locals.size());// phi inserted
         assertPhiStmt(L2);
     }
 
@@ -82,7 +95,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         LabelStmt L2 = newLabel();
         LabelStmt L3 = newLabel();
         LabelStmt L4 = newLabel();
-        method.traps.add(new Trap(L1, L2, new LabelStmt[] { L3 }, new String[] { exType }));
+        method.traps.add(new Trap(L1, L2, new LabelStmt[]{L3}, new String[]{exType}));
 
         Local b = addLocal("a");
         Local ex = addLocal("ex");
@@ -99,11 +112,11 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         addStmt(nReturn(b));
 
         transform();
-        Assert.assertEquals(4, method.locals.size());// phi inserted
+        assertEquals(4, method.locals.size());// phi inserted
         assertPhiStmt(L4);
     }
 
-    public void transform(){
+    public void transform() {
         super.transform();
         new RemoveLocalFromSSA().transform(method);
     }
@@ -130,7 +143,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         addStmt(L2);
         addStmt(Stmts.nIf(Exprs.niEq(nInt(1), nInt(2)), L3));
         addStmt(Stmts.nAssign(c,
-                Exprs.nInvokeStatic(new Value[] { b }, "Ljava/lang/String;", "someMethod", new String[] { "I" }, "V")));
+                Exprs.nInvokeStatic(new Value[]{b}, "Ljava/lang/String;", "someMethod", new String[]{"I"}, "V")));
         addStmt(Stmts.nReturnVoid());
         addStmt(L3);
 
@@ -138,7 +151,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
 
         transform();
 
-        Assert.assertEquals(4, method.locals.size());
+        assertEquals(4, method.locals.size());
         assertPhiStmt(L1);
 
     }
@@ -159,7 +172,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         addStmt(nReturn(b));
 
         transform();
-        Assert.assertEquals(1, method.locals.size());
+        assertEquals(1, method.locals.size());
     }
 
     @Test
@@ -182,7 +195,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         addStmt(nReturn(b));
 
         transform();
-        Assert.assertTrue("no phi should add", method.locals.size() == 1);
+        assertEquals(1, method.locals.size(), "no phi should add");
     }
 
     @Test
@@ -197,19 +210,19 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         addStmt(nReturn(b));
 
         transform();
-        Assert.assertEquals(1, method.locals.size());
+        assertEquals(1, method.locals.size());
     }
 
     /**
      * test for
-     * 
+     *
      * <pre>
      * if (xxx) {
      *     a = 1;
      * } else {
      *     a = 2;
      * }// phi here
-     * 
+     *
      * if (xxx) {
      *     if (xxx) {
      *         a = 3;
@@ -273,17 +286,17 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         assertPhiStmt(L1);
         assertPhiStmt(L4);
         assertPhiStmt(L5);
-        Assert.assertEquals(7, method.locals.size());// 4 assign + 3 phi
+        assertEquals(7, method.locals.size());// 4 assign + 3 phi
     }
 
     private void assertPhiStmt(LabelStmt label) {
-        Assert.assertNotNull(label.phis);
-        Assert.assertTrue(label.phis.size() > 0);
+        assertNotNull(label.phis);
+        assertTrue(!label.phis.isEmpty());
     }
 
     /**
      * for
-     * 
+     *
      * <pre>
      *     a=12;
      *     b=34;
@@ -292,9 +305,8 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
      *     c=b;
      *     L1:
      *     return c;
-     * 
+     *
      * </pre>
-     * 
      */
     @Test
     public void test11NotDeleteAssignWherePhiIsConfused() {
@@ -311,7 +323,7 @@ public class SSATransformerTest extends BaseTransformerTest<SSATransformer> {
         addStmt(Stmts.nReturn(c));
         transform();
 
-        Assert.assertNotSame("the c=b should not deleted", jmp.getNext(), L1);
+        assertNotSame(jmp.getNext(), L1, "the c=b should not deleted");
     }
 
 }

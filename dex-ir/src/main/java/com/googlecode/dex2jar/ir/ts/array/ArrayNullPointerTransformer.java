@@ -1,23 +1,4 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts.array;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.ArrayExpr;
@@ -37,30 +18,32 @@ import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Transformer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * run after {@link com.googlecode.dex2jar.ir.ts.ConstTransformer}, to deal with following code
- * 
+ *
  * <pre>
  * int[] a = null;
  * int b = a[1];
  * </pre>
- * 
+ * <p>
  * replace {@code int b = a[1];} to {@code throw new NullPointException()}, and we get
- * 
+ *
  * <pre>
  * int[] a = null;
  * throw new NullPointException();
  * </pre>
- * 
+ *
  * @author Panxiaobo
- * 
  */
 public class ArrayNullPointerTransformer implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-        for (Stmt p = irMethod.stmts.getFirst(); p != null;) {
+        Stmt p = irMethod.stmts.getFirst();
+        while (p != null) {
             if (arrayNPE(p)) {
                 Stmt q = p.getNext();
                 replaceNPE(irMethod.stmts, irMethod.locals, p);
@@ -72,7 +55,7 @@ public class ArrayNullPointerTransformer implements Transformer {
     }
 
     private void replaceNPE(StmtList stmts, List<Local> locals, Stmt p) {
-        List<Value> values = new ArrayList<Value>();
+        List<Value> values = new ArrayList<>();
         switch (p.et) {
         case E1:
             tryAdd(((E1Stmt) p).op.trim(), values);
@@ -140,7 +123,7 @@ public class ArrayNullPointerTransformer implements Transformer {
                 E2Expr e2 = (E2Expr) value;
                 if (e2.vt == VT.ARRAY && e2.op1.trim().vt == VT.CONSTANT) {
                     Constant cst = (Constant) e2.op1.trim();
-                    if (cst.value.equals(Integer.valueOf(0))) {
+                    if (cst.value.equals(0)) {
                         tryAdd(e2.op2.trim(), values);
                         return false;
                     }
@@ -155,6 +138,8 @@ public class ArrayNullPointerTransformer implements Transformer {
                         break;
                     }
                 }
+            default:
+                break;
             }
         }
         return false;
@@ -162,8 +147,6 @@ public class ArrayNullPointerTransformer implements Transformer {
 
     private boolean arrayNPE(Stmt p) {
         switch (p.et) {
-        case E0:
-            return false;
         case E1:
             if (p.st == ST.GOTO) {
                 return false;
@@ -178,16 +161,13 @@ public class ArrayNullPointerTransformer implements Transformer {
             default:
                 return arrayNPE(e2.op2.trim()) || arrayNPE(e2.op1.trim());
             }
-        case En:
+        default:
             return false;
         }
-        return false;
     }
 
     private boolean arrayNPE(Value value) {
         switch (value.et) {
-        case E0:
-            return false;
         case E1:
             E1Expr e1 = (E1Expr) value;
             if (e1.op == null || e1.op.trim() == null) {
@@ -198,7 +178,7 @@ public class ArrayNullPointerTransformer implements Transformer {
             E2Expr e2 = (E2Expr) value;
             if (e2.vt == VT.ARRAY && e2.op1.trim().vt == VT.CONSTANT) {
                 Constant cst = (Constant) e2.op1.trim();
-                if (cst.value.equals(Integer.valueOf(0))) {
+                if (cst.value.equals(0)) {
                     return true;
                 }
             }
@@ -210,8 +190,9 @@ public class ArrayNullPointerTransformer implements Transformer {
                     return true;
                 }
             }
+        default:
+            return false;
         }
-        return false;
     }
 
 }

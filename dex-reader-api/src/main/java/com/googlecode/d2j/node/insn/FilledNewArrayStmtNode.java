@@ -6,6 +6,7 @@ import com.googlecode.d2j.visitors.DexCodeVisitor;
 public class FilledNewArrayStmtNode extends DexStmtNode {
 
     public final int[] args;
+
     public final String type;
 
     public FilledNewArrayStmtNode(Op op, int[] args, String type) {
@@ -18,4 +19,5 @@ public class FilledNewArrayStmtNode extends DexStmtNode {
     public void accept(DexCodeVisitor cv) {
         cv.visitFilledNewArrayStmt(op, args, type);
     }
+
 }

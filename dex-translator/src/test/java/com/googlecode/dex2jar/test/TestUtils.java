@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.test;
 
 import com.android.dx.cf.direct.DirectClassFile;
@@ -22,6 +7,7 @@ import com.android.dx.command.dexer.DxContext;
 import com.android.dx.dex.DexOptions;
 import com.android.dx.dex.cf.CfOptions;
 import com.android.dx.dex.cf.CfTranslator;
+import com.android.dx.dex.file.DexFile;
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.DexException;
 import com.googlecode.d2j.dex.ClassVisitorFactory;
@@ -33,27 +19,18 @@ import com.googlecode.d2j.node.DexMethodNode;
 import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.d2j.smali.BaksmaliDumper;
 import com.googlecode.d2j.visitors.DexClassVisitor;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
-import org.objectweb.asm.tree.analysis.Analyzer;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
-import org.objectweb.asm.tree.analysis.BasicVerifier;
-import org.objectweb.asm.tree.analysis.Frame;
-import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.Textifier;
-import org.objectweb.asm.util.TraceMethodVisitor;
-
-import java.io.*;
+import com.googlecode.dex2jar.tools.Constants;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,37 +41,53 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
+import org.junit.jupiter.api.Disabled;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.BasicValue;
+import org.objectweb.asm.tree.analysis.BasicVerifier;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.Value;
+import org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.util.Textifier;
+import org.objectweb.asm.util.TraceMethodVisitor;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
- * 
  */
-@Ignore
+@Disabled
 public abstract class TestUtils {
 
     public static void breakPoint() {
     }
 
-    public static void checkZipFile(File zip) throws ZipException, Exception {
-        ZipFile zipFile = new ZipFile(zip);
-        for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements();) {
-            ZipEntry entry = e.nextElement();
-            if (entry.getName().endsWith(".class")) {
-                StringWriter sw = new StringWriter();
-                // PrintWriter pw = new PrintWriter(sw);
+    public static void checkZipFile(File zip) throws Exception {
+        try (ZipFile zipFile = new ZipFile(zip)) {
+            for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements(); ) {
+                ZipEntry entry = e.nextElement();
+                if (entry.getName().endsWith(".class")) {
+                    StringWriter sw = new StringWriter();
+                    // PrintWriter pw = new PrintWriter(sw);
 
-                try (InputStream is = zipFile.getInputStream(entry)) {
-                    verify(new ClassReader(ZipUtil.toByteArray(is)));
+                    try (InputStream is = zipFile.getInputStream(entry)) {
+                        verify(new ClassReader(ZipUtil.toByteArray(is)));
+                    }
+                    assertEquals(0, sw.toString().length(), sw.toString());
                 }
-                Assert.assertTrue(sw.toString(), sw.toString().length() == 0);
             }
         }
     }
 
     public static File dex(File file, File distFile) throws Exception {
-        return dex(new File[] { file }, distFile);
+        return dex(new File[]{file}, distFile);
     }
 
     public static File dex(File[] files) throws Exception {
@@ -112,12 +105,12 @@ public abstract class TestUtils {
         if (distFile == null) {
             distFile = File.createTempFile("dex", ".dex");
         }
-        List<String> args = new ArrayList<String>();
-        args.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + distFile.getCanonicalPath()));
+        List<String> args = new ArrayList<>(Arrays.asList("--dex", "--no-strict",
+                "--output=" + distFile.getCanonicalPath()));
         for (Path f : files) {
             args.add(f.toAbsolutePath().toString());
         }
-        m.invoke(null, new Object[] { args.toArray(new String[0]) });
+        m.invoke(null, new Object[]{args.toArray(new String[0])});
         return distFile;
     }
 
@@ -128,12 +121,12 @@ public abstract class TestUtils {
         if (distFile == null) {
             distFile = File.createTempFile("dex", ".dex");
         }
-        List<String> args = new ArrayList<String>();
-        args.addAll(Arrays.asList("--dex", "--no-strict", "--output=" + distFile.getCanonicalPath()));
+        List<String> args = new ArrayList<>(Arrays.asList("--dex", "--no-strict",
+                "--output=" + distFile.getCanonicalPath()));
         for (File f : files) {
             args.add(f.getCanonicalPath());
         }
-        m.invoke(null, new Object[] { args.toArray(new String[0]) });
+        m.invoke(null, new Object[]{args.toArray(new String[0])});
         return distFile;
     }
 
@@ -146,10 +139,10 @@ public abstract class TestUtils {
 
         Class<?> testClass = TestUtils.class;
         URL url = testClass.getResource("/dexes/i_jetty.dex");
-        Assert.assertNotNull(url);
+        assertNotNull(url);
 
         final String fileStr = url.getFile();
-        Assert.assertNotNull(fileStr);
+        assertNotNull(fileStr);
 
         return listPath(new File(fileStr).getParentFile(), ".apk", ".dex", ".zip");
     }
@@ -162,15 +155,11 @@ public abstract class TestUtils {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     String name = file.getFileName().toString();
-                    boolean add = false;
                     for (String ext : exts) {
                         if (name.endsWith(ext)) {
-                            add = true;
+                            list.add(file);
                             break;
                         }
-                    }
-                    if (add) {
-                        list.add(file);
                     }
                     return super.visitFile(file, attrs);
                 }
@@ -182,12 +171,16 @@ public abstract class TestUtils {
     }
 
     private static class StringBuilderTextifier extends Textifier {
+        public StringBuilderTextifier() {
+            super(Constants.ASM_VERSION);
+        }
+
         public StringBuilder getStringBuilder() {
             return super.stringBuilder;
         }
     }
 
-    static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)
+    static <T extends Value> void printAnalyzerResult(MethodNode method, Analyzer<T> a, final PrintWriter pw)
             throws IllegalArgumentException, IllegalAccessException {
         Frame[] frames = a.getFrames();
         StringBuilderTextifier t = new StringBuilderTextifier();
@@ -197,7 +190,7 @@ public abstract class TestUtils {
             method.instructions.get(j).accept(mv);
 
             StringBuffer s = new StringBuffer();
-            Frame f = frames[j];
+            Frame<T> f = frames[j];
             if (f == null) {
                 s.append('?');
             } else {
@@ -219,25 +212,21 @@ public abstract class TestUtils {
         pw.flush();
     }
 
-    public static void verify(final ClassReader cr) throws AnalyzerException, IllegalArgumentException,
+    public static void verify(final ClassReader cr) throws IllegalArgumentException,
             IllegalAccessException {
-        try {
-            verify(cr, new PrintWriter(new OutputStreamWriter(System.out, "UTF-8")));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        verify(cr, new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8)));
     }
 
     @SuppressWarnings("rawtypes")
-    public static void verify(final ClassReader cr, PrintWriter out) throws AnalyzerException,
+    public static void verify(final ClassReader cr, PrintWriter out) throws
             IllegalArgumentException, IllegalAccessException {
         ClassNode cn = new ClassNode();
         cr.accept(new CheckClassAdapter(cn, false), ClassReader.SKIP_DEBUG);
 
         List methods = cn.methods;
 
-        for (int i = 0; i < methods.size(); ++i) {
-            MethodNode method = (MethodNode) methods.get(i);
+        for (Object o : methods) {
+            MethodNode method = (MethodNode) o;
 
             List tryCatchBlocks = method.tryCatchBlocks;
             for (int j = 0; j < tryCatchBlocks.size(); j++) {
@@ -249,7 +238,7 @@ public abstract class TestUtils {
             }
 
             BasicVerifier verifier = new BasicVerifier();
-            Analyzer a = new Analyzer(verifier);
+            Analyzer<BasicValue> a = new Analyzer<>(verifier);
             try {
                 a.analyze(cn.name, method);
             } catch (Exception e) {
@@ -270,19 +259,16 @@ public abstract class TestUtils {
         DexClassNode clzNode = new DexClassNode(DexConstants.ACC_PUBLIC, "L" + generateClassName + ";",
                 "Ljava/lang/Object;", null);
         Method m = clz.getMethod(methodName, DexClassVisitor.class);
-        if (m == null) {
-            throw new java.lang.NoSuchMethodException(methodName);
-        }
         m.setAccessible(true);
         if (Modifier.isStatic(m.getModifiers())) {
             m.invoke(null, clzNode);
         } else {
-            m.invoke(clz.newInstance(), clzNode);
+            m.invoke(clz.getDeclaredConstructor().newInstance(), clzNode);
         }
         return translateAndCheck(clzNode);
     }
 
-    public static byte[] translateAndCheck(DexFileNode fileNode, DexClassNode clzNode) throws AnalyzerException,
+    public static byte[] translateAndCheck(DexFileNode fileNode, DexClassNode clzNode) throws
             IllegalAccessException {
         // 1. convert to .class
         Dex2Asm dex2Asm = new Dex2Asm() {
@@ -293,7 +279,8 @@ public abstract class TestUtils {
                 } catch (Exception ex) {
                     BaksmaliDumper d = new BaksmaliDumper();
                     try {
-                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(System.err, "UTF-8"));
+                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(System.err,
+                                StandardCharsets.UTF_8));
                         d.baksmaliMethod(methodNode, out);
                         out.flush();
                     } catch (IOException e) {
@@ -304,13 +291,8 @@ public abstract class TestUtils {
             }
         };
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
-        ClassVisitorFactory cvf = new ClassVisitorFactory() {
-            @Override
-            public ClassVisitor create(String classInternalName) {
-                return rca;
-            }
-        };
+        final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw, false);
+        ClassVisitorFactory cvf = classInternalName -> rca;
         if (fileNode != null) {
             dex2Asm.convertClass(clzNode, cvf, fileNode);
         } else {
@@ -332,7 +314,7 @@ public abstract class TestUtils {
 
         DirectClassFile dcf = new DirectClassFile(data, rca.getClassName() + ".class", true);
         dcf.setAttributeFactory(new StdAttributeFactory());
-        com.android.dx.dex.file.DexFile dxFile = new com.android.dx.dex.file.DexFile(dexOptions);
+        DexFile dxFile = new DexFile(dexOptions);
         try {
             CfTranslator.translate(new DxContext(), dcf, data, cfOptions, dexOptions, dxFile);
         } catch (ParseException e) {
@@ -345,7 +327,7 @@ public abstract class TestUtils {
         return data;
     }
 
-    public static byte[] translateAndCheck(DexClassNode clzNode) throws AnalyzerException, IllegalAccessException {
+    public static byte[] translateAndCheck(DexClassNode clzNode) throws IllegalAccessException {
         return translateAndCheck(null, clzNode);
     }
 
@@ -358,4 +340,5 @@ public abstract class TestUtils {
             return super.defineClass(type, data, 0, data.length);
         }
     }
+
 }

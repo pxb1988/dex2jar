@@ -1,22 +1,4 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.util;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
@@ -27,21 +9,27 @@ import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexFieldVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author <a href="mailto:pxb1988@gmail.com">Panxiaobo</a>
  * @version $Rev$
  */
 public class ASMifierClassV extends DexClassVisitor {
+
     protected ArrayOut out = new ArrayOut();
-    private List<ArrayOut> methodOuts = new ArrayList<ArrayOut>();
-    private List<ArrayOut> fieldOuts = new ArrayList<ArrayOut>();
+
+    private List<ArrayOut> methodOuts = new ArrayList<>();
+
+    private List<ArrayOut> fieldOuts = new ArrayList<>();
 
     int fCount = 0;
+
     int mCount = 0;
 
-    public ASMifierClassV(String pkgName, String javaClassName, int access_flags, String className, String superClass,
-            String[] interfaceNames) {
+    public ASMifierClassV(String pkgName, String javaClassName, int accessFlags, String className, String superClass,
+                          String[] interfaceNames) {
         super();
         out.s("package %s;", pkgName);
         out.s("import com.googlecode.d2j.*;");
@@ -52,7 +40,7 @@ public class ASMifierClassV extends DexClassVisitor {
         out.push();
         out.s("public static void accept(DexFileVisitor v) {");
         out.push();
-        out.s("DexClassVisitor cv=v.visit(%s,%s,%s,%s);", Escape.classAcc(access_flags), Escape.v(className),
+        out.s("DexClassVisitor cv=v.visit(%s,%s,%s,%s);", Escape.classAcc(accessFlags), Escape.v(className),
                 Escape.v(superClass), Escape.v(interfaceNames));
         out.s("if(cv!=null) {");
         out.push();
@@ -130,13 +118,8 @@ public class ASMifierClassV extends DexClassVisitor {
             @Override
             public DexAnnotationAble visitParameterAnnotation(final int index) {
                 m.s("DexAnnotationAble pv%02d = mv.visitParameterAnnotation(%s);", index, index);
-                return new DexAnnotationAble() {
-
-                    @Override
-                    public DexAnnotationVisitor visitAnnotation(String name, Visibility visibility) {
-                        return new ASMifierAnnotationV(String.format("pv%02d", index), m, name, visibility);
-                    }
-                };
+                return (name, visibility) -> new ASMifierAnnotationV(String.format("pv%02d", index), m, name,
+                        visibility);
             }
 
             @Override

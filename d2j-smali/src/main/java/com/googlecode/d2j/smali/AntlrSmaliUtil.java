@@ -1,34 +1,64 @@
 package com.googlecode.d2j.smali;
 
-import com.googlecode.d2j.*;
+import com.googlecode.d2j.CallSite;
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.DexType;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Visibility;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.smali.antlr4.SmaliBaseVisitor;
 import com.googlecode.d2j.smali.antlr4.SmaliLexer;
 import com.googlecode.d2j.smali.antlr4.SmaliParser;
-import com.googlecode.d2j.visitors.*;
+import com.googlecode.d2j.visitors.DexAnnotationAble;
+import com.googlecode.d2j.visitors.DexAnnotationVisitor;
+import com.googlecode.d2j.visitors.DexClassVisitor;
+import com.googlecode.d2j.visitors.DexCodeVisitor;
+import com.googlecode.d2j.visitors.DexDebugVisitor;
+import com.googlecode.d2j.visitors.DexFieldVisitor;
+import com.googlecode.d2j.visitors.DexFileVisitor;
+import com.googlecode.d2j.visitors.DexMethodVisitor;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import static com.googlecode.d2j.smali.Utils.findString;
+import static com.googlecode.d2j.smali.Utils.parseByte;
+import static com.googlecode.d2j.smali.Utils.parseDouble;
+import static com.googlecode.d2j.smali.Utils.parseFieldAndUnescape;
+import static com.googlecode.d2j.smali.Utils.parseFloat;
+import static com.googlecode.d2j.smali.Utils.parseInt;
+import static com.googlecode.d2j.smali.Utils.parseLong;
+import static com.googlecode.d2j.smali.Utils.parseMethodAndUnescape;
+import static com.googlecode.d2j.smali.Utils.parseProtoAndUnescape;
+import static com.googlecode.d2j.smali.Utils.parseShort;
+import static com.googlecode.d2j.smali.Utils.unEscapeId;
+import static com.googlecode.d2j.smali.Utils.unescapeChar;
+import static com.googlecode.d2j.smali.Utils.unescapeStr;
 
-import static com.googlecode.d2j.smali.Utils.*;
+public final class AntlrSmaliUtil {
 
-public class AntlrSmaliUtil {
+    private AntlrSmaliUtil() {
+        throw new UnsupportedOperationException();
+    }
+
     public static void acceptFile(SmaliParser.SFileContext ctx, DexFileVisitor dexFileVisitor) {
         DexClassVisitor dexClassVisitor;
         String className = Utils.unEscapeId(ctx.className.getText());
         int access = collectAccess(ctx.sAccList());
         List<SmaliParser.SSuperContext> superContexts = ctx.sSuper();
         String superClass = null;
-        if (superContexts.size() > 0) {
+        if (!superContexts.isEmpty()) {
             superClass = Utils.unEscapeId(superContexts.get(superContexts.size() - 1).name.getText());
         }
         List<SmaliParser.SInterfaceContext> itfs = ctx.sInterface();
         String[] interfaceNames = null;
-        if (itfs.size() > 0) {
+        if (!itfs.isEmpty()) {
             interfaceNames = new String[itfs.size()];
             for (int i = 0; i < itfs.size(); i++) {
                 interfaceNames[i] = Utils.unEscapeId(itfs.get(i).name.getText());
@@ -38,7 +68,7 @@ public class AntlrSmaliUtil {
         dexClassVisitor = dexFileVisitor.visit(access, className, superClass, interfaceNames);
 
         List<SmaliParser.SSourceContext> sources = ctx.sSource();
-        if (sources.size() > 0) {
+        if (!sources.isEmpty()) {
             dexClassVisitor.visitSource(
                     Utils.unescapeStr(sources.get(sources.size() - 1).src.getText())
             );
@@ -50,8 +80,9 @@ public class AntlrSmaliUtil {
         dexClassVisitor.visitEnd();
     }
 
-    private static void acceptMethod(List<SmaliParser.SMethodContext> sMethodContexts, String className, DexClassVisitor dexClassVisitor) {
-        if (dexClassVisitor == null || sMethodContexts == null || sMethodContexts.size() == 0) {
+    private static void acceptMethod(List<SmaliParser.SMethodContext> sMethodContexts, String className,
+                                     DexClassVisitor dexClassVisitor) {
+        if (dexClassVisitor == null || sMethodContexts == null || sMethodContexts.isEmpty()) {
             return;
         }
         for (SmaliParser.SMethodContext ctx : sMethodContexts) {
@@ -64,7 +95,7 @@ public class AntlrSmaliUtil {
         Token methodObj = ctx.methodObj;
         if (methodObj.getType() == SmaliLexer.METHOD_FULL) {
             method = Utils.parseMethodAndUnescape(methodObj.getText());
-        } else {// PART
+        } else { // PART
             method = Utils.parseMethodAndUnescape(className, methodObj.getText());
         }
         int access = collectAccess(ctx.sAccList());
@@ -85,9 +116,13 @@ public class AntlrSmaliUtil {
     }
 
     private static class M {
+
         int locals;
+
         String[] paramNames;
+
         int[] map;
+
         public int total;
 
         void setNameByIdx(int index, String name) {
@@ -133,6 +168,7 @@ public class AntlrSmaliUtil {
                 }
             }
         }
+
     }
 
     private static void acceptCode(SmaliParser.SMethodContext ctx, final M m, DexMethodVisitor dexMethodVisitor) {
@@ -146,7 +182,7 @@ public class AntlrSmaliUtil {
         final SmaliCodeVisitor scv = new SmaliCodeVisitor(dexCodeVisitor);
         final DexDebugVisitor dexDebugVisitor = scv.visitDebug();
         final List<SmaliParser.SInstructionContext> instructionContexts = ctx.sInstruction();
-        final SmaliBaseVisitor v = new SmaliBaseVisitor() {
+        final SmaliBaseVisitor<Object> v = new SmaliBaseVisitor<Object>() {
             @Override
             public Object visitFregisters(SmaliParser.FregistersContext ctx) {
                 return null;
@@ -293,73 +329,75 @@ public class AntlrSmaliUtil {
                 Token cst = ctx.cst;
 
                 switch (op) {
-                    case CONST_STRING:
-                    case CONST_STRING_JUMBO:
-                        scv.visitConstStmt(op, r, unescapeStr(cst.getText()));
-                        break;
-                    case CONST_CLASS:
-                        scv.visitConstStmt(op, r, new DexType(unEscapeId(cst.getText())));
-                        break;
-                    case CHECK_CAST:
-                    case NEW_INSTANCE:
-                        scv.visitTypeStmt(op, r, 0, unEscapeId(cst.getText()));
-                        break;
-                    case CONST_WIDE:
-                        scv.visitConstStmt(op, r, cst.getType() == SmaliLexer.INT ? ((long) parseInt(cst.getText())) : parseLong(cst.getText()));
-                        break;
-                    case CONST_WIDE_16: {
-                        long v;
-                        if (cst.getType() == SmaliLexer.LONG) {
-                            v = parseLong(cst.getText());
-                        } else {
+                case CONST_STRING:
+                case CONST_STRING_JUMBO:
+                    scv.visitConstStmt(op, r, unescapeStr(cst.getText()));
+                    break;
+                case CONST_CLASS:
+                    scv.visitConstStmt(op, r, new DexType(unEscapeId(cst.getText())));
+                    break;
+                case CHECK_CAST:
+                case NEW_INSTANCE:
+                    scv.visitTypeStmt(op, r, 0, unEscapeId(cst.getText()));
+                    break;
+                case CONST_WIDE:
+                    scv.visitConstStmt(op, r, cst.getType() == SmaliLexer.INT
+                            ? ((long) parseInt(cst.getText()))
+                            : parseLong(cst.getText()));
+                    break;
+                case CONST_WIDE_16: {
+                    long v;
+                    if (cst.getType() == SmaliLexer.LONG) {
+                        v = parseLong(cst.getText());
+                    } else {
 
-                            v = (short) parseInt(cst.getText());
-                        }
-                        scv.visitConstStmt(op, r, v);
+                        v = (short) parseInt(cst.getText());
                     }
-                    break;
-                    case CONST_WIDE_32: {
-                        long v;
-                        if (cst.getType() == SmaliLexer.LONG) {
-                            v = parseLong(cst.getText());
-                        } else {
-                            v = parseInt(cst.getText());
-                        }
-                        scv.visitConstStmt(op, r, v);
+                    scv.visitConstStmt(op, r, v);
+                }
+                break;
+                case CONST_WIDE_32: {
+                    long v;
+                    if (cst.getType() == SmaliLexer.LONG) {
+                        v = parseLong(cst.getText());
+                    } else {
+                        v = parseInt(cst.getText());
                     }
-                    break;
-                    case CONST_WIDE_HIGH16: {
-                        long v;
-                        if (cst.getType() == SmaliLexer.LONG) {
-                            v = parseLong(cst.getText());
-                        } else {
-                            v = (short) parseInt(cst.getText());
-                            v <<= 48;
-                        }
-                        scv.visitConstStmt(op, r, v);
+                    scv.visitConstStmt(op, r, v);
+                }
+                break;
+                case CONST_WIDE_HIGH16: {
+                    long v;
+                    if (cst.getType() == SmaliLexer.LONG) {
+                        v = parseLong(cst.getText());
+                    } else {
+                        v = (short) parseInt(cst.getText());
+                        v <<= 48;
                     }
+                    scv.visitConstStmt(op, r, v);
+                }
+                break;
+                case CONST:
+                case CONST_4:
+                case CONST_16: {
+                    int v = parseInt(cst.getText());
+                    scv.visitConstStmt(op, r, v);
+                }
+                break;
+                case CONST_HIGH16: {
+                    int v = parseInt(cst.getText());
+                    v <<= 16;
+                    scv.visitConstStmt(op, r, v);
+                }
+                break;
+                case CONST_METHOD_HANDLE:
+                    scv.visitConstStmt(op, r, parseMethodHandler(ctx.h));
                     break;
-                    case CONST:
-                    case CONST_4:
-                    case CONST_16: {
-                        int v = parseInt(cst.getText());
-                        scv.visitConstStmt(op, r, v);
-                    }
+                case CONST_METHOD_TYPE:
+                    scv.visitConstStmt(op, r, parseProtoAndUnescape(ctx.cst.getText()));
                     break;
-                    case CONST_HIGH16: {
-                        int v = parseInt(cst.getText());
-                        v <<= 16;
-                        scv.visitConstStmt(op, r, v);
-                    }
-                    break;
-                    case CONST_METHOD_HANDLE:
-                        scv.visitConstStmt(op, r, parseMethodHandler(ctx.h));
-                        break;
-                    case CONST_METHOD_TYPE:
-                        scv.visitConstStmt(op, r, parseProtoAndUnescape(ctx.cst.getText()));
-                        break;
-                    default:
-                        throw new RuntimeException();
+                default:
+                    throw new RuntimeException();
                 }
                 return null;
             }
@@ -441,9 +479,11 @@ public class AntlrSmaliUtil {
                     for (int i = 0; i < size; i++) {
                         rs[i] = start + i;
                     }
-                    scv.visitMethodStmt(getOp(ctx.op), rs, parseMethodAndUnescape(ctx.method.getText()), parseProtoAndUnescape(ctx.proto.getText()));
+                    scv.visitMethodStmt(getOp(ctx.op), rs, parseMethodAndUnescape(ctx.method.getText()),
+                            parseProtoAndUnescape(ctx.proto.getText()));
                 } else {
-                    scv.visitMethodStmt(getOp(ctx.op), new int[0], parseMethodAndUnescape(ctx.method.getText()), parseProtoAndUnescape(ctx.proto.getText()));
+                    scv.visitMethodStmt(getOp(ctx.op), new int[0], parseMethodAndUnescape(ctx.method.getText()),
+                            parseProtoAndUnescape(ctx.proto.getText()));
                 }
                 return null;
             }
@@ -456,7 +496,8 @@ public class AntlrSmaliUtil {
                 for (int i = 0; i < ts.size(); i++) {
                     rs[i] = m.pareReg(ts.get(i).getSymbol().getText());
                 }
-                scv.visitMethodStmt(op, rs, parseMethodAndUnescape(ctx.method.getText()), parseProtoAndUnescape(ctx.proto.getText()));
+                scv.visitMethodStmt(op, rs, parseMethodAndUnescape(ctx.method.getText()),
+                        parseProtoAndUnescape(ctx.proto.getText()));
                 return null;
             }
 
@@ -538,13 +579,15 @@ public class AntlrSmaliUtil {
 
             @Override
             public Object visitF2t(SmaliParser.F2tContext ctx) {
-                scv.visitJumpStmt(getOp(ctx.op), m.pareReg(ctx.r1.getText()), m.pareReg(ctx.r2.getText()), getLabel(ctx.label.getText()));
+                scv.visitJumpStmt(getOp(ctx.op), m.pareReg(ctx.r1.getText()), m.pareReg(ctx.r2.getText()),
+                        getLabel(ctx.label.getText()));
                 return null;
             }
 
             @Override
             public Object visitF2sb(SmaliParser.F2sbContext ctx) {
-                scv.visitStmt2R1N(getOp(ctx.op), m.pareReg(ctx.r1.getText()), m.pareReg(ctx.r2.getText()), parseInt(ctx.lit.getText()));
+                scv.visitStmt2R1N(getOp(ctx.op), m.pareReg(ctx.r1.getText()), m.pareReg(ctx.r2.getText()),
+                        parseInt(ctx.lit.getText()));
                 return null;
             }
 
@@ -635,35 +678,44 @@ public class AntlrSmaliUtil {
     private static MethodHandle parseMethodHandler(SmaliParser.Method_handlerContext methodHandlerContext) {
         MethodHandle value;
         switch (methodHandlerContext.type.getText()) {
-            case "static-get":
-                value = new MethodHandle(MethodHandle.STATIC_GET, parseFieldAndUnescape(methodHandlerContext.fld.getText()));
-                break;
-            case "static-put":
-                value = new MethodHandle(MethodHandle.STATIC_PUT, parseFieldAndUnescape(methodHandlerContext.fld.getText()));
-                break;
-            case "instance-get":
-                value = new MethodHandle(MethodHandle.INSTANCE_GET, parseFieldAndUnescape(methodHandlerContext.fld.getText()));
-                break;
-            case "instance-put":
-                value = new MethodHandle(MethodHandle.INSTANCE_PUT, parseFieldAndUnescape(methodHandlerContext.fld.getText()));
-                break;
-            case "invoke-static":
-                value = new MethodHandle(MethodHandle.INVOKE_STATIC, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
-                break;
-            case "invoke-instance":
-                value = new MethodHandle(MethodHandle.INVOKE_INSTANCE, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
-                break;
-            case "invoke-direct":
-                value = new MethodHandle(MethodHandle.INVOKE_DIRECT, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
-                break;
-            case "invoke-interface":
-                value = new MethodHandle(MethodHandle.INVOKE_INTERFACE, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
-                break;
-            case "invoke-constructor":
-                value = new MethodHandle(MethodHandle.INVOKE_CONSTRUCTOR, parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
-                break;
-            default:
-                throw new RuntimeException("not support yet: " + methodHandlerContext.type);
+        case "static-get":
+            value = new MethodHandle(MethodHandle.STATIC_GET,
+                    parseFieldAndUnescape(methodHandlerContext.fld.getText()));
+            break;
+        case "static-put":
+            value = new MethodHandle(MethodHandle.STATIC_PUT,
+                    parseFieldAndUnescape(methodHandlerContext.fld.getText()));
+            break;
+        case "instance-get":
+            value = new MethodHandle(MethodHandle.INSTANCE_GET,
+                    parseFieldAndUnescape(methodHandlerContext.fld.getText()));
+            break;
+        case "instance-put":
+            value = new MethodHandle(MethodHandle.INSTANCE_PUT,
+                    parseFieldAndUnescape(methodHandlerContext.fld.getText()));
+            break;
+        case "invoke-static":
+            value = new MethodHandle(MethodHandle.INVOKE_STATIC,
+                    parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+            break;
+        case "invoke-instance":
+            value = new MethodHandle(MethodHandle.INVOKE_INSTANCE,
+                    parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+            break;
+        case "invoke-direct":
+            value = new MethodHandle(MethodHandle.INVOKE_DIRECT,
+                    parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+            break;
+        case "invoke-interface":
+            value = new MethodHandle(MethodHandle.INVOKE_INTERFACE,
+                    parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+            break;
+        case "invoke-constructor":
+            value = new MethodHandle(MethodHandle.INVOKE_CONSTRUCTOR,
+                    parseMethodAndUnescape(methodHandlerContext.mtd.getText()));
+            break;
+        default:
+            throw new RuntimeException("Not yet supported: " + methodHandlerContext.type);
         }
         return value;
     }
@@ -687,8 +739,9 @@ public class AntlrSmaliUtil {
         return totalRegisters;
     }
 
-    private static void acceptParameter(List<SmaliParser.SParameterContext> sParameterContexts, M m, DexMethodVisitor dexMethodVisitor) {
-        if (sParameterContexts == null || sParameterContexts.size() == 0 || dexMethodVisitor == null) {
+    private static void acceptParameter(List<SmaliParser.SParameterContext> sParameterContexts, M m,
+                                        DexMethodVisitor dexMethodVisitor) {
+        if (sParameterContexts == null || sParameterContexts.isEmpty() || dexMethodVisitor == null) {
             return;
         }
         boolean hasParam = false;
@@ -716,7 +769,7 @@ public class AntlrSmaliUtil {
                 m.setNameByIdx(index, unescapeStr(ctx.name.getText()));
             }
             List<SmaliParser.SAnnotationContext> annotationContexts = ctx.sAnnotation();
-            if (annotationContexts.size() > 0) {
+            if (!annotationContexts.isEmpty()) {
                 acceptAnnotations(annotationContexts, dexMethodVisitor.visitParameterAnnotation(index));
             }
         }
@@ -724,8 +777,9 @@ public class AntlrSmaliUtil {
 
     }
 
-    private static void acceptField(List<SmaliParser.SFieldContext> sFieldContexts, String className, DexClassVisitor dexClassVisitor) {
-        if (sFieldContexts == null || sFieldContexts.size() == 0 || dexClassVisitor == null) {
+    private static void acceptField(List<SmaliParser.SFieldContext> sFieldContexts, String className,
+                                    DexClassVisitor dexClassVisitor) {
+        if (sFieldContexts == null || sFieldContexts.isEmpty() || dexClassVisitor == null) {
             return;
         }
         for (SmaliParser.SFieldContext ctx : sFieldContexts) {
@@ -764,57 +818,58 @@ public class AntlrSmaliUtil {
             value = tn.getSymbol();
         }
         switch (value.getType()) {
-            case SmaliLexer.STRING:
-                return unescapeStr(value.getText());
-            case SmaliLexer.BOOLEAN:
-                return "true".equals(value.getText());
-            case SmaliLexer.BYTE:
-                return parseByte(value.getText());
-            case SmaliLexer.SHORT:
-                return parseShort(value.getText());
-            case SmaliLexer.CHAR:
-                return unescapeChar(value.getText());
-            case SmaliLexer.INT:
-                return parseInt(value.getText());
-            case SmaliLexer.LONG:
-                return parseLong(value.getText());
+        case SmaliLexer.STRING:
+            return unescapeStr(value.getText());
+        case SmaliLexer.BOOLEAN:
+            return "true".equals(value.getText());
+        case SmaliLexer.BYTE:
+            return parseByte(value.getText());
+        case SmaliLexer.SHORT:
+            return parseShort(value.getText());
+        case SmaliLexer.CHAR:
+            return unescapeChar(value.getText());
+        case SmaliLexer.INT:
+            return parseInt(value.getText());
+        case SmaliLexer.LONG:
+            return parseLong(value.getText());
 
-            case SmaliLexer.BASE_FLOAT:
-            case SmaliLexer.FLOAT_INFINITY:
-            case SmaliLexer.FLOAT_NAN:
-                return parseFloat(value.getText());
-            case SmaliLexer.BASE_DOUBLE:
-            case SmaliLexer.DOUBLE_INFINITY:
-            case SmaliLexer.DOUBLE_NAN:
-                return parseDouble(value.getText());
+        case SmaliLexer.BASE_FLOAT:
+        case SmaliLexer.FLOAT_INFINITY:
+        case SmaliLexer.FLOAT_NAN:
+            return parseFloat(value.getText());
+        case SmaliLexer.BASE_DOUBLE:
+        case SmaliLexer.DOUBLE_INFINITY:
+        case SmaliLexer.DOUBLE_NAN:
+            return parseDouble(value.getText());
 
-            case SmaliLexer.METHOD_FULL:
-                return parseMethodAndUnescape(value.getText());
-            case SmaliLexer.OBJECT_TYPE:
-                return new DexType(unEscapeId(value.getText()));
-            case SmaliLexer.NULL:
-                return null;
-            case SmaliLexer.FIELD_FULL:
-                return parseFieldAndUnescape(value.getText());
+        case SmaliLexer.METHOD_FULL:
+            return parseMethodAndUnescape(value.getText());
+        case SmaliLexer.OBJECT_TYPE:
+            return new DexType(unEscapeId(value.getText()));
+        case SmaliLexer.FIELD_FULL:
+            return parseFieldAndUnescape(value.getText());
+        default:
+            return null;
         }
-        return null;
     }
 
-    private static void acceptAnnotations(List<SmaliParser.SAnnotationContext> sAnnotationContexts, DexAnnotationAble dexAnnotationAble) {
+    private static void acceptAnnotations(List<SmaliParser.SAnnotationContext> sAnnotationContexts,
+                                          DexAnnotationAble dexAnnotationAble) {
         if (dexAnnotationAble == null) {
             return;
         }
-        if (sAnnotationContexts.size() > 0) {
+        if (!sAnnotationContexts.isEmpty()) {
             for (SmaliParser.SAnnotationContext ctx : sAnnotationContexts) {
                 Visibility visibility = Utils.getAnnVisibility(ctx.visibility.getText());
                 String type = Utils.unEscapeId(ctx.type.getText());
                 DexAnnotationVisitor dexAnnotationVisitor = dexAnnotationAble.visitAnnotation(type, visibility);
                 if (dexAnnotationVisitor != null) {
                     List<SmaliParser.SAnnotationKeyNameContext> keys = ctx.sAnnotationKeyName();
-                    if (keys.size() > 0) {
+                    if (!keys.isEmpty()) {
                         List<SmaliParser.SAnnotationValueContext> values = ctx.sAnnotationValue();
                         for (int i = 0; i < keys.size(); i++) {
-                            acceptAnnotation(dexAnnotationVisitor, Utils.unEscapeId(keys.get(i).getText()), values.get(i));
+                            acceptAnnotation(dexAnnotationVisitor, Utils.unEscapeId(keys.get(i).getText()),
+                                    values.get(i));
                         }
                     }
                     dexAnnotationVisitor.visitEnd();
@@ -823,55 +878,59 @@ public class AntlrSmaliUtil {
         }
     }
 
-    private static void acceptAnnotation(DexAnnotationVisitor dexAnnotationVisitor, String name, SmaliParser.SAnnotationValueContext ctx) {
+    private static void acceptAnnotation(DexAnnotationVisitor dexAnnotationVisitor, String name,
+                                         SmaliParser.SAnnotationValueContext ctx) {
         ParserRuleContext t = (ParserRuleContext) ctx.getChild(0);
         switch (t.getRuleIndex()) {
-            case SmaliParser.RULE_sSubannotation: {
-                SmaliParser.SSubannotationContext subannotationContext = (SmaliParser.SSubannotationContext) t;
-                DexAnnotationVisitor annotationVisitor = dexAnnotationVisitor.visitAnnotation(name, Utils
-                        .unEscapeId(subannotationContext.type.getText()));
-                if (annotationVisitor != null) {
-                    List<SmaliParser.SAnnotationKeyNameContext> keys = subannotationContext.sAnnotationKeyName();
-                    if (keys.size() > 0) {
-                        List<SmaliParser.SAnnotationValueContext> values = subannotationContext.sAnnotationValue();
-                        for (int i = 0; i < keys.size(); i++) {
-                            acceptAnnotation(annotationVisitor, Utils.unEscapeId(keys.get(i).getText()), values.get(i));
-                        }
+        case SmaliParser.RULE_sSubannotation: {
+            SmaliParser.SSubannotationContext subannotationContext = (SmaliParser.SSubannotationContext) t;
+            DexAnnotationVisitor annotationVisitor = dexAnnotationVisitor.visitAnnotation(name, Utils
+                    .unEscapeId(subannotationContext.type.getText()));
+            if (annotationVisitor != null) {
+                List<SmaliParser.SAnnotationKeyNameContext> keys = subannotationContext.sAnnotationKeyName();
+                if (!keys.isEmpty()) {
+                    List<SmaliParser.SAnnotationValueContext> values = subannotationContext.sAnnotationValue();
+                    for (int i = 0; i < keys.size(); i++) {
+                        acceptAnnotation(annotationVisitor, Utils.unEscapeId(keys.get(i).getText()), values.get(i));
                     }
-                    annotationVisitor.visitEnd();
                 }
-                break;
+                annotationVisitor.visitEnd();
             }
-            case SmaliParser.RULE_sArrayValue: {
-                SmaliParser.SArrayValueContext arrayValueContext = (SmaliParser.SArrayValueContext) t;
-                DexAnnotationVisitor annotationVisitor = dexAnnotationVisitor.visitArray(name);
-                if (annotationVisitor != null) {
-                    for (SmaliParser.SAnnotationValueContext annotationValueContext : arrayValueContext
-                            .sAnnotationValue()) {
-                        acceptAnnotation(annotationVisitor, null, annotationValueContext);
-                    }
-                    annotationVisitor.visitEnd();
+            break;
+        }
+        case SmaliParser.RULE_sArrayValue: {
+            SmaliParser.SArrayValueContext arrayValueContext = (SmaliParser.SArrayValueContext) t;
+            DexAnnotationVisitor annotationVisitor = dexAnnotationVisitor.visitArray(name);
+            if (annotationVisitor != null) {
+                for (SmaliParser.SAnnotationValueContext annotationValueContext : arrayValueContext
+                        .sAnnotationValue()) {
+                    acceptAnnotation(annotationVisitor, null, annotationValueContext);
                 }
-                break;
+                annotationVisitor.visitEnd();
             }
-            case SmaliParser.RULE_sBaseValue:
-                SmaliParser.SBaseValueContext baseValueContext = (SmaliParser.SBaseValueContext) t;
-                Object value = parseBaseValue(baseValueContext);
-                dexAnnotationVisitor.visit(name, value);
-                break;
-            case SmaliParser.RULE_method_handler:
-                MethodHandle methodHandle = parseMethodHandler((SmaliParser.Method_handlerContext) t);
-                dexAnnotationVisitor.visit(name, methodHandle);
-                break;
+            break;
+        }
+        case SmaliParser.RULE_sBaseValue:
+            SmaliParser.SBaseValueContext baseValueContext = (SmaliParser.SBaseValueContext) t;
+            Object value = parseBaseValue(baseValueContext);
+            dexAnnotationVisitor.visit(name, value);
+            break;
+        case SmaliParser.RULE_method_handler:
+            MethodHandle methodHandle = parseMethodHandler((SmaliParser.Method_handlerContext) t);
+            dexAnnotationVisitor.visit(name, methodHandle);
+            break;
+        default:
+            break;
         }
     }
 
 
-    static private int collectAccess(SmaliParser.SAccListContext ctx) {
+    private static int collectAccess(SmaliParser.SAccListContext ctx) {
         int access = 0;
         for (TerminalNode acc : ctx.ACC()) {
             access |= Utils.getAcc(acc.getSymbol().getText());
         }
         return access;
     }
+
 }

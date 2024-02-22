@@ -1,26 +1,24 @@
 package com.googlecode.d2j.reader.test;
 
-import java.io.IOException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
 import com.googlecode.d2j.reader.zip.ZipUtil;
 import com.googlecode.d2j.util.zip.ZipFile;
+import java.io.IOException;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test case for issue 169
- * 
+ *
  * @author bob
- * 
  */
 public class BadZipEntryFlagTest {
+
     @Test
     public void test1() throws IOException {
-        ZipArchiveInputStream zis = new ZipArchiveInputStream(BadZipEntryFlagTest.class.getResourceAsStream("/bad.zip"));
-        for (ZipArchiveEntry e = zis.getNextZipEntry(); e != null; e = zis.getNextZipEntry()) {
+        ZipArchiveInputStream zis = new ZipArchiveInputStream(BadZipEntryFlagTest.class.getResourceAsStream("/bad"
+                + ".zip"));
+        for (ZipArchiveEntry e = zis.getNextEntry(); e != null; e = zis.getNextEntry()) {
             e.getGeneralPurposeBit().useEncryption(false);
             if (!e.isDirectory()) {
                 zis.read();

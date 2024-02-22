@@ -7,15 +7,13 @@ import java.util.ArrayList;
 import java.math.BigInteger;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
+import static com.googlecode.dex2jar.tools.Constants.*;
 import static org.objectweb.asm.Opcodes.*;
 }
 @lexer::header {
 package com.googlecode.d2j.jasmin;
 }
 @members{
-    private static int versions[] = { 0, V1_1, V1_2, V1_3, V1_4, V1_5, V1_6, V1_7, 52 // V1_8 ?
-            , 53 // V1_9 ?
-    };
     private ClassNode cn;
     private FieldNode fn;
     private MethodNode mn;
@@ -25,7 +23,7 @@ package com.googlecode.d2j.jasmin;
     public boolean rebuildLine=false;
     private java.util.Map<String, Label> labelMap = new java.util.HashMap<>();
     private void reset0() {
-        cn = new ClassNode(Opcodes.ASM9);
+        cn = new ClassNode(ASM_VERSION);
         fn = null;
         mn = null;
     }
@@ -962,8 +960,8 @@ RIGHT_PAREN: ')';
 sFile	: { reset0(); currentAv=cnv; }
 sHead+ (sAnnotation|sVisibiltyAnnotation)* (sField|sMethod)*
 	;
-sHead   :  '.bytecode' ( a=INT { int v=parseInt($a.text); cn.version=versions[v>=45?v-45:v];}
-                        |a=DOUBLE {double v=parseDouble($a.text); cn.version=versions[(int)(v<2.0?(v*10)\%10:(v-44))]; }
+sHead   :  '.bytecode' ( a=INT { int v=parseInt($a.text); cn.version=JAVA_VERSIONS[v>=45?v-45:v];}
+                        |a=DOUBLE {double v=parseDouble($a.text); cn.version=JAVA_VERSIONS[(int)(v<2.0?(v*10)\%10:(v-44))]; }
                        )
         |  '.source' aa4=sAnyIdOrString  { cn.sourceFile=$aa4.str; }
 		|  '.class' i=sAccList {cn.access|=$i.acc; if ((cn.access & Opcodes.ACC_INTERFACE) == 0) {cn.access |= Opcodes.ACC_SUPER;} else { cn.access &= ~Opcodes.ACC_SUPER; } } a1=sInternalNameOrDesc { cn.name=Type.getType($a1.desc).getInternalName(); }
@@ -1103,7 +1101,7 @@ sMethod	@init{
         cn.methods=new ArrayList<>();
     }
     currentAv=mnv;
-    mn=new MethodNode(Opcodes.ASM9);
+    mn=new MethodNode(ASM_VERSION);
     cn.methods.add(mn);
     labelMap.clear();
     if(mn.exceptions==null){

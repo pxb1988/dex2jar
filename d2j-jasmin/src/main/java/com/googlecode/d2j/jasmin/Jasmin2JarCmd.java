@@ -1,22 +1,20 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.jasmin;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
+import com.googlecode.dex2jar.tools.Constants;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -25,31 +23,30 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-
-@BaseCmd.Syntax(cmd = "d2j-jasmin2jar", syntax = "[options] <jar>", desc = "Assemble .j files to .class file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Jasmin")
+@BaseCmd.Syntax(cmd = "d2j-jasmin2jar", syntax = "[options] <jar>", desc = "Assemble .j files to .class file",
+        onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Jasmin")
 public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
-    private static final int[] versions = { 0, V1_1, V1_2, V1_3, V1_4, V1_5, V1_6, V1_7, V1_8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18 };
+
     @Opt(opt = "g", longOpt = "autogenerate-linenumbers", hasArg = false, description = "autogenerate-linenumbers")
     boolean autogenLines = false;
+
     @Opt(opt = "f", longOpt = "force", hasArg = false, description = "force overwrite")
     private boolean forceOverwrite = false;
-    @Opt(opt = "o", longOpt = "output", description = "output .jar file, default is $current_dir/[jar-name]-jasmin2jar.jar", argName = "out-jar-file")
+
+    @Opt(opt = "o", longOpt = "output", description = "output .jar file, default is "
+            + "$current_dir/[jar-name]-jasmin2jar.jar", argName = "out-jar-file")
     private Path output;
+
     @Opt(opt = "e", longOpt = "encoding", description = "encoding for .j files, default is UTF-8", argName = "enc")
     private String encoding = "UTF-8";
 
     @Opt(opt = "d", longOpt = "dump", description = "dump to stdout", hasArg = false)
     private boolean dump;
 
-    @Opt( longOpt = "no-compute-max", description = "", hasArg = false)
+    @Opt(longOpt = "no-compute-max", description = "", hasArg = false)
     private boolean noComputeMax;
 
-    @Opt(opt = "cv", longOpt = "class-version", description = "default .class version, [1~9], default 8 for JAVA8")
+    @Opt(opt = "cv", longOpt = "class-version", description = "default .class version, [1~21], default 8 for JAVA8")
     private int classVersion = 8;
 
     public Jasmin2JarCmd() {
@@ -65,8 +62,9 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
             usage();
             return;
         }
-        if (classVersion < 1 || classVersion > 18) {
-            throw new HelpException("-cv,--class-version out of range, 1-18 is supported.");
+        int maxClassVersion = Constants.JAVA_VERSIONS.length - 1;
+        if (classVersion < 1 || classVersion > maxClassVersion) {
+            throw new HelpException("-cv,--class-version out of range, 1-" + maxClassVersion + " is supported.");
         }
 
         Path jar = new File(remainingArgs[0]).toPath().toAbsolutePath();
@@ -129,21 +127,23 @@ public class Jasmin2JarCmd extends BaseCmd implements Opcodes {
             CommonTokenStream ts = new CommonTokenStream(lexer);
             JasminParser parser = new JasminParser(ts);
             parser.rebuildLine = autogenLines;
-            ClassWriter cw = new ClassWriter(noComputeMax?0:ClassWriter.COMPUTE_MAXS);
+            ClassWriter cw = new ClassWriter(noComputeMax ? 0 : ClassWriter.COMPUTE_MAXS);
             ClassNode cn = parser.parse();
             if (cn.version == 0) {
-                cn.version = versions[classVersion];
+                cn.version = Constants.JAVA_VERSIONS[classVersion];
             }
             if (dump) {
-                new JasminDumper(new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8), true)).dump(cn);
+                new JasminDumper(new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8), true))
+                        .dump(cn);
             }
             cn.accept(cw);
             Path clzFile = output.resolve(cn.name.replace('.', '/') + ".class");
             createParentDirectories(clzFile);
             Files.write(clzFile, cw.toByteArray());
         } catch (RecognitionException e) {
-            System.err.println("Fail to assemble " + file);
+            System.err.println("Failed to assemble " + file);
             e.printStackTrace();
         }
     }
+
 }

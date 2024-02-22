@@ -1,13 +1,14 @@
 package com.googlecode.d2j;
 
 public class CallSite {
-    private String name;
-    private MethodHandle bootstrapMethodHandler;
-    private String methodName;
-    private Proto methodProto;
-    private Object[] extraArguments;
+    private final String name;
+    private final MethodHandle bootstrapMethodHandler;
+    private final String methodName;
+    private final Proto methodProto;
+    private final Object[] extraArguments;
 
-    public CallSite(String name, MethodHandle bootstrapMethodHandler, String methodName, Proto methodProto, Object... extraArguments) {
+    public CallSite(String name, MethodHandle bootstrapMethodHandler, String methodName, Proto methodProto,
+                    Object... extraArguments) {
         this.name = name;
         this.bootstrapMethodHandler = bootstrapMethodHandler;
         this.methodName = methodName;

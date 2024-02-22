@@ -3,20 +3,29 @@ package com.googlecode.dex2jar.ir.ts.array;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.StmtTraveler;
-import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.expr.ArrayExpr;
+import com.googlecode.dex2jar.ir.expr.Constant;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Cfg;
 import com.googlecode.dex2jar.ir.ts.StatedTransformer;
-
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * require SSA, element index are const
- * <p/>
+ * <p>
  * transformer
  * <pre>
  *     ...
@@ -31,19 +40,20 @@ import java.util.*;
  * </pre>
  */
 public class ArrayElementTransformer extends StatedTransformer {
+
     @Override
     public boolean transformReportChanged(IrMethod method) {
 
         Set<Local> arrays = searchForArrayObject(method);
-        if (arrays.size() == 0) {
+        if (arrays.isEmpty()) {
             return false;
         }
         for (Local local : method.locals) {
-            local._ls_index = -1;
+            local.lsIndex = -1;
         }
         int i = 0;
         for (Local local : arrays) {
-            local._ls_index = i++;
+            local.lsIndex = i++;
         }
         final int size = i;
         Cfg.createCFG(method);
@@ -51,7 +61,7 @@ public class ArrayElementTransformer extends StatedTransformer {
         final List<Stmt> used = new ArrayList<>();
         Cfg.dfs(method.stmts, new Cfg.FrameVisitor<ArrayValue[]>() {
 
-            Set<Integer> phis = new HashSet<>();
+            final Set<Integer> phis = new HashSet<>();
 
             @Override
             public ArrayValue[] merge(ArrayValue[] srcFrame, ArrayValue[] distFrame, Stmt src, Stmt dist) {
@@ -59,7 +69,7 @@ public class ArrayElementTransformer extends StatedTransformer {
                     LabelStmt labelStmt = (LabelStmt) dist;
                     if (labelStmt.phis != null) {
                         for (AssignStmt phi : labelStmt.phis) {
-                            int idx = ((Local) phi.getOp1())._ls_index;
+                            int idx = ((Local) phi.getOp1()).lsIndex;
                             if (idx >= 0) {
                                 phis.add(idx);
                             }
@@ -130,14 +140,14 @@ public class ArrayElementTransformer extends StatedTransformer {
                     if (stmt.getOp1().vt == Value.VT.LOCAL) {
                         Local local = (Local) stmt.getOp1();
                         use(stmt.getOp2());
-                        if (local._ls_index >= 0) {
+                        if (local.lsIndex >= 0) {
                             Value op2 = stmt.getOp2();
                             if (op2.vt == Value.VT.NEW_ARRAY) {
                                 ArrayValue av = new ArrayValue();
                                 av.s = ArrayValue.S.DEFAULT;
                                 av.size = op2.getOp();
                                 values.add(av);
-                                tmp[local._ls_index] = av;
+                                tmp[local.lsIndex] = av;
                             } else if (op2.vt == Value.VT.FILLED_ARRAY) {
                                 ArrayValue av = new ArrayValue();
                                 av.s = ArrayValue.S.DEFAULT;
@@ -150,10 +160,10 @@ public class ArrayElementTransformer extends StatedTransformer {
                                     av.elements1.put(i, ops[i]);
                                 }
                                 values.add(av);
-                                tmp[local._ls_index] = av;
+                                tmp[local.lsIndex] = av;
                             } else if (op2.vt == Value.VT.CONSTANT) {
                                 Object cst = ((Constant) op2).value;
-                                if (cst != null && !cst.equals(Constant.Null) && cst.getClass().isArray()) {
+                                if (cst != null && !cst.equals(Constant.NULL) && cst.getClass().isArray()) {
                                     ArrayValue av = new ArrayValue();
                                     av.s = ArrayValue.S.DEFAULT;
                                     av.indexType = ArrayValue.IndexType.CONST;
@@ -164,14 +174,14 @@ public class ArrayElementTransformer extends StatedTransformer {
                                         av.elements1.put(i, Exprs.nConstant(Array.get(cst, size)));
                                     }
                                     values.add(av);
-                                    tmp[local._ls_index] = av;
+                                    tmp[local.lsIndex] = av;
                                 } else {
                                     ArrayValue av = new ArrayValue();
                                     values.add(av);
                                     av.s = ArrayValue.S.UNKNOWN;
                                     av.indexType = ArrayValue.IndexType.NONE;
                                     av.stmt = stmt;
-                                    tmp[local._ls_index] = av;
+                                    tmp[local.lsIndex] = av;
                                 }
                             } else {
                                 ArrayValue av = new ArrayValue();
@@ -179,7 +189,7 @@ public class ArrayElementTransformer extends StatedTransformer {
                                 av.s = ArrayValue.S.UNKNOWN;
                                 av.indexType = ArrayValue.IndexType.NONE;
                                 av.stmt = stmt;
-                                tmp[local._ls_index] = av;
+                                tmp[local.lsIndex] = av;
                             }
                         }
                         // assign index1
@@ -189,9 +199,9 @@ public class ArrayElementTransformer extends StatedTransformer {
                         if (ae.getOp1().vt == Value.VT.LOCAL) {
                             Local local = (Local) ae.getOp1();
                             Value index = ae.getOp2();
-                            if (local._ls_index >= 0) {
+                            if (local.lsIndex >= 0) {
                                 if (index.vt == Value.VT.CONSTANT) {
-                                    ArrayValue parent = tmp[local._ls_index];
+                                    ArrayValue parent = tmp[local.lsIndex];
                                     ArrayValue av = new ArrayValue();
                                     values.add(av);
                                     av.parent = parent;
@@ -199,9 +209,9 @@ public class ArrayElementTransformer extends StatedTransformer {
                                     av.indexType = ArrayValue.IndexType.CONST;
                                     av.s = ArrayValue.S.INHERIT;
                                     av.stmt = stmt;
-                                    tmp[local._ls_index] = av;
+                                    tmp[local.lsIndex] = av;
                                 } else if (index.vt == Value.VT.LOCAL) {
-                                    ArrayValue parent = tmp[local._ls_index];
+                                    ArrayValue parent = tmp[local.lsIndex];
                                     ArrayValue av = new ArrayValue();
                                     values.add(av);
                                     av.parent = parent;
@@ -209,14 +219,14 @@ public class ArrayElementTransformer extends StatedTransformer {
                                     av.indexType = ArrayValue.IndexType.LOCAL;
                                     av.s = ArrayValue.S.INHERIT;
                                     av.stmt = stmt;
-                                    tmp[local._ls_index] = av;
+                                    tmp[local.lsIndex] = av;
                                 } else {
                                     ArrayValue av = new ArrayValue();
                                     values.add(av);
                                     av.s = ArrayValue.S.UNKNOWN;
                                     av.indexType = ArrayValue.IndexType.NONE;
                                     av.stmt = stmt;
-                                    tmp[local._ls_index] = av;
+                                    tmp[local.lsIndex] = av;
                                 }
                             } else {
                                 use(stmt.getOp1());
@@ -233,9 +243,9 @@ public class ArrayElementTransformer extends StatedTransformer {
                 } else if (stmt.st == Stmt.ST.FILL_ARRAY_DATA) {
                     if (stmt.getOp1().vt == Value.VT.LOCAL) {
                         Local local = (Local) stmt.getOp1();
-                        if (local._ls_index >= 0) {
+                        if (local.lsIndex >= 0) {
                             Object array = ((Constant) stmt.getOp2()).value;
-                            ArrayValue parent = tmp[local._ls_index];
+                            ArrayValue parent = tmp[local.lsIndex];
                             ArrayValue av = new ArrayValue();
                             values.add(av);
                             av.parent = parent;
@@ -247,24 +257,24 @@ public class ArrayElementTransformer extends StatedTransformer {
                             av.indexType = ArrayValue.IndexType.CONST;
                             av.s = ArrayValue.S.INHERIT;
                             av.stmt = stmt;
-                            tmp[local._ls_index] = av;
+                            tmp[local.lsIndex] = av;
                         }
                     } else {
                         use(stmt.getOp1());
                     }
                 } else {
                     switch (stmt.et) {
-                        case E0:
-                            break;
-                        case E1:
-                            use(stmt.getOp());
-                            break;
-                        case E2:
-                            use(stmt.getOp1());
-                            use(stmt.getOp2());
-                            break;
-                        case En:
-                            throw new RuntimeException();
+                    case E1:
+                        use(stmt.getOp());
+                        break;
+                    case E2:
+                        use(stmt.getOp1());
+                        use(stmt.getOp2());
+                        break;
+                    case En:
+                        throw new RuntimeException();
+                    default:
+                        break;
                     }
                 }
 
@@ -273,30 +283,30 @@ public class ArrayElementTransformer extends StatedTransformer {
 
             private void use(Value v) {
                 switch (v.et) {
-                    case E0:
-                        break;
-                    case E1:
-                        use(v.getOp());
-                        break;
-                    case E2:
-                        Value op1 = v.getOp1();
-                        Value op2 = v.getOp2();
-                        use(op1);
-                        use(op2);
-                        if (v.vt == Value.VT.ARRAY) {
-                            if (op1.vt == Value.VT.LOCAL && (op2.vt == Value.VT.LOCAL || op2.vt == Value.VT.CONSTANT)) {
-                                Local local = (Local) op1;
-                                if (local._ls_index > 0) {
-                                    used.add(currentStmt);
-                                }
+                case E1:
+                    use(v.getOp());
+                    break;
+                case E2:
+                    Value op1 = v.getOp1();
+                    Value op2 = v.getOp2();
+                    use(op1);
+                    use(op2);
+                    if (v.vt == Value.VT.ARRAY) {
+                        if (op1.vt == Value.VT.LOCAL && (op2.vt == Value.VT.LOCAL || op2.vt == Value.VT.CONSTANT)) {
+                            Local local = (Local) op1;
+                            if (local.lsIndex > 0) {
+                                used.add(currentStmt);
                             }
                         }
-                        break;
-                    case En:
-                        for (Value op : v.getOps()) {
-                            use(op);
-                        }
-                        break;
+                    }
+                    break;
+                case En:
+                    for (Value op : v.getOps()) {
+                        use(op);
+                    }
+                    break;
+                default:
+                    break;
                 }
             }
         });
@@ -304,16 +314,14 @@ public class ArrayElementTransformer extends StatedTransformer {
 
         // TODO travel stmt to find must-be array element
 
-        for (Stmt p : method.stmts) {
-
-        }
+        /*for (Stmt p : method.stmts) {
+        }*/
         new StmtTraveler() {
             @Override
             public Value travel(Value op) {
                 op = super.travel(op);
-                if (op.vt == Value.VT.ARRAY) {
-
-                }
+                /*if (op.vt == Value.VT.ARRAY) {
+                }*/
                 return op;
             }
         }.travel(method.stmts);
@@ -370,32 +378,47 @@ public class ArrayElementTransformer extends StatedTransformer {
     }
 
     static class ArrayValue {
+
         enum S {
+
             /**
              * all element are default value. that is null for object and 0 for primitive
              */
             DEFAULT,
+
             /**
              * all element are unknown value
              */
             UNKNOWN,
+
             /**
              * the element value is based on its parent
              */
             INHERIT
+
         }
 
         enum IndexType {
+
             CONST, LOCAL, NONE
+
         }
 
 
         IndexType indexType = IndexType.NONE;
+
         S s = S.INHERIT;
+
         ArrayValue parent;
+
         Value size;
+
         Set<ArrayValue> otherParents;
+
         Map<Object, Value> elements1 = new HashMap<>();
+
         Stmt stmt;
+
     }
+
 }

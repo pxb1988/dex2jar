@@ -1,66 +1,50 @@
-/***
- * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2005 INRIA, France Telecom
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the copyright holders nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- */
 package com.googlecode.d2j.jasmin;
 
+import com.googlecode.dex2jar.tools.Constants;
+import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InnerClassNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LocalVariableNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.util.Printer;
-
-import java.io.PrintWriter;
-import java.util.*;
 
 /**
  * <b>get from asm example</b>
  * <p>
  * Disassembled view of the classes in Jasmin assembler format.
  * <p>
- * The trace printed when visiting the <tt>Hello</tt> class is the following:
+ * The trace printed when visiting the <code>Hello</code> class is the following:
  * <p>
  * <blockquote>
- * 
+ *
  * <pre>
  * .bytecode 45.3
  * .class public Hello
  * .super java/lang/Object
- * 
- * .method public <init>()V
+ *
+ * .method public &lt;init&gt;()V
  * aload 0
- * invokespecial java/lang/Object/<init>()V
+ * invokespecial java/lang/Object/&lt;init&gt;()V
  * return
  * .limit locals 1
  * .limit stack 1
  * .end method
- * 
+ *
  * .method public static main([Ljava/lang/String;)V
  * getstatic java/lang/System/out Ljava/io/PrintStream;
  * ldc "hello"
@@ -70,27 +54,29 @@ import java.util.*;
  * .limit stack 2
  * .end method
  * </pre>
- * 
- * </blockquote> where <tt>Hello</tt> is defined by:
+ *
+ * </blockquote> where <code>Hello</code> is defined by:
  * <p>
  * <blockquote>
- * 
+ *
  * <pre>
  * public class Hello {
- * 
+ *
  *     public static void main(String[] args) {
  *         System.out.println(&quot;hello&quot;);
  *     }
  * }
  * </pre>
- * 
+ *
  * </blockquote>
- * 
+ *
  * @author Eric Bruneton
  */
 public class JasminDumper implements Opcodes {
+
     private static final Set<String> ACCESS_KWS = new HashSet<>(Arrays
-            .asList("abstract", "private", "protected", "public", "enum", "final", "interface", "static", "strictfp", "native", "super"));
+            .asList("abstract", "private", "protected", "public", "enum", "final", "interface", "static", "strictfp",
+                    "native", "super"));
 
     public JasminDumper(PrintWriter pw) {
         this.pw = pw;
@@ -124,7 +110,7 @@ public class JasminDumper implements Opcodes {
         pw.println(cn.version >>> 16);
         println(".source ", cn.sourceFile);
         pw.print(".class");
-        pw.print(access_clz(cn.access));
+        pw.print(accessClz(cn.access));
         pw.print(' ');
         printIdAfterAccess(pw, cn.name);
         pw.println();
@@ -170,7 +156,7 @@ public class JasminDumper implements Opcodes {
 
         for (InnerClassNode in : cn.innerClasses) {
             pw.print(".inner class");
-            pw.print(access_clz(in.access & (~Opcodes.ACC_SUPER)));
+            pw.print(accessClz(in.access & (~Opcodes.ACC_SUPER)));
             if (in.innerName != null) {
                 pw.print(' ');
                 printIdAfterAccess(pw, in.innerName);
@@ -187,22 +173,19 @@ public class JasminDumper implements Opcodes {
         }
 
         for (FieldNode fn : cn.fields) {
-            boolean annotations = fn.visibleAnnotations != null && fn.visibleAnnotations.size() > 0;
-            if (fn.invisibleAnnotations != null && fn.invisibleAnnotations.size() > 0) {
-                annotations = true;
-            }
+            boolean annotations = fn.visibleAnnotations != null && !fn.visibleAnnotations.isEmpty();
             boolean deprecated = (fn.access & Opcodes.ACC_DEPRECATED) != 0;
             pw.print("\n.field");
-            pw.print(access_fld(fn.access));
+            pw.print(accessFld(fn.access));
             pw.print(' ');
-            printIdAfterAccess(pw,fn.name);
+            printIdAfterAccess(pw, fn.name);
             pw.print(' ');
             pw.print(fn.desc);
             if (fn.value instanceof String) {
                 StringBuilder buf = new StringBuilder();
                 Printer.appendString(buf, (String) fn.value);
                 pw.print(" = ");
-                pw.print(buf.toString());
+                pw.print(buf);
             } else if (fn.value != null) {
                 pw.print(" = ");
                 print(fn.value);
@@ -233,7 +216,7 @@ public class JasminDumper implements Opcodes {
 
         for (MethodNode mn : cn.methods) {
             pw.print("\n.method");
-            pw.print(access_mtd(mn.access));
+            pw.print(accessMtd(mn.access));
             pw.print(' ');
             printIdAfterAccess(pw, mn.name);
             pw.println(mn.desc);
@@ -301,13 +284,13 @@ public class JasminDumper implements Opcodes {
                 for (int j = 0; j < mn.instructions.size(); ++j) {
                     AbstractInsnNode in = mn.instructions.get(j);
                     if (in.getType() != AbstractInsnNode.LINE && in.getType() != AbstractInsnNode.FRAME) {
-                       if(in.getType()==AbstractInsnNode.LABEL){
-                           pw.print("  ");
-                       }else {
-                           pw.print("    ");
-                       }
+                        if (in.getType() == AbstractInsnNode.LABEL) {
+                            pw.print("  ");
+                        } else {
+                            pw.print("    ");
+                        }
                     }
-                    in.accept(new MethodVisitor(Opcodes.ASM9) {
+                    in.accept(new MethodVisitor(Constants.ASM_VERSION) {
 
                         @Override
                         public void visitInsn(int opcode) {
@@ -378,7 +361,8 @@ public class JasminDumper implements Opcodes {
                         }
 
                         @Override
-                        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isInterface) {
+                        public void visitMethodInsn(int opcode, String owner, String name, String desc,
+                                                    boolean isInterface) {
                             print(opcode);
                             pw.print(' ');
                             pw.print(owner);
@@ -517,7 +501,8 @@ public class JasminDumper implements Opcodes {
             pw.println(arg);
         }
     }
-    protected String access_clz(final int access) {
+
+    protected String accessClz(final int access) {
         StringBuilder b = new StringBuilder();
         if ((access & Opcodes.ACC_PUBLIC) != 0) {
             b.append(" public");
@@ -551,7 +536,8 @@ public class JasminDumper implements Opcodes {
         }
         return b.toString();
     }
-    protected String access_fld(final int access) {
+
+    protected String accessFld(final int access) {
         StringBuilder b = new StringBuilder();
         if ((access & Opcodes.ACC_PUBLIC) != 0) {
             b.append(" public");
@@ -582,7 +568,8 @@ public class JasminDumper implements Opcodes {
         }
         return b.toString();
     }
-    protected String access_mtd(final int access) {
+
+    protected String accessMtd(final int access) {
         StringBuilder b = new StringBuilder();
         if ((access & Opcodes.ACC_PUBLIC) != 0) {
             b.append(" public");
@@ -631,7 +618,7 @@ public class JasminDumper implements Opcodes {
         if (cst instanceof String) {
             StringBuilder buf = new StringBuilder();
             Printer.appendString(buf, (String) cst);
-            pw.print(buf.toString());
+            pw.print(buf);
         } else if (cst instanceof Float) {
             Float f = (Float) cst;
             if (!f.isNaN() && !f.isInfinite()) {
@@ -669,11 +656,7 @@ public class JasminDumper implements Opcodes {
     }
 
     protected void print(final Label l) {
-        String name = labelNames.get(l);
-        if (name == null) {
-            name = "L" + labelNames.size();
-            labelNames.put(l, name);
-        }
+        String name = labelNames.computeIfAbsent(l, k -> "L" + labelNames.size());
         pw.print(name);
     }
 
@@ -744,7 +727,7 @@ public class JasminDumper implements Opcodes {
             pw.print("[C = ");
             char[] v = (char[]) value;
             for (char element : v) {
-                pw.print(new Integer(element));
+                pw.print(Integer.valueOf(element));
                 pw.print(' ');
             }
             pw.println();
@@ -781,8 +764,8 @@ public class JasminDumper implements Opcodes {
             }
             pw.println();
         } else if (value instanceof List) {
-            List l = (List) value;
-            if (l.size() > 0) {
+            List<?> l = (List<?>) value;
+            if (!l.isEmpty()) {
                 Object o = l.get(0);
                 if (o instanceof String[]) {
                     pw.print("[e ");
@@ -834,7 +817,7 @@ public class JasminDumper implements Opcodes {
             pw.println((Boolean) value ? 1 : 0);
         } else if (value instanceof Character) {
             pw.print("C = ");
-            pw.println(new Integer((Character) value));
+            pw.println(Integer.valueOf((Character) value));
         } else if (value instanceof Short) {
             pw.print("S = ");
             pw.println(((Short) value).intValue());
@@ -874,7 +857,7 @@ public class JasminDumper implements Opcodes {
         } else if (value instanceof Boolean) {
             pw.print((Boolean) value ? 1 : 0);
         } else if (value instanceof Character) {
-            pw.print(new Integer((Character) value));
+            pw.print(Integer.valueOf((Character) value));
         } else if (value instanceof Short) {
             pw.print(((Short) value).intValue());
         } else if (value instanceof Type) {
@@ -885,19 +868,19 @@ public class JasminDumper implements Opcodes {
     }
 
     protected void printFrameType(final Object type) {
-        if (type == Opcodes.TOP) {
+        if (Opcodes.TOP.equals(type)) {
             pw.print("Top");
-        } else if (type == Opcodes.INTEGER) {
+        } else if (Opcodes.INTEGER.equals(type)) {
             pw.print("Integer");
-        } else if (type == Opcodes.FLOAT) {
+        } else if (Opcodes.FLOAT.equals(type)) {
             pw.print("Float");
-        } else if (type == Opcodes.LONG) {
+        } else if (Opcodes.LONG.equals(type)) {
             pw.print("Long");
-        } else if (type == Opcodes.DOUBLE) {
+        } else if (Opcodes.DOUBLE.equals(type)) {
             pw.print("Double");
-        } else if (type == Opcodes.NULL) {
+        } else if (Opcodes.NULL.equals(type)) {
             pw.print("Null");
-        } else if (type == Opcodes.UNINITIALIZED_THIS) {
+        } else if (Opcodes.UNINITIALIZED_THIS.equals(type)) {
             pw.print("UninitializedThis");
         } else if (type instanceof Label) {
             pw.print("Uninitialized ");
@@ -907,4 +890,5 @@ public class JasminDumper implements Opcodes {
             pw.print(type);
         }
     }
+
 }

@@ -5,15 +5,22 @@ import com.googlecode.d2j.util.zip.AccessBufByteArrayOutputStream;
 import com.googlecode.d2j.util.zip.ZipEntry;
 import com.googlecode.d2j.util.zip.ZipFile;
 import com.googlecode.d2j.visitors.DexFileVisitor;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class MultiDexFileReader implements BaseDexFileReader {
-    final private List<DexFileReader> readers = new ArrayList<>();
-    final private List<Item> items = new ArrayList<>();
+
+    private final List<DexFileReader> readers = new ArrayList<>();
+
+    private final List<Item> items = new ArrayList<>();
 
     public MultiDexFileReader(Collection<DexFileReader> readers) {
         this.readers.addAll(readers);
@@ -29,13 +36,17 @@ public class MultiDexFileReader implements BaseDexFileReader {
         return out.getBuf();
     }
 
+    public static BaseDexFileReader open(InputStream in) throws IOException {
+        return open(toByteArray(in));
+    }
+
     public static BaseDexFileReader open(byte[] data) throws IOException {
         if (data.length < 3) {
             throw new IOException("File too small to be a dex/zip");
         }
-        if ("dex".equals(new String(data, 0, 3, StandardCharsets.ISO_8859_1))) {// dex
+        if ("dex".equals(new String(data, 0, 3, StandardCharsets.ISO_8859_1))) { // dex
             return new DexFileReader(data);
-        } else if ("PK".equals(new String(data, 0, 2, StandardCharsets.ISO_8859_1))) {// ZIP
+        } else if ("PK".equals(new String(data, 0, 2, StandardCharsets.ISO_8859_1))) { // ZIP
             TreeMap<String, DexFileReader> dexFileReaders = new TreeMap<>();
             try (ZipFile zipFile = new ZipFile(data)) {
                 for (ZipEntry e : zipFile.entries()) {
@@ -47,7 +58,7 @@ public class MultiDexFileReader implements BaseDexFileReader {
                     }
                 }
             }
-            if (dexFileReaders.size() == 0) {
+            if (dexFileReaders.isEmpty()) {
                 throw new IOException("Can not find classes.dex in zip file");
             } else if (dexFileReaders.size() == 1) {
                 return dexFileReaders.firstEntry().getValue();
@@ -73,14 +84,8 @@ public class MultiDexFileReader implements BaseDexFileReader {
 
     @Override
     public int getDexVersion() {
-        int max = DexConstants.DEX_035;
-        for (DexFileReader r : readers) {
-            int v = r.getDexVersion();
-            if (v > max) {
-                max = v;
-            }
-        }
-        return max;
+        return readers.stream().mapToInt(DexFileReader::getDexVersion)
+                .max().orElse(DexConstants.DEX_035);
     }
 
     @Override
@@ -118,14 +123,19 @@ public class MultiDexFileReader implements BaseDexFileReader {
     }
 
     static class Item {
+
         int idx;
+
         DexFileReader reader;
+
         String className;
 
-        public Item(int i, DexFileReader reader, String className) {
+        Item(int i, DexFileReader reader, String className) {
             idx = i;
             this.reader = reader;
             this.className = className;
         }
+
     }
+
 }

@@ -1,7 +1,5 @@
 package com.googlecode.dex2jar.ir.ts;
 
-import java.util.*;
-
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Constant;
 import com.googlecode.dex2jar.ir.expr.Exprs;
@@ -10,23 +8,32 @@ import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 1. Remove constant AssignStmt.
- * 
+ *
  * <pre>
  * a = &quot;123&quot;;
  * return a;
  * </pre>
- * 
+ * <p>
  * to
- * 
+ *
  * <pre>
  * return &quot;123&quot;;
  * </pre>
- * 
+ * <p>
  * 2. Remove Phi if all value are equal
- * 
+ *
  * <pre>
  * a = &quot;123&quot;;
  * // ...
@@ -35,9 +42,9 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
  * c = PHI(a, b);
  * return c;
  * </pre>
- * 
+ * <p>
  * to
- * 
+ *
  * <pre>
  * // ...
  * return &quot;123&quot;;
@@ -45,7 +52,7 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
  */
 public class RemoveConstantFromSSA extends StatedTransformer {
 
-    public static final Comparator<Local> LOCAL_COMPARATOR = Comparator.comparingInt(local -> local._ls_index);
+    public static final Comparator<Local> LOCAL_COMPARATOR = Comparator.comparingInt(local -> local.lsIndex);
 
     @Override
     public boolean transformReportChanged(IrMethod method) {
@@ -65,7 +72,7 @@ public class RemoveConstantFromSSA extends StatedTransformer {
                 }
             }
         }
-        if (assignStmtList.size() == 0) {
+        if (assignStmtList.isEmpty()) {
             return false;
         }
         RemoveLocalFromSSA.fixReplace(cstMap);
@@ -77,10 +84,12 @@ public class RemoveConstantFromSSA extends StatedTransformer {
             while (loopAgain) {
                 loopAgain = false;
                 usedInPhi.clear();
-                for (Iterator<LabelStmt> it = phiLabels.iterator(); it.hasNext();) {
+                Iterator<LabelStmt> it = phiLabels.iterator();
+                while (it.hasNext()) {
                     LabelStmt labelStmt = it.next();
                     if (labelStmt.phis != null) {
-                        for (Iterator<AssignStmt> it2 = labelStmt.phis.iterator(); it2.hasNext();) {
+                        Iterator<AssignStmt> it2 = labelStmt.phis.iterator();
+                        while (it2.hasNext()) {
                             AssignStmt phi = it2.next();
                             Value[] vs = phi.getOp2().getOps();
                             Object sameCst = null;
@@ -114,7 +123,7 @@ public class RemoveConstantFromSSA extends StatedTransformer {
                                 usedInPhi.addAll(Arrays.asList(phi.getOp2().getOps()));
                             }
                         }
-                        if (labelStmt.phis.size() == 0) {
+                        if (labelStmt.phis.isEmpty()) {
                             it.remove();
                         }
                     }
@@ -122,7 +131,8 @@ public class RemoveConstantFromSSA extends StatedTransformer {
             }
         }
 
-        for (Iterator<AssignStmt> it = assignStmtList.iterator(); it.hasNext();) {
+        Iterator<AssignStmt> it = assignStmtList.iterator();
+        while (it.hasNext()) {
             AssignStmt as = it.next();
             if (!usedInPhi.contains(as.getOp1())) {
                 it.remove();
@@ -148,4 +158,5 @@ public class RemoveConstantFromSSA extends StatedTransformer {
         }, false);
         return changed;
     }
+
 }

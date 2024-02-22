@@ -17,4 +17,5 @@ public class SparseSwitchStmtNode extends BaseSwitchStmtNode {
     public void accept(DexCodeVisitor cv) {
         cv.visitSparseSwitchStmt(op, a, cases, labels);
     }
+
 }

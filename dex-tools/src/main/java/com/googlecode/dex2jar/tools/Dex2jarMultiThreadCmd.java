@@ -1,45 +1,35 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.tools;
 
+import com.googlecode.d2j.dex.ClassVisitorFactory;
+import com.googlecode.d2j.dex.ExDex2Asm;
+import com.googlecode.d2j.dex.LambadaNameSafeClassAdapter;
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexFileNode;
+import com.googlecode.d2j.reader.BaseDexFileReader;
+import com.googlecode.d2j.reader.DexFileReader;
+import com.googlecode.d2j.reader.MultiDexFileReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.*;
-
-import com.googlecode.d2j.dex.LambadaNameSafeClassAdapter;
-import com.googlecode.d2j.reader.BaseDexFileReader;
-import com.googlecode.d2j.reader.MultiDexFileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-
-import com.googlecode.d2j.dex.ClassVisitorFactory;
-import com.googlecode.d2j.dex.ExDex2Asm;
-import com.googlecode.d2j.node.DexClassNode;
-import com.googlecode.d2j.node.DexFileNode;
-import com.googlecode.d2j.reader.DexFileReader;
 
 @BaseCmd.Syntax(cmd = "d2j-mt-dex2jar", syntax = "[options] <file0> [file1 ... fileN]", desc = "convert dex to jar")
 public class Dex2jarMultiThreadCmd extends BaseCmd {
+
     public static void main(String... args) {
         new Dex2jarMultiThreadCmd().doMain(args);
     }
@@ -50,13 +40,16 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
     @Opt(opt = "fl", longOpt = "file-list", description = "a file contains a list of dex to process")
     private Path fileList;
 
+    @Opt(opt = "dsn", longOpt = "dont-sanitize-names", hasArg = false, description = "do not replace '_' by '-'")
+    private boolean dontSanitizeNames = false;
+
     @Override
     protected void doCommandLine() throws Exception {
         List<String> f = new ArrayList<>(Arrays.asList(remainingArgs));
         if (fileList != null) {
             f.addAll(Files.readAllLines(fileList, StandardCharsets.UTF_8));
         }
-        if (f.size() < 1) {
+        if (f.isEmpty()) {
             throw new HelpException();
         }
 
@@ -105,8 +98,8 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
             @Override
             public ClassVisitor create(final String name) {
                 final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-                final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw);
-                return new ClassVisitor(Opcodes.ASM9, rca) {
+                final LambadaNameSafeClassAdapter rca = new LambadaNameSafeClassAdapter(cw, dontSanitizeNames);
+                return new ClassVisitor(Constants.ASM_VERSION, rca) {
                     @Override
                     public void visitEnd() {
                         super.visitEnd();
@@ -116,7 +109,7 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
                             // FIXME handle 'java.lang.RuntimeException: Method code too large!'
                             data = cw.toByteArray();
                         } catch (Exception ex) {
-                            System.err.printf("ASM fail to generate .class file: %s%n", className);
+                            System.err.printf("ASM failed to generate .class file: %s%n", className);
                             exceptionHandler.handleFileException(ex);
                             return;
                         }
@@ -140,36 +133,30 @@ public class Dex2jarMultiThreadCmd extends BaseCmd {
                     final Map<String, Clz> classes = collectClzInfo(fileNode);
                     final List<Future<?>> results = new ArrayList<>(fileNode.clzs.size());
                     for (final DexClassNode classNode : fileNode.clzs) {
-                        results.add(executorService.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                convertClass(fileNode, classNode, cvf, classes);
-                            }
-                        }));
+                        results.add(executorService.submit(() -> convertClass(fileNode, classNode, cvf, classes)));
                     }
-                    executorService.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            for (Future<?> result : results) {
-                                try {
-                                    result.get();
-                                } catch (InterruptedException | ExecutionException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                            BaksmaliBaseDexExceptionHandler exceptionHandler1 = (BaksmaliBaseDexExceptionHandler) exceptionHandler;
-                            if (exceptionHandler1.hasException()) {
-                                exceptionHandler1.dump(errorFile, new String[0]);
-                            }
+                    executorService.submit(() -> {
+                        for (Future<?> result : results) {
                             try {
-                                fs.close();
-                            } catch (IOException e) {
+                                result.get();
+                            } catch (InterruptedException | ExecutionException e) {
                                 e.printStackTrace();
                             }
+                        }
+                        BaksmaliBaseDexExceptionHandler exceptionHandler1 =
+                                (BaksmaliBaseDexExceptionHandler) exceptionHandler;
+                        if (exceptionHandler1.hasException()) {
+                            exceptionHandler1.dump(errorFile, new String[0]);
+                        }
+                        try {
+                            fs.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     });
                 }
             }
         }.convertDex(fileNode, cvf);
     }
+
 }

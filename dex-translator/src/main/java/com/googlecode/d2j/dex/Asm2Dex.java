@@ -5,12 +5,10 @@ import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.MethodHandle;
 import com.googlecode.d2j.Proto;
-
+import java.util.Arrays;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-
-import java.util.Arrays;
 
 public class Asm2Dex {
     public static Object convertConstantValue(Object ele) {
@@ -45,30 +43,33 @@ public class Asm2Dex {
 
     public static MethodHandle toMethodHandle(Handle bsm) {
         switch (bsm.getTag()) {
-            case Opcodes.H_GETFIELD:
-                return new MethodHandle(MethodHandle.INSTANCE_GET, toField(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
-            case Opcodes.H_GETSTATIC:
-                return new MethodHandle(MethodHandle.STATIC_GET, toField(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
-            case Opcodes.H_PUTFIELD:
-                return new MethodHandle(MethodHandle.INSTANCE_PUT, toField(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
-            case Opcodes.H_PUTSTATIC:
-                return new MethodHandle(MethodHandle.STATIC_PUT, toField(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
-            case Opcodes.H_INVOKEVIRTUAL:
-                return new MethodHandle(MethodHandle.INVOKE_INSTANCE, toMethod(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
-            case Opcodes.H_INVOKESTATIC:
-                return new MethodHandle(MethodHandle.INVOKE_STATIC, toMethod(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
-            case Opcodes.H_INVOKESPECIAL:
-                return new MethodHandle(MethodHandle.INVOKE_DIRECT, toMethod(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
-            case Opcodes.H_NEWINVOKESPECIAL:
-                return new MethodHandle(MethodHandle.INVOKE_CONSTRUCTOR, toMethod(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
-            case Opcodes.H_INVOKEINTERFACE:
-                return new MethodHandle(MethodHandle.INVOKE_INTERFACE, toMethod(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
-            default:
-                throw new RuntimeException("Not supported yet.");
+        case Opcodes.H_GETFIELD:
+            return new MethodHandle(MethodHandle.INSTANCE_GET, toField(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
+        case Opcodes.H_GETSTATIC:
+            return new MethodHandle(MethodHandle.STATIC_GET, toField(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
+        case Opcodes.H_PUTFIELD:
+            return new MethodHandle(MethodHandle.INSTANCE_PUT, toField(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
+        case Opcodes.H_PUTSTATIC:
+            return new MethodHandle(MethodHandle.STATIC_PUT, toField(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
+        case Opcodes.H_INVOKEVIRTUAL:
+            return new MethodHandle(MethodHandle.INVOKE_INSTANCE, toMethod(bsm.getOwner(), bsm.getName(),
+                    bsm.getDesc()));
+        case Opcodes.H_INVOKESTATIC:
+            return new MethodHandle(MethodHandle.INVOKE_STATIC, toMethod(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
+        case Opcodes.H_INVOKESPECIAL:
+            return new MethodHandle(MethodHandle.INVOKE_DIRECT, toMethod(bsm.getOwner(), bsm.getName(), bsm.getDesc()));
+        case Opcodes.H_NEWINVOKESPECIAL:
+            return new MethodHandle(MethodHandle.INVOKE_CONSTRUCTOR, toMethod(bsm.getOwner(), bsm.getName(),
+                    bsm.getDesc()));
+        case Opcodes.H_INVOKEINTERFACE:
+            return new MethodHandle(MethodHandle.INVOKE_INTERFACE, toMethod(bsm.getOwner(), bsm.getName(),
+                    bsm.getDesc()));
+        default:
+            throw new RuntimeException("Not supported yet.");
         }
     }
 
-    static  private Method toMethod(String internalName, String name, String desc) {
+    static private Method toMethod(String internalName, String name, String desc) {
         return new Method("L" + internalName + ";", name, toMethodType(desc));
     }
 

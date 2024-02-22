@@ -1,22 +1,4 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2015 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.tools.jar;
-
-import org.objectweb.asm.Type;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,23 +7,40 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.objectweb.asm.Type;
 
 
 public class BaseWeaver {
+
     protected String invocationInterfaceDesc = "Lcom/googlecode/d2j/tools/jar/MethodInvocation;";
+
     protected String invocationTypePrefix = "d2j/gen/MI_";
 
     protected static final String DEFAULT_RET_TYPE = "L888;";
+
     protected static final String DEFAULT_DESC = "(L;)" + DEFAULT_RET_TYPE;
-    protected List<Callback> callbacks = new ArrayList<Callback>();
+
+    protected List<Callback> callbacks = new ArrayList<>();
+
     protected int currentInvocationIdx = 0;
+
     protected int seqIndex = 1;
+
     protected MtdInfo key = new MtdInfo();
-    protected Set<String> ignores = new HashSet<String>();
-    protected Map<String, String> clzDescMap = new HashMap<String, String>();
-    protected Map<MtdInfo, MtdInfo> mtdMap = new HashMap<MtdInfo, MtdInfo>();
-    protected Map<MtdInfo, MtdInfo> defMap = new HashMap<MtdInfo, MtdInfo>();
+
+    protected Set<String> ignores = new HashSet<>();
+
+    protected Map<String, String> clzDescMap = new HashMap<>();
+
+    protected Map<MtdInfo, MtdInfo> mtdMap = new HashMap<>();
+
+    protected Map<MtdInfo, MtdInfo> defMap = new HashMap<>();
 
     protected String buildMethodAName(String oldName) {
         return String.format("%s_A%03d", oldName, seqIndex++);
@@ -116,62 +115,64 @@ public class BaseWeaver {
             return;
         }
         switch (Character.toLowerCase(ln.charAt(0))) {
-            case 'i':
-                ignores.add(ln.substring(2));
-                break;
-            case 'c':
-                int index = ln.lastIndexOf('=');
-                if (index > 0) {
-                    String key = toInternal(ln.substring(2, index));
-                    String value = toInternal(ln.substring(index + 1));
-                    clzDescMap.put(key, value);
-                    ignores.add(value);
-                }
-                break;
-            case 'r':
-                index = ln.lastIndexOf('=');
-                if (index > 0) {
-                    String key = ln.substring(2, index);
-                    String value = ln.substring(index + 1);
-                    MtdInfo mi = buildMethodInfo(key);
+        case 'i':
+            ignores.add(ln.substring(2));
+            break;
+        case 'c':
+            int index = ln.lastIndexOf('=');
+            if (index > 0) {
+                String key = toInternal(ln.substring(2, index));
+                String value = toInternal(ln.substring(index + 1));
+                clzDescMap.put(key, value);
+                ignores.add(value);
+            }
+            break;
+        case 'r':
+            index = ln.lastIndexOf('=');
+            if (index > 0) {
+                String key = ln.substring(2, index);
+                String value = ln.substring(index + 1);
+                MtdInfo mi = buildMethodInfo(key);
 
-                    index = value.indexOf('.');
-                    MtdInfo mtdValue = new MtdInfo();
-                    mtdValue.owner = value.substring(0, index);
+                index = value.indexOf('.');
+                MtdInfo mtdValue = new MtdInfo();
+                mtdValue.owner = value.substring(0, index);
 
-                    int index2 = value.indexOf('(', index);
-                    mtdValue.name = value.substring(index + 1, index2);
-                    mtdValue.desc = value.substring(index2);
+                int index2 = value.indexOf('(', index);
+                mtdValue.name = value.substring(index + 1, index2);
+                mtdValue.desc = value.substring(index2);
 
-                    mtdMap.put(mi, mtdValue);
+                mtdMap.put(mi, mtdValue);
 
-                }
-                break;
-            case 'd':
-                index = ln.lastIndexOf('=');
-                if (index > 0) {
-                    String key = ln.substring(2, index);
-                    String value = ln.substring(index + 1);
-                    MtdInfo mi = buildMethodInfo(key);
+            }
+            break;
+        case 'd':
+            index = ln.lastIndexOf('=');
+            if (index > 0) {
+                String key = ln.substring(2, index);
+                String value = ln.substring(index + 1);
+                MtdInfo mi = buildMethodInfo(key);
 
-                    index = value.indexOf('.');
-                    MtdInfo mtdValue = new MtdInfo();
-                    mtdValue.owner = value.substring(0, index);
+                index = value.indexOf('.');
+                MtdInfo mtdValue = new MtdInfo();
+                mtdValue.owner = value.substring(0, index);
 
-                    int index2 = value.indexOf('(', index);
-                    mtdValue.name = value.substring(index + 1, index2);
-                    mtdValue.desc = value.substring(index2);
+                int index2 = value.indexOf('(', index);
+                mtdValue.name = value.substring(index + 1, index2);
+                mtdValue.desc = value.substring(index2);
 
-                    defMap.put(mi, mtdValue);
-                }
-                break;
+                defMap.put(mi, mtdValue);
+            }
+            break;
 
-            case 'o':
-                setInvocationInterfaceDesc(ln.substring(2));
-                break;
-            case 'p':
-                invocationTypePrefix = ln.substring(2);
-                break;
+        case 'o':
+            setInvocationInterfaceDesc(ln.substring(2));
+            break;
+        case 'p':
+            invocationTypePrefix = ln.substring(2);
+            break;
+        default:
+            break;
         }
     }
 
@@ -217,35 +218,45 @@ public class BaseWeaver {
     }
 
     public static class Callback {
+
         int idx;
+
         Object callback;
+
         Object target;
+
         boolean isSpecial;
+
         boolean isStatic;
+
     }
 
     public static class MtdInfo {
+
         public String desc;
+
         public String name;
+
         public String owner;
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
+            if (this == o) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
+            }
 
             MtdInfo mtdInfo = (MtdInfo) o;
 
-            if (!desc.equals(mtdInfo.desc))
+            if (!desc.equals(mtdInfo.desc)) {
                 return false;
-            if (!name.equals(mtdInfo.name))
+            }
+            if (!name.equals(mtdInfo.name)) {
                 return false;
-            if (!owner.equals(mtdInfo.owner))
-                return false;
-
-            return true;
+            }
+            return owner.equals(mtdInfo.owner);
         }
 
         @Override
@@ -255,6 +266,7 @@ public class BaseWeaver {
             result = 31 * result + owner.hashCode();
             return result;
         }
+
     }
 
 }

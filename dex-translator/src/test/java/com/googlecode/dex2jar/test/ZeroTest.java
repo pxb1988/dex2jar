@@ -3,20 +3,27 @@ package com.googlecode.dex2jar.test;
 import com.googlecode.d2j.DexConstants;
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Method;
-import com.googlecode.d2j.visitors.DexClassVisitor;
+import com.googlecode.d2j.node.DexClassNode;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import static com.googlecode.d2j.reader.Op.*;
+import static com.googlecode.d2j.reader.Op.CONST;
+import static com.googlecode.d2j.reader.Op.GOTO;
+import static com.googlecode.d2j.reader.Op.IF_EQ;
+import static com.googlecode.d2j.reader.Op.INVOKE_STATIC;
+import static com.googlecode.d2j.reader.Op.MOVE_RESULT;
+import static com.googlecode.d2j.reader.Op.MOVE_RESULT_OBJECT;
+import static com.googlecode.d2j.reader.Op.RETURN_OBJECT;
 
-@RunWith(DexTranslatorRunner.class)
+@ExtendWith(DexTranslatorRunner.class)
 public class ZeroTest implements DexConstants {
+
     @Test
-    public static void testZero(DexClassVisitor cv) {
+    public void testZero(DexClassNode cv) {
         DexMethodVisitor mv = cv
-                .visitMethod(ACC_STATIC, new Method("La;", "b", new String[] {}, "[Ljava/lang/Object;"));
+                .visitMethod(ACC_STATIC, new Method("La;", "b", new String[]{}, "[Ljava/lang/Object;"));
         if (mv != null) {
             DexCodeVisitor code = mv.visitCode();
             if (code != null) {
@@ -34,8 +41,8 @@ public class ZeroTest implements DexConstants {
                 code.visitMethodStmt(INVOKE_STATIC, new int[0], new Method("La;", "getBytes", new String[0], "[B"));
                 code.visitStmt1R(MOVE_RESULT_OBJECT, v0);
                 code.visitLabel(L3);
-                code.visitMethodStmt(INVOKE_STATIC, new int[] { v0 }, new Method("La;", "useBytes",
-                        new String[] { "[B" }, "V"));
+                code.visitMethodStmt(INVOKE_STATIC, new int[]{v0}, new Method("La;", "useBytes",
+                        new String[]{"[B"}, "V"));
                 code.visitMethodStmt(INVOKE_STATIC, new int[0], new Method("La;", "getObjects", new String[0],
                         "[Ljava/lang/Object;"));
                 code.visitStmt1R(MOVE_RESULT, v0);
@@ -44,5 +51,6 @@ public class ZeroTest implements DexConstants {
             }
             mv.visitEnd();
         }
+        cv.visitEnd();
     }
 }

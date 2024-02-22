@@ -1,31 +1,25 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
+import com.googlecode.dex2jar.ir.stmt.BaseSwitchStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Cfg.TravelCallBack;
 import com.googlecode.dex2jar.ir.ts.an.AnalyzeValue;
 import com.googlecode.dex2jar.ir.ts.an.BaseAnalyze;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * Transform Stmt to SSA form and count local read
@@ -39,12 +33,13 @@ public class SSATransformer implements Transformer {
         int i = 0;
         for (Local local : method.locals) {
             local.tag = null;
-            local._ls_index = i++;
+            local.lsIndex = i++;
         }
     }
 
     private void deleteDeadCode(IrMethod method) {
-        for (Iterator<Stmt> it = method.stmts.iterator(); it.hasNext(); ) {
+        Iterator<Stmt> it = method.stmts.iterator();
+        while (it.hasNext()) {
             Stmt stmt = it.next();
             if (!stmt.visited && stmt.st != ST.LABEL) {
                 it.remove();
@@ -61,7 +56,7 @@ public class SSATransformer implements Transformer {
 
             @Override
             public Value onAssign(Local a, AssignStmt as) {
-                if (a._ls_index < 0) {
+                if (a.lsIndex < 0) {
                     locals.add(a);
                     return a;
                 }
@@ -73,12 +68,11 @@ public class SSATransformer implements Transformer {
 
             @Override
             public Value onUse(Local a) {
-                if (a._ls_index < 0) {
+                if (a.lsIndex < 0) {
                     return a;
                 }
                 SSAValue lsv = (SSAValue) a.tag;
-                Local b = lsv.local;
-                return b;
+                return lsv.local;
             }
 
         };
@@ -108,7 +102,7 @@ public class SSATransformer implements Transformer {
                             phis = new ArrayList<>();
                         }
                         locals.add(v.local);
-                        phis.add(Stmts.nAssign(v.local, Exprs.nPhi(froms.toArray(new Value[froms.size()]))));
+                        phis.add(Stmts.nAssign(v.local, Exprs.nPhi(froms.toArray(new Value[0]))));
                         froms.clear();
                     }
                 }
@@ -121,7 +115,7 @@ public class SSATransformer implements Transformer {
             }
             p.frame = null;
         }
-        if (phiLabels.size() > 0) {
+        if (!phiLabels.isEmpty()) {
             method.phiLabels = phiLabels;
         }
     }
@@ -146,18 +140,18 @@ public class SSATransformer implements Transformer {
     private boolean prepare(final IrMethod method) {
         int index = Cfg.reIndexLocal(method);
 
-        final int readCounts[] = new int[index];
-        final int writeCounts[] = new int[index];
+        final int[] readCounts = new int[index];
+        final int[] writeCounts = new int[index];
         Cfg.travel(method.stmts, new TravelCallBack() {
             @Override
             public Value onAssign(Local v, AssignStmt as) {
-                writeCounts[v._ls_index]++;
+                writeCounts[v.lsIndex]++;
                 return v;
             }
 
             @Override
             public Value onUse(Local v) {
-                readCounts[v._ls_index]++;
+                readCounts[v.lsIndex]++;
                 return v;
             }
         }, true);
@@ -170,29 +164,27 @@ public class SSATransformer implements Transformer {
         oldLocals.clear();
 
         for (Local local : locals) {
-            int idx = local._ls_index;
+            int idx = local.lsIndex;
             int read = readCounts[idx];
             int write = writeCounts[idx];
-            if (read > 0 && write == 0) {
+            /*if (read > 0 && write == 0) {
                 // TODO if we need throw exception ?
                 // or the code is dead?
-            }
+            }*/
 
-            if (read == 0 && write == 0) {
-                // ignore the local
-            } else {
+            if (read != 0 || write != 0) {
                 if (write <= 1) {
                     // no phi require
-                    local._ls_index = -1;
+                    local.lsIndex = -1;
                     oldLocals.add(local);
                 } else if (read == 0) {
-                    local._ls_index = -2;
+                    local.lsIndex = -2;
                     needTravel = true;
                     // we are going to duplicate each usage of the local and add to method.locals,
                     // so not add the original local to method.locals
                 } else {
                     needSSAAnalyze = true;
-                    local._ls_index = index++;
+                    local.lsIndex = index++;
                     oldLocals.add(local);
                 }
             }
@@ -202,9 +194,9 @@ public class SSATransformer implements Transformer {
 
                 @Override
                 public Value onAssign(Local v, AssignStmt as) {
-                    if (v._ls_index == -1) {
+                    if (v.lsIndex == -1) {
                         return v;
-                    } else if (v._ls_index == -2) {
+                    } else if (v.lsIndex == -2) {
                         Local n = (Local) v.clone();
                         method.locals.add(n);
                         return n;
@@ -215,7 +207,7 @@ public class SSATransformer implements Transformer {
 
                 @Override
                 public Value onUse(Local v) {
-                    if (v._ls_index == -1) {
+                    if (v.lsIndex == -1) {
                         return v;
                     }
                     return v.clone();
@@ -226,9 +218,10 @@ public class SSATransformer implements Transformer {
     }
 
     static class SSAAnalyze extends BaseAnalyze<SSAValue> {
+
         public int nextIndex;
 
-        public SSAAnalyze(IrMethod method) {
+        SSAAnalyze(IrMethod method) {
             super(method, false);
         }
 
@@ -236,7 +229,7 @@ public class SSATransformer implements Transformer {
         protected void afterExec(SSAValue[] frame, Stmt stmt) {
             if (!DEBUG) {
                 // remove frame to save memory
-                if (stmt._cfg_froms.size() < 2) {
+                if (stmt.cfgFroms.size() < 2) {
                     // we only care stmt only has one or less parent,
                     // the parent must be visited already.
                     // if more than 1 parent, the other may not been visited at
@@ -248,7 +241,7 @@ public class SSATransformer implements Transformer {
 
         @Override
         public Local onUse(Local local) {
-            if (local._ls_index < 0) {
+            if (local.lsIndex < 0) {
                 return local;
             }
             return super.onUse(local);
@@ -256,7 +249,7 @@ public class SSATransformer implements Transformer {
 
         @Override
         public Local onAssign(Local local, AssignStmt as) {
-            if (local._ls_index < 0) {
+            if (local.lsIndex < 0) {
                 return local;
             }
             return super.onAssign(local, as);
@@ -271,9 +264,8 @@ public class SSATransformer implements Transformer {
                 clearLsEmptyValueFromFrame();
             }
             for (SSAValue v0 : set) {
-                SSAValue v = v0;
-                if (v.used && v.local == null) {
-                    v.local = new Local(nextIndex++);
+                if (v0.used && v0.local == null) {
+                    v0.local = new Local(nextIndex++);
                 }
             }
         }
@@ -304,7 +296,7 @@ public class SSATransformer implements Transformer {
         }
 
         protected Set<SSAValue> markUsed() {
-            Set<SSAValue> used = new HashSet<SSAValue>(aValues.size() / 2);
+            Set<SSAValue> used = new HashSet<>(aValues.size() / 2);
             Queue<SSAValue> q = new UniqueQueue<>();
             q.addAll(aValues);
             while (!q.isEmpty()) {
@@ -339,7 +331,7 @@ public class SSATransformer implements Transformer {
             if (distFrame != null) {
                 relationMerge(frame, dist, distFrame);
             } else {
-                if (dist._cfg_froms.size() > 1) {// detail mode
+                if (dist.cfgFroms.size() > 1) { // detail mode
                     distFrame = newFrame();
                     relationMerge(frame, dist, distFrame);
                 } else if (needCopyFrame(src)) {
@@ -406,9 +398,9 @@ public class SSATransformer implements Transformer {
 
         protected void relationMerge(SSAValue[] frame, Stmt dist, SSAValue[] distFrame) {
             for (int i = 0; i < localSize; i++) {
-                SSAValue srcValue = (SSAValue) frame[i];
+                SSAValue srcValue = frame[i];
                 if (srcValue != null) {
-                    SSAValue distValue = (SSAValue) distFrame[i];
+                    SSAValue distValue = distFrame[i];
                     if (distValue == null) {
                         if (!dist.visited) {
                             distValue = newValue();
@@ -426,22 +418,26 @@ public class SSATransformer implements Transformer {
         private void linkParentChildren(SSAValue p, SSAValue c) {
             if (c.parent == null) {
                 c.parent = p;
-            } else if (c.parent == p) {
-                return;
-            } else {
+            } else if (c.parent != p) {
                 Set<SSAValue> ps = c.otherParents;
                 if (ps == null) {
-                    c.otherParents = ps = new HashSet<>(3);
+                    ps = new HashSet<>(3);
+                    c.otherParents = ps;
                 }
                 ps.add(p);
             }
         }
+
     }
 
     private static class SSAValue implements AnalyzeValue {
+
         public Local local;
+
         public Set<SSAValue> otherParents;
+
         public boolean used = false;
+
         public SSAValue parent;
 
         @Override
@@ -457,6 +453,7 @@ public class SSATransformer implements Transformer {
                 return "N";
             }
         }
+
     }
 
 }

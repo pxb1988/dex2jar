@@ -4,8 +4,6 @@ public class I71 {
 
     /**
      * code similar to edu.emory.mathcs.backport.java.util.concurrent.ConcurrentSkipListMap.SubMap.size()
-     * 
-     * @return
      */
     public int size() {
         long count = 0;

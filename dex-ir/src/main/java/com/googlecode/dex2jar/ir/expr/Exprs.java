@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.expr;
 
 import com.googlecode.d2j.CallSite;
@@ -23,11 +8,12 @@ import com.googlecode.d2j.Proto;
 import com.googlecode.dex2jar.ir.expr.Value.VT;
 
 public final class Exprs {
+
     public static Value[] copy(Value[] v) {
         if (v == null) {
             return new Value[0];
         }
-        Value vb[] = new Value[v.length];
+        Value[] vb = new Value[v.length];
         for (int i = 0; i < v.length; i++) {
             vb[i] = v[i].trim();
         }
@@ -45,6 +31,7 @@ public final class Exprs {
     public static Constant nType(String desc) {
         return new Constant(new DexType(desc));
     }
+
     public static Constant nType(DexType t) {
         return new Constant(t);
     }
@@ -66,7 +53,7 @@ public final class Exprs {
     }
 
     public static Constant nNull() {
-        return new Constant(Constant.Null);
+        return new Constant(Constant.NULL);
     }
 
     public static Constant nShort(short i) {
@@ -76,12 +63,15 @@ public final class Exprs {
     public static Constant nString(String i) {
         return new Constant(i);
     }
+
     public static Constant nMethodHandle(MethodHandle i) {
         return new Constant(i);
     }
+
     public static Constant nProto(Proto i) {
         return new Constant(i);
     }
+
     public static BinopExpr nAdd(Value a, Value b, String type) {
         return new BinopExpr(VT.ADD, a, b, type);
     }
@@ -119,17 +109,17 @@ public final class Exprs {
     }
 
     public static BinopExpr nDiv(Value a, Value b, String type) {
-        switch (type){
-            case "I":
-                return new BinopExpr(VT.IDIV, a, b, type);
-            case "J":
-                return new BinopExpr(VT.LDIV, a, b, type);
-            case "F":
-                return new BinopExpr(VT.FDIV, a, b, type);
-            case "D":
-                return new BinopExpr(VT.DDIV, a, b, type);
-            default:
-                throw new RuntimeException("type must set to one of I/J/F/D");
+        switch (type) {
+        case "I":
+            return new BinopExpr(VT.IDIV, a, b, type);
+        case "J":
+            return new BinopExpr(VT.LDIV, a, b, type);
+        case "F":
+            return new BinopExpr(VT.FDIV, a, b, type);
+        case "D":
+            return new BinopExpr(VT.DDIV, a, b, type);
+        default:
+            throw new RuntimeException("type must set to one of I/J/F/D");
         }
     }
 
@@ -178,7 +168,7 @@ public final class Exprs {
     }
 
     public static InvokeExpr nInvokeInterface(Value[] regs, String owner, String name, String[] argmentTypes,
-            String returnType) {
+                                              String returnType) {
         return new InvokeExpr(VT.INVOKE_INTERFACE, regs, owner, name, argmentTypes, returnType);
     }
 
@@ -187,26 +177,26 @@ public final class Exprs {
     }
 
     public static InvokeExpr nInvokeSpecial(Value[] regs, String owner, String name, String[] argmentTypes,
-            String returnType) {
+                                            String returnType) {
         return new InvokeExpr(VT.INVOKE_SPECIAL, regs, owner, name, argmentTypes, returnType);
     }
 
     public static InvokeExpr nInvokeStatic(Value[] regs, String owner, String name, String[] argmentTypes,
-            String returnType) {
+                                           String returnType) {
         return new InvokeExpr(VT.INVOKE_STATIC, regs, owner, name, argmentTypes, returnType);
     }
 
     public static InvokeExpr nInvokeVirtual(Value[] regs, String owner, String name, String[] argmentTypes,
-            String returnType) {
+                                            String returnType) {
         return new InvokeExpr(VT.INVOKE_VIRTUAL, regs, owner, name, argmentTypes, returnType);
     }
 
     public static InvokeCustomExpr nInvokeCustom(Value[] regs, CallSite callSite) {
-        return new InvokeCustomExpr(VT.INVOKE_CUSTOM, regs , callSite);
+        return new InvokeCustomExpr(VT.INVOKE_CUSTOM, regs, callSite);
     }
 
     public static InvokePolymorphicExpr nInvokePolymorphic(Value[] regs, Proto proto, Method method) {
-        return new InvokePolymorphicExpr(VT.INVOKE_POLYMORPHIC, regs , proto, method);
+        return new InvokePolymorphicExpr(VT.INVOKE_POLYMORPHIC, regs, proto, method);
     }
 
     public static BinopExpr nLCmp(Value a, Value b) {
@@ -327,4 +317,5 @@ public final class Exprs {
     public static Constant nConstant(Object cst) {
         return new Constant(cst);
     }
+
 }

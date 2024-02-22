@@ -1,43 +1,78 @@
 package com.googlecode.d2j.tools.jar;
 
 import com.googlecode.dex2jar.tools.BaseCmd;
-
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
-
+import com.googlecode.dex2jar.tools.Constants;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 
-import static com.googlecode.d2j.util.AccUtils.*;
-import static org.objectweb.asm.Opcodes.*;
+import static com.googlecode.d2j.util.AccUtils.isEnum;
+import static com.googlecode.d2j.util.AccUtils.isFinal;
+import static com.googlecode.d2j.util.AccUtils.isPrivate;
+import static com.googlecode.d2j.util.AccUtils.isProtected;
+import static com.googlecode.d2j.util.AccUtils.isPublic;
+import static com.googlecode.d2j.util.AccUtils.isStatic;
+import static com.googlecode.d2j.util.AccUtils.isSynthetic;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.LDC;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.PUTSTATIC;
 
 public class InitOut {
-    private static final Set<String> keywords = new HashSet<String>(Arrays.asList("abstract", "continue", "for", "new",
+
+    private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList("abstract", "continue", "for", "new",
             "switch", "assert", "default", "goto", "package", "synchronized", "boolean", "do", "if", "private", "this",
             "break", "double", "implements", "protected", "throw", "byte", "else", "import", "public", "throws",
             "case", "enum", "instanceof", "return", "transient", "catch", "extends", "int", "short", "try", "char",
             "final", "interface", "static", "void", "class", "finally", "long", "strictfp", "volatile", "const",
             "float", "native", "super", "while"));
+
     private int clzIndex = 0;
-    private Set<String> clzMap = new TreeSet<>();
-    private Set<String> clzSet = new TreeSet<>();
+
+    private final Set<String> clzMap = new TreeSet<>();
+
+    private final Set<String> clzSet = new TreeSet<>();
+
     private Path from;
+
     private int maxLength = 40;
-    private Set<String> memberMap = new TreeSet<>();
+
+    private final Set<String> memberMap = new TreeSet<>();
+
     private int minLength = 2;
+
     private int pkgIndex = 0;
-    private Set<String> pkgMap = new TreeSet<>();
-    private Set<String> pkgSet = new TreeSet<>();
+
+    private final Set<String> pkgMap = new TreeSet<>();
+
+    private final Set<String> pkgSet = new TreeSet<>();
+
     private boolean initEnumNames = false;
+
     private boolean initSourceNames = false;
+
     private boolean initAssertionNames = false;
 
     public InitOut initEnumNames() {
@@ -140,12 +175,12 @@ public class InitOut {
 
     private List<ClassInfo> collect(Path file) throws IOException {
         final List<ClassInfo> clzList = new ArrayList<>();
-        final ClassVisitor collectVisitor = new ClassVisitor(Opcodes.ASM9) {
+        final ClassVisitor collectVisitor = new ClassVisitor(Constants.ASM_VERSION) {
             private static final String ASSERTION_DISABLED_FIELD_NAME = "$assertionsDisabled";
             private static final String ENUM_VALUES_FIELD_NAME = "ENUM$VALUES";
             ClassInfo clz;
             boolean isEnum = false;
-            Map<String, String> enumFieldMap = new HashMap<>();
+            final Map<String, String> enumFieldMap = new HashMap<>();
 
             @Override
             public void visitSource(String source, String debug) {
@@ -155,11 +190,12 @@ public class InitOut {
             }
 
             @Override
-            public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+                                             String[] exceptions) {
                 clz.addMethod(access, name, desc);
                 if (initEnumNames && isEnum && name.equals("<clinit>")) {
                     final String thisDesc = "L" + clz.name + ";";
-                    return new MethodNode(ASM9, access, name, desc, signature, exceptions) {
+                    return new MethodNode(Constants.ASM_VERSION, access, name, desc, signature, exceptions) {
                         @Override
                         public void visitEnd() {
                             if (this.instructions != null) {
@@ -193,7 +229,7 @@ public class InitOut {
                                         } else {
                                             status = 0;
                                         }
-                                    } else if (status == 3) {  //find LDC
+                                    } else {  //find LDC
                                         if (p.getOpcode() == PUTSTATIC) {
                                             FieldInsnNode fin = (FieldInsnNode) p;
                                             if (fin.owner.equals(thisDesc) && fin.desc.equals(thisDesc)) {
@@ -253,20 +289,21 @@ public class InitOut {
             }
 
             @Override
-            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+            public void visit(int version, int access, String name, String signature, String superName,
+                              String[] interfaces) {
                 this.clz = new ClassInfo(name);
                 isEnum = isEnum(access);
             }
         };
 
-      try(FileSystem fs = BaseCmd.openZip(file)) {
-          BaseCmd.walkJarOrDir(fs.getPath("/"), (file1, relative) -> {
-              if (relative.endsWith(".class")) {
-                  byte[] data = Files.readAllBytes(file1);
-                  new ClassReader(data).accept(collectVisitor, ClassReader.EXPAND_FRAMES);
-              }
-          });
-      }
+        try (FileSystem fs = BaseCmd.openZip(file)) {
+            BaseCmd.walkJarOrDir(fs.getPath("/"), (file1, relative) -> {
+                if (relative.endsWith(".class")) {
+                    byte[] data = Files.readAllBytes(file1);
+                    new ClassReader(data).accept(collectVisitor, ClassReader.EXPAND_FRAMES);
+                }
+            });
+        }
         return clzList;
     }
 
@@ -305,7 +342,7 @@ public class InitOut {
     }
 
     private boolean shouldRename(String s) {
-        return s.length() > maxLength || s.length() < minLength || keywords.contains(s);
+        return s.length() > maxLength || s.length() < minLength || KEYWORDS.contains(s);
     }
 
     public void to(Path config) throws IOException {
@@ -315,7 +352,7 @@ public class InitOut {
         list.addAll(pkgMap);
         list.addAll(clzMap);
         list.addAll(memberMap);
-        Files.write(config,list, StandardCharsets.UTF_8);
+        Files.write(config, list, StandardCharsets.UTF_8);
     }
 
     private void transformerMember(String owner, List<MemberInfo> members) {
@@ -362,14 +399,17 @@ public class InitOut {
 
     }
 
-    static private class ClassInfo {
+    private static class ClassInfo {
 
-        final public String name;
+        public final String name;
+
         public List<MemberInfo> fields = new ArrayList<>(5);
+
         public List<MemberInfo> methods = new ArrayList<>(5);
+
         public String suggestName;
 
-        public ClassInfo(String name) {
+        ClassInfo(String name) {
             this.name = name;
         }
 
@@ -388,22 +428,29 @@ public class InitOut {
         public String toString() {
             return name;
         }
+
     }
 
     private static class MemberInfo {
+
         public int access;
+
         public String desc;
+
         public String name;
+
         public String suggestName;
 
-        public MemberInfo(int access, String name, String desc) {
+        MemberInfo(int access, String name, String desc) {
             this.name = name;
             this.access = access;
             this.desc = desc;
         }
+
     }
 
-    private static class MemberInfoComparator implements Comparator<MemberInfo> {
+    private static class MemberInfoComparator implements Comparator<MemberInfo>, Serializable {
+
         @Override
         public int compare(MemberInfo memberInfo, MemberInfo memberInfo2) {
             int x = memberInfo.name.compareTo(memberInfo2.name);
@@ -412,5 +459,7 @@ public class InitOut {
             }
             return memberInfo.desc.compareTo(memberInfo2.desc);
         }
+
     }
+
 }

@@ -3,20 +3,31 @@ package com.googlecode.d2j.tools.jar;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class ClassInfo {
 
-    final public String name;
-    public List<MemberInfo> members = new ArrayList<MemberInfo>(5);
-    public Set<String> parent = new HashSet<String>();
+    public final String name;
+
+    public List<MemberInfo> members = new ArrayList<>(5);
+
+    public Set<String> parent = new HashSet<>();
 
     public ClassInfo(String name) {
         this.name = name;
     }
 
+    @Override
     public boolean equals(Object o) {
-        return name.equals(((ClassInfo) o).name);
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ClassInfo)) {
+            return false;
+        }
+        ClassInfo classInfo = (ClassInfo) o;
+        return Objects.equals(name, classInfo.name);
     }
 
     public int hashCode() {
@@ -28,8 +39,13 @@ public class ClassInfo {
     }
 
     public static class MemberInfo {
+
         public int access;
+
         public String desc;
+
         public String name;
+
     }
+
 }

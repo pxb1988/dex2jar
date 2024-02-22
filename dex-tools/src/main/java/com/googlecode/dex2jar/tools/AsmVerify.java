@@ -1,23 +1,7 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.tools;
 
+import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
@@ -26,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -39,8 +22,6 @@ import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
-
-import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 
 @Syntax(cmd = "d2j-asm-verify", syntax = "[options] <jar0> [jar1 ... jarN]", desc = "Verify .class in jar")
 public class AsmVerify extends BaseCmd {
@@ -55,18 +36,19 @@ public class AsmVerify extends BaseCmd {
     }
 
     static Field buf;
+
     static {
         try {
-            buf = Printer.class.getDeclaredField("buf");
+            buf = Printer.class.getDeclaredField("stringBuilder");
         } catch (NoSuchFieldException | SecurityException e) {
             e.printStackTrace();
         }
         buf.setAccessible(true);
     }
 
-    static void printAnalyzerResult(MethodNode method, Analyzer a, final PrintWriter pw)
+    static void printAnalyzerResult(MethodNode method, Analyzer<?> a, final PrintWriter pw)
             throws IllegalArgumentException {
-        Frame[] frames = a.getFrames();
+        Frame<?>[] frames = a.getFrames();
         Textifier t = new Textifier();
         TraceMethodVisitor mv = new TraceMethodVisitor(t);
         String format = "%05d %-" + (method.maxStack + method.maxLocals + 6) + "s|%s";
@@ -74,7 +56,7 @@ public class AsmVerify extends BaseCmd {
             method.instructions.get(j).accept(mv);
 
             StringBuffer s = new StringBuffer();
-            Frame f = frames[j];
+            Frame<?> f = frames[j];
             if (f == null) {
                 s.append('?');
             } else {
@@ -92,7 +74,7 @@ public class AsmVerify extends BaseCmd {
                 e.printStackTrace();
             }
         }
-        for (TryCatchBlockNode tryCatchBlockNode: method.tryCatchBlocks) {
+        for (TryCatchBlockNode tryCatchBlockNode : method.tryCatchBlocks) {
             tryCatchBlockNode.accept(mv);
             try {
                 pw.print(" " + buf.get(t));
@@ -127,26 +109,24 @@ public class AsmVerify extends BaseCmd {
 
         for (Path file : files) {
             System.out.println("verify " + file);
-            walkJarOrDir(file, new FileVisitorX() {
-                @Override
-                public void visitFile(Path file, String relative) throws IOException {
-                    if (file.getFileName().toString().endsWith(".class")) {
-                        ClassReader cr = new ClassReader(Files.readAllBytes(file));
-                        ClassNode cn = new ClassNode();
-                        cr.accept(new CheckClassAdapter(cn, false),
-                                ClassReader.SKIP_DEBUG | ClassReader.EXPAND_FRAMES | ClassReader.SKIP_FRAMES);
-                        for (MethodNode method : cn.methods) {
-                            BasicVerifier verifier = new BasicVerifier();
-                            Analyzer<BasicValue> a = new Analyzer<>(verifier);
-                            try {
-                                a.analyze(cn.name, method);
-                            } catch (Exception ex) {
-                                System.err.println("Error verify method " + cr.getClassName() + "." + method.name + " "
-                                        + method.desc);
-                                if (detail) {
-                                    ex.printStackTrace(System.err);
-                                    printAnalyzerResult(method, a, new PrintWriter(new OutputStreamWriter(System.err, StandardCharsets.UTF_8)));
-                                }
+            walkJarOrDir(file, (file1, relative) -> {
+                if (file1.getFileName().toString().endsWith(".class")) {
+                    ClassReader cr = new ClassReader(Files.readAllBytes(file1));
+                    ClassNode cn = new ClassNode();
+                    cr.accept(new CheckClassAdapter(cn, false),
+                            ClassReader.SKIP_DEBUG | ClassReader.EXPAND_FRAMES | ClassReader.SKIP_FRAMES);
+                    for (MethodNode method : cn.methods) {
+                        BasicVerifier verifier = new BasicVerifier();
+                        Analyzer<BasicValue> a = new Analyzer<>(verifier);
+                        try {
+                            a.analyze(cn.name, method);
+                        } catch (Exception ex) {
+                            System.err.println("Error verify method " + cr.getClassName() + "." + method.name + " "
+                                    + method.desc);
+                            if (detail) {
+                                ex.printStackTrace(System.err);
+                                printAnalyzerResult(method, a, new PrintWriter(new OutputStreamWriter(System.err,
+                                        StandardCharsets.UTF_8)));
                             }
                         }
                     }
@@ -154,4 +134,5 @@ public class AsmVerify extends BaseCmd {
             });
         }
     }
+
 }

@@ -1,46 +1,51 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2014 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.smali;
 
-import java.io.BufferedWriter;
-import java.util.*;
-
-import com.googlecode.d2j.*;
-import com.googlecode.d2j.node.*;
+import com.googlecode.d2j.DexConstants;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.DexType;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.MethodHandle;
+import com.googlecode.d2j.Proto;
+import com.googlecode.d2j.node.DexAnnotationNode;
 import com.googlecode.d2j.node.DexAnnotationNode.Item;
+import com.googlecode.d2j.node.DexClassNode;
+import com.googlecode.d2j.node.DexCodeNode;
+import com.googlecode.d2j.node.DexDebugNode;
+import com.googlecode.d2j.node.DexFieldNode;
+import com.googlecode.d2j.node.DexMethodNode;
+import com.googlecode.d2j.node.TryCatchNode;
 import com.googlecode.d2j.node.insn.DexLabelStmtNode;
 import com.googlecode.d2j.node.insn.DexStmtNode;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.util.Out;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
+import java.io.BufferedWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class BaksmaliDumper implements DexConstants {
+
     private static final int ACCESS_FIELD = 1 << 31;
-    private final static String[] accessWords = new String[]{"public", "private", "protected", "static", "final",
+
+    private static final String[] ACCESS_WORDS = new String[]{"public", "private", "protected", "static", "final",
             "synchronized", "bridge", "varargs", "native", "abstract", "strictfp", "synthetic", "constructor",
             "interface", "enum", "annotation", "volatile", "transient"};
 
     static {
-        Arrays.sort(accessWords);
+        Arrays.sort(ACCESS_WORDS);
     }
 
     private final StringBuilder buff = new StringBuilder();
+
     private boolean useParameterRegisters = true;
+
     private boolean useLocals = false;
 
     public BaksmaliDumper() {
@@ -52,7 +57,7 @@ public class BaksmaliDumper implements DexConstants {
     }
 
     private static boolean isAccessWords(String name) {
-        return Arrays.binarySearch(accessWords, name) >= 0;
+        return Arrays.binarySearch(ACCESS_WORDS, name) >= 0;
     }
 
     static void escape0(final StringBuilder buf, char c) {
@@ -87,17 +92,25 @@ public class BaksmaliDumper implements DexConstants {
         return escapeBuff.toString();
     }
 
-    static void escapeId0(StringBuilder sb, String id) {
-        for (int i = 0; i < id.length(); ++i) {
-            char c = id.charAt(i);
-            escape1(sb, c);
-        }
-    }
-
     static String escapeId(String id) {
         StringBuilder escapeBuff = new StringBuilder();
         escapeId0(escapeBuff, id);
         return escapeBuff.toString();
+    }
+
+    static void escapeId0(StringBuilder sb, String id) {
+        for (int i = 0; i < id.length(); ++i) {
+            char c = id.charAt(i);
+            escapeId1(sb, c);
+        }
+    }
+
+    static void escapeId1(final StringBuilder buf, char c) {
+        if (c == '\\' || c == '/' || c == '.') {
+            buf.append(String.format("\\u%04x", (int) c));
+        } else {
+            escape1(buf, c);
+        }
     }
 
     static void escape1(final StringBuilder buf, char c) {
@@ -120,11 +133,15 @@ public class BaksmaliDumper implements DexConstants {
     }
 
     static String escapeMethod(Method method) {
-        return BaksmaliDumper.escapeType(method.getOwner()) + "->" + BaksmaliDumper.escapeId(method.getName()) + BaksmaliDumper.escapeMethodDesc(method);
+        return BaksmaliDumper.escapeType(method.getOwner())
+                + "->" + BaksmaliDumper.escapeId(method.getName())
+                + BaksmaliDumper.escapeMethodDesc(method);
     }
+
     static String escapeMethodDesc(Method m) {
         return escapeMethodDesc(m.getProto());
     }
+
     static String escapeMethodDesc(Proto m) {
         StringBuilder escapeBuff = new StringBuilder();
         escapeBuff.append("(");
@@ -217,10 +234,10 @@ public class BaksmaliDumper implements DexConstants {
         if (obj instanceof DexType) {
             return escapeType(((DexType) obj).desc);
         }
-        if(obj instanceof Proto) {
+        if (obj instanceof Proto) {
             return escapeMethodDesc((Proto) obj);
         }
-        if(obj instanceof MethodHandle) {
+        if (obj instanceof MethodHandle) {
             return escapeMethodHandle((MethodHandle) obj);
         }
         if (obj instanceof Field) {
@@ -389,7 +406,7 @@ public class BaksmaliDumper implements DexConstants {
         if (n.superClass != null) {
             out.s(".super %s", escapeType(n.superClass));
         }
-        if (n.interfaceNames != null && n.interfaceNames.length > 0) {
+        if (n.interfaceNames != null) {
             for (String itf : n.interfaceNames) {
                 out.s(".implements %s", escapeType(itf));
             }
@@ -440,6 +457,7 @@ public class BaksmaliDumper implements DexConstants {
         buff.append(".method ");
         Method method = m.method;
         appendAccess(m.access, buff);
+        int register = (m.access & ACC_STATIC) != 0 ? 0 : 1;
         buff.append(escapeId(method.getName())).append(escapeMethodDesc(method));
         out.s(buff.toString());
         out.push();
@@ -459,7 +477,7 @@ public class BaksmaliDumper implements DexConstants {
         if (m.parameterAnns != null) {
             for (int i = 0; i < m.parameterAnns.length; i++) {
                 List<DexAnnotationNode> ps = m.parameterAnns[i];
-                if (ps != null && ps.size() > 0) {
+                if (ps != null && !ps.isEmpty()) {
                     annoMax = i + 1;
                 }
             }
@@ -470,18 +488,22 @@ public class BaksmaliDumper implements DexConstants {
             String type = method.getParameterTypes()[i];
             String debugName = parameterNames == null ? null : i < parameterNames.size() ? parameterNames.get(i) : null;
             if (debugName != null) {
-                out.s(".parameter \"" + escapeId(debugName) + "\" # " + type);
+                out.s(".param p" + register++ + ", \"" + escapeId(debugName) + "\" # " + type);
             } else {
-                out.s(".parameter # " + type);
+                out.s(".param p" + register++ + " # " + type);
             }
+
+            if (isWideType(type)) {
+                register++;
+            }
+
             List<DexAnnotationNode> ps = m.parameterAnns == null ? null : m.parameterAnns[i];
-            if (ps != null && ps.size() != 0) {
+            if (ps != null && !ps.isEmpty()) {
                 out.push();
                 dumpAnns(ps, out);
                 out.pop();
-                out.s(".end parameter");
+                out.s(".end param");
             }
-            // FIXME support '.param' REGISTER, STRING
         }
 
         if (m.codeNode != null) {
@@ -490,6 +512,14 @@ public class BaksmaliDumper implements DexConstants {
 
         out.pop();
         out.s(".end method");
+    }
+
+    private static boolean isWideType(String type) {
+        if (type == null || type.isEmpty()) {
+            return false;
+        }
+        char c = type.charAt(0);
+        return c == 'J' || c == 'D';
     }
 
     public void baksmaliCode(DexMethodNode methodNode, DexCodeNode codeNode, Out out) {
@@ -503,7 +533,7 @@ public class BaksmaliDumper implements DexConstants {
             }
 
             @Override
-            public void visitPackedSwitchStmt(Op op, int aA, int first_case, DexLabel[] labels) {
+            public void visitPackedSwitchStmt(Op op, int aA, int firstCase, DexLabel[] labels) {
                 usedLabel.addAll(Arrays.asList(labels));
             }
 
@@ -528,11 +558,8 @@ public class BaksmaliDumper implements DexConstants {
         if (codeNode.debugNode != null) {
             DexDebugNode debugNode = codeNode.debugNode;
             for (DexDebugNode.DexDebugOpNode opNode : debugNode.debugNodes) {
-                List<DexDebugNode.DexDebugOpNode> list = debugLabelMap.get(opNode.label);
-                if (list == null) {
-                    list = new ArrayList<>(3);
-                    debugLabelMap.put(opNode.label, list);
-                }
+                List<DexDebugNode.DexDebugOpNode> list = debugLabelMap.computeIfAbsent(opNode.label,
+                        k -> new ArrayList<>(3));
                 list.add(opNode);
             }
         }
@@ -564,7 +591,7 @@ public class BaksmaliDumper implements DexConstants {
                 ddv.visitEnd();
             }
         }
-        if (code.totalRegister >= 0 && code.stmts.size() > 0) {
+        if (code.totalRegister >= 0 && !code.stmts.isEmpty()) {
             v.visitRegister(code.totalRegister);
         }
         for (DexStmtNode n : code.stmts) {
@@ -578,4 +605,5 @@ public class BaksmaliDumper implements DexConstants {
 
         }
     }
+
 }

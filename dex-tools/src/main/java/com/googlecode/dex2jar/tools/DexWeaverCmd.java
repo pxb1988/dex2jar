@@ -1,12 +1,5 @@
 package com.googlecode.dex2jar.tools;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.dex.writer.DexFileWriter;
 import com.googlecode.d2j.reader.DexFileReader;
@@ -17,13 +10,23 @@ import com.googlecode.d2j.visitors.DexClassVisitor;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexFileVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
-@BaseCmd.Syntax(cmd = "d2j-dex-weaver", syntax = "[options] dex", desc = "replace invoke in dex", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/DexWeaver")
+@BaseCmd.Syntax(cmd = "d2j-dex-weaver", syntax = "[options] dex", desc = "replace invoke in dex", onlineHelp = "https"
+        + "://sourceforge.net/p/dex2jar/wiki/DexWeaver")
 public class DexWeaverCmd extends BaseCmd {
+
     @Opt(opt = "o", longOpt = "output", description = "output .dex file", argName = "out-dex-file")
     private Path output;
+
     @Opt(opt = "c", longOpt = "config", description = "config file", argName = "config")
     private Path config;
+
     @Opt(opt = "s", longOpt = "stub-dex", description = "stub dex", argName = "stub")
     private Path stub;
 
@@ -46,7 +49,7 @@ public class DexWeaverCmd extends BaseCmd {
 
         final Map<String, Method> map = new HashMap<>();
         for (String ln : Files.readAllLines(config, StandardCharsets.UTF_8)) {
-            if (ln.startsWith("#") || ln.length() == 0) {
+            if (ln.startsWith("#") || ln.isEmpty()) {
                 continue;
             }
             String[] x = ln.split("=");
@@ -56,8 +59,9 @@ public class DexWeaverCmd extends BaseCmd {
         DexFileWriter out = new DexFileWriter();
         DexFileVisitor fv = new DexFileVisitor(out) {
             @Override
-            public DexClassVisitor visit(int access_flags, String className, String superClass, String[] interfaceNames) {
-                DexClassVisitor dcv = super.visit(access_flags, className, superClass, interfaceNames);
+            public DexClassVisitor visit(int accessFlags, String className, String superClass,
+                                         String[] interfaceNames) {
+                DexClassVisitor dcv = super.visit(accessFlags, className, superClass, interfaceNames);
                 if (dcv != null) {
                     return new DexClassVisitor(dcv) {
                         @Override
@@ -87,7 +91,8 @@ public class DexWeaverCmd extends BaseCmd {
                                                         case INVOKE_STATIC_RANGE:
                                                         case INVOKE_SUPER_RANGE:
                                                         case INVOKE_VIRTUAL_RANGE:
-                                                            super.visitMethodStmt(Op.INVOKE_STATIC_RANGE, args, replaceTo);
+                                                            super.visitMethodStmt(Op.INVOKE_STATIC_RANGE, args,
+                                                                    replaceTo);
                                                             break;
                                                         default:
                                                             // impossible here
@@ -137,7 +142,7 @@ public class DexWeaverCmd extends BaseCmd {
 
     }
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new DexWeaverCmd().doMain(args);
     }
 

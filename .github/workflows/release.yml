@@ -1,0 +1,51 @@
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Generate and submit dependency graphs
+        uses: gradle/actions/dependency-submission@v3
+        with:
+          dependency-graph: generate-and-submit
+
+      - name: Build dex-tools with Gradle
+        run: ./gradlew check -Pversion=2.4.${{ github.run_number }} distZip
+
+      - uses: ncipollo/release-action@v1
+        if: success()
+        with:
+          tag: 2.4.${{ github.run_number }}
+          artifacts: dex-tools/build/distributions/dex-tools-*.zip
+
+      - name: Archive dex tools
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: dex-tools
+          path: dex-tools/build/distributions/dex-tools-*.zip
+
+      - name: Publish to Maven Central
+        run: ./gradlew -Pversion=2.4.${{ github.run_number }} publish closeAndReleaseStagingRepositories
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          GPG_SIGNING_PASSPHRASE: ${{ secrets.GPG_SIGNING_PASSPHRASE }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}

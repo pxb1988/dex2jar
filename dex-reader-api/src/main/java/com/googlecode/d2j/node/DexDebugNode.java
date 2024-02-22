@@ -1,30 +1,16 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2014 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DexDebugNode extends DexDebugVisitor {
+
     public List<DexDebugOpNode> debugNodes = new ArrayList<>();
+
     public List<String> parameterNames;
+
     public String fineName;
 
     protected void addDebug(DexDebugOpNode dexDebugNode) {
@@ -97,6 +83,7 @@ public class DexDebugNode extends DexDebugVisitor {
     }
 
     public abstract static class DexDebugOpNode {
+
         public DexLabel label;
 
         protected DexDebugOpNode(DexLabel label) {
@@ -106,9 +93,13 @@ public class DexDebugNode extends DexDebugVisitor {
         public abstract void accept(DexDebugVisitor cv);
 
         public static class StartLocalNode extends DexDebugOpNode {
+
             public int reg;
+
             public String name;
+
             public String type;
+
             public String signature;
 
             public StartLocalNode(DexLabel label, int reg, String name, String type, String signature) {
@@ -123,9 +114,11 @@ public class DexDebugNode extends DexDebugVisitor {
             public void accept(DexDebugVisitor cv) {
                 cv.visitStartLocal(reg, label, name, type, signature);
             }
+
         }
 
         public static class EndLocal extends DexDebugOpNode {
+
             public int reg;
 
             public EndLocal(DexLabel label, int reg) {
@@ -137,6 +130,7 @@ public class DexDebugNode extends DexDebugVisitor {
             public void accept(DexDebugVisitor cv) {
                 cv.visitEndLocal(reg, label);
             }
+
         }
 
         public static class Epiogue extends DexDebugOpNode {
@@ -149,6 +143,7 @@ public class DexDebugNode extends DexDebugVisitor {
             public void accept(DexDebugVisitor cv) {
                 cv.visitEpiogue(label);
             }
+
         }
 
         public static class Prologue extends DexDebugOpNode {
@@ -161,9 +156,11 @@ public class DexDebugNode extends DexDebugVisitor {
             public void accept(DexDebugVisitor cv) {
                 cv.visitPrologue(label);
             }
+
         }
 
         public static class RestartLocal extends DexDebugOpNode {
+
             public int reg;
 
             public RestartLocal(DexLabel label, int reg) {
@@ -175,9 +172,11 @@ public class DexDebugNode extends DexDebugVisitor {
             public void accept(DexDebugVisitor cv) {
                 cv.visitRestartLocal(reg, label);
             }
+
         }
 
         public static class LineNumber extends DexDebugOpNode {
+
             public int line;
 
             public LineNumber(DexLabel label, int line) {
@@ -189,6 +188,9 @@ public class DexDebugNode extends DexDebugVisitor {
             public void accept(DexDebugVisitor cv) {
                 cv.visitLineNumber(line, label);
             }
+
         }
+
     }
+
 }

@@ -1,16 +1,22 @@
-apply plugin: 'antlr'
+plugins {
+    id "antlr"
+    id "dex2jar.build-conventions"
+}
+
+description = "Smali support for dex2jar"
 
 dependencies {
-  compile 'org.antlr:antlr4-runtime:4.9.3' // Newer versions only for Java 11+
-  compile project(':dex-reader')
-  antlr 'org.antlr:antlr4:4.9.3' // Newer versions only for Java 11+
-  compile project(':d2j-base-cmd')
-  compile project(':dex-writer')
-    testImplementation "com.android.tools.smali:smali-baksmali:3.0.3"
+    api "org.antlr:antlr4-runtime:${project.property('antlr4Version')}"
+    api project(':dex-reader-api')
+    api project(':dex-reader')
+    antlr "org.antlr:antlr4:${project.property('antlr4Version')}"
+    api project(':d2j-base-cmd')
+    api project(':dex-writer')
+    testImplementation "com.android.tools.smali:smali-baksmali:${project.property('baksmaliVersion')}"
 }
 
 generateGrammarSource {
-    arguments += ['-no-listener', '-visitor','-package','com.googlecode.d2j.smali.antlr4']
+    arguments += ['-no-listener', '-visitor', '-package', 'com.googlecode.d2j.smali.antlr4']
 }
 
 sourceSets {
