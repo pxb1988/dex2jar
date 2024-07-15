@@ -864,7 +864,7 @@ OP0	:	'nop'|'monitorenter'|'monitorexit'|'pop2'|'pop'
 	|'aconst_null'
 	|('a'|'d'|'f'|'i'|'l')? 'return'
 	|('a'|'d'|'f'|'i'|'l') ('store'|'load') '_' ('0'..'3')
-	|('a'|'b'|'c'|'d'|'f'|'i'|'l') ('astore'|'aload')
+	|('a'|'b'|'c'|'d'|'f'|'i'|'l'|'s') ('astore'|'aload')
 	|'dcmpg'|'dcmpl' | 'lcmp' |'fcmpg'|'fcmpl'
 	|'athrow'
 	|('i'|'f'|'d'|'l')('add'|'div'|'sub'|'mul'|'rem'|'shl'|'shr'|'ushr'|'and'|'or'|'xor'|'neg')
@@ -970,12 +970,31 @@ sHead   :  '.bytecode' ( a=INT { int v=parseInt($a.text); cn.version=versions[v>
 		|  '.interface' i=sAccList {cn.access|=ACC_INTERFACE|$i.acc;} a1=sInternalNameOrDesc { cn.name=Type.getType($a1.desc).getInternalName(); }
 		|  '.super' a1=sInternalNameOrDescACC  {  cn.superName=Type.getType($a1.desc).getInternalName(); }
 		|  '.implements' a1=sInternalNameOrDescACC { if(cn.interfaces==null){cn.interfaces=new ArrayList<>();}  cn.interfaces.add(Type.getType($a1.desc).getInternalName()); }
-		|  '.enclosing method' ownerAndName=sOwnerAndName {tmp=null;} (b=sMethodDesc{tmp=$b.text;})? {cn.visitOuterClass($ownerAndName.ownerInternalName,$ownerAndName.memberName,tmp);}
+		|  '.enclosing method' ownerAndName=sOwnerAndName {tmp="";} (b=sMethodDesc{tmp=$b.text;})? {cn.visitOuterClass($ownerAndName.ownerInternalName,$ownerAndName.memberName,tmp);}
 		|  sDeprecateAttr  { cn.access|=ACC_DEPRECATED; }
 		|  '.debug' a=STRING  { cn.sourceDebug=unEscapeString($a.text); }
 		|  '.attribute' sId STRING     { System.err.println("ignore .attribute"); }
-		|  '.inner class' (i=sAccList sId{tmpInt=$i.acc;})? {tmp=null;tmp2=null;} ('inner' a3=sId{tmp=$a3.text;})? ('outer' a4=sId{tmp2=$a4.text;})?   { cn.visitInnerClass(null,tmp2,tmp,tmpInt); }
-		|  '.no_super' {cn.superName=null;}
+		|  '.inner class' 
+                {String name = null; String outerName = null; String innerName = null; int access = 0;} 
+    // Specifiche di accesso e nome della classe interna (opzionali)
+    (i=sAccList { access = $i.acc; })
+    (id1=sId { innerName = $id1.text; })?
+    {tmp=null; tmp2=null;} 
+    // Nome della classe interna con 'inner' (opzionale)
+    ('inner' id2=sId { tmp = $id2.text; name = $id2.text; })?
+    // Nome della classe esterna con 'outer' (opzionale)
+    ('outer' id3=sId { tmp2 = $id3.text; outerName = $id3.text; })? 
+            { 
+                if (name == null) {
+                    name = outerName + "$" + innerName;
+                }
+                if (innerName == null) {
+                    innerName = "";
+                }
+                cn.visitInnerClass(name, outerName, innerName, access); 
+            }
+
+        |  '.no_super' {cn.superName=null;}
 		|  '.class_attribute' sId STRING    { System.err.println("ignore .class_attribute"); }
 		|  '.enclosing_method_attr' a=STRING b1=STRING c=STRING   {cn.visitOuterClass($a.text,$b1.text,$c.text);}
 		|  '.inner_class_attr' ('.inner_class_spec_attr' a=STRING b2=STRING i=sAccList '.end' '.inner_class_spec_attr' { cn.visitInnerClass(null,unEscape($a.text),unEscape($b2.text),i); } )* '.end' '.inner_class_attr'
