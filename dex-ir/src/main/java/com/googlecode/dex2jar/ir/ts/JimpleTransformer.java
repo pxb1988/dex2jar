@@ -1,23 +1,4 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import com.googlecode.d2j.DexType;
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -29,23 +10,27 @@ import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * transforme IR to simple 3-addr format
- * 
- * a=b+c+d; => e=b+c; a=e+d;
- * 
+ * transform IR to simple 3-addr format
+ * <p>
+ * a=b+c+d; =&gt; e=b+c; a=e+d;
+ *
  * @author bob
- * 
  */
 public class JimpleTransformer implements Transformer {
 
     static class N {
-        public List<Stmt> tmp;
-        int nextIdx;
-        private List<Local> locals;
 
-        public N(List<Stmt> tmp, List<Local> locals) {
+        public List<Stmt> tmp;
+
+        int nextIdx;
+
+        private final List<Local> locals;
+
+        N(List<Stmt> tmp, List<Local> locals) {
             super();
             this.tmp = tmp;
             this.locals = locals;
@@ -117,6 +102,8 @@ public class JimpleTransformer implements Transformer {
                 return tmp.newAssign(x);
             }
             break;
+        default:
+            break;
         }
 
         return x;
@@ -158,6 +145,9 @@ public class JimpleTransformer implements Transformer {
                 ops[i] = convertExpr(ops[i], true, tmp);
             }
             break;
+        default:
+            break;
         }
     }
+
 }

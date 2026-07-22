@@ -1,22 +1,4 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
-
-import java.util.*;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Local;
@@ -27,6 +9,14 @@ import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.ts.an.SimpleLiveAnalyze;
 import com.googlecode.dex2jar.ir.ts.an.SimpleLiveValue;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <ol>
@@ -40,26 +30,27 @@ import com.googlecode.dex2jar.ir.ts.an.SimpleLiveValue;
 public class Ir2JRegAssignTransformer implements Transformer {
 
     public static class Reg {
+
         public Set<Reg> excludes = new HashSet<>(4);
+
         public Set<Reg> prefers = new HashSet<>(3);
+
         int reg = -1;
+
         public char type;
+
     }
 
-    private static final Comparator<Reg> OrderRegAssignByPreferredSizeDesc = new Comparator<Reg>() {
-
-        @Override
-        public int compare(Reg o1, Reg o2) {
-            int x = o2.prefers.size() - o1.prefers.size();
-            if (x == 0) {
-                x = o2.excludes.size() - o1.excludes.size();
-            }
-            return x;
+    private static final Comparator<Reg> ORDER_REG_ASSIGN_BY_PREFERRED_SIZE_DESC = (o1, o2) -> {
+        int x = o2.prefers.size() - o1.prefers.size();
+        if (x == 0) {
+            x = o2.excludes.size() - o1.excludes.size();
         }
+        return x;
     };
 
     private Reg[] genGraph(IrMethod method, final Reg[] regs) {
-        Reg args[];
+        Reg[] args;
         if (method.isStatic) {
             args = new Reg[method.args.length];
         } else {
@@ -72,7 +63,7 @@ public class Ir2JRegAssignTransformer implements Transformer {
                 if (stmt.getOp1().vt == VT.LOCAL) {
                     Local left = (Local) stmt.getOp1();
                     Value op2 = stmt.getOp2();
-                    int idx = left._ls_index;
+                    int idx = left.lsIndex;
                     Reg leftReg = regs[idx];
 
                     // a new local can't effect next value live in next frame
@@ -98,7 +89,7 @@ public class Ir2JRegAssignTransformer implements Transformer {
 
                     // Preferred same reg can save load-store
                     if (op2.vt == VT.LOCAL) {
-                        Reg rightReg = regs[((Local) op2)._ls_index];
+                        Reg rightReg = regs[((Local) op2).lsIndex];
                         leftReg.prefers.add(rightReg);
                         rightReg.prefers.add(leftReg);
                     }
@@ -125,29 +116,15 @@ public class Ir2JRegAssignTransformer implements Transformer {
         return args;
     }
 
-   Map<Character, List<Reg>> groupAndCleanUpByType(Reg[] regs) {
+    Map<Character, List<Reg>> groupAndCleanUpByType(Reg[] regs) {
         Map<Character, List<Reg>> groups = new HashMap<>();
         for (Reg reg : regs) {
             char simpleType = reg.type;
-            List<Reg> group = groups.get(simpleType);
-            if (group == null) {
-                group = new ArrayList<>();
-                groups.put(simpleType, group);
-            }
+            List<Reg> group = groups.computeIfAbsent(simpleType, k -> new ArrayList<>());
             group.add(reg);
 
-            for (Iterator<Reg> it = reg.excludes.iterator(); it.hasNext(); ) {
-                Reg ex = it.next();
-                if (ex.type != reg.type) {
-                    it.remove();
-                }
-            }
-            for (Iterator<Reg> it = reg.prefers.iterator(); it.hasNext(); ) {
-                Reg ex = it.next();
-                if (ex.type != reg.type) {
-                    it.remove();
-                }
-            }
+            reg.excludes.removeIf(ex -> ex.type != reg.type);
+            reg.prefers.removeIf(ex -> ex.type != reg.type);
         }
         return groups;
     }
@@ -175,7 +152,7 @@ public class Ir2JRegAssignTransformer implements Transformer {
 
     @Override
     public void transform(IrMethod method) {
-        if (method.locals.size() == 0) {
+        if (method.locals.isEmpty()) {
             return;
         }
         SimpleLiveAnalyze sa = new SimpleLiveAnalyze(method, true);
@@ -183,7 +160,7 @@ public class Ir2JRegAssignTransformer implements Transformer {
 
         // init regs
         int maxLocalSize = sa.getLocalSize();
-        final Reg regs[] = new Reg[maxLocalSize];
+        final Reg[] regs = new Reg[maxLocalSize];
         for (Local local : method.locals) {
             Reg reg = new Reg();
             char type = local.valueType.charAt(0);
@@ -192,7 +169,7 @@ public class Ir2JRegAssignTransformer implements Transformer {
             }
             reg.type = type;
             local.tag = reg;
-            regs[local._ls_index] = reg;
+            regs[local.lsIndex] = reg;
         }
 
         // gen graph
@@ -238,11 +215,11 @@ public class Ir2JRegAssignTransformer implements Transformer {
         BitSet usedInOneType = new BitSet();
         for (Map.Entry<Character, List<Reg>> e : groups.entrySet()) {
             List<Reg> assigns = e.getValue();
-            Collections.sort(assigns, OrderRegAssignByPreferredSizeDesc);
+            assigns.sort(ORDER_REG_ASSIGN_BY_PREFERRED_SIZE_DESC);
             char type = e.getKey();
             boolean doubleOrLong = type == 'J' || type == 'D';
             for (Reg as : assigns) {
-                if (as.reg < 0) {// need color
+                if (as.reg < 0) { // need color
 
                     initExcludeColor(excludeColor, as);
                     excludeParameters(excludeColor, args, type);
@@ -274,8 +251,7 @@ public class Ir2JRegAssignTransformer implements Transformer {
                             } while (excludeColor.get(reg + 1));
                             as.reg = reg;
                         } else {
-                            int reg = excludeColor.nextClearBit(0);
-                            as.reg = reg;
+                            as.reg = excludeColor.nextClearBit(0);
                         }
                     }
                 }
@@ -290,7 +266,7 @@ public class Ir2JRegAssignTransformer implements Transformer {
 
         for (Local local : method.locals) {
             Reg as = (Reg) local.tag;
-            local._ls_index = as.reg;
+            local.lsIndex = as.reg;
             local.tag = null;
         }
         for (Stmt stmt : method.stmts) {
@@ -308,4 +284,5 @@ public class Ir2JRegAssignTransformer implements Transformer {
             }
         }
     }
+
 }

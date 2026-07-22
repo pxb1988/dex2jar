@@ -4,9 +4,12 @@ import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.LabelAndLocalMapper;
 import com.googlecode.dex2jar.ir.Trap;
 import com.googlecode.dex2jar.ir.expr.Local;
-import com.googlecode.dex2jar.ir.stmt.*;
+import com.googlecode.dex2jar.ir.stmt.GotoStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import java.util.ArrayList;
 
 /**
@@ -14,15 +17,14 @@ import java.util.ArrayList;
  * <ol>
  * <li>Move {@link Stmt}s outside a {@link Trap} if {@link Stmt}s are not throw</li>
  * <li>Remove {@link Trap} if all {@link Stmt}s are not throw</li>
- * <li>...;GOTO L2; ... ; L2: ; return; => ...;return ; ... ; L2: ; return;</li>
+ * <li>...;GOTO L2; ... ; L2: ; return; =&gt; ...;return ; ... ; L2: ; return;</li>
  * </ol>
- * 
+ *
  * @author bob
- * 
  */
 public class EndRemover implements Transformer {
 
-    private static final LabelAndLocalMapper keepLocal = new LabelAndLocalMapper() {
+    private static final LabelAndLocalMapper KEEP_LOCAL = new LabelAndLocalMapper() {
         @Override
         public Local map(Local local) {
             return local;
@@ -31,10 +33,11 @@ public class EndRemover implements Transformer {
 
     @Override
     public void transform(IrMethod irMethod) {
-        for (Trap trap : new ArrayList<Trap>(irMethod.traps)) {// copy the list and we can remove one from original list
+        for (Trap trap : new ArrayList<>(irMethod.traps)) { // copy the list and we can remove one from original list
             LabelStmt start = null;
             boolean removeTrap = true;
-            for (Stmt p = trap.start.getNext(); p != null && p != trap.end;) {
+            Stmt p = trap.start.getNext();
+            while (p != null && p != trap.end) {
                 boolean notThrow = Cfg.notThrow(p);
                 if (!notThrow) {
                     start = null;
@@ -77,7 +80,7 @@ public class EndRemover implements Transformer {
                 LabelStmt target = ((GotoStmt) p).target;
                 Stmt next = target.getNext();
                 if (next != null && (next.st == ST.RETURN || next.st == ST.RETURN_VOID)) {
-                    Stmt nnext = next.clone(keepLocal);
+                    Stmt nnext = next.clone(KEEP_LOCAL);
                     stmts.insertAfter(p, nnext);
                     stmts.remove(p);
                     p = nnext;
@@ -101,6 +104,6 @@ public class EndRemover implements Transformer {
             last = stmts.getLast();
         }
         stmts.move(start, end, last);
-
     }
+
 }

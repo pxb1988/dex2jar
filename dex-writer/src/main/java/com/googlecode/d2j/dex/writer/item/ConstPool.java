@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex.writer.item;
 
 import com.googlecode.d2j.CallSite;
@@ -26,28 +10,54 @@ import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.dex.writer.DexWriteException;
 import com.googlecode.d2j.dex.writer.ev.EncodedArray;
 import com.googlecode.d2j.dex.writer.ev.EncodedValue;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+import java.util.TreeMap;
 
 public class ConstPool {
+
     public int dexVersion = DexConstants.DEX_035;
 
+    public Map<AnnotationSetRefListItem, AnnotationSetRefListItem> annotationSetRefListItems
+            = new HashMap<>();
+
     public Map<CallSiteIdItem, CallSiteIdItem> callSiteIdItems = new TreeMap<>();
+
     public Map<EncodedArray, EncodedArray> encodedArrayItems = new TreeMap<>();
-    public Map<AnnotationSetRefListItem, AnnotationSetRefListItem> annotationSetRefListItems = new HashMap<>();
+
     public List<CodeItem> codeItems = new ArrayList<>();
+
     public List<ClassDataItem> classDataItems = new ArrayList<>();
+
     public List<DebugInfoItem> debugInfoItems = new ArrayList<>();
+
     public Map<AnnotationItem, AnnotationItem> annotationItems = new HashMap<>();
+
     public List<AnnotationsDirectoryItem> annotationsDirectoryItems = new ArrayList<>();
+
     public Map<AnnotationSetItem, AnnotationSetItem> annotationSetItems = new HashMap<>();
+
     public Map<FieldIdItem, FieldIdItem> fields = new TreeMap<>();
+
     public Map<MethodIdItem, MethodIdItem> methods = new TreeMap<>();
+
     public Map<ProtoIdItem, ProtoIdItem> protos = new TreeMap<>();
+
     public List<StringDataItem> stringDatas = new ArrayList<>(100);
+
     public Map<String, StringIdItem> strings = new TreeMap<>();
+
     public Map<TypeListItem, TypeListItem> typeLists = new TreeMap<>();
+
     public Map<String, TypeIdItem> types = new TreeMap<>();
+
     public Map<TypeIdItem, ClassDefItem> classDefs = new HashMap<>();
     public Map<MethodHandleItem, MethodHandleItem> methodHandlers = new TreeMap<>();
 
@@ -149,13 +159,16 @@ public class ConstPool {
     }
 
     static class PE {
+
         final ClassDefItem owner;
+
         final Iterator<TypeIdItem> it;
 
         PE(ClassDefItem owner, Iterator<TypeIdItem> it) {
             this.owner = owner;
             this.it = it;
         }
+
     }
 
     public List<ClassDefItem> buildSortedClassDefItems() {
@@ -250,12 +263,13 @@ public class ConstPool {
     }
 
     public MethodIdItem uniqMethod(Method method) {
-        MethodIdItem key = new MethodIdItem(uniqType(method.getOwner()), uniqString(method.getName()), uniqProto(method));
+        MethodIdItem key = new MethodIdItem(uniqType(method.getOwner()), uniqString(method.getName()),
+                uniqProto(method));
         return uniqMethod(key);
     }
 
-    public MethodIdItem uniqMethod(String owner, String name, String parms[], String ret) {
-        MethodIdItem key = new MethodIdItem(uniqType(owner), uniqString(name), uniqProto(parms, ret));
+    public MethodIdItem uniqMethod(String owner, String name, String[] params, String ret) {
+        MethodIdItem key = new MethodIdItem(uniqType(owner), uniqString(name), uniqProto(params, ret));
         return uniqMethod(key);
     }
 
@@ -271,6 +285,7 @@ public class ConstPool {
     public ProtoIdItem uniqProto(Proto method) {
         return uniqProto(method.getParameterTypes(), method.getReturnType());
     }
+
     private ProtoIdItem uniqProto(Method method) {
         return uniqProto(method.getProto());
     }
@@ -328,14 +343,15 @@ public class ConstPool {
         return key;
     }
 
-    private static final TypeListItem ZERO_SIZE_TYPE_LIST = new TypeListItem(Collections.EMPTY_LIST);
+    private static final TypeListItem ZERO_SIZE_TYPE_LIST = new TypeListItem(new ArrayList<>());
+
     static {
         // make sure the offset is 0
         ZERO_SIZE_TYPE_LIST.offset = 0;
     }
 
     private TypeListItem putTypeList(List<String> subList) {
-        if (subList.size() == 0) {
+        if (subList.isEmpty()) {
             return ZERO_SIZE_TYPE_LIST;
         }
         List<TypeIdItem> idItems = new ArrayList<>(subList.size());
@@ -358,7 +374,8 @@ public class ConstPool {
 
     public CallSiteIdItem uniqCallSite(CallSite callSite) {
         EncodedArray e = new EncodedArray();
-        e.values.add(new EncodedValue(EncodedValue.VALUE_METHOD_HANDLE, uniqMethodHandle(callSite.getBootstrapMethodHandler())));
+        e.values.add(new EncodedValue(EncodedValue.VALUE_METHOD_HANDLE,
+                uniqMethodHandle(callSite.getBootstrapMethodHandler())));
         e.values.add(new EncodedValue(EncodedValue.VALUE_STRING, uniqString(callSite.getMethodName())));
         e.values.add(new EncodedValue(EncodedValue.VALUE_METHOD_TYPE, uniqProto(callSite.getMethodProto())));
         for (Object arg : callSite.getExtraArguments()) {
@@ -384,7 +401,7 @@ public class ConstPool {
     }
 
     public AnnotationSetItem uniqAnnotationSetItem(AnnotationSetItem key) {
-        List<AnnotationItem> copy = new ArrayList<AnnotationItem>(key.annotations);
+        List<AnnotationItem> copy = new ArrayList<>(key.annotations);
         key.annotations.clear();
         for (AnnotationItem annotationItem : copy) {
             key.annotations.add(uniqAnnotationItem(annotationItem));
@@ -415,4 +432,5 @@ public class ConstPool {
     public void addCodeItem(CodeItem code) {
         codeItems.add(code);
     }
+
 }

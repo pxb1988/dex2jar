@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.tools;
 
 import java.io.File;
@@ -27,12 +11,23 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public abstract class BaseCmd {
+
     public static String getBaseName(String fn) {
         int x = fn.lastIndexOf('.');
         return x >= 0 ? fn.substring(0, x) : fn;
@@ -43,9 +38,11 @@ public abstract class BaseCmd {
     }
 
     public interface FileVisitorX {
+
         // change the relative from Path to String
         // java.nio.file.ProviderMismatchException on jdk8
         void visitFile(Path file, String relative) throws IOException;
+
     }
 
     public static void walkFileTreeX(final Path base, final FileVisitorX fv) throws IOException {
@@ -96,7 +93,7 @@ public abstract class BaseCmd {
         for (FileSystemProvider p : FileSystemProvider.installedProviders()) {
             String s = p.getScheme();
             if ("jar".equals(s) || "zip".equalsIgnoreCase(s)) {
-                return p.newFileSystem(in, new HashMap<String, Object>());
+                return p.newFileSystem(in, new HashMap<>());
             }
         }
         throw new IOException("cant find zipfs support");
@@ -117,8 +114,9 @@ public abstract class BaseCmd {
     }
 
     @Retention(value = RetentionPolicy.RUNTIME)
-    @Target(value = { ElementType.FIELD })
+    @Target(value = {ElementType.FIELD})
     public @interface Opt {
+
         String argName() default "";
 
         String description() default "";
@@ -130,15 +128,23 @@ public abstract class BaseCmd {
         String opt() default "";
 
         boolean required() default false;
+
     }
 
-    static protected class Option implements Comparable<Option> {
+    protected static class Option implements Comparable<Option> {
+
         public String argName = "arg";
+
         public String description;
+
         public Field field;
+
         public boolean hasArg = true;
+
         public String longOpt;
+
         public String opt;
+
         public boolean required = false;
 
         @Override
@@ -171,14 +177,14 @@ public abstract class BaseCmd {
         public String getOptAndLongOpt() {
             StringBuilder sb = new StringBuilder();
             boolean havePrev = false;
-            if (opt != null && opt.length() > 0) {
-            sb.append("-").append(opt);
+            if (opt != null && !opt.isEmpty()) {
+                sb.append("-").append(opt);
                 havePrev = true;
             }
-            if (longOpt != null && longOpt.length() > 0) {
+            if (longOpt != null && !longOpt.isEmpty()) {
                 if (havePrev) {
-                sb.append(",");
-            }
+                    sb.append(",");
+                }
                 sb.append("--").append(longOpt);
             }
             return sb.toString();
@@ -187,7 +193,7 @@ public abstract class BaseCmd {
     }
 
     @Retention(value = RetentionPolicy.RUNTIME)
-    @Target(value = { ElementType.TYPE })
+    @Target(value = {ElementType.TYPE})
     public @interface Syntax {
 
         String cmd();
@@ -202,15 +208,18 @@ public abstract class BaseCmd {
     private String cmdLineSyntax;
 
     private String cmdName;
+
     private String desc;
+
     private String onlineHelp;
 
-    protected Map<String, Option> optMap = new HashMap<String, Option>();
+    protected Map<String, Option> optMap = new HashMap<>();
 
     @Opt(opt = "h", longOpt = "help", hasArg = false, description = "Print this help message")
     private boolean printHelp = false;
 
     protected String[] remainingArgs;
+
     protected String[] originalArgs;
 
     public BaseCmd() {
@@ -244,7 +253,7 @@ public abstract class BaseCmd {
         return options;
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     protected Object convert(String value, Class type) {
         if (type.equals(String.class)) {
             return value;
@@ -288,7 +297,7 @@ public abstract class BaseCmd {
             doCommandLine();
         } catch (HelpException e) {
             String msg = e.getMessage();
-            if (msg != null && msg.length() > 0) {
+            if (msg != null && !msg.isEmpty()) {
                 System.err.println("ERROR: " + msg);
             }
             usage();
@@ -329,10 +338,11 @@ public abstract class BaseCmd {
                 if ("".equals(opt.longOpt()) && "".equals(opt.opt())) {   // into automode
                     option.longOpt = fromCamel(f.getName());
                     if (f.getType().equals(boolean.class)) {
-                        option.hasArg=false;
+                        option.hasArg = false;
                         try {
                             if (f.getBoolean(this)) {
-                                throw new RuntimeException("the value of " + f + " must be false, as it is declared as no args");
+                                throw new RuntimeException("the value of " + f + " must be false, as it is declared "
+                                        + "as no args");
                             }
                         } catch (IllegalAccessException e) {
                             throw new RuntimeException(e);
@@ -349,7 +359,8 @@ public abstract class BaseCmd {
 
                     try {
                         if (f.getBoolean(this)) {
-                            throw new RuntimeException("the value of " + f + " must be false, as it is declared as no args");
+                            throw new RuntimeException("the value of " + f + " must be false, as it is declared as no"
+                                    + " args");
                         }
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException(e);
@@ -377,7 +388,7 @@ public abstract class BaseCmd {
     }
 
     private static String fromCamel(String name) {
-        if (name.length() == 0) {
+        if (name.isEmpty()) {
             return "";
         }
         StringBuilder sb = new StringBuilder();
@@ -417,15 +428,15 @@ public abstract class BaseCmd {
         String[] newArgs = new String[args.length - 1];
         System.arraycopy(args, 1, newArgs, 0, newArgs.length);
         if (BaseCmd.class.isAssignableFrom(clz)) {
-            BaseCmd baseCmd = (BaseCmd) clz.newInstance();
+            BaseCmd baseCmd = (BaseCmd) clz.getDeclaredConstructor().newInstance();
             baseCmd.doMain(newArgs);
         } else {
-            Method m = clz.getMethod("main",String[].class);
+            Method m = clz.getMethod("main", String[].class);
             m.setAccessible(true);
-            m.invoke(null, (Object)newArgs);
+            m.invoke(null, (Object) newArgs);
         }
     }
-    
+
     protected void parseSetArgs(String... args) throws IllegalArgumentException, IllegalAccessException {
         this.originalArgs = args;
         List<String> remainsOptions = new ArrayList<>();
@@ -435,7 +446,7 @@ public abstract class BaseCmd {
             if (needArgOpt != null) {
                 needArgOpt.field.set(this, convert(s, needArgOpt.field.getType()));
                 needArgOpt = null;
-            } else if (s.startsWith("-")) {// it's a short or long option
+            } else if (s.startsWith("-")) { // it's a short or long option
                 Option opt = optMap.get(s);
                 requiredOpts.remove(opt);
                 if (opt == null) {
@@ -487,7 +498,7 @@ public abstract class BaseCmd {
         final int maxPaLength = 40;
         out.println(this.cmdName + " -- " + desc);
         out.println("usage: " + this.cmdName + " " + cmdLineSyntax);
-        if (this.optMap.size() > 0) {
+        if (!this.optMap.isEmpty()) {
             out.println("options:");
         }
         // [PART.A.........][Part.B
@@ -517,13 +528,13 @@ public abstract class BaseCmd {
                 sb.append(" <").append(option.argName).append(">");
             }
             String desc = option.description;
-            if (desc == null || desc.length() == 0) {// no description
+            if (desc == null || desc.isEmpty()) { // no description
                 out.println(sb);
             } else {
                 for (int i = palength - sb.length(); i > 0; i--) {
                     sb.append(' ');
                 }
-                if (sb.length() > maxPaLength) {// to huge part A
+                if (sb.length() > maxPaLength) { // to huge part A
                     out.println(sb);
                     sb.setLength(0);
                     for (int i = 0; i < palength; i++) {
@@ -532,7 +543,7 @@ public abstract class BaseCmd {
                 }
                 int nextStart = 0;
                 while (nextStart < desc.length()) {
-                    if (desc.length() - nextStart < pblength) {// can put in one line
+                    if (desc.length() - nextStart < pblength) { // can put in one line
                         sb.append(desc.substring(nextStart));
                         out.println(sb);
                         nextStart = desc.length();
@@ -556,10 +567,10 @@ public abstract class BaseCmd {
             }
         }
         String ver = getVersionString();
-        if (ver != null && !"".equals(ver)) {
+        if (ver != null && !ver.isEmpty()) {
             out.println("version: " + ver);
         }
-        if (onlineHelp != null && !"".equals(onlineHelp)) {
+        if (onlineHelp != null && !onlineHelp.isEmpty()) {
             if (onlineHelp.length() + "online help: ".length() > maxLength) {
                 out.println("online help: ");
                 out.println(onlineHelp);
@@ -569,4 +580,5 @@ public abstract class BaseCmd {
         }
         out.flush();
     }
+
 }

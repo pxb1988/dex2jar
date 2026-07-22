@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2014 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.IrMethod;
@@ -28,22 +12,27 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
 
 /**
  * Replace MUST be NullPointerException stmt to 'throw new NullPointerException()'
- *
+ * <p>
  * Replace MUST be 'divide by zero' stmt to 'throw new ArithmeticException("divide by zero")'
  */
 public class NpeTransformer extends StatedTransformer {
+
     private static class MustThrowException extends RuntimeException {
+
         private static final long serialVersionUID = 7501197864919305696L;
+
     }
 
     private static final MustThrowException NPE = new MustThrowException();
+
     private static final MustThrowException DIVE = new MustThrowException();
+
     private static final MustThrowException NEGATIVE_ARRAY_SIZE = new MustThrowException();
 
     @Override
     public boolean transformReportChanged(IrMethod method) {
         boolean changed = false;
-        if (method.locals.size() == 0) {
+        if (method.locals.isEmpty()) {
             return false;
         }
         StmtSearcher st = new StmtSearcher() {
@@ -67,59 +56,60 @@ public class NpeTransformer extends StatedTransformer {
                         throw NPE;
                     }
                 }
-                    break;
+                break;
                 case ARRAY: {
                     if (isNull(op.getOp1())) {
                         throw NPE;
                     }
                 }
-                    break;
+                break;
                 case FIELD: {
                     if (isNull(op.getOp())) {
                         throw NPE;
                     }
                 }
+                break;
+                case IDIV:
+                    if (op.getOp2().vt == Value.VT.CONSTANT) {
+                        Constant constant = (Constant) op.getOp2();
+                        if (((Number) constant.value).intValue() == 0) {
+                            throw DIVE;
+                        }
+                    }
                     break;
-                    case IDIV:
-                        if (op.getOp2().vt == Value.VT.CONSTANT) {
-                            Constant constant = (Constant) op.getOp2();
-                            if (((Number) constant.value).intValue() == 0) {
-                                throw DIVE;
-                            }
+                case LDIV:
+                    if (op.getOp2().vt == Value.VT.CONSTANT) {
+                        Constant constant = (Constant) op.getOp2();
+                        if (((Number) constant.value).longValue() == 0) {
+                            throw DIVE;
                         }
-                        break;
-                    case LDIV:
-                        if (op.getOp2().vt == Value.VT.CONSTANT) {
-                            Constant constant = (Constant) op.getOp2();
-                            if (((Number) constant.value).longValue() == 0) {
-                                throw DIVE;
-                            }
+                    }
+                    break;
+                case NEW_ARRAY:
+                    if (op.getOp().vt == Value.VT.CONSTANT) {
+                        Constant constant = (Constant) op.getOp();
+                        if (((Number) constant.value).intValue() < 0) {
+                            throw NEGATIVE_ARRAY_SIZE;
                         }
-                        break;
-                    case NEW_ARRAY:
-                        if (op.getOp().vt == Value.VT.CONSTANT) {
-                            Constant constant = (Constant) op.getOp();
+                    }
+                    break;
+                case NEW_MUTI_ARRAY:
+                    for (Value size : op.getOps()) {
+                        if (size.vt == Value.VT.CONSTANT) {
+                            Constant constant = (Constant) size;
                             if (((Number) constant.value).intValue() < 0) {
                                 throw NEGATIVE_ARRAY_SIZE;
                             }
                         }
-                        break;
-                    case NEW_MUTI_ARRAY:
-                        for (Value size : op.getOps()) {
-                            if (size.vt == Value.VT.CONSTANT) {
-                                Constant constant = (Constant) size;
-                                if (((Number) constant.value).intValue() < 0) {
-                                    throw NEGATIVE_ARRAY_SIZE;
-                                }
-                            }
-                        }
-                        break;
+                    }
+                    break;
                 default:
                 }
             }
 
         };
-        for (Stmt p = method.stmts.getFirst(); p != null;) {
+        Stmt p = method.stmts.getFirst();
+        while (p != null) {
             try {
                 st.travel(p);
                 p = p.getNext();
@@ -142,7 +132,7 @@ public class NpeTransformer extends StatedTransformer {
                 case INVOKE_VIRTUAL:
                 case INVOKE_SPECIAL:
                 case INVOKE_INTERFACE: {
-                    Value ops[] = op.getOps();
+                    Value[] ops = op.getOps();
                     if (isNull(ops[0])) {
                         for (int i = 1; i < ops.length; i++) {
                             travel(ops[i]);
@@ -150,58 +140,58 @@ public class NpeTransformer extends StatedTransformer {
                         throw NPE;
                     }
                 }
-                    break;
+                break;
                 case ARRAY: {
                     if (isNull(op.getOp1())) {
                         travel(op.getOp2());
                         throw NPE;
                     }
                 }
-                    break;
+                break;
                 case FIELD: {
                     if (isNull(op.getOp())) {
                         throw NPE;
                     }
                 }
+                break;
+                case IDIV:
+                    if (op.getOp2().vt == Value.VT.CONSTANT) {
+                        Constant constant = (Constant) op.getOp2();
+                        if (((Number) constant.value).intValue() == 0) {
+                            travel(op.getOp1());
+                            throw DIVE;
+                        }
+                    }
                     break;
-                    case IDIV:
-                        if (op.getOp2().vt == Value.VT.CONSTANT) {
-                            Constant constant = (Constant) op.getOp2();
-                            if (((Number) constant.value).intValue() == 0) {
-                                travel(op.getOp1());
-                                throw DIVE;
-                            }
+                case LDIV:
+                    if (op.getOp2().vt == Value.VT.CONSTANT) {
+                        Constant constant = (Constant) op.getOp2();
+                        if (((Number) constant.value).longValue() == 0) {
+                            travel(op.getOp1());
+                            throw DIVE;
                         }
-                        break;
-                    case LDIV:
-                        if (op.getOp2().vt == Value.VT.CONSTANT) {
-                            Constant constant = (Constant) op.getOp2();
-                            if (((Number) constant.value).longValue() == 0) {
-                                travel(op.getOp1());
-                                throw DIVE;
-                            }
+                    }
+                    break;
+                case NEW_ARRAY:
+                    if (op.getOp().vt == Value.VT.CONSTANT) {
+                        Constant constant = (Constant) op.getOp();
+                        if (((Number) constant.value).intValue() < 0) {
+                            throw NEGATIVE_ARRAY_SIZE;
                         }
-                        break;
-                    case NEW_ARRAY:
-                        if (op.getOp().vt == Value.VT.CONSTANT) {
-                            Constant constant = (Constant) op.getOp();
+                    }
+                    break;
+                case NEW_MUTI_ARRAY:
+                    for (Value size : op.getOps()) {
+                        if (size.vt == Value.VT.CONSTANT) {
+                            Constant constant = (Constant) size;
                             if (((Number) constant.value).intValue() < 0) {
                                 throw NEGATIVE_ARRAY_SIZE;
+                            } else {
+                                travel(size);
                             }
                         }
-                        break;
-                    case NEW_MUTI_ARRAY:
-                        for (Value size : op.getOps()) {
-                            if (size.vt == Value.VT.CONSTANT) {
-                                Constant constant = (Constant) size;
-                                if (((Number) constant.value).intValue() < 0) {
-                                    throw NEGATIVE_ARRAY_SIZE;
-                                }else {
-                                    travel(size);
-                                }
-                            }
-                        }
-                        break;
+                    }
+                    break;
                 default:
                 }
                 Value sop = super.travel(op);
@@ -251,17 +241,23 @@ public class NpeTransformer extends StatedTransformer {
                 }
                 break;
             case En:
+                break;
+            default:
+                break;
             }
         } catch (MustThrowException e) {
             if (e == NPE) {
                 m.stmts.insertBefore(p,
-                        Stmts.nThrow(Exprs.nInvokeNew(new Value[0], new String[0], "Ljava/lang/NullPointerException;")));
+                        Stmts.nThrow(Exprs.nInvokeNew(new Value[0], new String[0],
+                                "Ljava/lang/NullPointerException;")));
             } else if (e == DIVE) {
                 m.stmts.insertBefore(p,
-                        Stmts.nThrow(Exprs.nInvokeNew(new Value[]{Exprs.nString("divide by zero")}, new String[]{"Ljava/lang/String;"}, "Ljava/lang/ArithmeticException;")));
+                        Stmts.nThrow(Exprs.nInvokeNew(new Value[]{Exprs.nString("divide by zero")}, new String[]{
+                                "Ljava/lang/String;"}, "Ljava/lang/ArithmeticException;")));
             } else if (e == NEGATIVE_ARRAY_SIZE) {
                 m.stmts.insertBefore(p,
-                        Stmts.nThrow(Exprs.nInvokeNew(new Value[0], new String[0], "Ljava/lang/NegativeArraySizeException;")));
+                        Stmts.nThrow(Exprs.nInvokeNew(new Value[0], new String[0], "Ljava/lang"
+                                + "/NegativeArraySizeException;")));
             }
         }
     }
@@ -269,7 +265,7 @@ public class NpeTransformer extends StatedTransformer {
     static boolean isNull(Value v) {
         if (v.vt == Value.VT.CONSTANT) {
             Constant cst = (Constant) v;
-            if (Constant.Null.equals(cst.value)) {
+            if (Constant.NULL.equals(cst.value)) {
                 return true;
             } else if (cst.value instanceof Number) {
                 return ((Number) cst.value).intValue() == 0;
@@ -277,4 +273,5 @@ public class NpeTransformer extends StatedTransformer {
         }
         return false;
     }
+
 }

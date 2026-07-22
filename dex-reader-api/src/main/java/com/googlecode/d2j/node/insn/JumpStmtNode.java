@@ -5,8 +5,11 @@ import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 
 public class JumpStmtNode extends DexStmtNode {
+
     public final int a;
+
     public final int b;
+
     public final DexLabel label;
 
     public JumpStmtNode(Op op, int a, int b, DexLabel label) {
@@ -20,4 +23,5 @@ public class JumpStmtNode extends DexStmtNode {
     public void accept(DexCodeVisitor cv) {
         cv.visitJumpStmt(op, a, b, label);
     }
+
 }

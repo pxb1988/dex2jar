@@ -1,18 +1,19 @@
 package com.googlecode.dex2jar.test;
 
+import com.googlecode.d2j.Method;
 import com.googlecode.d2j.node.DexMethodNode;
-import org.junit.Ignore;
+import com.googlecode.d2j.visitors.DexClassVisitor;
+import com.googlecode.d2j.visitors.DexMethodVisitor;
+import org.junit.jupiter.api.Disabled;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 
-import com.googlecode.d2j.Method;
-import com.googlecode.d2j.visitors.DexClassVisitor;
-import com.googlecode.d2j.visitors.DexMethodVisitor;
-
-@Ignore
+@Disabled
 public class TestDexClassV extends DexClassVisitor {
-    private int config;
-    private ClassWriter cw;
+
+    private final int config;
+
+    private final ClassWriter cw;
 
     public TestDexClassV(String clz, int config) {
         super();
@@ -29,7 +30,6 @@ public class TestDexClassV extends DexClassVisitor {
     @Override
     public DexMethodVisitor visitMethod(int accessFlags, Method method) {
         return new DexMethodNode(accessFlags, method) {
-
             @Override
             public void visitEnd() {
                 super.visitEnd();
@@ -38,4 +38,5 @@ public class TestDexClassV extends DexClassVisitor {
             }
         };
     }
+
 }

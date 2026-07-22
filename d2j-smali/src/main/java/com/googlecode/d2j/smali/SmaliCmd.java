@@ -1,28 +1,37 @@
 package com.googlecode.d2j.smali;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import com.googlecode.d2j.dex.writer.DexFileWriter;
 import com.googlecode.d2j.visitors.DexFileVisitor;
 import com.googlecode.dex2jar.tools.BaseCmd;
 import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-@Syntax(cmd = "d2j-smali", syntax = "[options] [--] [<smali-file>|folder]*", desc = "assembles a set of smali files into a dex file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Smali")
+@Syntax(cmd = "d2j-smali", syntax = "[options] [--] [<smali-file>|folder]*", desc = "assembles a set of smali files "
+        + "into a dex file", onlineHelp = "https://sourceforge.net/p/dex2jar/wiki/Smali")
 public class SmaliCmd extends BaseCmd {
-    @Opt(opt = "x", longOpt = "allow-odex-instructions", hasArg = false, description = "[not impl] allow odex instructions to be compiled into the dex file. Only a few instructions are supported - the ones that can exist in a dead code path and not cause dalvik to reject the class")
+
+    @Opt(opt = "x", longOpt = "allow-odex-instructions", hasArg = false, description = "[not impl] allow odex "
+            + "instructions to be compiled into the dex file. Only a few instructions are supported - the ones that "
+            + "can exist in a dead code path and not cause dalvik to reject the class")
     private boolean allowOdexInstructions;
-    @Opt(opt = "a", longOpt = "api-level", description = "[not impl] The numeric api-level of the file to generate, e.g. 14 for ICS. If not specified, it defaults to 14 (ICS).", argName = "API_LEVEL")
+
+    @Opt(opt = "a", longOpt = "api-level", description = "[not impl] The numeric api-level of the file to generate, e"
+            + ".g. 14 for ICS. If not specified, it defaults to 14 (ICS).", argName = "API_LEVEL")
     private int apiLevel = 14;
+
     @Opt(opt = "v", longOpt = "version", hasArg = false, description = "prints the version then exits")
     private boolean showVersionThenExits;
-    @Opt(opt = "o", longOpt = "output", description = "the name of the dex file that will be written. The default is out.dex", argName = "FILE")
+
+    @Opt(opt = "o", longOpt = "output", description = "the name of the dex file that will be written. The default is "
+            + "out.dex", argName = "FILE")
     private Path output;
+
     @Opt(opt = "-", hasArg = false, description = "read smali from stdin")
     private boolean readSmaliFromStdin;
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         new SmaliCmd().doMain(args);
     }
 
@@ -49,7 +58,7 @@ public class SmaliCmd extends BaseCmd {
 
         DexFileVisitor fv = new DexFileVisitor(fw) {
             @Override
-            public void visitEnd() {// intercept the call to super
+            public void visitEnd() { // intercept the call to super
             }
         };
 
@@ -72,4 +81,5 @@ public class SmaliCmd extends BaseCmd {
         byte[] data = fw.toByteArray();
         Files.write(output, data);
     }
+
 }

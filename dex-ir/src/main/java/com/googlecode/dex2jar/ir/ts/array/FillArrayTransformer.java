@@ -1,7 +1,13 @@
 package com.googlecode.dex2jar.ir.ts.array;
 
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.expr.ArrayExpr;
+import com.googlecode.dex2jar.ir.expr.Constant;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.FilledArrayExpr;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.TypeExpr;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.LabelStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
@@ -9,19 +15,29 @@ import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Cfg;
 import com.googlecode.dex2jar.ir.ts.StatedTransformer;
 import com.googlecode.dex2jar.ir.ts.UniqueQueue;
-
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * require SSA, usually run after ConstTransformer 1. array is fixed size. 2. array object init and use once, (exclude
  * the element assignment) 3. all elements are init with fixed index before use. 4. the array is not in PhiExpr 5. and
- * for array object init at A, use at B; A and B must in same loop/path, so G(A->B), G(A->C->B), G(A->C,A->D,C->B,D->B),
- * G(A->C,C->D,D->C,C->B) and G(A->C,C->A,C->B) is ok to transform, but for G(A->C,C->B,B->D,D->C), B is in a loop
- * (B->D->C->B), should not transformed.
- * <p/>
+ * for array object init at A, use at B; A and B must in same loop/path, so G(A-&gt;B), G(A-&gt;C-&gt;B), G(A-&gt;C,
+ * A-&gt;D,C-&gt;B,D-&gt;B),
+ * G(A-&gt;C,C-&gt;D,D-&gt;C,C-&gt;B) and G(A-&gt;C,C-&gt;A,C-&gt;B) is ok to transform, but for G(A-&gt;C,C-&gt;B,
+ * B-&gt;D,D-&gt;C), B is in a loop
+ * (B-&gt;D-&gt;C-&gt;B), should not transformed.
+ * <p>
  * transform
- * 
+ *
  * <pre>
  *     a=new String[3]
  *     a[0]="123"
@@ -29,15 +45,15 @@ import java.util.*;
  *     a[1]="12345"
  *     return a
  * </pre>
- * 
+ * <p>
  * to
- * 
+ *
  * <pre>
  *     return new String[3] { "123", "12345", "1234" }
  * </pre>
- * 
+ * <p>
  * 1. This Transformer is useful when cleanup the tool-injected reflection code
- * 
+ *
  * <pre>
  *     // before transform
  *     ...
@@ -53,9 +69,9 @@ import java.util.*;
  *     Method m=x.getMethod("methodA", new Class[2] { String.class ,int.class });
  *     m.invoke(b,new Object[]{"123",Integer.valueOf(1)})
  * </pre>
- * 
+ * <p>
  * 2. Suggest decompilers generate better code
- * 
+ *
  * <pre>
  *     // for following code, before transform, the decompiler generate same source
  *     Object[]a=new Object[2];
@@ -65,9 +81,9 @@ import java.util.*;
  *     // after transform, then decompile generate the following source
  *     String.format("b is %s, c is %s",b,c)
  * </pre>
- * 
+ * <p>
  * FIXME also handle not full filled array
- * 
+ *
  * <pre>
  * int a[] = new int[5];
  * // a[0]=0;
@@ -78,11 +94,17 @@ import java.util.*;
  * </pre>
  */
 public class FillArrayTransformer extends StatedTransformer {
-    private static class ArrayObject {
+
+    private static final class ArrayObject {
+
         int size;
+
         String type;
+
         AssignStmt init;
+
         List<Stmt> putItem = new ArrayList<>();
+
         List<Stmt> used = new ArrayList<>();
 
         private ArrayObject(int size, String type, AssignStmt init) {
@@ -90,6 +112,7 @@ public class FillArrayTransformer extends StatedTransformer {
             this.type = type;
             this.init = init;
         }
+
     }
 
     public static void main(String... args) {
@@ -116,18 +139,18 @@ public class FillArrayTransformer extends StatedTransformer {
         // find array match fixed size,fixed index, not in phi
         final Map<Local, ArrayObject> arraySizes = searchForArrayObject(method);
 
-        if (arraySizes.size() == 0) {
+        if (arraySizes.isEmpty()) {
             return false;
         }
 
         makeSureAllElementAreAssigned(arraySizes);
-        if (arraySizes.size() == 0) {
+        if (arraySizes.isEmpty()) {
             return false;
         }
 
         makeSureArrayUsedAfterAllElementAssigned(method, arraySizes);
 
-        if (arraySizes.size() == 0) {
+        if (arraySizes.isEmpty()) {
             return false;
         }
 
@@ -141,9 +164,8 @@ public class FillArrayTransformer extends StatedTransformer {
         for (Map.Entry<Local, ArrayObject> e : arraySizes.entrySet()) {
             final Local local0 = e.getKey();
             final ArrayObject ao = e.getValue();
-            final Value t[] = new Value[ao.size];
-            for (Iterator<Stmt> it = ao.putItem.iterator(); it.hasNext();) {
-                Stmt p = it.next();
+            final Value[] t = new Value[ao.size];
+            for (Stmt p : ao.putItem) {
                 if (p.st == Stmt.ST.FILL_ARRAY_DATA) {
                     Local local = (Local) p.getOp1();
                     if (local == local0) {
@@ -214,9 +236,7 @@ public class FillArrayTransformer extends StatedTransformer {
                         Cfg.travelMod(filledArrayExprs.get(i), tcb);
                     }
                 }
-            } else if (ao.used.size() == 0) {
-                // the array is never used, ignore
-            } else {
+            } else if (!ao.used.isEmpty()) {
                 throw new RuntimeException("array is used multiple times");
             }
         }
@@ -226,10 +246,10 @@ public class FillArrayTransformer extends StatedTransformer {
     private void makeSureArrayUsedAfterAllElementAssigned(IrMethod method, final Map<Local, ArrayObject> arraySizes) {
 
         for (Local local : method.locals) {
-            local._ls_index = -1;
+            local.lsIndex = -1;
         }
-        final int MAX = 50;
-        if (arraySizes.size() < MAX) {
+        final int max = 50;
+        if (arraySizes.size() < max) {
             makeSureArrayUsedAfterAllElementAssigned0(method, arraySizes);
         } else {
 
@@ -237,11 +257,11 @@ public class FillArrayTransformer extends StatedTransformer {
             // it
             Map<Local, ArrayObject> keptInAll = new HashMap<>();
             Map<Local, ArrayObject> keptInPart = new HashMap<>();
-            List<Local> arrays = new ArrayList<>(MAX);
+            List<Local> arrays = new ArrayList<>(max);
 
             Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator();
             while (it.hasNext()) {
-                for (int i = 0; i < MAX && it.hasNext(); i++) {
+                for (int i = 0; i < max && it.hasNext(); i++) {
                     Map.Entry<Local, ArrayObject> e = it.next();
                     keptInPart.put(e.getKey(), e.getValue());
                     it.remove();
@@ -249,7 +269,7 @@ public class FillArrayTransformer extends StatedTransformer {
                 }
                 makeSureArrayUsedAfterAllElementAssigned0(method, keptInPart);
                 for (Local local : arrays) {
-                    local._ls_index = -1;
+                    local.lsIndex = -1;
                 }
                 arrays.clear();
                 keptInAll.putAll(keptInPart);
@@ -265,7 +285,7 @@ public class FillArrayTransformer extends StatedTransformer {
     private void makeSureArrayUsedAfterAllElementAssigned0(IrMethod method, final Map<Local, ArrayObject> arraySizes) {
         int i = 0;
         for (Local local : arraySizes.keySet()) {
-            local._ls_index = i++;
+            local.lsIndex = i++;
         }
 
         final int size = i;
@@ -274,7 +294,7 @@ public class FillArrayTransformer extends StatedTransformer {
 
             @Override
             public ArrayObjectValue[] merge(ArrayObjectValue[] srcFrame, ArrayObjectValue[] distFrame, Stmt src,
-                    Stmt dist) {
+                                            Stmt dist) {
                 if (distFrame == null) {
                     distFrame = new ArrayObjectValue[size];
                     for (int i = 0; i < size; i++) {
@@ -308,7 +328,7 @@ public class FillArrayTransformer extends StatedTransformer {
                 return new ArrayObjectValue[size];
             }
 
-            ArrayObjectValue tmp[] = initFirstFrame(null);
+            ArrayObjectValue[] tmp = initFirstFrame(null);
             Stmt currentStmt;
 
             @Override
@@ -318,8 +338,8 @@ public class FillArrayTransformer extends StatedTransformer {
                 if (stmt.st == Stmt.ST.FILL_ARRAY_DATA) {
                     if (stmt.getOp1().vt == Value.VT.LOCAL) {
                         Local local = (Local) stmt.getOp1();
-                        if (local._ls_index >= 0) {
-                            ArrayObjectValue av = tmp[local._ls_index];
+                        if (local.lsIndex >= 0) {
+                            ArrayObjectValue av = tmp[local.lsIndex];
                             Constant cst = (Constant) stmt.getOp2();
                             int endPos = Array.getLength(cst.value);
                             av.pos.set(0, endPos);
@@ -332,9 +352,9 @@ public class FillArrayTransformer extends StatedTransformer {
                     ArrayExpr ae = (ArrayExpr) stmt.getOp1();
                     if (ae.getOp1().vt == Value.VT.LOCAL) {
                         Local local = (Local) ae.getOp1();
-                        if (local._ls_index >= 0) {
+                        if (local.lsIndex >= 0) {
                             int index = ((Number) ((Constant) ae.getOp2()).value).intValue();
-                            ArrayObjectValue av = tmp[local._ls_index];
+                            ArrayObjectValue av = tmp[local.lsIndex];
                             av.pos.set(index);
                         } else {
                             use(ae);
@@ -346,17 +366,15 @@ public class FillArrayTransformer extends StatedTransformer {
                     Local local = (Local) stmt.getOp1();
                     use(stmt.getOp2());
 
-                    if (local._ls_index >= 0) {
+                    if (local.lsIndex >= 0) {
                         ArrayObjectValue aov = new ArrayObjectValue(local);
                         aov.array = arraySizes.get(local);
                         aov.pos = new BitSet();
                         values.add(aov);
-                        tmp[local._ls_index] = aov;
+                        tmp[local.lsIndex] = aov;
                     }
                 } else {
                     switch (stmt.et) {
-                    case E0:
-                        break;
                     case E1:
                         use(stmt.getOp());
                         break;
@@ -366,6 +384,8 @@ public class FillArrayTransformer extends StatedTransformer {
                         break;
                     case En:
                         throw new RuntimeException();
+                    default:
+                        break;
                     }
                 }
                 return tmp;
@@ -376,8 +396,8 @@ public class FillArrayTransformer extends StatedTransformer {
                 case E0:
                     if (v.vt == Value.VT.LOCAL) {
                         Local local = (Local) v;
-                        if (local._ls_index >= 0) {
-                            ArrayObjectValue aov = tmp[local._ls_index];
+                        if (local.lsIndex >= 0) {
+                            ArrayObjectValue aov = tmp[local.lsIndex];
                             aov.array.used.add(currentStmt);
                             aov.used = true;
                         }
@@ -394,6 +414,8 @@ public class FillArrayTransformer extends StatedTransformer {
                     for (Value op : v.getOps()) {
                         use(op);
                     }
+                    break;
+                default:
                     break;
                 }
             }
@@ -419,13 +441,14 @@ public class FillArrayTransformer extends StatedTransformer {
             }
         }
         // check for un full init array
-        for (Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator(); it.hasNext();) {
+        Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator();
+        while (it.hasNext()) {
             Map.Entry<Local, ArrayObject> e = it.next();
             Local local = e.getKey();
             ArrayObject arrayObject = e.getValue();
             for (Stmt use : arrayObject.used) {
-                ArrayObjectValue frame[] = (ArrayObjectValue[]) use.frame;
-                ArrayObjectValue aov = frame[local._ls_index];
+                ArrayObjectValue[] frame = (ArrayObjectValue[]) use.frame;
+                ArrayObjectValue aov = frame[local.lsIndex];
                 BitSet pos = aov.pos;
                 if (pos.nextClearBit(0) < arrayObject.size || pos.nextSetBit(arrayObject.size) >= 0) {
                     it.remove();
@@ -477,7 +500,8 @@ public class FillArrayTransformer extends StatedTransformer {
 
     private void makeSureAllElementAreAssigned(Map<Local, ArrayObject> arraySizes) {
         BitSet pos = new BitSet();
-        for (Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator(); it.hasNext();) {
+        Iterator<Map.Entry<Local, ArrayObject>> it = arraySizes.entrySet().iterator();
+        while (it.hasNext()) {
             Map.Entry<Local, ArrayObject> e = it.next();
             ArrayObject arrayObject = e.getValue();
             boolean needRemove = false;
@@ -485,9 +509,9 @@ public class FillArrayTransformer extends StatedTransformer {
                 if (p.st == Stmt.ST.FILL_ARRAY_DATA) {
                     int endPos = Array.getLength(((Constant) p.getOp2()).value);
                     int next = pos.nextSetBit(0);
-                    if (next < 0 || next >= endPos) {// not set in range
+                    if (next < 0 || next >= endPos) { // not set in range
                         pos.set(0, endPos);
-                    } else {// setted in range
+                    } else { // setted in range
                         needRemove = true;
                         break;
                     }
@@ -512,57 +536,54 @@ public class FillArrayTransformer extends StatedTransformer {
     private Map<Local, ArrayObject> searchForArrayObject(IrMethod method) {
 
         final Map<Local, ArrayObject> arraySizes = new HashMap<>();
-        if (method.locals.size() == 0) {
+        if (method.locals.isEmpty()) {
             return arraySizes;
         }
         Cfg.createCFG(method);
-        Cfg.dfsVisit(method, new Cfg.DfsVisitor() {
-            @Override
-            public void onVisit(Stmt p) {
-                if (p.st == Stmt.ST.ASSIGN) {
-                    if (p.getOp2().vt == Value.VT.NEW_ARRAY && p.getOp1().vt == Value.VT.LOCAL) {
-                        TypeExpr ae = (TypeExpr) p.getOp2();
-                        if (ae.getOp().vt == Value.VT.CONSTANT) {
-                            int size = ((Number) ((Constant) ae.getOp()).value).intValue();
+        Cfg.dfsVisit(method, p -> {
+            if (p.st == Stmt.ST.ASSIGN) {
+                if (p.getOp2().vt == Value.VT.NEW_ARRAY && p.getOp1().vt == Value.VT.LOCAL) {
+                    TypeExpr ae = (TypeExpr) p.getOp2();
+                    if (ae.getOp().vt == Value.VT.CONSTANT) {
+                        int size = ((Number) ((Constant) ae.getOp()).value).intValue();
 
-                            // https://bitbucket.org/pxb1988/dex2jar/issues/2/decompiler-error
-                            // the following code may used in a java
-                            // try{
-                            //   new int[-1];
-                            // } catch(Exception e) {
-                            //   ...
-                            // }
-                            if (size >= 0) {
-                                arraySizes.put((Local) p.getOp1(), new ArrayObject(size, ae.type, (AssignStmt) p));
-                            }
+                        // https://bitbucket.org/pxb1988/dex2jar/issues/2/decompiler-error
+                        // the following code may used in a java
+                        // try{
+                        //   new int[-1];
+                        // } catch(Exception e) {
+                        //   ...
+                        // }
+                        if (size >= 0) {
+                            arraySizes.put((Local) p.getOp1(), new ArrayObject(size, ae.type, (AssignStmt) p));
                         }
-                    } else if (p.getOp1().vt == Value.VT.ARRAY) {
-                        ArrayExpr ae = (ArrayExpr) p.getOp1();
-                        if (ae.getOp1().vt == Value.VT.LOCAL) {
-                            Local local = (Local) ae.getOp1();
-                            ArrayObject arrayObject = arraySizes.get(local);
-                            if (arrayObject != null) {
-                                if (ae.getOp2().vt == Value.VT.CONSTANT) {
-                                    arrayObject.putItem.add(p);
-                                } else {
-                                    arraySizes.remove(local);
-                                }
+                    }
+                } else if (p.getOp1().vt == Value.VT.ARRAY) {
+                    ArrayExpr ae = (ArrayExpr) p.getOp1();
+                    if (ae.getOp1().vt == Value.VT.LOCAL) {
+                        Local local = (Local) ae.getOp1();
+                        ArrayObject arrayObject = arraySizes.get(local);
+                        if (arrayObject != null) {
+                            if (ae.getOp2().vt == Value.VT.CONSTANT) {
+                                arrayObject.putItem.add(p);
+                            } else {
+                                arraySizes.remove(local);
                             }
                         }
                     }
-                } else if (p.st == Stmt.ST.FILL_ARRAY_DATA) {
-                    if (p.getOp1().vt == Value.VT.LOCAL) {
-                        Local local = (Local) p.getOp1();
-                        ArrayObject arrayObject = arraySizes.get(local);
-                        if (arrayObject != null) {
-                            arrayObject.putItem.add(p);
-                        }
+                }
+            } else if (p.st == Stmt.ST.FILL_ARRAY_DATA) {
+                if (p.getOp1().vt == Value.VT.LOCAL) {
+                    Local local = (Local) p.getOp1();
+                    ArrayObject arrayObject = arraySizes.get(local);
+                    if (arrayObject != null) {
+                        arrayObject.putItem.add(p);
                     }
                 }
             }
         });
-        if (arraySizes.size() > 0) {
-            Set<Local> set = new HashSet<Local>();
+        if (!arraySizes.isEmpty()) {
+            Set<Local> set = new HashSet<>();
             if (method.phiLabels != null) {
                 for (LabelStmt labelStmt : method.phiLabels) {
                     if (labelStmt.phis != null) {
@@ -575,7 +596,7 @@ public class FillArrayTransformer extends StatedTransformer {
                     }
                 }
             }
-            if (set.size() > 0) {
+            if (!set.isEmpty()) {
                 for (Local local : set) {
                     arraySizes.remove(local);
                 }
@@ -585,15 +606,23 @@ public class FillArrayTransformer extends StatedTransformer {
     }
 
     static class ArrayObjectValue {
+
         BitSet pos;
+
         Local local;
+
         ArrayObject array;
+
         ArrayObjectValue parent;
+
         Set<ArrayObjectValue> otherParent;
+
         boolean used;
 
-        public ArrayObjectValue(Local local) {
+        ArrayObjectValue(Local local) {
             this.local = local;
         }
+
     }
+
 }

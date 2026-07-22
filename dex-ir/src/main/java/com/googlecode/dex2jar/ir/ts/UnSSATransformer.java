@@ -1,31 +1,4 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
 
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Local;
@@ -41,25 +14,29 @@ import com.googlecode.dex2jar.ir.stmt.StmtList;
 import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.an.AnalyzeValue;
 import com.googlecode.dex2jar.ir.ts.an.BaseAnalyze;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * Remove {@link PhiExpr}s, add a=x to each CFG from.
- * 
+ * <p>
  * TODO clean frame
- * 
+ *
  * @author bob
  */
 public class UnSSATransformer implements Transformer {
 
     private static final boolean DEBUG = false;
 
-    protected static final Comparator<RegAssign> OrderRegAssignByExcludeSizeDesc = new Comparator<RegAssign>() {
-
-        @Override
-        public int compare(RegAssign o1, RegAssign o2) {
-            return o2.excludes.size() - o1.excludes.size();
-        }
-    };
+    protected static final Comparator<RegAssign> ORDER_REG_ASSIGN_BY_EXCLUDE_SIZE_DESC =
+            (o1, o2) -> o2.excludes.size() - o1.excludes.size();
 
     public UnSSATransformer() {
         super();
@@ -67,7 +44,7 @@ public class UnSSATransformer implements Transformer {
 
     /**
      * there is somewhere both a and its possible x is both live, insert a=x, will change the meaning for example
-     * 
+     *
      * <pre>
      *                      L0:
      *                      a = phi(b, ... )
@@ -75,9 +52,9 @@ public class UnSSATransformer implements Transformer {
      *                      if a>0 goto L0: // a, b both live here
      *                      ...
      * </pre>
-     * 
+     * <p>
      * after insert a=b before the if stmt, the programe change to
-     * 
+     *
      * <pre>
      *                      L0:
      *                      // a = phi(b, ... )
@@ -86,9 +63,9 @@ public class UnSSATransformer implements Transformer {
      *                      if a>0 goto L0:
      *                      ...
      * </pre>
-     * 
+     * <p>
      * the solution is by introduce a new local x
-     * 
+     *
      * <pre>
      *                      L0:
      *                      x = phi(b, ... )
@@ -97,9 +74,9 @@ public class UnSSATransformer implements Transformer {
      *                      if a>0 goto L0: // a, b both live here
      *                      ...
      * </pre>
-     * 
+     * <p>
      * insert x = b is ok now
-     * 
+     *
      * <pre>
      *                      L0:
      *                      // x = phi(b, ... )
@@ -109,12 +86,10 @@ public class UnSSATransformer implements Transformer {
      *                      if a>0 goto L0: // a, b both live here
      *                      ...
      * </pre>
-     * 
-     * @param phiLabels
      */
     private void fixPhi(IrMethod method, Collection<LabelStmt> phiLabels) {
         for (LabelStmt labelStmt : phiLabels) {
-            List<AssignStmt> phis = (List<AssignStmt>) labelStmt.phis;
+            List<AssignStmt> phis = labelStmt.phis;
 
             for (AssignStmt phi : phis) {
 
@@ -123,7 +98,7 @@ public class UnSSATransformer implements Transformer {
                 boolean introduceNewLocal = false;
                 RegAssign aReg = (RegAssign) a.tag;
                 for (Value op : b.getOps()) {
-                    RegAssign bReg = (RegAssign) ((Local) op).tag;
+                    RegAssign bReg = (RegAssign) op.tag;
                     if (aReg.excludes.contains(bReg)) {
                         introduceNewLocal = true;
                         break;
@@ -153,10 +128,10 @@ public class UnSSATransformer implements Transformer {
                         LiveV n = new LiveV();
                         n.local = a;
                         n.used = true;
-                        copy[a._ls_index] = new LiveV();
+                        copy[a.lsIndex] = new LiveV();
                         newAssigStmt.frame = copy;
                     }
-                    LiveV thePhi = frame[a._ls_index];
+                    LiveV thePhi = frame[a.lsIndex];
                     thePhi.local = newLocal;
                     for (LiveV v : frame) {
                         if (v != null && v.used) {
@@ -175,13 +150,13 @@ public class UnSSATransformer implements Transformer {
         // FIXME the phi in Exception handler is buggy
         List<AssignStmt> buff = new ArrayList<>();
         for (LabelStmt labelStmt : phiLabels) {
-            List<AssignStmt> phis = (List<AssignStmt>) labelStmt.phis;
+            List<AssignStmt> phis = labelStmt.phis;
             LiveV[] frame = (LiveV[]) labelStmt.frame;
-            for (Stmt from : labelStmt._cfg_froms) {
+            for (Stmt from : labelStmt.cfgFroms) {
                 if (from.visited) { // at lease it is reached by cfg
                     for (AssignStmt phi : phis) {
                         Local a = (Local) phi.getOp1();
-                        LiveV v = frame[a._ls_index];
+                        LiveV v = frame[a.lsIndex];
                         Local local = v.stmt2regMap.get(from);
                         if (local != a) {
                             buff.add(Stmts.nAssign(a, local));
@@ -235,7 +210,7 @@ public class UnSSATransformer implements Transformer {
             }
             RegAssign leftRegAssign = (RegAssign) left.tag;
             Local right = (Local) as.getOp2();
-            int toSkip = right._ls_index;
+            int toSkip = right.lsIndex;
             for (int i = 0; i < frame.length; i++) {
                 if (i == toSkip) {
                     continue;
@@ -248,7 +223,7 @@ public class UnSSATransformer implements Transformer {
                 }
             }
             for (AssignStmt as2 : buff) {
-                RegAssign assign = (RegAssign) ((Local) as2.getOp1()).tag;
+                RegAssign assign = (RegAssign) as2.getOp1().tag;
                 assign.excludes.add(leftRegAssign);
                 leftRegAssign.excludes.add(assign);
             }
@@ -259,12 +234,11 @@ public class UnSSATransformer implements Transformer {
         for (int i = 0; i < newLiveVs.size(); i++) {
             newFrame[i + frame.length] = newLiveVs.get(i);
         }
-
     }
 
     @Override
     public void transform(IrMethod method) {
-        if (method.phiLabels == null || method.phiLabels.size() == 0) {
+        if (method.phiLabels == null || method.phiLabels.isEmpty()) {
             return;
         }
 
@@ -287,7 +261,7 @@ public class UnSSATransformer implements Transformer {
             Stmt stmt = phiLabel.getNext();
             if (stmt.st == ST.LABEL) {
                 LabelStmt labelStmt2 = (LabelStmt) stmt;
-                if (labelStmt2.phis != null && labelStmt2.phis.size() > 0) {
+                if (labelStmt2.phis != null && !labelStmt2.phis.isEmpty()) {
                     method.stmts.insertAfter(phiLabel, Stmts.nNop());
                 }
             }
@@ -331,19 +305,19 @@ public class UnSSATransformer implements Transformer {
                 Set<Integer> excludeIdx = new HashSet<>();
                 Cfg.collectTos(stmt, tos);
                 for (Stmt target : tos) {
-                    LiveV frame[] = (LiveV[]) target.frame;
+                    LiveV[] frame = (LiveV[]) target.frame;
                     if (frame == null) {
                         continue;
                     }
                     // exclude thisReg and phiReg
                     excludeIdx.clear();
-                    excludeIdx.add(localAssignTo._ls_index);
+                    excludeIdx.add(localAssignTo.lsIndex);
                     if (target.st == ST.LABEL) {
                         LabelStmt label = (LabelStmt) target;
                         if (label.phis != null) {
-                            for (AssignStmt phiAssignStmt : (List<AssignStmt>) label.phis) {
+                            for (AssignStmt phiAssignStmt : label.phis) {
                                 Local phiLocal = (Local) phiAssignStmt.getOp1();
-                                excludeIdx.add(phiLocal._ls_index);
+                                excludeIdx.add(phiLocal.lsIndex);
                             }
                         }
                     }
@@ -365,15 +339,17 @@ public class UnSSATransformer implements Transformer {
                 // the exception handler is dead and stmt.frame is null
                 LabelStmt label = (LabelStmt) stmt;
                 if (label.phis != null && stmt.frame != null) {
-                    for (AssignStmt phiAssignStmt : (List<AssignStmt>) label.phis) {
+                    for (AssignStmt phiAssignStmt : label.phis) {
                         Local phiLocal = (Local) phiAssignStmt.getOp1();
                         RegAssign a = (RegAssign) phiLocal.tag;
-                        LiveV frame[] = (LiveV[]) stmt.frame;
-                        for (LiveV v : frame) {
-                            if (v != null && v.used) {
-                                RegAssign b = (RegAssign) v.local.tag;
-                                a.excludes.add(b);
-                                b.excludes.add(a);
+                        LiveV[] frame = (LiveV[]) stmt.frame;
+                        if (frame != null) {
+                            for (LiveV v : frame) {
+                                if (v != null && v.used) {
+                                    RegAssign b = (RegAssign) v.local.tag;
+                                    a.excludes.add(b);
+                                    b.excludes.add(a);
+                                }
                             }
                         }
                     }
@@ -386,13 +362,8 @@ public class UnSSATransformer implements Transformer {
     }
 
     protected static class LiveA extends BaseAnalyze<LiveV> {
-        static Comparator<LiveV> sortByHopsASC = new Comparator<LiveV>() {
 
-            @Override
-            public int compare(LiveV arg0, LiveV arg1) {
-                return arg0.hops - arg1.hops;
-            }
-        };
+        static Comparator<LiveV> sortByHopsASC = Comparator.comparingInt(arg0 -> arg0.hops);
 
         public LiveA(IrMethod method) {
             super(method);
@@ -425,7 +396,7 @@ public class UnSSATransformer implements Transformer {
         }
 
         protected Set<LiveV> markUsed() {
-            Set<LiveV> used = new HashSet<LiveV>(aValues.size() / 2);
+            Set<LiveV> used = new HashSet<>(aValues.size() / 2);
             Queue<LiveV> q = new UniqueQueue<>();
             q.addAll(aValues);
 
@@ -445,7 +416,7 @@ public class UnSSATransformer implements Transformer {
                     }
                     {
                         List<LiveV> otherParent = v.otherParents;
-                        if (otherParent != null && otherParent.size() > 0) {
+                        if (otherParent != null && !otherParent.isEmpty()) {
                             for (LiveV parent : otherParent) {
                                 if (parent != null && !parent.used) {
                                     parent.used = true;
@@ -465,18 +436,18 @@ public class UnSSATransformer implements Transformer {
             return used;
         }
 
-        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
         public LiveV[] merge(LiveV[] srcFrame, LiveV[] distFrame, Stmt src, Stmt dist) {
 
             Map<Integer, AssignStmt> phiLives = new HashMap<>();
             if (dist.st == ST.LABEL) {
                 LabelStmt label = (LabelStmt) dist;
-                if (label.phis != null) {// we got phis here
+                if (label.phis != null) { // we got phis here
                     // travel each phi assignment, find where the phiLocal from
-                    for (AssignStmt phiAssignStmt : (List<AssignStmt>) label.phis) {
+                    for (AssignStmt phiAssignStmt : label.phis) {
                         Local phiLocal = (Local) phiAssignStmt.getOp1();
-                        phiLives.put(phiLocal._ls_index, phiAssignStmt);
+                        phiLives.put(phiLocal.lsIndex, phiAssignStmt);
                     }
                 }
             }
@@ -529,28 +500,28 @@ public class UnSSATransformer implements Transformer {
                     distValue = new LiveV();
                     distValue.local = phiLocal;
                     distValue.stmt2regMap = new HashMap<>();
-                    distFrame[phiLocal._ls_index] = distValue;
+                    distFrame[phiLocal.lsIndex] = distValue;
                 } else {
-                    distValue = distFrame[phiLocal._ls_index];
+                    distValue = distFrame[phiLocal.lsIndex];
                 }
 
                 List<LiveV> liveVs = new ArrayList();
 
-                LiveV possiblePhiLocal = srcFrame[phiLocal._ls_index];
+                LiveV possiblePhiLocal = srcFrame[phiLocal.lsIndex];
                 if (possiblePhiLocal != null) {
                     liveVs.add(possiblePhiLocal);
                 }
 
                 for (Value p0 : phiAssignStmt.getOp2().getOps()) {
                     Local srcLocal = (Local) p0;
-                    LiveV s = srcFrame[srcLocal._ls_index];
+                    LiveV s = srcFrame[srcLocal.lsIndex];
                     if (s != null) {
                         liveVs.add(s);
                     }
                 }
-                Collections.sort(liveVs, sortByHopsASC);
+                liveVs.sort(sortByHopsASC);
                 LiveV a = liveVs.get(0); // this value assign to
-                                         // phiLocal in srcFrame
+                // phiLocal in srcFrame
                 a.used = true;
                 distValue.stmt2regMap.put(src, a.local);
             }
@@ -583,21 +554,27 @@ public class UnSSATransformer implements Transformer {
     }
 
     private static class LiveV implements AnalyzeValue {
+
         public int hops;
+
         public Local local;
+
         public LiveV parent;
+
         public boolean used;
+
         public List<LiveV> otherParents;
+
         /**
          * for a Phi local, record where the this assigned from, for
-         * 
+         *
          * <pre>
          *     s0: a0=1
          *     s1: if x goto s3
          *     s2: a1=2
          *     s3: a= phi(a0, a1)
          * </pre>
-         * 
+         * <p>
          * the value is s0 : a0 s2 : a1
          */
         Map<Stmt, Local> stmt2regMap;
@@ -611,16 +588,19 @@ public class UnSSATransformer implements Transformer {
         public String toString() {
             return local + "|" + hops;
         }
+
     }
 
     /**
      * designed for assign index to Local, each Object is related to a Local
      */
     protected static class RegAssign {
+
         /**
          * can not have same index with
          */
-        public Set<RegAssign> excludes = new HashSet<RegAssign>();
+        public Set<RegAssign> excludes = new HashSet<>();
 
     }
+
 }

@@ -8,22 +8,29 @@ import com.googlecode.d2j.dex.writer.DexFileWriter;
 import com.googlecode.d2j.dex.writer.DexWriteException;
 import com.googlecode.d2j.reader.DexFileReader;
 import com.googlecode.d2j.reader.Op;
-import com.googlecode.d2j.visitors.*;
-
-import org.junit.Test;
-
+import com.googlecode.d2j.visitors.DexAnnotationVisitor;
+import com.googlecode.d2j.visitors.DexClassVisitor;
+import com.googlecode.d2j.visitors.DexCodeVisitor;
+import com.googlecode.d2j.visitors.DexFieldVisitor;
+import com.googlecode.d2j.visitors.DexMethodVisitor;
 import java.io.File;
 import java.io.IOException;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AppWriterTest implements DexConstants {
-    @Test(expected = DexWriteException.class)
+
+    @Test
     public void testDupClz() {
-        DexFileWriter w = new DexFileWriter();
-        DexClassVisitor cv = w.visit(0, "La/b;", null, null);
-        cv.visitEnd();
-        cv = w.visit(0, "La/b;", null, null);
-        cv.visitEnd();
-        w.visitEnd();
+        assertThrows(DexWriteException.class, () -> {
+            DexFileWriter w = new DexFileWriter();
+            DexClassVisitor cv = w.visit(0, "La/b;", null, null);
+            cv.visitEnd();
+            cv = w.visit(0, "La/b;", null, null);
+            cv.visitEnd();
+            w.visitEnd();
+        });
     }
 
     @Test
@@ -63,8 +70,10 @@ public class AppWriterTest implements DexConstants {
     @Test
     public void test4() throws IOException {
         DexFileWriter w = new DexFileWriter();
-        DexFileReader dexFileReader = new DexFileReader(new File("../dex-translator/src/test/resources/dexes/i_jetty.dex"));
+        DexFileReader dexFileReader = new DexFileReader(new File("../dex-translator/src/test/resources/dexes/i_jetty"
+                + ".dex"));
         dexFileReader.accept(w);
         w.toByteArray();
     }
+
 }

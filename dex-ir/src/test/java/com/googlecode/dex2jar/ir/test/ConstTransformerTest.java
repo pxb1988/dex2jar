@@ -1,13 +1,5 @@
 package com.googlecode.dex2jar.ir.test;
 
-import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
-import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
-import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Constant;
 import com.googlecode.dex2jar.ir.expr.Exprs;
@@ -15,6 +7,13 @@ import com.googlecode.dex2jar.ir.expr.Local;
 import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.UnopStmt;
 import com.googlecode.dex2jar.ir.ts.ConstTransformer;
+import org.junit.jupiter.api.Test;
+
+import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
+import static com.googlecode.dex2jar.ir.expr.Exprs.nString;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nAssign;
+import static com.googlecode.dex2jar.ir.stmt.Stmts.nReturn;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ConstTransformerTest {
 
@@ -29,9 +28,9 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 1);
-        Assert.assertTrue(jm.stmts.getSize() == 2);
-        Assert.assertEquals("a String", ((Constant) retStmt.op.trim()).value);
+        assertEquals(1, jm.locals.size());
+        assertEquals(2, jm.stmts.getSize());
+        assertEquals("a String", ((Constant) retStmt.op.trim()).value);
     }
 
     @Test
@@ -48,9 +47,9 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 2);
-        Assert.assertTrue(jm.stmts.getSize() == 3);
-        Assert.assertEquals("a String", ((Constant) retStmt.op.trim()).value);
+        assertEquals(2, jm.locals.size());
+        assertEquals(3, jm.stmts.getSize());
+        assertEquals("a String", ((Constant) retStmt.op.trim()).value);
     }
 
     @Test
@@ -70,9 +69,9 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 3);
-        Assert.assertTrue(jm.stmts.getSize() == 4);
-        Assert.assertEquals("a String", ((Constant) retStmt.op.trim()).value);
+        assertEquals(3, jm.locals.size());
+        assertEquals(4, jm.stmts.getSize());
+        assertEquals("a String", ((Constant) retStmt.op.trim()).value);
     }
 
     @Test
@@ -92,9 +91,9 @@ public class ConstTransformerTest {
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 3);
-        Assert.assertTrue(jm.stmts.getSize() == 4);
-        Assert.assertEquals(p, retStmt.op.trim());
+        assertEquals(3, jm.locals.size());
+        assertEquals(4, jm.stmts.getSize());
+        assertEquals(p, retStmt.op.trim());
     }
 
     @Test
@@ -107,15 +106,16 @@ public class ConstTransformerTest {
         jm.locals.add(a);
         jm.locals.add(b);
         jm.locals.add(p);
-        jm.stmts.add(nAssign(a, nString(new String("a String"))));
-        jm.stmts.add(nAssign(b, nString(new String("a String"))));
+        jm.stmts.add(nAssign(a, nString("a String")));
+        jm.stmts.add(nAssign(b, nString("a String")));
         jm.stmts.add(nAssign(p, Exprs.nPhi(a, b)));
         UnopStmt retStmt = nReturn(p);
         jm.stmts.add(retStmt);
         new ConstTransformer().transform(jm);
 
-        Assert.assertTrue(jm.locals.size() == 3);
-        Assert.assertTrue(jm.stmts.getSize() == 4);
-        Assert.assertEquals(VT.CONSTANT, retStmt.op.vt);
+        assertEquals(3, jm.locals.size());
+        assertEquals(4, jm.stmts.getSize());
+        assertEquals(VT.CONSTANT, retStmt.op.vt);
     }
+
 }

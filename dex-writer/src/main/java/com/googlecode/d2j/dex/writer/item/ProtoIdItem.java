@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex.writer.item;
 
 import com.googlecode.d2j.dex.writer.ann.Idx;
@@ -21,10 +5,13 @@ import com.googlecode.d2j.dex.writer.ann.Off;
 import com.googlecode.d2j.dex.writer.io.DataOut;
 
 public class ProtoIdItem extends BaseItem implements Comparable<ProtoIdItem> {
+
     @Idx
     public final StringIdItem shorty;
+
     @Idx
     public final TypeIdItem ret;
+
     @Off
     public final TypeListItem parameters;
 
@@ -47,29 +34,35 @@ public class ProtoIdItem extends BaseItem implements Comparable<ProtoIdItem> {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         ProtoIdItem other = (ProtoIdItem) obj;
         if (parameters == null) {
-            if (other.parameters != null)
+            if (other.parameters != null) {
                 return false;
-        } else if (!parameters.equals(other.parameters))
+            }
+        } else if (!parameters.equals(other.parameters)) {
             return false;
+        }
         if (ret == null) {
-            if (other.ret != null)
+            if (other.ret != null) {
                 return false;
-        } else if (!ret.equals(other.ret))
+            }
+        } else if (!ret.equals(other.ret)) {
             return false;
+        }
         if (shorty == null) {
-            if (other.shorty != null)
-                return false;
-        } else if (!shorty.equals(other.shorty))
-            return false;
-        return true;
+            return other.shorty == null;
+        } else {
+            return shorty.equals(other.shorty);
+        }
     }
 
     @Override
@@ -91,7 +84,7 @@ public class ProtoIdItem extends BaseItem implements Comparable<ProtoIdItem> {
         out.uint("shorty_idx", shorty.index);
         out.uint("return_type_idx", ret.index);
         // can't use zero-size type_list_item in libart
-        out.uint("parameters_off", (parameters == null || parameters.items.size() == 0) ? 0 : parameters.offset);
+        out.uint("parameters_off", (parameters == null || parameters.items.isEmpty()) ? 0 : parameters.offset);
     }
 
 }

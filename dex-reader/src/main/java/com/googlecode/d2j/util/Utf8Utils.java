@@ -32,12 +32,15 @@ import java.io.Writer;
  */
 public final class Utf8Utils {
 
+    private Utf8Utils() {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Converts a string into its Java-style UTF-8 form. Java-style UTF-8 differs from normal UTF-8 in the handling of
      * character '\0' and surrogate pairs.
-     * 
-     * @param string
-     *            non-null; the string to convert
+     *
+     * @param string non-null; the string to convert
      * @return non-null; the UTF-8 bytes for it
      */
     public static byte[] stringToUtf8Bytes(String string) {
@@ -71,15 +74,12 @@ public final class Utf8Utils {
 
     /**
      * Converts an array of UTF-8 bytes into a string.
-     * 
+     * <p>
      * This method uses a global buffer to avoid having to allocate one every time, so it is *not* thread-safe
-     * 
-     * @param bytes
-     *            non-null; the bytes to convert
-     * @param start
-     *            the start index of the utf8 string to convert
-     * @param length
-     *            the length of the utf8 string to convert, not including any null-terminator that might be present
+     *
+     * @param bytes  non-null; the bytes to convert
+     * @param start  the start index of the utf8 string to convert
+     * @param length the length of the utf8 string to convert, not including any null-terminator that might be present
      * @return non-null; the converted string
      */
     public static String utf8BytesToString(byte[] bytes, int start, int length) {
@@ -89,7 +89,8 @@ public final class Utf8Utils {
         char[] chars = tempBuffer;
         int outAt = 0;
 
-        for (int at = start; length > 0; /* at */) {
+        int at = start;
+        while (length > 0) {
             int v0 = bytes[at] & 0xFF;
             char out;
             switch (v0 >> 4) {
@@ -172,14 +173,11 @@ public final class Utf8Utils {
 
     /**
      * Helper for {@link #utf8BytesToString}, which throws the right exception for a bogus utf-8 byte.
-     * 
-     * @param value
-     *            the byte value
-     * @param offset
-     *            the file offset
+     *
+     * @param value  the byte value
+     * @param offset the file offset
      * @return never
-     * @throws IllegalArgumentException
-     *             always thrown
+     * @throws IllegalArgumentException always thrown
      */
     private static String throwBadUtf8(int value, int offset) {
         throw new IllegalArgumentException("bad utf-8 byte " + String.format("%02x", value) + " at offset "
@@ -204,6 +202,8 @@ public final class Utf8Utils {
             case '\t':
                 writer.write("\\t");
                 return;
+            default:
+                break;
             }
         }
 
@@ -236,6 +236,8 @@ public final class Utf8Utils {
                 case '\t':
                     writer.write("\\t");
                     continue;
+                default:
+                    break;
                 }
             }
 
@@ -271,6 +273,8 @@ public final class Utf8Utils {
                 case '\t':
                     sb.append("\\t");
                     continue;
+                default:
+                    break;
                 }
             }
 
@@ -283,4 +287,5 @@ public final class Utf8Utils {
 
         return sb.toString();
     }
+
 }

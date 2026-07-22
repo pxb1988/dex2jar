@@ -46,4 +46,5 @@ public class UniqueQueue<T> extends LinkedList<T> {
         set.remove(t);
         return t;
     }
+
 }

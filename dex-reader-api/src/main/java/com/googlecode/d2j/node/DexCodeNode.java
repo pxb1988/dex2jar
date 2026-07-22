@@ -1,36 +1,43 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.node;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.googlecode.d2j.*;
-import com.googlecode.d2j.node.insn.*;
+import com.googlecode.d2j.CallSite;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.Proto;
+import com.googlecode.d2j.node.insn.ConstStmtNode;
+import com.googlecode.d2j.node.insn.DexLabelStmtNode;
+import com.googlecode.d2j.node.insn.DexStmtNode;
+import com.googlecode.d2j.node.insn.FieldStmtNode;
+import com.googlecode.d2j.node.insn.FillArrayDataStmtNode;
+import com.googlecode.d2j.node.insn.FilledNewArrayStmtNode;
+import com.googlecode.d2j.node.insn.JumpStmtNode;
+import com.googlecode.d2j.node.insn.MethodCustomStmtNode;
+import com.googlecode.d2j.node.insn.MethodPolymorphicStmtNode;
+import com.googlecode.d2j.node.insn.MethodStmtNode;
+import com.googlecode.d2j.node.insn.PackedSwitchStmtNode;
+import com.googlecode.d2j.node.insn.SparseSwitchStmtNode;
+import com.googlecode.d2j.node.insn.Stmt0RNode;
+import com.googlecode.d2j.node.insn.Stmt1RNode;
+import com.googlecode.d2j.node.insn.Stmt2R1NNode;
+import com.googlecode.d2j.node.insn.Stmt2RNode;
+import com.googlecode.d2j.node.insn.Stmt3RNode;
+import com.googlecode.d2j.node.insn.TypeStmtNode;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
 import com.googlecode.d2j.visitors.DexMethodVisitor;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DexCodeNode extends DexCodeVisitor {
 
-    public List<DexStmtNode> stmts = new ArrayList<DexStmtNode>();
+    public List<DexStmtNode> stmts = new ArrayList<>();
+
     public List<TryCatchNode> tryStmts = null;
+
     public DexDebugNode debugNode;
+
     public int totalRegister = -1;
 
     public DexCodeNode() {
@@ -120,8 +127,8 @@ public class DexCodeNode extends DexCodeVisitor {
     }
 
     @Override
-    public void visitPackedSwitchStmt(final Op op, final int aA, final int first_case, final DexLabel[] labels) {
-        add(new PackedSwitchStmtNode(op, aA, first_case, labels));
+    public void visitPackedSwitchStmt(final Op op, final int aA, final int firstCase, final DexLabel[] labels) {
+        add(new PackedSwitchStmtNode(op, aA, firstCase, labels));
     }
 
     @Override

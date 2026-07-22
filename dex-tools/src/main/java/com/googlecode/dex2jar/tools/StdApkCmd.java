@@ -1,30 +1,14 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.tools;
 
+import com.googlecode.d2j.util.zip.AutoSTOREDZipOutputStream;
+import com.googlecode.d2j.util.zip.ZipFile;
+import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import com.googlecode.d2j.util.zip.AutoSTOREDZipOutputStream;
-import com.googlecode.dex2jar.tools.BaseCmd.Syntax;
 
 @Syntax(cmd = "d2j-std-zip", syntax = "[options] <zip>", desc = "clean up apk to standard zip")
 public class StdApkCmd extends BaseCmd {
@@ -43,12 +27,12 @@ public class StdApkCmd extends BaseCmd {
             return;
         }
 
-        System.err.printf("fix %s -> %s\n", remainingArgs[0], output);
+        System.err.printf("fix %s -> %s%n", remainingArgs[0], output);
 
         byte[] buffer = new byte[1000];
         try (ZipOutputStream zos = new AutoSTOREDZipOutputStream(Files.newOutputStream(output))) {
             byte[] data = Files.readAllBytes(new File(remainingArgs[0]).toPath());
-            try(com.googlecode.d2j.util.zip.ZipFile zipFile = new com.googlecode.d2j.util.zip.ZipFile(data)) {
+            try (ZipFile zipFile = new ZipFile(data)) {
                 for (com.googlecode.d2j.util.zip.ZipEntry e : zipFile.entries()) {
                     ZipEntry nEntry = new ZipEntry(e.getName());
 
@@ -73,4 +57,5 @@ public class StdApkCmd extends BaseCmd {
             zos.finish();
         }
     }
+
 }

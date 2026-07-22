@@ -1,19 +1,3 @@
-/*
- * dex2jar - Tools to work with android .dex and java .class files
- * Copyright (c) 2009-2013 Panxiaobo
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.dex.writer;
 
 import com.googlecode.d2j.CallSite;
@@ -21,54 +5,93 @@ import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.Field;
 import com.googlecode.d2j.Method;
 import com.googlecode.d2j.Proto;
-import com.googlecode.d2j.dex.writer.insn.*;
-import com.googlecode.d2j.dex.writer.item.*;
+import com.googlecode.d2j.dex.writer.insn.Insn;
+import com.googlecode.d2j.dex.writer.insn.JumpOp;
+import com.googlecode.d2j.dex.writer.insn.Label;
+import com.googlecode.d2j.dex.writer.insn.OpInsn;
+import com.googlecode.d2j.dex.writer.insn.PreBuildInsn;
+import com.googlecode.d2j.dex.writer.item.BaseItem;
+import com.googlecode.d2j.dex.writer.item.ClassDataItem;
+import com.googlecode.d2j.dex.writer.item.CodeItem;
+import com.googlecode.d2j.dex.writer.item.ConstPool;
+import com.googlecode.d2j.dex.writer.item.DebugInfoItem;
+import com.googlecode.d2j.dex.writer.item.StringIdItem;
 import com.googlecode.d2j.reader.Op;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 import com.googlecode.d2j.visitors.DexDebugVisitor;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static com.googlecode.d2j.reader.InstructionFormat.*;
-import static com.googlecode.d2j.reader.Op.*;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt10x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt11x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt22b;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt22s;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt23x;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt35c;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt3rc;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt45cc;
+import static com.googlecode.d2j.reader.InstructionFormat.kFmt4rcc;
+import static com.googlecode.d2j.reader.Op.BAD_OP;
+import static com.googlecode.d2j.reader.Op.CONST;
+import static com.googlecode.d2j.reader.Op.CONST_16;
+import static com.googlecode.d2j.reader.Op.CONST_HIGH16;
+import static com.googlecode.d2j.reader.Op.CONST_METHOD_HANDLE;
+import static com.googlecode.d2j.reader.Op.CONST_METHOD_TYPE;
+import static com.googlecode.d2j.reader.Op.CONST_STRING;
+import static com.googlecode.d2j.reader.Op.CONST_STRING_JUMBO;
+import static com.googlecode.d2j.reader.Op.CONST_WIDE_32;
 
-@SuppressWarnings("incomplete-switch")
 public class CodeWriter extends DexCodeVisitor {
+
     final CodeItem codeItem;
+
     final ConstPool cp;
+
     ByteBuffer b = ByteBuffer.allocate(10).order(ByteOrder.LITTLE_ENDIAN);
-    int in_reg_size = 0;
-    int max_out_reg_size = 0;
+
+    int inRegSize;
+
+    int maxOutRegSize = 0;
+
     List<Insn> ops = new ArrayList<>();
+
     List<Insn> tailOps = new ArrayList<>();
-    int total_reg;
+
+    int totalReg;
+
     List<CodeItem.TryItem> tryItems = new ArrayList<>();
+
     Method owner;
+
     Map<DexLabel, Label> labelMap = new HashMap<>();
+
     ClassDataItem.EncodedMethod encodedMethod;
 
-    public CodeWriter(ClassDataItem.EncodedMethod encodedMethod, CodeItem codeItem, Method owner, boolean isStatic, ConstPool cp) {
+    public CodeWriter(ClassDataItem.EncodedMethod encodedMethod, CodeItem codeItem, Method owner, boolean isStatic,
+                      ConstPool cp) {
         this.encodedMethod = encodedMethod;
         this.codeItem = codeItem;
         this.owner = owner;
-        int in_reg_size = 0;
+        int inRegSize = 0;
         if (!isStatic) {
-            in_reg_size++;
+            inRegSize++;
         }
         for (String s : owner.getParameterTypes()) {
             switch (s.charAt(0)) {
             case 'J':
             case 'D':
-                in_reg_size += 2;
+                inRegSize += 2;
                 break;
             default:
-                in_reg_size++;
+                inRegSize++;
                 break;
             }
         }
-        this.in_reg_size = in_reg_size;
+        this.inRegSize = inRegSize;
         this.cp = cp;
     }
 
@@ -145,12 +168,12 @@ public class CodeWriter extends DexCodeVisitor {
     }
 
     // B|A|op
-    private byte[] build11n(Op op, int vA, int B) {
+    private byte[] build11n(Op op, int vA, int b) {
         checkRegA(op, "vA", vA);
-        checkContentS4bit(op, "#+B", B);
-        b.position(0);
-        b.put((byte) op.opcode).put((byte) ((vA & 0xF) | (B << 4)));
-        return copy(b);
+        checkContentS4bit(op, "#+B", b);
+        this.b.position(0);
+        this.b.put((byte) op.opcode).put((byte) ((vA & 0xF) | (b << 4)));
+        return copy(this.b);
     }
 
     // AA|op
@@ -177,14 +200,14 @@ public class CodeWriter extends DexCodeVisitor {
         checkRegAA(op, "vAA", vAA);
         int realV;
         if (op == CONST_HIGH16) { // op vAA, #+BBBB0000
-            int v = ((Number) value).intValue();
+            int v = value.intValue();
             if ((v & 0xFFFF) != 0) {
                 throw new CantNotFixContentException(op, "#+BBBB0000", v);
             }
             realV = v >> 16;
 
         } else { // CONST_WIDE_HIGH16 //op vAA, #+BBBB000000000000
-            long v = ((Number) value).longValue();
+            long v = value.longValue();
             if ((v & 0x0000FFFFffffFFFFL) != 0) {
                 throw new CantNotFixContentException(op, "#+BBBB000000000000", v);
             }
@@ -202,7 +225,7 @@ public class CodeWriter extends DexCodeVisitor {
         if (op == CONST_16) {
             realV = value.intValue();
             checkContentShort(op, "#+BBBB", realV);
-        } else {// CONST_WIDE_16
+        } else { // CONST_WIDE_16
             long v = value.longValue();
             if (v > Short.MAX_VALUE || v < Short.MIN_VALUE) {
                 throw new CantNotFixContentException(op, "#+BBBB", v);
@@ -226,14 +249,14 @@ public class CodeWriter extends DexCodeVisitor {
     }
 
     // B|A|op CCCC
-    private byte[] build22s(Op op, int A, int B, int CCCC) {
-        checkRegA(op, "vA", A);
-        checkRegA(op, "vB", B);
-        checkContentShort(op, "+CCCC", CCCC);
+    private byte[] build22s(Op op, int a, int b, int cccc) {
+        checkRegA(op, "vA", a);
+        checkRegA(op, "vB", b);
+        checkContentShort(op, "+CCCC", cccc);
 
-        b.position(0);
-        b.put((byte) op.opcode).put((byte) ((A & 0xF) | (B << 4))).putShort((short) CCCC);
-        return copy(b);
+        this.b.position(0);
+        this.b.put((byte) op.opcode).put((byte) ((a & 0xF) | (b << 4))).putShort((short) cccc);
+        return copy(this.b);
     }
 
     // AA|op BBBB
@@ -311,19 +334,19 @@ public class CodeWriter extends DexCodeVisitor {
         if (value instanceof byte[]) {
             byte[] data = (byte[]) value;
             int size = data.length;
-            int element_width = 1;
-            b = ByteBuffer.allocate(((size * element_width + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
+            int elementWidth = 1;
+            b = ByteBuffer.allocate(((size * elementWidth + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
             b.putShort((short) 0x0300);
-            b.putShort((short) element_width);
+            b.putShort((short) elementWidth);
             b.putInt(size);
             b.put(data);
         } else if (value instanceof short[]) {
             short[] data = (short[]) value;
             int size = data.length;
-            int element_width = 2;
-            b = ByteBuffer.allocate(((size * element_width + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
+            int elementWidth = 2;
+            b = ByteBuffer.allocate(((size * elementWidth + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
             b.putShort((short) 0x0300);
-            b.putShort((short) element_width);
+            b.putShort((short) elementWidth);
             b.putInt(size);
             for (short s : data) {
                 b.putShort(s);
@@ -331,10 +354,10 @@ public class CodeWriter extends DexCodeVisitor {
         } else if (value instanceof int[]) {
             int[] data = (int[]) value;
             int size = data.length;
-            int element_width = 4;
-            b = ByteBuffer.allocate(((size * element_width + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
+            int elementWidth = 4;
+            b = ByteBuffer.allocate(((size * elementWidth + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
             b.putShort((short) 0x0300);
-            b.putShort((short) element_width);
+            b.putShort((short) elementWidth);
             b.putInt(size);
             for (int s : data) {
                 b.putInt(s);
@@ -342,10 +365,10 @@ public class CodeWriter extends DexCodeVisitor {
         } else if (value instanceof float[]) {
             float[] data = (float[]) value;
             int size = data.length;
-            int element_width = 4;
-            b = ByteBuffer.allocate(((size * element_width + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
+            int elementWidth = 4;
+            b = ByteBuffer.allocate(((size * elementWidth + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
             b.putShort((short) 0x0300);
-            b.putShort((short) element_width);
+            b.putShort((short) elementWidth);
             b.putInt(size);
             for (float s : data) {
                 b.putInt(Float.floatToIntBits(s));
@@ -353,10 +376,10 @@ public class CodeWriter extends DexCodeVisitor {
         } else if (value instanceof long[]) {
             long[] data = (long[]) value;
             int size = data.length;
-            int element_width = 8;
-            b = ByteBuffer.allocate(((size * element_width + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
+            int elementWidth = 8;
+            b = ByteBuffer.allocate(((size * elementWidth + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
             b.putShort((short) 0x0300);
-            b.putShort((short) element_width);
+            b.putShort((short) elementWidth);
             b.putInt(size);
             for (long s : data) {
                 b.putLong(s);
@@ -364,10 +387,10 @@ public class CodeWriter extends DexCodeVisitor {
         } else if (value instanceof double[]) {
             double[] data = (double[]) value;
             int size = data.length;
-            int element_width = 8;
-            b = ByteBuffer.allocate(((size * element_width + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
+            int elementWidth = 8;
+            b = ByteBuffer.allocate(((size * elementWidth + 1) / 2 + 4) * 2).order(ByteOrder.LITTLE_ENDIAN);
             b.putShort((short) 0x0300);
-            b.putShort((short) element_width);
+            b.putShort((short) elementWidth);
             b.putInt(size);
             for (double s : data) {
                 b.putLong(Double.doubleToLongBits(s));
@@ -385,10 +408,6 @@ public class CodeWriter extends DexCodeVisitor {
 
     /**
      * kFmt21c,kFmt31c,kFmt11n,kFmt21h,kFmt21s,kFmt31i,kFmt51l
-     * 
-     * @param op
-     * @param ra
-     * @param value
      */
     @Override
     public void visitConstStmt(Op op, int ra, Object value) {
@@ -416,43 +435,41 @@ public class CodeWriter extends DexCodeVisitor {
         case kFmt51l:
             ops.add(new PreBuildInsn(build51l(op, ra, ((Number) value))));
             break;
-
+        default:
+            break;
         }
     }
 
     @Override
     public void visitEnd() {
-        if (ops.size() == 0 && tailOps.size() == 0) {
+        if (ops.isEmpty() && tailOps.isEmpty()) {
             encodedMethod.code = null;
             return;
         }
         cp.addCodeItem(codeItem);
 
-        codeItem.registersSize = this.total_reg;
-        codeItem.outsSize = max_out_reg_size;
-        codeItem.insSize = in_reg_size;
+        codeItem.registersSize = this.totalReg;
+        codeItem.outsSize = maxOutRegSize;
+        codeItem.insSize = inRegSize;
 
         codeItem.init(ops, tailOps, tryItems);
 
         if (codeItem.debugInfo != null) {
             cp.addDebugInfoItem(codeItem.debugInfo);
             List<DebugInfoItem.DNode> debugNodes = codeItem.debugInfo.debugNodes;
-            Collections.sort(debugNodes, new Comparator<DebugInfoItem.DNode>() {
-                @Override
-                public int compare(DebugInfoItem.DNode o1, DebugInfoItem.DNode o2) {
-                    int x = o1.label.offset - o2.label.offset;
-                    // if (x == 0) {
-                    // if (o1.op == o2.op) {
-                    // x = o1.reg - o2.reg;
-                    // if (x == 0) {
-                    // x = o1.line - o2.line;
-                    // }
-                    // } else {
-                    // //
-                    // }
-                    // }
-                    return x;
-                }
+            debugNodes.sort((o1, o2) -> {
+                int x = o1.label.offset - o2.label.offset;
+                // if (x == 0) {
+                // if (o1.op == o2.op) {
+                // x = o1.reg - o2.reg;
+                // if (x == 0) {
+                // x = o1.line - o2.line;
+                // }
+                // } else {
+                // //
+                // }
+                // }
+                return x;
             });
         }
 
@@ -494,8 +511,8 @@ public class CodeWriter extends DexCodeVisitor {
         } else if (op.format == kFmt35c) {
             ops.add(new CodeWriter.OP35c(op, args, cp.uniqMethod(method)));
         }
-        if (args.length > max_out_reg_size) {
-            max_out_reg_size = args.length;
+        if (args.length > maxOutRegSize) {
+            maxOutRegSize = args.length;
         }
     }
 
@@ -507,8 +524,8 @@ public class CodeWriter extends DexCodeVisitor {
         } else if (op.format == kFmt35c) {
             ops.add(new CodeWriter.OP35c(op, args, cp.uniqCallSite(callSite)));
         }
-        if (args.length > max_out_reg_size) {
-            max_out_reg_size = args.length;
+        if (args.length > maxOutRegSize) {
+            maxOutRegSize = args.length;
         }
     }
 
@@ -521,18 +538,18 @@ public class CodeWriter extends DexCodeVisitor {
             ops.add(new CodeWriter.OP45cc(op, args, cp.uniqMethod(bsm), cp.uniqProto(proto)));
         }
 
-        if (args.length > max_out_reg_size) {
-            max_out_reg_size = args.length;
+        if (args.length > maxOutRegSize) {
+            maxOutRegSize = args.length;
         }
     }
 
     @Override
-    public void visitPackedSwitchStmt(Op op, int aA, final int first_case, final DexLabel[] labels) {
-        Label switch_data_location = new Label();
-        final JumpOp jumpOp = new JumpOp(op, aA, 0, switch_data_location);
+    public void visitPackedSwitchStmt(Op op, int aA, final int firstCase, final DexLabel[] labels) {
+        Label switchDataLocation = new Label();
+        final JumpOp jumpOp = new JumpOp(op, aA, 0, switchDataLocation);
         ops.add(jumpOp);
 
-        tailOps.add(switch_data_location);
+        tailOps.add(switchDataLocation);
         tailOps.add(new Insn() {
 
             @Override
@@ -542,10 +559,10 @@ public class CodeWriter extends DexCodeVisitor {
 
             @Override
             public void write(ByteBuffer out) {
-                out.putShort((short) 0x0100).putShort((short) labels.length).putInt(first_case);
+                out.putShort((short) 0x0100).putShort((short) labels.length).putInt(firstCase);
 
-                for (int i = 0; i < labels.length; i++) {
-                    out.putInt(getLabel(labels[i]).offset - jumpOp.offset);
+                for (DexLabel label : labels) {
+                    out.putInt(getLabel(label).offset - jumpOp.offset);
                 }
             }
         });
@@ -553,16 +570,16 @@ public class CodeWriter extends DexCodeVisitor {
 
     @Override
     public void visitRegister(int total) {
-        this.total_reg = total;
+        this.totalReg = total;
     }
 
     @Override
     public void visitSparseSwitchStmt(Op op, int ra, final int[] cases, final DexLabel[] labels) {
-        Label switch_data_location = new Label();
-        final JumpOp jumpOp = new JumpOp(op, ra, 0, switch_data_location);
+        Label switchDataLocation = new Label();
+        final JumpOp jumpOp = new JumpOp(op, ra, 0, switchDataLocation);
         ops.add(jumpOp);
 
-        tailOps.add(switch_data_location);
+        tailOps.add(switchDataLocation);
         tailOps.add(new Insn() {
 
             @Override
@@ -573,8 +590,8 @@ public class CodeWriter extends DexCodeVisitor {
             @Override
             public void write(ByteBuffer out) {
                 out.putShort((short) 0x0200).putShort((short) cases.length);
-                for (int i = 0; i < cases.length; i++) {
-                    out.putInt(cases[i]);
+                for (int aCase : cases) {
+                    out.putInt(aCase);
                 }
                 for (int i = 0; i < cases.length; i++) {
                     out.putInt(getLabel(labels[i]).offset - jumpOp.offset);
@@ -586,6 +603,7 @@ public class CodeWriter extends DexCodeVisitor {
 
     @Override
     public void visitStmt0R(Op op) {
+        // CHECKSTYLE:OFF
         if (op == BAD_OP) {
             // TODO check
         } else {
@@ -595,28 +613,21 @@ public class CodeWriter extends DexCodeVisitor {
                 // FIXME error
             }
         }
+        // CHECKSTYLE:ON
     }
 
     /**
      * kFmt11x
-     * 
-     * @param op
-     * @param reg
      */
     @Override
     public void visitStmt1R(Op op, int reg) {
         if (op.format == kFmt11x) {
             ops.add(new PreBuildInsn(build11x(op, reg)));
-        } else {
         }
     }
 
     /**
      * kFmt12x,kFmt22x,kFmt32x
-     * 
-     * @param op
-     * @param a
-     * @param b
      */
     @Override
     public void visitStmt2R(Op op, int a, int b) {
@@ -630,16 +641,13 @@ public class CodeWriter extends DexCodeVisitor {
         case kFmt32x:
             ops.add(new PreBuildInsn(build32x(op, a, b)));
             break;
+        default:
+            break;
         }
     }
 
     /**
      * Only kFmt22s, kFmt22b
-     * 
-     * @param op
-     * @param distReg
-     * @param srcReg
-     * @param content
      */
     @Override
     public void visitStmt2R1N(Op op, int distReg, int srcReg, int content) {
@@ -647,23 +655,16 @@ public class CodeWriter extends DexCodeVisitor {
             ops.add(new PreBuildInsn(build22s(op, distReg, srcReg, content)));
         } else if (op.format == kFmt22b) {
             ops.add(new PreBuildInsn(build22b(op, distReg, srcReg, content)));
-        } else {
         }
     }
 
     /**
      * kFmt23x
-     * 
-     * @param op
-     * @param a
-     * @param b
-     * @param c
      */
     @Override
     public void visitStmt3R(Op op, int a, int b, int c) {
         if (op.format == kFmt23x) {
             ops.add(new PreBuildInsn(build23x(op, a, b, c)));
-        } else {
         }
     }
 
@@ -693,7 +694,11 @@ public class CodeWriter extends DexCodeVisitor {
     }
 
     public static class IndexedInsn extends OpInsn {
-        final int a, b;
+
+        final int a;
+
+        final int b;
+
         final BaseItem idxItem;
 
         public IndexedInsn(Op op, int a, int b, BaseItem idxItem) {
@@ -706,6 +711,8 @@ public class CodeWriter extends DexCodeVisitor {
             case kFmt22c:
                 checkContentU4bit(op, "A", a);
                 checkContentU4bit(op, "B", b);
+                break;
+            default:
                 break;
             }
 
@@ -732,6 +739,8 @@ public class CodeWriter extends DexCodeVisitor {
                 checkContentUShort(op, "?@CCCC", idxItem.index);
                 out.put((byte) ((a & 0xF) | (b << 4))).putShort((short) idxItem.index);
                 break;
+            default:
+                break;
             }
         }
 
@@ -743,10 +752,66 @@ public class CodeWriter extends DexCodeVisitor {
     }
 
     public static class OP35c extends OpInsn {
+
         final BaseItem item;
-        int A, C, D, E, F, G;
+
+        int a;
+
+        int c;
+
+        int d;
+
+        int e;
+
+        int f;
+
+        int g;
 
         public OP35c(Op op, int[] args, BaseItem item) {
+            super(op);
+            int a = args.length;
+            if (a > 5) {
+                throw new CantNotFixContentException(op, "A", a);
+            }
+            this.a = a;
+            switch (a) { // [A=5] op {vC, vD, vE, vF, vG},
+            case 5:
+                g = args[4];
+                checkContentU4bit(op, "vG", g);
+            case 4:
+                f = args[3];
+                checkContentU4bit(op, "vF", f);
+            case 3:
+                e = args[2];
+                checkContentU4bit(op, "vE", e);
+            case 2:
+                d = args[1];
+                checkContentU4bit(op, "vD", d);
+            case 1:
+                c = args[0];
+                checkContentU4bit(op, "vC", c);
+                break;
+            default:
+                break;
+            }
+            this.item = item;
+        }
+
+        @Override
+        public void write(ByteBuffer out) { // A|G|op BBBB F|E|D|C
+            checkContentUShort(op, "@BBBB", item.index);
+            out.put((byte) op.opcode).put((byte) ((a << 4) | (g & 0xF))).putShort((short) item.index)
+                    .put((byte) ((d << 4) | (c & 0xF))).put((byte) ((f << 4) | (e & 0xF)));
+        }
+    }
+
+    //A|G|op BBBB F|E|D|C HHHH
+    public static class OP45cc extends OpInsn {
+        final BaseItem mtd;
+        final BaseItem proto;
+        int A, C, D, E, F, G;
+
+        public OP45cc(Op op, int[] args, BaseItem mtd, BaseItem proto) {
             super(op);
             int A = args.length;
             if (A > 5) {
@@ -771,48 +836,6 @@ public class CodeWriter extends DexCodeVisitor {
                 checkContentU4bit(op, "vC", C);
                 break;
             }
-            this.item = item;
-        }
-
-        @Override
-        public void write(ByteBuffer out) { // A|G|op BBBB F|E|D|C
-            checkContentUShort(op, "@BBBB", item.index);
-            out.put((byte) op.opcode).put((byte) ((A << 4) | (G & 0xF))).putShort((short) item.index)
-                    .put((byte) ((D << 4) | (C & 0xF))).put((byte) ((F << 4) | (E & 0xF)));
-        }
-    }
-
-    //A|G|op BBBB F|E|D|C HHHH
-    public static class OP45cc extends OpInsn {
-        final BaseItem mtd;
-        final BaseItem proto;
-        int A, C, D, E, F, G;
-
-        public OP45cc(Op op, int[] args, BaseItem mtd, BaseItem proto) {
-            super(op);
-            int A = args.length;
-            if (A > 5) {
-                throw new CantNotFixContentException(op, "A", A);
-            }
-            this.A = A;
-            switch (A) { // [A=5] op {vC, vD, vE, vF, vG},
-                case 5:
-                    G = args[4];
-                    checkContentU4bit(op, "vG", G);
-                case 4:
-                    F = args[3];
-                    checkContentU4bit(op, "vF", F);
-                case 3:
-                    E = args[2];
-                    checkContentU4bit(op, "vE", E);
-                case 2:
-                    D = args[1];
-                    checkContentU4bit(op, "vD", D);
-                case 1:
-                    C = args[0];
-                    checkContentU4bit(op, "vC", C);
-                    break;
-            }
             this.mtd = mtd;
             this.proto = proto;
         }
@@ -830,6 +853,7 @@ public class CodeWriter extends DexCodeVisitor {
             ;
         }
     }
+
     // AA|op BBBB CCCC HHHH
     public static class OP4rcc extends OpInsn {
         final BaseItem mtd;
@@ -873,8 +897,11 @@ public class CodeWriter extends DexCodeVisitor {
 
     // AA|op BBBB CCCC
     public static class OP3rc extends OpInsn {
+
         final BaseItem item;
+
         final int length;
+
         final int start;
 
         public OP3rc(Op op, int[] args, BaseItem item) {
@@ -901,14 +928,14 @@ public class CodeWriter extends DexCodeVisitor {
             checkContentUShort(op, "@BBBB", item.index);
             out.put((byte) op.opcode).put((byte) length).putShort((short) item.index).putShort((short) start);
         }
+
     }
 
     @Override
     public DexDebugVisitor visitDebug() {
-
         if (codeItem.debugInfo == null) {
             codeItem.debugInfo = new DebugInfoItem();
-            codeItem.debugInfo.parameterNames=new StringIdItem[owner.getParameterTypes().length];
+            codeItem.debugInfo.parameterNames = new StringIdItem[owner.getParameterTypes().length];
         }
         final DebugInfoItem debugInfoItem = codeItem.debugInfo;
         return new DexDebugVisitor() {
@@ -947,12 +974,12 @@ public class CodeWriter extends DexCodeVisitor {
 
             @Override
             public void visitPrologue(DexLabel dexLabel) {
-                debugInfoItem.debugNodes.add(DebugInfoItem.DNode.prologue( getLabel(dexLabel)));
+                debugInfoItem.debugNodes.add(DebugInfoItem.DNode.prologue(getLabel(dexLabel)));
             }
 
             @Override
             public void visitEpiogue(DexLabel dexLabel) {
-                debugInfoItem.debugNodes.add(DebugInfoItem.DNode.epiogue( getLabel(dexLabel)));
+                debugInfoItem.debugNodes.add(DebugInfoItem.DNode.epiogue(getLabel(dexLabel)));
             }
 
             @Override
@@ -976,4 +1003,5 @@ public class CodeWriter extends DexCodeVisitor {
             }
         };
     }
+
 }

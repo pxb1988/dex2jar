@@ -4,23 +4,23 @@ import com.googlecode.d2j.asm.LdcOptimizeAdapter;
 import com.googlecode.d2j.jasmin.JasminDumper;
 import com.googlecode.d2j.jasmin.Jasmins;
 import com.googlecode.d2j.tools.jar.InvocationWeaver;
-
+import com.googlecode.dex2jar.tools.Constants;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import org.antlr.runtime.RecognitionException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class WaveTest {
+
     @Test
     public void testA() throws IOException, RecognitionException {
-
         InvocationWeaver iw = new InvocationWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
         iw.withConfig("d LA;.m()V=LB;.t(Lp;)Ljava/lang/Object;");
@@ -30,20 +30,23 @@ public class WaveTest {
 
     @Test
     public void testB() throws IOException, RecognitionException {
-
         InvocationWeaver iw = new InvocationWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
-        iw.withConfig("r Ljava/util/ArrayList;.size=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.size(Lp;)Ljava/lang/Object;");
-        iw.withConfig("r Ljava/util/ArrayList;.add=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.add(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-        iw.withConfig("r Ljava/io/PrintStream;.append(Ljava/lang/CharSequence;)Ljava/io/PrintStream;=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.append(Lp;)Ljava/lang/Object;");
-        iw.withConfig("r Ljava/io/PrintStream;.println(Ljava/lang/String;)V=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.println(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;");
+        iw.withConfig("r Ljava/util/ArrayList;.size=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.size(Lp;)"
+                + "Ljava/lang/Object;");
+        iw.withConfig("r Ljava/util/ArrayList;.add=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.add"
+                + "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+        iw.withConfig("r Ljava/io/PrintStream;.append(Ljava/lang/CharSequence;)Ljava/io/PrintStream;"
+                + "=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.append(Lp;)Ljava/lang/Object;");
+        iw.withConfig("r Ljava/io/PrintStream;.println(Ljava/lang/String;)"
+                + "V=Lcom/googlecode/d2j/tools/jar/test/WaveTest;.println(Ljava/lang/Object;Ljava/lang/String;)"
+                + "Ljava/lang/Object;");
 
         test0(iw, "b");
     }
 
     @Test
     public void testC() throws IOException, RecognitionException {
-
         InvocationWeaver iw = new InvocationWeaver();
         iw.setInvocationInterfaceDesc("Lp;");
         iw.withConfig("r LT;.a()V=LB;.a(Lp;)Ljava/lang/Object;");
@@ -73,19 +76,19 @@ public class WaveTest {
         assertEqual(expectedGen, gen);
     }
 
-    private void assertEqual(ClassNode expected, ClassNode actual) throws IOException {
+    private void assertEqual(ClassNode expected, ClassNode actual) {
         String stdExpect = toStd(expected);
         String stdActual = toStd(actual);
-        Assert.assertEquals(stdExpect, stdActual);
+        assertEquals(stdExpect, stdActual);
     }
 
-    public static String toStd(ClassNode expected) throws IOException {
+    public static String toStd(ClassNode expected) {
         expected.access &= ~Opcodes.ACC_SUPER;
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
         expected.accept(LdcOptimizeAdapter.wrap(cw));
 
         ClassReader cr = new ClassReader(cw.toByteArray());
-        ClassNode n = new ClassNode(Opcodes.ASM9);
+        ClassNode n = new ClassNode(Constants.ASM_VERSION);
         cr.accept(n, ClassReader.EXPAND_FRAMES | ClassReader.SKIP_FRAMES);
 
         StringWriter stringWriter = new StringWriter();

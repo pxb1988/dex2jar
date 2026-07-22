@@ -5,7 +5,9 @@ import com.googlecode.d2j.visitors.DexCodeVisitor;
 
 
 public class ConstStmtNode extends DexStmtNode {
+
     public final int a;
+
     public final Object value;
 
     public ConstStmtNode(Op op, int a, Object value) {
@@ -18,4 +20,5 @@ public class ConstStmtNode extends DexStmtNode {
     public void accept(DexCodeVisitor cv) {
         cv.visitConstStmt(op, a, value);
     }
+
 }

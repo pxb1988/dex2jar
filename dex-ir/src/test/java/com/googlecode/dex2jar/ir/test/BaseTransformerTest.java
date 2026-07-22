@@ -1,18 +1,21 @@
 package com.googlecode.dex2jar.ir.test;
 
-import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.googlecode.dex2jar.ir.stmt.*;
-import org.junit.After;
-import org.junit.Before;
-
 import com.googlecode.dex2jar.ir.IrMethod;
 import com.googlecode.dex2jar.ir.expr.Exprs;
 import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.stmt.AssignStmt;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.Stmt;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
 import com.googlecode.dex2jar.ir.ts.Transformer;
+import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
+// Ignore the unused inspection; it is indeed used
 public abstract class BaseTransformerTest<T extends Transformer> {
 
     protected void transform() {
@@ -39,7 +42,7 @@ public abstract class BaseTransformerTest<T extends Transformer> {
         Class<?> transformerType = (Class<?>) t.getActualTypeArguments()[0];
 
         try {
-            this.transformer = (Transformer) transformerType.newInstance();
+            this.transformer = (Transformer) transformerType.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -76,14 +79,14 @@ public abstract class BaseTransformerTest<T extends Transformer> {
         }
         return phi;
     }
-    
+
     public void initMethod(boolean isStatic, String ret, String... args) {
         method.ret = ret;
         method.args = args;
         method.isStatic = isStatic;
     }
 
-    @After
+    @AfterEach
     public void reset() {
         method = null;
         stmts = null;
@@ -91,7 +94,7 @@ public abstract class BaseTransformerTest<T extends Transformer> {
         labelIndex = 0;
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
         method = new IrMethod();
         method.owner = "La/Clz;";
@@ -102,5 +105,4 @@ public abstract class BaseTransformerTest<T extends Transformer> {
         stmts = method.stmts;
         locals = method.locals;
     }
-
 }

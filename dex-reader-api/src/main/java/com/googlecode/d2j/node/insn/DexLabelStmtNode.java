@@ -4,6 +4,7 @@ import com.googlecode.d2j.DexLabel;
 import com.googlecode.d2j.visitors.DexCodeVisitor;
 
 public class DexLabelStmtNode extends DexStmtNode {
+
     public DexLabel label;
 
     public DexLabelStmtNode(DexLabel label) {
@@ -15,4 +16,5 @@ public class DexLabelStmtNode extends DexStmtNode {
     public void accept(DexCodeVisitor cv) {
         cv.visitLabel(label);
     }
+
 }

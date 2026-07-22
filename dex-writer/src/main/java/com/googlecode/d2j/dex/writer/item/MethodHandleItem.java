@@ -1,7 +1,6 @@
 package com.googlecode.d2j.dex.writer.item;
 
 import com.googlecode.d2j.dex.writer.io.DataOut;
-
 import java.util.Objects;
 
 public class MethodHandleItem extends BaseItem implements Comparable<MethodHandleItem> {

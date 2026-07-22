@@ -53,7 +53,7 @@ VOID_TYPE:'V';
 fragment
 FRAGMENT_PRIMITIVE_TYPE:'B'|'Z'|'S'|'C'|'I'|'F'|'J'|'D';
 fragment
-FRAGMENT_OBJECT_TYPE: 'L' (ESC_SEQ |~(';'|':'|'\\'|' '|'\n'|'\t'|'\r'|'('|')'))+ ';' ;
+FRAGMENT_OBJECT_TYPE: 'L' (ESC_SEQ |~(';'|':'|'\\'|'\n'|'\t'|'\r'|'('|')'))+ ';' ;
 fragment
 FRAGMENT_ARRAY_TYPE: ('[')+ (FRAGMENT_PRIMITIVE_TYPE|FRAGMENT_OBJECT_TYPE);
 

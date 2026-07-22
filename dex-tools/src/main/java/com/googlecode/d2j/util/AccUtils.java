@@ -2,7 +2,12 @@ package com.googlecode.d2j.util;
 
 import org.objectweb.asm.Opcodes;
 
-public class AccUtils {
+public final class AccUtils {
+
+    private AccUtils() {
+        throw new UnsupportedOperationException();
+    }
+
     public static boolean isBridge(int acc) {
         return (acc & Opcodes.ACC_BRIDGE) != 0;
     }

@@ -1,19 +1,3 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.util.zip;
 
 import java.io.IOException;
@@ -31,22 +15,28 @@ import java.util.GregorianCalendar;
  * classes.
  */
 public final class ZipEntry implements ZipConstants, Cloneable {
+
     String name;
+
     String comment;
 
-    long crc = -1; // Needs to be a long to distinguish -1 ("not set") from the 0xffffffff CRC32.
+    long crc; // Needs to be a long to distinguish -1 ("not set") from the 0xffffffff CRC32.
 
-    long compressedSize = -1;
-    long size = -1;
+    long compressedSize;
 
-    int compressionMethod = -1;
-    int time = -1;
-    int modDate = -1;
+    long size;
+
+    int compressionMethod;
+
+    int time;
+
+    int modDate;
 
     byte[] extra;
 
-    int nameLength = -1;
-    long localHeaderRelOffset = -1;
+    int nameLength;
+
+    long localHeaderRelOffset;
 
     /**
      * Zip entry state: Deflated.
@@ -68,7 +58,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Gets the compressed size of this {@code android.ZipEntry}.
-     * 
+     *
      * @return the compressed size, or -1 if the compressed size has not been set.
      */
     public long getCompressedSize() {
@@ -77,7 +67,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Gets the checksum for this {@code android.ZipEntry}.
-     * 
+     *
      * @return the checksum, or -1 if the checksum has not been set.
      */
     public long getCrc() {
@@ -86,7 +76,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Gets the extra information for this {@code android.ZipEntry}.
-     * 
+     *
      * @return a byte array containing the extra information, or {@code null} if there is none.
      */
     public byte[] getExtra() {
@@ -95,7 +85,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Gets the compression method for this {@code android.ZipEntry}.
-     * 
+     *
      * @return the compression method, either {@code DEFLATED}, {@code STORED} or -1 if the compression method has not
      *         been set.
      */
@@ -105,7 +95,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Gets the name of this {@code android.ZipEntry}.
-     * 
+     *
      * @return the entry name.
      */
     public String getName() {
@@ -114,7 +104,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Gets the uncompressed size of this {@code android.ZipEntry}.
-     * 
+     *
      * @return the uncompressed size, or {@code -1} if the size has not been set.
      */
     public long getSize() {
@@ -123,7 +113,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Gets the last modification time of this {@code android.ZipEntry}.
-     * 
+     *
      * @return the last modification time as the number of milliseconds since Jan. 1, 1970.
      */
     public long getTime() {
@@ -139,7 +129,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Determine whether or not this {@code android.ZipEntry} is a directory.
-     * 
+     *
      * @return {@code true} when this {@code android.ZipEntry} is a directory, {@code false} otherwise.
      */
     public boolean isDirectory() {
@@ -148,7 +138,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
 
     /**
      * Returns the string representation of this {@code android.ZipEntry}.
-     * 
+     *
      * @return the string representation of this {@code android.ZipEntry}.
      */
     @Override
@@ -203,7 +193,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
         // if (containsNulByte(nameBytes)) {
         // throw new ZipException("Filename contains NUL byte: " + Arrays.toString(nameBytes));
         // }
-        name = new String(nameBytes, 0, nameBytes.length, StandardCharsets.UTF_8);
+        name = new String(nameBytes, StandardCharsets.UTF_8);
 
         if (extraLength > 0) {
             if (skipCommentsAndExtra) {
@@ -222,7 +212,7 @@ public final class ZipEntry implements ZipConstants, Cloneable {
             } else {
                 byte[] commentBytes = new byte[commentByteCount];
                 it0.get(commentBytes);
-                comment = new String(commentBytes, 0, commentBytes.length, StandardCharsets.UTF_8);
+                comment = new String(commentBytes, StandardCharsets.UTF_8);
             }
         }
     }
@@ -235,4 +225,5 @@ public final class ZipEntry implements ZipConstants, Cloneable {
         }
         return false;
     }
+
 }

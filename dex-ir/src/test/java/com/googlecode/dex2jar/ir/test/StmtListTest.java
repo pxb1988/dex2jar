@@ -1,5 +1,11 @@
 package com.googlecode.dex2jar.ir.test;
 
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.stmt.LabelStmt;
+import com.googlecode.dex2jar.ir.stmt.StmtList;
+import com.googlecode.dex2jar.ir.stmt.Stmts;
+import org.junit.jupiter.api.Test;
+
 import static com.googlecode.dex2jar.ir.expr.Exprs.nCast;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nGt;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nInt;
@@ -7,17 +13,10 @@ import static com.googlecode.dex2jar.ir.expr.Exprs.nLocal;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nParameterRef;
 import static com.googlecode.dex2jar.ir.expr.Exprs.nThisRef;
 
-import org.junit.Test;
-
-import com.googlecode.dex2jar.ir.expr.Local;
-import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.stmt.Stmts;
-
 public class StmtListTest {
+
     @Test
     public void toStringTest() {
-
         StmtList list = new StmtList();
         Local a = nLocal("this");
         Local b = nLocal("b");
@@ -34,4 +33,5 @@ public class StmtListTest {
         list.add(L1);
         list.toString();
     }
+
 }

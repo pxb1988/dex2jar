@@ -1,42 +1,31 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.dex2jar.ir.ts;
 
 import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.expr.*;
+import com.googlecode.dex2jar.ir.expr.Constant;
+import com.googlecode.dex2jar.ir.expr.Exprs;
+import com.googlecode.dex2jar.ir.expr.Local;
+import com.googlecode.dex2jar.ir.expr.PhiExpr;
+import com.googlecode.dex2jar.ir.expr.Value;
 import com.googlecode.dex2jar.ir.expr.Value.VT;
 import com.googlecode.dex2jar.ir.stmt.AssignStmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.E2Stmt;
 import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
 import com.googlecode.dex2jar.ir.ts.Cfg.TravelCallBack;
-
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
 
 /**
  * Replace must-be-constant local to constant
- * <p/>
+ * <p>
  * Require a SSA form, usually run after {@link SSATransformer}
  *
  * @author Panxiaobo
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class ConstTransformer implements Transformer {
+
     @Override
     public void transform(IrMethod m) {
 
@@ -115,7 +104,7 @@ public class ConstTransformer implements Transformer {
             Object cst = cav.cst;
 
             if (cav.isConst == null) {
-                if (cst != null) {// we have a cst
+                if (cst != null) { // we have a cst
                     boolean allCstEquals = true;
                     for (ConstAnalyzeValue p0 : cav.assignFrom) {
                         if (!cst.equals(p0.cst)) {
@@ -161,7 +150,7 @@ public class ConstTransformer implements Transformer {
                 Value op1 = e2.op1.trim();
                 Value op2 = e2.op2.trim();
                 if (op1.vt == VT.LOCAL) {
-                    ConstAnalyzeValue cav = (ConstAnalyzeValue) ((Local) op1).tag;
+                    ConstAnalyzeValue cav = (ConstAnalyzeValue) op1.tag;
                     if (op2.vt == VT.CONSTANT) {
                         Constant c = (Constant) op2;
                         cav.isConst = true;
@@ -174,7 +163,7 @@ public class ConstTransformer implements Transformer {
                     } else if (op2.vt == VT.PHI) {
                         PhiExpr pe = (PhiExpr) op2;
                         for (Value v : pe.ops) {
-                            ConstAnalyzeValue zaf2 = (ConstAnalyzeValue) ((Local) v.trim()).tag;
+                            ConstAnalyzeValue zaf2 = (ConstAnalyzeValue) v.trim().tag;
                             cav.assignFrom.add(zaf2);
                             zaf2.assignTo.add(cav);
                         }
@@ -193,15 +182,22 @@ public class ConstTransformer implements Transformer {
     }
 
     static class ConstAnalyzeValue {
-        private static final Integer ZERO = Integer.valueOf(0);
+
+        private static final Integer ZERO = 0;
+
         public final Local local;
+
         public Boolean isConst = null;
+
         public boolean replacable = false;
+
         public Object cst;
+
         public Set<ConstAnalyzeValue> assignFrom = new HashSet(3);
+
         public Set<ConstAnalyzeValue> assignTo = new HashSet(3);
 
-        public ConstAnalyzeValue(Local local) {
+        ConstAnalyzeValue(Local local) {
             super();
             this.local = local;
         }
@@ -212,5 +208,7 @@ public class ConstTransformer implements Transformer {
             }
             return isConst && (ZERO.equals(cst));
         }
+
     }
+
 }

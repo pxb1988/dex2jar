@@ -1,13 +1,24 @@
-apply plugin: 'antlr'
+plugins {
+    id "antlr"
+    id "dex2jar.build-conventions"
+}
+
+description = "Jasmin support for dex2jar"
 
 dependencies {
-  compile(group: 'org.antlr', name: 'antlr-runtime', version:'3.5.2') {
+    api(libs.antlr3.runtime) {
         exclude(module: 'stringtemplate')
-  }
-  implementation group: 'org.ow2.asm', name: 'asm-tree', version: '9.5'
-  implementation group: 'org.ow2.asm', name: 'asm-util', version: '9.5'
-  compile project(':d2j-base-cmd')
-  antlr "org.antlr:antlr:3.5.2"
+    }
+    api project(path: ':d2j-external', configuration: 'shadow')
+    // api libs.asm // Fixed MethodCodeTooLargeException
+    api(libs.asm.tree) {
+        exclude(module: 'asm')
+    }
+    api(libs.asm.util) {
+        exclude(module: 'asm')
+    }
+    api project(':d2j-base-cmd')
+    antlr libs.antlr3
 }
 
 sourceSets.main.antlr.srcDirs = ['src/main/antlr3']

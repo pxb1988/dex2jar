@@ -1,0 +1,31 @@
+[versions]
+antlr3 = '3.5.3'
+antlr4 = '4.13.2'
+asm = '9.10.1'
+smali = '3.0.9'
+commons-compress = '1.28.0'
+junit = '5.14.4'
+junit-platform = '1.14.4'
+r8 = '4.0.63' # Newer versions only for Java 11+
+nexus-publish-plugin = '2.0.0'
+shadow-plugin = '9.6.0'
+versions-plugin = '0.54.0'
+
+[libraries]
+antlr3 = { module = "org.antlr:antlr", version.ref = "antlr3" }
+antlr3-runtime = { module = "org.antlr:antlr-runtime", version.ref = "antlr3" }
+antlr4 = { module = "org.antlr:antlr4", version.ref = "antlr4" }
+antlr4-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr4" }
+asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
+asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
+asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
+baksmali = { module = "com.android.tools.smali:smali-baksmali", version.ref = "smali" }
+commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commons-compress" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
+r8 = { module = "com.android.tools:r8", version.ref = "r8" }
+
+[plugins]
+nexus-publish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexus-publish-plugin" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow-plugin" }
+versions = { id = "com.github.ben-manes.versions", version.ref = "versions-plugin" }

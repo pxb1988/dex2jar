@@ -16,4 +16,5 @@ public class Stmt1RNode extends DexStmtNode {
     public void accept(DexCodeVisitor cv) {
         cv.visitStmt1R(op, a);
     }
+
 }

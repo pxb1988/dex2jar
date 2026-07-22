@@ -2,6 +2,7 @@ package com.googlecode.d2j.tools.jar;
 
 
 public interface MethodInvocation {
+
     Object proceed() throws Throwable;
 
     String getMethodOwner();
@@ -11,6 +12,8 @@ public interface MethodInvocation {
     String getMethodDesc();
 
     Object getThis();
-    // @Nullale
+
+    // @Nullable
     Object[] getArguments();
+
 }

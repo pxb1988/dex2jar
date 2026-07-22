@@ -6,7 +6,9 @@ import com.googlecode.d2j.visitors.DexCodeVisitor;
 public class Stmt2R1NNode extends DexStmtNode {
 
     public final int distReg;
+
     public final int srcReg;
+
     public final int content;
 
     public Stmt2R1NNode(Op op, int distReg, int srcReg, int content) {
@@ -20,4 +22,5 @@ public class Stmt2R1NNode extends DexStmtNode {
     public void accept(DexCodeVisitor cv) {
         cv.visitStmt2R1N(op, distReg, srcReg, content);
     }
+
 }

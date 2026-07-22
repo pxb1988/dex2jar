@@ -1,21 +1,10 @@
-/*
- * Copyright (c) 2009-2012 Panxiaobo
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.googlecode.d2j.visitors;
 
-import com.googlecode.d2j.*;
+import com.googlecode.d2j.CallSite;
+import com.googlecode.d2j.DexLabel;
+import com.googlecode.d2j.Field;
+import com.googlecode.d2j.Method;
+import com.googlecode.d2j.Proto;
 import com.googlecode.d2j.reader.Op;
 
 /**
@@ -23,6 +12,7 @@ import com.googlecode.d2j.reader.Op;
  * @version $Rev$
  */
 public class DexCodeVisitor {
+
     protected DexCodeVisitor visitor;
 
     public DexCodeVisitor() {
@@ -44,11 +34,6 @@ public class DexCodeVisitor {
      * <pre>
      * OP_X_INT_LIT8
      * </pre>
-     * 
-     * @param op
-     * @param distReg
-     * @param srcReg
-     * @param content
      */
     public void visitStmt2R1N(Op op, int distReg, int srcReg, int content) {
         if (visitor != null) {
@@ -58,7 +43,7 @@ public class DexCodeVisitor {
 
     /**
      * <pre>
-     * 
+     *
      * OP_ADD
      * OP_SUB
      * OP_MUL
@@ -76,7 +61,6 @@ public class DexCodeVisitor {
      * OP_AGETX
      * OP_APUTX
      * </pre>
-     * 
      */
     public void visitStmt3R(Op op, int a, int b, int c) {
         if (visitor != null) {
@@ -91,11 +75,6 @@ public class DexCodeVisitor {
      * OP_CHECK_CAST
      * OP_NEW_INSTANCE
      * </pre>
-     * 
-     * @param op
-     * @param a
-     * @param b
-     * @param type
      */
     public void visitTypeStmt(Op op, int a, int b, String type) {
         if (visitor != null) {
@@ -104,6 +83,9 @@ public class DexCodeVisitor {
     }
 
     /**
+     * @param op    CONST*
+     * @param ra    register
+     * @param value Integer,Long,DexType,MethodHandle,Proto
      * @see Op#CONST
      * @see Op#CONST_4
      * @see Op#CONST_16
@@ -117,10 +99,6 @@ public class DexCodeVisitor {
      * @see Op#CONST_CLASS
      * @see Op#CONST_METHOD_HANDLE
      * @see Op#CONST_METHOD_TYPE
-     * @param op CONST*
-     * @param ra register
-     * @param value
-     *            Integer,Long,DexType,MethodHandle,Proto
      */
     public void visitConstStmt(Op op, int ra, Object value) {
         if (visitor != null) {
@@ -147,11 +125,6 @@ public class DexCodeVisitor {
      * OP_SGETX a field
      * OP_SPUTX a field
      * </pre>
-     * 
-     * @param op
-     * @param a
-     * @param b
-     * @param field
      */
     public void visitFieldStmt(Op op, int a, int b, Field field) {
         if (visitor != null) {
@@ -163,10 +136,6 @@ public class DexCodeVisitor {
      * <pre>
      * OP_FILLED_NEW_ARRAY
      * </pre>
-     * 
-     * @param op
-     * @param args
-     * @param type
      */
     public void visitFilledNewArrayStmt(Op op, int[] args, String type) {
         if (visitor != null) {
@@ -190,11 +159,6 @@ public class DexCodeVisitor {
      * OP_IF_GTZ
      * OP_IF_LEZ
      * </pre>
-     * 
-     * @param op
-     * @param a
-     * @param b
-     * @param label
      */
     public void visitJumpStmt(Op op, int a, int b, DexLabel label) {
         if (visitor != null) {
@@ -222,10 +186,6 @@ public class DexCodeVisitor {
      * OP_INVOKE_STATIC
      * OP_INVOKE_INTERFACE
      * </pre>
-     * 
-     * @param op
-     * @param args
-     * @param method
      */
     public void visitMethodStmt(Op op, int[] args, Method method) {
         if (visitor != null) {
@@ -248,7 +208,6 @@ public class DexCodeVisitor {
      * <pre>
      * OP_INVOKE_POLYMORPHIC
      * </pre>
-     *
      */
     public void visitMethodStmt(Op op, int[] args, Method bsm, Proto proto) {
         if (visitor != null) {
@@ -264,10 +223,6 @@ public class DexCodeVisitor {
      * a=Xb
      * X_TO_Y
      * </pre>
-     * 
-     * @param op
-     * @param a
-     * @param b
      */
     public void visitStmt2R(Op op, int a, int b) {
         if (visitor != null) {
@@ -276,10 +231,7 @@ public class DexCodeVisitor {
     }
 
     /**
-     * 
      * {@link Op#RETURN_VOID} {@link Op#NOP} {@link Op#BAD_OP}
-     * 
-     * @param op
      */
     public void visitStmt0R(Op op) {
         if (visitor != null) {
@@ -296,9 +248,6 @@ public class DexCodeVisitor {
      * OP_MOVE_RESULT_X
      * OP_MOVE_EXCEPTION_X
      * </pre>
-     * 
-     * @param op
-     * @param reg
      */
     public void visitStmt1R(Op op, int reg) {
         if (visitor != null) {
@@ -306,13 +255,13 @@ public class DexCodeVisitor {
         }
     }
 
-    public void visitPackedSwitchStmt(Op op, int aA, int first_case, DexLabel[] labels) {
+    public void visitPackedSwitchStmt(Op op, int aA, int firstCase, DexLabel[] labels) {
         if (visitor != null) {
-            visitor.visitPackedSwitchStmt(op, aA, first_case, labels);
+            visitor.visitPackedSwitchStmt(op, aA, firstCase, labels);
         }
     }
 
-    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel handler[], String type[]) {
+    public void visitTryCatch(DexLabel start, DexLabel end, DexLabel[] handler, String[] type) {
         if (visitor != null) {
             visitor.visitTryCatch(start, end, handler, type);
         }
