@@ -37,10 +37,12 @@ import com.googlecode.dex2jar.ir.expr.Value.EnExpr;
 public class InvokeExpr extends AbstractInvokeExpr {
 
     public Method method;
+    public String invokeSpecialOwner;
 
     @Override
     protected void releaseMemory() {
         method = null;
+        invokeSpecialOwner = null;
         super.releaseMemory();
     }
 
@@ -62,12 +64,16 @@ public class InvokeExpr extends AbstractInvokeExpr {
 
     @Override
     public Value clone() {
-        return new InvokeExpr(vt, cloneOps(), method);
+        InvokeExpr ie = new InvokeExpr(vt, cloneOps(), method);
+        ie.invokeSpecialOwner = invokeSpecialOwner;
+        return ie;
     }
 
     @Override
     public Value clone(LabelAndLocalMapper mapper) {
-        return new InvokeExpr(vt, cloneOps(mapper), method);
+        InvokeExpr ie = new InvokeExpr(vt, cloneOps(mapper), method);
+        ie.invokeSpecialOwner = invokeSpecialOwner;
+        return ie;
     }
 
     @Override
@@ -99,6 +105,10 @@ public class InvokeExpr extends AbstractInvokeExpr {
 
     public String getOwner() {
         return method.getOwner();
+    }
+
+    public String getInvokeSpecialOwner() {
+        return invokeSpecialOwner == null ? method.getOwner() : invokeSpecialOwner;
     }
 
     public String getRet() {
