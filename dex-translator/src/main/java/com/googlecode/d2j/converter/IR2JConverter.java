@@ -817,7 +817,8 @@ public class IR2JConverter implements Opcodes {
             if (ie.vt == VT.INVOKE_NEW) {
                 p = new Proto(p.getParameterTypes(), "V");
             }
-            asm.visitMethodInsn(opcode, toInternal(ie.getOwner()), ie.getName(), p.getDesc(), opcode == INVOKEINTERFACE);
+            String owner = ie.vt == VT.INVOKE_NEW ? ie.getInvokeSpecialOwner() : ie.getOwner();
+            asm.visitMethodInsn(opcode, toInternal(owner), ie.getName(), p.getDesc(), opcode == INVOKEINTERFACE);
         }
         break;
         case INVOKE_CUSTOM: {
